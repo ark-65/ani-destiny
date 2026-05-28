@@ -20,7 +20,7 @@ class SakuraAnimeSourceAdapter implements AnimeSourceAdapter {
     required Dio dio,
     SourceDiagnosticRecorder diagnosticRecorder =
         const NoopSourceDiagnosticRecorder(),
-    this.baseUrl = 'https://yhdm.one',
+    this.baseUrl = 'https://yhdm.at',
   })  : _dio = dio,
         _diagnostics = diagnosticRecorder;
 

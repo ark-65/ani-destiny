@@ -14,6 +14,9 @@ class SourceRepositoryImpl implements SourceRepository {
         _preferences = preferences;
 
   static const _currentSourceKey = 'current_source_id';
+  static const _sourceDefaultVersionKey = 'source_default_version';
+  static const _currentSourceDefaultVersion = 2;
+  static const _legacyMockDefaultSourceId = 'mock';
 
   final SourceRegistry _registry;
   final Future<SharedPreferences> Function() _preferences;
@@ -36,6 +39,21 @@ class SourceRepositoryImpl implements SourceRepository {
   Future<String> getCurrentSourceId() async {
     final preferences = await _preferences();
     final stored = preferences.getString(_currentSourceKey);
+    final defaultVersion = preferences.getInt(_sourceDefaultVersionKey) ?? 1;
+    if (defaultVersion < _currentSourceDefaultVersion) {
+      await preferences.setInt(
+        _sourceDefaultVersionKey,
+        _currentSourceDefaultVersion,
+      );
+      if (stored == _legacyMockDefaultSourceId &&
+          _registry.getById(AppConstants.defaultSourceId) != null) {
+        await preferences.setString(
+          _currentSourceKey,
+          AppConstants.defaultSourceId,
+        );
+        return AppConstants.defaultSourceId;
+      }
+    }
     if (stored != null && _registry.getById(stored) != null) {
       return stored;
     }
@@ -50,6 +68,10 @@ class SourceRepositoryImpl implements SourceRepository {
     }
     final preferences = await _preferences();
     await preferences.setString(_currentSourceKey, sourceId);
+    await preferences.setInt(
+      _sourceDefaultVersionKey,
+      _currentSourceDefaultVersion,
+    );
   }
 
   @override

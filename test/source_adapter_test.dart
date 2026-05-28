@@ -1,5 +1,14 @@
 import 'package:ani_destiny/features/source/data/adapters/mock_anime_source_adapter.dart';
+import 'package:ani_destiny/features/source/data/registry/source_registry.dart';
+import 'package:ani_destiny/features/source/data/repositories/source_repository_impl.dart';
+import 'package:ani_destiny/features/source/domain/adapters/anime_source_adapter.dart';
+import 'package:ani_destiny/features/anime/domain/entities/anime.dart';
+import 'package:ani_destiny/features/anime/domain/entities/anime_detail.dart';
+import 'package:ani_destiny/features/anime/domain/entities/play_source.dart';
+import 'package:ani_destiny/features/anime/domain/entities/schedule_item.dart';
+import 'package:ani_destiny/features/anime/domain/entities/search_result.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
   test('MockAnimeSourceAdapter supports the first-version flow', () async {
@@ -20,4 +29,84 @@ void main() {
     final schedule = await adapter.getSchedule();
     expect(schedule, isNotEmpty);
   });
+
+  test('SourceRegistry defaults to the real Sakura source', () {
+    final registry = SourceRegistry(
+      adapters: [
+        MockAnimeSourceAdapter(),
+        const _FakeSourceAdapter(id: 'sakura'),
+      ],
+    );
+
+    expect(registry.defaultAdapter.id, 'sakura');
+  });
+
+  test('SourceRepository migrates the old mock default to Sakura', () async {
+    SharedPreferences.setMockInitialValues({
+      'current_source_id': 'mock',
+    });
+    final registry = SourceRegistry(
+      adapters: [
+        MockAnimeSourceAdapter(),
+        const _FakeSourceAdapter(id: 'sakura'),
+      ],
+    );
+    final repository = SourceRepositoryImpl(
+      registry: registry,
+      preferences: SharedPreferences.getInstance,
+    );
+
+    expect(await repository.getCurrentSourceId(), 'sakura');
+  });
+
+  test('SourceRepository preserves an explicit source selection', () async {
+    SharedPreferences.setMockInitialValues({});
+    final registry = SourceRegistry(
+      adapters: [
+        MockAnimeSourceAdapter(),
+        const _FakeSourceAdapter(id: 'sakura'),
+      ],
+    );
+    final repository = SourceRepositoryImpl(
+      registry: registry,
+      preferences: SharedPreferences.getInstance,
+    );
+
+    await repository.setCurrentSourceId('mock');
+
+    expect(await repository.getCurrentSourceId(), 'mock');
+  });
+}
+
+class _FakeSourceAdapter implements AnimeSourceAdapter {
+  const _FakeSourceAdapter({required this.id});
+
+  @override
+  final String id;
+
+  @override
+  String get name => id;
+
+  @override
+  String? get description => id;
+
+  @override
+  Future<List<Anime>> getHomeRecommendations() async => const [];
+
+  @override
+  Future<AnimeDetail> getAnimeDetail(String animeId) async =>
+      throw StateError('Not used in this test');
+
+  @override
+  Future<List<PlaySource>> getPlaySources(String episodeId) async => const [];
+
+  @override
+  Future<List<ScheduleItem>> getSchedule() async => const [];
+
+  @override
+  Future<List<SearchResult>> search(
+    String keyword, {
+    int page = 1,
+  }) async =>
+      const [];
 }

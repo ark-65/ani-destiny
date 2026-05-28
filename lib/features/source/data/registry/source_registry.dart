@@ -1,3 +1,4 @@
+import '../../../../core/constants/app_constants.dart';
 import '../../domain/adapters/anime_source_adapter.dart';
 
 class SourceRegistry {
@@ -17,7 +18,7 @@ class SourceRegistry {
   }
 
   AnimeSourceAdapter get defaultAdapter => _adapters.firstWhere(
-        (adapter) => adapter.id == 'mock',
+        (adapter) => adapter.id == AppConstants.defaultSourceId,
         orElse: () => _adapters.first,
       );
 }
