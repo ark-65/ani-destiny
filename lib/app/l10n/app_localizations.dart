@@ -99,6 +99,8 @@ class AppLocalizations {
   String get loadingDetail => _t('loadingDetail');
   String get noPlaySource => _t('noPlaySource');
   String get noDownloadSource => _t('noDownloadSource');
+  String get selectPlaySource => _t('selectPlaySource');
+  String get selectDownloadSource => _t('selectDownloadSource');
   String downloadTaskCreated(String taskId) =>
       '${_t('downloadTaskCreated')}: $taskId';
   String get playerNoPlayUrl => _t('playerNoPlayUrl');
@@ -232,6 +234,8 @@ const _localizedValues = {
     'loadingDetail': '正在加载详情',
     'noPlaySource': '暂无播放源。',
     'noDownloadSource': '暂无可下载播放源。',
+    'selectPlaySource': '选择播放线路',
+    'selectDownloadSource': '选择下载线路',
     'downloadTaskCreated': '已创建下载任务',
     'playerNoPlayUrl': '暂无播放地址',
     'playerMockReady': 'Mock 播放器就绪',
@@ -336,6 +340,8 @@ const _localizedValues = {
     'loadingDetail': 'Loading detail',
     'noPlaySource': 'No play source available.',
     'noDownloadSource': 'No download source available.',
+    'selectPlaySource': 'Select playback line',
+    'selectDownloadSource': 'Select download line',
     'downloadTaskCreated': 'Download task created',
     'playerNoPlayUrl': 'No play URL',
     'playerMockReady': 'Mock player ready',
@@ -439,6 +445,8 @@ const _localizedValues = {
     'loadingDetail': '詳細を読み込み中',
     'noPlaySource': '再生ソースがありません。',
     'noDownloadSource': 'ダウンロード可能なソースがありません。',
+    'selectPlaySource': '再生ラインを選択',
+    'selectDownloadSource': 'ダウンロードラインを選択',
     'downloadTaskCreated': 'ダウンロードタスクを作成しました',
     'playerNoPlayUrl': '再生 URL がありません',
     'playerMockReady': 'Mock プレイヤー準備完了',

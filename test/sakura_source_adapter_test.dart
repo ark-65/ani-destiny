@@ -40,15 +40,18 @@ void main() {
     expect(detail.episodes.first.id, '2026406456/ep1');
 
     final playSources = await adapter.getPlaySources(detail.episodes.first.id);
-    expect(playSources.single.title, 'jyzy');
+    expect(playSources, hasLength(2));
+    expect(playSources.first.title, 'jyzy');
     expect(
-      playSources.single.url,
+      playSources.first.url,
       'https://cdn.example.test/video/index.m3u8',
     );
     expect(
-      playSources.single.headers['referer'],
+      playSources.first.headers['referer'],
       'https://example.test/vod-play/2026406456/ep1.html',
     );
+    expect(playSources.last.title, '备用线路');
+    expect(playSources.last.quality, 'HLS');
 
     final schedule = await adapter.getSchedule();
     expect(schedule.single.animeId, '2026406456');
@@ -168,6 +171,10 @@ const _playJson = '''
     {
       "play_data": "https://cdn.example.test/video/index.m3u8",
       "src_site": "jyzy"
+    },
+    {
+      "play_data": "/media/backup.m3u8",
+      "src_site": "备用线路"
     }
   ]
 }

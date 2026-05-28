@@ -1,7 +1,10 @@
 import '../entities/player_state.dart';
 
 abstract class PlayerControllerAdapter {
-  Future<void> load(String url);
+  Future<void> load(
+    String url, {
+    Map<String, String> headers = const {},
+  });
 
   Future<void> play();
 

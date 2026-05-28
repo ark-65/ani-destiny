@@ -47,10 +47,19 @@ class MediaKitPlayerAdapter implements PlayerControllerAdapter {
   Stream<PlayerState> get stateStream => _controller.stream;
 
   @override
-  Future<void> load(String url) async {
+  Future<void> load(
+    String url, {
+    Map<String, String> headers = const {},
+  }) async {
     try {
       _update(isBuffering: true, clearErrorMessage: true);
-      await _player.open(media.Media(url), play: false);
+      await _player.open(
+        media.Media(
+          url,
+          httpHeaders: headers.isEmpty ? null : headers,
+        ),
+        play: false,
+      );
       _update(
         isInitialized: true,
         isBuffering: false,

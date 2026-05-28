@@ -16,7 +16,10 @@ class MockPlayerAdapter implements PlayerControllerAdapter {
   Stream<PlayerState> get stateStream => _controller.stream;
 
   @override
-  Future<void> load(String url) async {
+  Future<void> load(
+    String url, {
+    Map<String, String> headers = const {},
+  }) async {
     _state = PlayerState.initial().copyWith(
       isInitialized: true,
       duration: const Duration(minutes: 24, seconds: 12),

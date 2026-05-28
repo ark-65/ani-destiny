@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -11,6 +13,7 @@ import '../../../favorite/domain/entities/favorite_anime.dart';
 import '../../../favorite/presentation/providers/favorite_providers.dart';
 import '../../domain/entities/anime_detail.dart';
 import '../../domain/entities/episode.dart';
+import '../../domain/entities/play_source.dart';
 import '../providers/anime_providers.dart';
 import '../widgets/anime_detail_header.dart';
 import '../widgets/episode_list.dart';
@@ -123,7 +126,8 @@ class AnimeDetailPage extends ConsumerWidget {
       );
       return;
     }
-    final source = sources.first;
+    final source = await _selectPlaySource(context, sources);
+    if (!context.mounted || source == null) return;
     final query = <String, String>{
       'animeId': detail.id,
       'episodeId': episode.id,
@@ -131,6 +135,8 @@ class AnimeDetailPage extends ConsumerWidget {
       'episodeTitle': episode.title,
       'sourceId': detail.sourceId,
       'playUrl': source.url,
+      if (source.headers.isNotEmpty)
+        'playHeaders': _encodePlayHeaders(source.headers),
       if (detail.coverUrl != null) 'coverUrl': detail.coverUrl!,
     };
     context.push(Uri(path: '/player', queryParameters: query).toString());
@@ -154,11 +160,13 @@ class AnimeDetailPage extends ConsumerWidget {
       );
       return;
     }
+    final source = await _selectDownloadSource(context, sources);
+    if (!context.mounted || source == null) return;
     final taskId = await ref.read(httpDownloadServiceProvider).createTask(
           animeId: detail.id,
           episodeId: episode.id,
           sourceId: detail.sourceId,
-          url: sources.first.url,
+          url: source.url,
           title: detail.title,
           episodeTitle: episode.title,
         );
@@ -166,5 +174,81 @@ class AnimeDetailPage extends ConsumerWidget {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text(context.l10n.downloadTaskCreated(taskId))),
     );
+  }
+
+  Future<PlaySource?> _selectPlaySource(
+    BuildContext context,
+    List<PlaySource> sources,
+  ) {
+    return _selectSource(
+      context,
+      sources,
+      title: context.l10n.selectPlaySource,
+      actionIcon: Icons.play_arrow,
+    );
+  }
+
+  Future<PlaySource?> _selectDownloadSource(
+    BuildContext context,
+    List<PlaySource> sources,
+  ) {
+    return _selectSource(
+      context,
+      sources,
+      title: context.l10n.selectDownloadSource,
+      actionIcon: Icons.download_outlined,
+    );
+  }
+
+  Future<PlaySource?> _selectSource(
+    BuildContext context,
+    List<PlaySource> sources, {
+    required String title,
+    required IconData actionIcon,
+  }) async {
+    if (sources.length == 1) return sources.first;
+    return showModalBottomSheet<PlaySource>(
+      context: context,
+      showDragHandle: true,
+      builder: (context) {
+        return SafeArea(
+          child: ListView.separated(
+            shrinkWrap: true,
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+            itemCount: sources.length + 1,
+            separatorBuilder: (context, index) => const Divider(height: 1),
+            itemBuilder: (context, index) {
+              if (index == 0) {
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: 8),
+                  child: Text(
+                    title,
+                    style: Theme.of(context).textTheme.titleLarge,
+                  ),
+                );
+              }
+
+              final source = sources[index - 1];
+              final host = Uri.tryParse(source.url)?.host;
+              final subtitle = [
+                if (source.quality != null) source.quality,
+                if (host != null && host.isNotEmpty) host,
+              ].join(' · ');
+              return ListTile(
+                leading: CircleAvatar(child: Text('$index')),
+                title: Text(source.title),
+                subtitle: subtitle.isEmpty ? null : Text(subtitle),
+                trailing: Icon(actionIcon),
+                onTap: () => Navigator.of(context).pop(source),
+              );
+            },
+          ),
+        );
+      },
+    );
+  }
+
+  String _encodePlayHeaders(Map<String, String> headers) {
+    return base64Url.encode(utf8.encode(jsonEncode(headers)));
   }
 }

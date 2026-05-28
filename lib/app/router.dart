@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
@@ -81,6 +83,9 @@ final appRouter = GoRouter(
         coverUrl: state.uri.queryParameters['coverUrl'],
         sourceId: state.uri.queryParameters['sourceId'] ?? 'mock',
         playUrl: state.uri.queryParameters['playUrl'] ?? '',
+        playHeaders: _decodePlayHeaders(
+          state.uri.queryParameters['playHeaders'],
+        ),
       ),
     ),
   ],
@@ -91,3 +96,16 @@ final appRouter = GoRouter(
     ),
   ),
 );
+
+Map<String, String> _decodePlayHeaders(String? raw) {
+  if (raw == null || raw.trim().isEmpty) return const {};
+  try {
+    final decoded = jsonDecode(utf8.decode(base64Url.decode(raw)));
+    if (decoded is! Map) return const {};
+    return decoded.map(
+      (key, value) => MapEntry(key.toString(), value.toString()),
+    );
+  } on Object {
+    return const {};
+  }
+}

@@ -27,6 +27,7 @@ class PlayerPage extends ConsumerStatefulWidget {
     super.key,
     this.episodeTitle,
     this.coverUrl,
+    this.playHeaders = const {},
   });
 
   final String animeId;
@@ -36,6 +37,7 @@ class PlayerPage extends ConsumerStatefulWidget {
   final String sourceId;
   final String? episodeTitle;
   final String? coverUrl;
+  final Map<String, String> playHeaders;
 
   @override
   ConsumerState<PlayerPage> createState() => _PlayerPageState();
@@ -226,7 +228,7 @@ class _PlayerPageState extends ConsumerState<PlayerPage> {
         );
         return;
       }
-      await _controller.load(widget.playUrl);
+      await _controller.load(widget.playUrl, headers: widget.playHeaders);
     } catch (error) {
       if (!mounted) return;
       setState(
