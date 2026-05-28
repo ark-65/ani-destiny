@@ -6,7 +6,7 @@ class GetAnimeDetail {
 
   final AnimeRepository _repository;
 
-  Future<AnimeDetail> call(String animeId) {
-    return _repository.getAnimeDetail(animeId);
+  Future<AnimeDetail> call(String animeId) async {
+    return (await _repository.getAnimeDetail(animeId)).value;
   }
 }

@@ -42,37 +42,52 @@ class SchedulePage extends ConsumerWidget {
                 loading: () =>
                     AppLoadingView(message: context.l10n.loadingSchedule),
                 error: (error, stackTrace) => AppErrorView(
-                  message:
-                      '${context.l10n.sourceTemporarilyUnavailable}\n'
+                  message: '${context.l10n.sourceTemporarilyUnavailable}\n'
                       '${context.l10n.sourceUnavailableSuggestion}',
                   onRetry: () => ref.invalidate(scheduleProvider),
                 ),
-                data: (items) {
+                data: (result) {
+                  final items = result.value;
                   if (items.isEmpty) {
                     return AppEmptyView(message: context.l10n.noScheduleData);
                   }
                   final grouped = items.groupListsBy((item) => item.weekday);
                   final weekdays = grouped.keys.toList()..sort();
-                  return ListView.builder(
-                    itemCount: weekdays.length,
-                    itemBuilder: (context, index) {
-                      final weekday = weekdays[index];
-                      final dayItems = grouped[weekday] ?? [];
-                      return ExpansionTile(
-                        initiallyExpanded: index == 0,
-                        title: Text(_weekdayName(context, weekday)),
-                        children: [
-                          for (final item in dayItems)
-                            ListTile(
-                              title: Text(item.title),
-                              subtitle: Text(item.updateTime ?? item.sourceId),
-                              leading: const Icon(Icons.event_available),
-                              onTap: () =>
-                                  context.push('/anime/${item.animeId}'),
-                            ),
-                        ],
-                      );
-                    },
+                  return Column(
+                    children: [
+                      if (result.usedFallback)
+                        Padding(
+                          padding: const EdgeInsets.only(bottom: 8),
+                          child: _FallbackNotice(
+                            message: context.l10n.sourceFallbackNotice,
+                          ),
+                        ),
+                      Expanded(
+                        child: ListView.builder(
+                          itemCount: weekdays.length,
+                          itemBuilder: (context, index) {
+                            final weekday = weekdays[index];
+                            final dayItems = grouped[weekday] ?? [];
+                            return ExpansionTile(
+                              initiallyExpanded: index == 0,
+                              title: Text(_weekdayName(context, weekday)),
+                              children: [
+                                for (final item in dayItems)
+                                  ListTile(
+                                    title: Text(item.title),
+                                    subtitle:
+                                        Text(item.updateTime ?? item.sourceId),
+                                    leading: const Icon(Icons.event_available),
+                                    onTap: () => context.push(
+                                      '/anime/${item.animeId}?sourceId=${Uri.encodeQueryComponent(item.sourceId)}',
+                                    ),
+                                  ),
+                              ],
+                            );
+                          },
+                        ),
+                      ),
+                    ],
                   );
                 },
               ),
@@ -94,5 +109,23 @@ class SchedulePage extends ConsumerWidget {
       7 => context.l10n.sunday,
       _ => context.l10n.dayLabel(weekday),
     };
+  }
+}
+
+class _FallbackNotice extends StatelessWidget {
+  const _FallbackNotice({required this.message});
+
+  final String message;
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      color: Theme.of(context).colorScheme.tertiaryContainer,
+      child: ListTile(
+        leading: const Icon(Icons.swap_horiz_outlined),
+        title: Text(message),
+        dense: true,
+      ),
+    );
   }
 }

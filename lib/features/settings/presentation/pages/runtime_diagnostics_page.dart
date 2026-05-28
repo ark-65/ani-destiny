@@ -8,6 +8,8 @@ import '../../../../core/utils/url_sanitizer.dart';
 import '../../../../shared/widgets/adaptive_page.dart';
 import '../../../danmaku/presentation/providers/danmaku_providers.dart';
 import '../../../source/domain/entities/source_diagnostic.dart';
+import '../../../source/domain/entities/source_fallback_event.dart';
+import '../../../source/domain/entities/source_health.dart';
 import '../../../source/presentation/providers/source_providers.dart';
 import '../providers/settings_providers.dart';
 import '../widgets/settings_section.dart';
@@ -24,6 +26,13 @@ class RuntimeDiagnosticsPage extends ConsumerWidget {
         .toList(growable: false)
         .reversed
         .take(8)
+        .toList(growable: false);
+    final health = ref.watch(sourceHealthControllerProvider);
+    final fallbackEvents = ref
+        .watch(sourceFallbackEventsProvider)
+        .toList(growable: false)
+        .reversed
+        .take(6)
         .toList(growable: false);
     final danmakuSettings = ref.watch(danmakuSettingsProvider);
 
@@ -94,6 +103,32 @@ class RuntimeDiagnosticsPage extends ConsumerWidget {
               ],
             ),
             SettingsSection(
+              title: context.l10n.sourceHealth,
+              children: health.isEmpty
+                  ? [
+                      ListTile(
+                        leading: const Icon(Icons.check_circle_outline),
+                        title: Text(context.l10n.sourceDiagnosticsEmpty),
+                      ),
+                    ]
+                  : health
+                      .map((item) => _SourceHealthTile(health: item))
+                      .toList(growable: false),
+            ),
+            SettingsSection(
+              title: context.l10n.sourceFallbackEvents,
+              children: fallbackEvents.isEmpty
+                  ? [
+                      ListTile(
+                        leading: const Icon(Icons.check_circle_outline),
+                        title: Text(context.l10n.sourceFallbackEventsEmpty),
+                      ),
+                    ]
+                  : fallbackEvents
+                      .map((item) => _FallbackEventTile(event: item))
+                      .toList(growable: false),
+            ),
+            SettingsSection(
               title: context.l10n.latestSourceDiagnostics,
               children: diagnostics.isEmpty
                   ? [
@@ -109,6 +144,48 @@ class RuntimeDiagnosticsPage extends ConsumerWidget {
           ],
         ),
       ),
+    );
+  }
+}
+
+class _SourceHealthTile extends StatelessWidget {
+  const _SourceHealthTile({required this.health});
+
+  final SourceHealth health;
+
+  @override
+  Widget build(BuildContext context) {
+    return _DiagnosticTile(
+      label: '${health.sourceId} · ${_statusLabel(context)}',
+      value: [
+        context.l10n.sourceFailureCount(health.failureCount),
+        if (health.lastErrorMessage != null)
+          context.l10n.sourceLastError(health.lastErrorMessage!),
+      ].join('\n'),
+      icon: Icons.monitor_heart_outlined,
+    );
+  }
+
+  String _statusLabel(BuildContext context) {
+    return switch (health.status) {
+      SourceHealthStatus.healthy => context.l10n.sourceHealthHealthy,
+      SourceHealthStatus.degraded => context.l10n.sourceHealthDegraded,
+      SourceHealthStatus.unavailable => context.l10n.sourceHealthUnavailable,
+    };
+  }
+}
+
+class _FallbackEventTile extends StatelessWidget {
+  const _FallbackEventTile({required this.event});
+
+  final SourceFallbackEvent event;
+
+  @override
+  Widget build(BuildContext context) {
+    return _DiagnosticTile(
+      label: '${event.operation}: ${event.fromSourceId} -> ${event.toSourceId}',
+      value: event.reason,
+      icon: Icons.swap_horiz_outlined,
     );
   }
 }
@@ -145,6 +222,11 @@ class _SourceDiagnosticTile extends StatelessWidget {
       if (diagnostic.url != null) sanitizeUrlForDiagnostics(diagnostic.url!),
       if (diagnostic.statusCode != null) 'HTTP ${diagnostic.statusCode}',
       if (diagnostic.exceptionType != null) diagnostic.exceptionType!,
+      if (diagnostic.usedFallback &&
+          diagnostic.fromSourceId != null &&
+          diagnostic.toSourceId != null)
+        '${diagnostic.fromSourceId} -> ${diagnostic.toSourceId}',
+      if (diagnostic.reason != null) diagnostic.reason!,
     ];
 
     return ListTile(

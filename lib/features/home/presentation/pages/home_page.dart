@@ -85,13 +85,13 @@ class HomePage extends ConsumerWidget {
               ),
               error: (error, stackTrace) => SliverFillRemaining(
                 child: AppErrorView(
-                  message:
-                      '${context.l10n.sourceTemporarilyUnavailable}\n'
+                  message: '${context.l10n.sourceTemporarilyUnavailable}\n'
                       '${context.l10n.sourceUnavailableSuggestion}',
                   onRetry: () => ref.invalidate(homeRecommendationsProvider),
                 ),
               ),
-              data: (items) {
+              data: (result) {
+                final items = result.value;
                 if (items.isEmpty) {
                   return SliverFillRemaining(
                     child: AppEmptyView(
@@ -99,27 +99,76 @@ class HomePage extends ConsumerWidget {
                     ),
                   );
                 }
-                return SliverPadding(
-                  padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
-                  sliver: SliverGrid.builder(
-                    gridDelegate:
-                        const SliverGridDelegateWithMaxCrossAxisExtent(
-                      maxCrossAxisExtent: 320,
-                      mainAxisSpacing: 12,
-                      crossAxisSpacing: 12,
-                      childAspectRatio: 0.64,
+                return SliverMainAxisGroup(
+                  slivers: [
+                    if (result.usedFallback)
+                      SliverToBoxAdapter(
+                        child: Padding(
+                          padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),
+                          child: _FallbackNotice(
+                            message: context.l10n.sourceFallbackNotice,
+                          ),
+                        ),
+                      ),
+                    SliverPadding(
+                      padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
+                      sliver: SliverGrid.builder(
+                        gridDelegate:
+                            const SliverGridDelegateWithMaxCrossAxisExtent(
+                          maxCrossAxisExtent: 320,
+                          mainAxisSpacing: 12,
+                          crossAxisSpacing: 12,
+                          childAspectRatio: 0.64,
+                        ),
+                        itemCount: items.length,
+                        itemBuilder: (context, index) {
+                          final anime = items[index];
+                          final sourceId = anime.sourceId ?? result.sourceId;
+                          return AnimeCard(
+                            anime: anime,
+                            onTap: () => context.push(
+                              '/anime/${anime.id}?sourceId=${Uri.encodeQueryComponent(sourceId)}',
+                            ),
+                          );
+                        },
+                      ),
                     ),
-                    itemCount: items.length,
-                    itemBuilder: (context, index) {
-                      final anime = items[index];
-                      return AnimeCard(
-                        anime: anime,
-                        onTap: () => context.push('/anime/${anime.id}'),
-                      );
-                    },
-                  ),
+                  ],
                 );
               },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _FallbackNotice extends StatelessWidget {
+  const _FallbackNotice({required this.message});
+
+  final String message;
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      color: Theme.of(context).colorScheme.tertiaryContainer,
+      child: Padding(
+        padding: const EdgeInsets.all(12),
+        child: Row(
+          children: [
+            Icon(
+              Icons.swap_horiz_outlined,
+              color: Theme.of(context).colorScheme.onTertiaryContainer,
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Text(
+                message,
+                style: TextStyle(
+                  color: Theme.of(context).colorScheme.onTertiaryContainer,
+                ),
+              ),
             ),
           ],
         ),

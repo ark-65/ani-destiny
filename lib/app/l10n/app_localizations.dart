@@ -165,8 +165,7 @@ class AppLocalizations {
   String get latestSourceDiagnostics => _t('latestSourceDiagnostics');
   String get playbackDiagnosticsSummary => _t('playbackDiagnosticsSummary');
   String get playbackDiagnosticsDebugHint => _t('playbackDiagnosticsDebugHint');
-  String get sourceTemporarilyUnavailable =>
-      _t('sourceTemporarilyUnavailable');
+  String get sourceTemporarilyUnavailable => _t('sourceTemporarilyUnavailable');
   String get sourceUnavailableSuggestion => _t('sourceUnavailableSuggestion');
   String get noPlayableSourceFound => _t('noPlayableSourceFound');
   String get playbackFailedSuggestion => _t('playbackFailedSuggestion');
@@ -180,6 +179,18 @@ class AppLocalizations {
   String get sourceDiagnosticsSubtitle => _t('sourceDiagnosticsSubtitle');
   String get sourceDiagnosticsEmpty => _t('sourceDiagnosticsEmpty');
   String get sourceDiagnosticsClear => _t('sourceDiagnosticsClear');
+  String get sourceFallbackNotice => _t('sourceFallbackNotice');
+  String get sourceHealth => _t('sourceHealth');
+  String get sourceHealthHealthy => _t('sourceHealthHealthy');
+  String get sourceHealthDegraded => _t('sourceHealthDegraded');
+  String get sourceHealthUnavailable => _t('sourceHealthUnavailable');
+  String sourceFailureCount(int count) => '${_t('sourceFailureCount')}: $count';
+  String sourceLastError(String message) =>
+      '${_t('sourceLastError')}: $message';
+  String get sourceResetStatus => _t('sourceResetStatus');
+  String get sourceStatusReset => _t('sourceStatusReset');
+  String get sourceFallbackEvents => _t('sourceFallbackEvents');
+  String get sourceFallbackEventsEmpty => _t('sourceFallbackEventsEmpty');
   String get danmaku => _t('danmaku');
   String get danmakuStatusLoading => _t('danmakuStatusLoading');
   String get danmakuStatusDandanplay => _t('danmakuStatusDandanplay');
@@ -338,7 +349,8 @@ const _localizedValues = {
     'currentSourceId': '当前数据源 ID',
     'latestSourceDiagnostics': '最近数据源诊断',
     'playbackDiagnosticsSummary': '播放诊断摘要',
-    'playbackDiagnosticsDebugHint': '播放页 Debug 按钮可查看当前播放线路、URL 类型和 header keys。',
+    'playbackDiagnosticsDebugHint':
+        '播放页 Debug 按钮可查看当前播放线路、URL 类型和 header keys。',
     'sourceTemporarilyUnavailable': '数据源暂时不可用',
     'sourceUnavailableSuggestion': '上游数据源可能已变化或暂时不可用，请稍后重试或切换数据源。',
     'noPlayableSourceFound': '未找到可播放线路，请稍后重试或切换数据源。',
@@ -353,6 +365,17 @@ const _localizedValues = {
     'sourceDiagnosticsSubtitle': '查看最近的数据源请求和解析状态。',
     'sourceDiagnosticsEmpty': '暂无诊断记录',
     'sourceDiagnosticsClear': '清空',
+    'sourceFallbackNotice': '当前数据源暂时不可用，正在显示备用数据。',
+    'sourceHealth': '数据源健康状态',
+    'sourceHealthHealthy': 'Healthy',
+    'sourceHealthDegraded': 'Degraded',
+    'sourceHealthUnavailable': 'Unavailable',
+    'sourceFailureCount': '失败次数',
+    'sourceLastError': '最近问题',
+    'sourceResetStatus': '重置状态',
+    'sourceStatusReset': '数据源状态已重置',
+    'sourceFallbackEvents': '最近 fallback 事件',
+    'sourceFallbackEventsEmpty': '暂无 fallback 事件',
     'danmaku': '弹幕',
     'danmakuStatusLoading': '弹幕：加载中',
     'danmakuStatusDandanplay': '弹幕：弹弹play',
@@ -418,7 +441,8 @@ const _localizedValues = {
     'play': 'Play',
     'downloads': 'Downloads',
     'loadingDetail': 'Loading detail',
-    'noPlaySource': 'No playable source found. Try another source or retry later.',
+    'noPlaySource':
+        'No playable source found. Try another source or retry later.',
     'noDownloadSource':
         'No downloadable source found. Try another source or retry later.',
     'selectPlaySource': 'Select playback line',
@@ -509,6 +533,18 @@ const _localizedValues = {
         'View recent source request and parser status.',
     'sourceDiagnosticsEmpty': 'No diagnostics yet',
     'sourceDiagnosticsClear': 'Clear',
+    'sourceFallbackNotice':
+        'The current source is temporarily unavailable. Showing fallback data.',
+    'sourceHealth': 'Source health',
+    'sourceHealthHealthy': 'Healthy',
+    'sourceHealthDegraded': 'Degraded',
+    'sourceHealthUnavailable': 'Unavailable',
+    'sourceFailureCount': 'Failure count',
+    'sourceLastError': 'Last issue',
+    'sourceResetStatus': 'Reset status',
+    'sourceStatusReset': 'Source status reset',
+    'sourceFallbackEvents': 'Latest fallback events',
+    'sourceFallbackEventsEmpty': 'No fallback events yet',
     'danmaku': 'Danmaku',
     'danmakuStatusLoading': 'Danmaku: loading',
     'danmakuStatusDandanplay': 'Danmaku: Dandanplay',
@@ -640,7 +676,8 @@ const _localizedValues = {
     'playbackDiagnosticsDebugHint':
         'プレイヤー画面の Debug ボタンで現在のライン、URL 種類、header keys を確認できます。',
     'sourceTemporarilyUnavailable': 'ソースが一時的に利用できません',
-    'sourceUnavailableSuggestion': '上流ソースが変更されたか、一時的に利用できません。別のソースを試すか、後で再試行してください。',
+    'sourceUnavailableSuggestion':
+        '上流ソースが変更されたか、一時的に利用できません。別のソースを試すか、後で再試行してください。',
     'noPlayableSourceFound': '再生可能なソースが見つかりません。別のソースを試すか、後で再試行してください。',
     'playbackFailedSuggestion': '再生に一時的に失敗しました。後で再試行するか、別の再生ラインを試してください。',
     'sources': 'ソース',
@@ -654,6 +691,17 @@ const _localizedValues = {
     'sourceDiagnosticsSubtitle': '最近のソース要求と解析状態を確認します。',
     'sourceDiagnosticsEmpty': '診断記録はありません',
     'sourceDiagnosticsClear': 'クリア',
+    'sourceFallbackNotice': '現在のソースは一時的に利用できません。代替データを表示しています。',
+    'sourceHealth': 'ソース健康状態',
+    'sourceHealthHealthy': 'Healthy',
+    'sourceHealthDegraded': 'Degraded',
+    'sourceHealthUnavailable': 'Unavailable',
+    'sourceFailureCount': '失敗回数',
+    'sourceLastError': '最近の問題',
+    'sourceResetStatus': '状態をリセット',
+    'sourceStatusReset': 'ソース状態をリセットしました',
+    'sourceFallbackEvents': '最近の fallback イベント',
+    'sourceFallbackEventsEmpty': 'fallback イベントはありません',
     'danmaku': '弾幕',
     'danmakuStatusLoading': '弾幕: 読み込み中',
     'danmakuStatusDandanplay': '弾幕: 弹弹play',

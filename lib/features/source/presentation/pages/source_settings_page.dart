@@ -9,6 +9,8 @@ import '../../../../core/widgets/app_loading_view.dart';
 import '../../../../shared/widgets/adaptive_page.dart';
 import '../../../home/presentation/providers/home_providers.dart';
 import '../../domain/entities/source_diagnostic.dart';
+import '../../domain/entities/source_fallback_event.dart';
+import '../../domain/entities/source_health.dart';
 import '../providers/source_providers.dart';
 import '../widgets/source_selector.dart';
 
@@ -19,6 +21,10 @@ class SourceSettingsPage extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final sources = ref.watch(sourceListProvider);
     final currentSource = ref.watch(currentSourceIdProvider);
+    final healthBySourceId = {
+      for (final health in ref.watch(sourceHealthControllerProvider))
+        health.sourceId: health,
+    };
 
     return SafeArea(
       child: AdaptivePage(
@@ -45,8 +51,7 @@ class SourceSettingsPage extends ConsumerWidget {
                 loading: () =>
                     AppLoadingView(message: context.l10n.loadingCurrentSource),
                 error: (error, stackTrace) => AppErrorView(
-                  message:
-                      '${context.l10n.sourceTemporarilyUnavailable}\n'
+                  message: '${context.l10n.sourceTemporarilyUnavailable}\n'
                       '${context.l10n.sourceUnavailableSuggestion}',
                 ),
                 data: (currentSourceId) => ListView(
@@ -54,6 +59,7 @@ class SourceSettingsPage extends ConsumerWidget {
                     SourceSelector(
                       sources: sources,
                       currentSourceId: currentSourceId,
+                      healthBySourceId: healthBySourceId,
                       onSelected: (sourceId) async {
                         await ref
                             .read(currentSourceIdProvider.notifier)
@@ -70,6 +76,16 @@ class SourceSettingsPage extends ConsumerWidget {
                                 ),
                               ),
                             ),
+                          ),
+                        );
+                      },
+                      onResetHealth: (sourceId) {
+                        ref
+                            .read(sourceHealthControllerProvider.notifier)
+                            .reset(sourceId);
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text(context.l10n.sourceStatusReset),
                           ),
                         );
                       },
@@ -116,6 +132,13 @@ class _SourceDiagnosticsSheet extends ConsumerWidget {
         .reversed
         .take(20)
         .toList(growable: false);
+    final fallbackEvents = ref
+        .watch(sourceFallbackEventsProvider)
+        .toList(growable: false)
+        .reversed
+        .take(8)
+        .toList(growable: false);
+    final health = ref.watch(sourceHealthControllerProvider);
 
     return SafeArea(
       child: SizedBox(
@@ -146,22 +169,103 @@ class _SourceDiagnosticsSheet extends ConsumerWidget {
               ),
               const SizedBox(height: 8),
               Expanded(
-                child: diagnostics.isEmpty
-                    ? Center(child: Text(context.l10n.sourceDiagnosticsEmpty))
-                    : ListView.separated(
-                        itemBuilder: (context, index) {
-                          return _SourceDiagnosticTile(
-                            diagnostic: diagnostics[index],
-                          );
-                        },
-                        separatorBuilder: (context, index) => const Divider(),
-                        itemCount: diagnostics.length,
-                      ),
+                child: ListView(
+                  children: [
+                    _SheetSectionTitle(title: context.l10n.sourceHealth),
+                    if (health.isEmpty)
+                      ListTile(title: Text(context.l10n.sourceDiagnosticsEmpty))
+                    else
+                      for (final item in health)
+                        _SourceHealthTile(health: item),
+                    const Divider(),
+                    _SheetSectionTitle(
+                      title: context.l10n.sourceFallbackEvents,
+                    ),
+                    if (fallbackEvents.isEmpty)
+                      ListTile(
+                        title: Text(context.l10n.sourceFallbackEventsEmpty),
+                      )
+                    else
+                      for (final event in fallbackEvents)
+                        _FallbackEventTile(event: event),
+                    const Divider(),
+                    _SheetSectionTitle(
+                      title: context.l10n.latestSourceDiagnostics,
+                    ),
+                    if (diagnostics.isEmpty)
+                      ListTile(title: Text(context.l10n.sourceDiagnosticsEmpty))
+                    else
+                      for (final diagnostic in diagnostics)
+                        _SourceDiagnosticTile(diagnostic: diagnostic),
+                  ],
+                ),
               ),
             ],
           ),
         ),
       ),
+    );
+  }
+}
+
+class _SheetSectionTitle extends StatelessWidget {
+  const _SheetSectionTitle({required this.title});
+
+  final String title;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(top: 12, bottom: 4),
+      child: Text(title, style: Theme.of(context).textTheme.titleMedium),
+    );
+  }
+}
+
+class _SourceHealthTile extends StatelessWidget {
+  const _SourceHealthTile({required this.health});
+
+  final SourceHealth health;
+
+  @override
+  Widget build(BuildContext context) {
+    return ListTile(
+      contentPadding: EdgeInsets.zero,
+      leading: const Icon(Icons.monitor_heart_outlined),
+      title: Text('${health.sourceId} · ${_statusLabel(context)}'),
+      subtitle: Text(
+        [
+          context.l10n.sourceFailureCount(health.failureCount),
+          if (health.lastErrorMessage != null)
+            context.l10n.sourceLastError(health.lastErrorMessage!),
+        ].join('\n'),
+      ),
+    );
+  }
+
+  String _statusLabel(BuildContext context) {
+    return switch (health.status) {
+      SourceHealthStatus.healthy => context.l10n.sourceHealthHealthy,
+      SourceHealthStatus.degraded => context.l10n.sourceHealthDegraded,
+      SourceHealthStatus.unavailable => context.l10n.sourceHealthUnavailable,
+    };
+  }
+}
+
+class _FallbackEventTile extends StatelessWidget {
+  const _FallbackEventTile({required this.event});
+
+  final SourceFallbackEvent event;
+
+  @override
+  Widget build(BuildContext context) {
+    return ListTile(
+      contentPadding: EdgeInsets.zero,
+      leading: const Icon(Icons.swap_horiz_outlined),
+      title: Text(
+        '${event.operation}: ${event.fromSourceId} -> ${event.toSourceId}',
+      ),
+      subtitle: Text(event.reason),
     );
   }
 }
@@ -183,6 +287,11 @@ class _SourceDiagnosticTile extends StatelessWidget {
       if (diagnostic.url != null) sanitizeUrlForDiagnostics(diagnostic.url!),
       if (diagnostic.statusCode != null) 'HTTP ${diagnostic.statusCode}',
       if (diagnostic.exceptionType != null) diagnostic.exceptionType!,
+      if (diagnostic.usedFallback &&
+          diagnostic.fromSourceId != null &&
+          diagnostic.toSourceId != null)
+        '${diagnostic.fromSourceId} -> ${diagnostic.toSourceId}',
+      if (diagnostic.reason != null) diagnostic.reason!,
       if (timestamp != null)
         '${timestamp.hour.toString().padLeft(2, '0')}:${timestamp.minute.toString().padLeft(2, '0')}:${timestamp.second.toString().padLeft(2, '0')}',
     ];

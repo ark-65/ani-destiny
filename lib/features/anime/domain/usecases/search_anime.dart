@@ -9,7 +9,7 @@ class SearchAnime {
   Future<List<SearchResult>> call(
     String keyword, {
     int page = 1,
-  }) {
-    return _repository.search(keyword, page: page);
+  }) async {
+    return (await _repository.search(keyword, page: page)).value;
   }
 }

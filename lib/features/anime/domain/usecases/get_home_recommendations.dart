@@ -6,7 +6,7 @@ class GetHomeRecommendations {
 
   final AnimeRepository _repository;
 
-  Future<List<Anime>> call() {
-    return _repository.getHomeRecommendations();
+  Future<List<Anime>> call() async {
+    return (await _repository.getHomeRecommendations()).value;
   }
 }

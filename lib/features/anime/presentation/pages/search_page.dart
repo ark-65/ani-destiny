@@ -74,31 +74,63 @@ class _SearchPageState extends ConsumerState<SearchPage> {
                         onRetry: () =>
                             ref.invalidate(searchResultsProvider(_query)),
                       ),
-                      data: (items) {
+                      data: (result) {
+                        final items = result.value;
                         if (items.isEmpty) {
                           return AppEmptyView(
-                            message: context.l10n.sourceUnavailableSuggestion,
+                            message: context.l10n.noMatchingAnime,
                           );
                         }
-                        return ListView.separated(
-                          itemBuilder: (context, index) {
-                            final item = items[index];
-                            return SearchResultTile(
-                              result: item,
-                              onTap: () => context.push(
-                                '/anime/${item.animeId}',
+                        return Column(
+                          children: [
+                            if (result.usedFallback)
+                              Padding(
+                                padding: const EdgeInsets.only(bottom: 8),
+                                child: _FallbackNotice(
+                                  message: context.l10n.sourceFallbackNotice,
+                                ),
                               ),
-                            );
-                          },
-                          separatorBuilder: (context, index) =>
-                              const Divider(height: 1),
-                          itemCount: items.length,
+                            Expanded(
+                              child: ListView.separated(
+                                itemBuilder: (context, index) {
+                                  final item = items[index];
+                                  return SearchResultTile(
+                                    result: item,
+                                    onTap: () => context.push(
+                                      '/anime/${item.animeId}?sourceId=${Uri.encodeQueryComponent(item.sourceId)}',
+                                    ),
+                                  );
+                                },
+                                separatorBuilder: (context, index) =>
+                                    const Divider(height: 1),
+                                itemCount: items.length,
+                              ),
+                            ),
+                          ],
                         );
                       },
                     ),
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+class _FallbackNotice extends StatelessWidget {
+  const _FallbackNotice({required this.message});
+
+  final String message;
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      color: Theme.of(context).colorScheme.tertiaryContainer,
+      child: ListTile(
+        leading: const Icon(Icons.swap_horiz_outlined),
+        title: Text(message),
+        dense: true,
       ),
     );
   }

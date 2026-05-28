@@ -6,7 +6,7 @@ class GetPlaySources {
 
   final AnimeRepository _repository;
 
-  Future<List<PlaySource>> call(String episodeId) {
-    return _repository.getPlaySources(episodeId);
+  Future<List<PlaySource>> call(String episodeId) async {
+    return (await _repository.getPlaySources(episodeId)).value;
   }
 }

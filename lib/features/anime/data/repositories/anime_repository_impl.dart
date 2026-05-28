@@ -1,4 +1,5 @@
-import '../../../source/domain/repositories/source_repository.dart';
+import '../../../source/domain/entities/source_fallback_result.dart';
+import '../../../source/domain/services/source_fallback_service.dart';
 import '../../domain/entities/anime.dart';
 import '../../domain/entities/anime_detail.dart';
 import '../../domain/entities/play_source.dart';
@@ -8,41 +9,86 @@ import '../../domain/repositories/anime_repository.dart';
 
 class AnimeRepositoryImpl implements AnimeRepository {
   const AnimeRepositoryImpl({
-    required SourceRepository sourceRepository,
-  }) : _sourceRepository = sourceRepository;
+    required SourceFallbackService fallbackService,
+  }) : _fallbackService = fallbackService;
 
-  final SourceRepository _sourceRepository;
+  final SourceFallbackService _fallbackService;
 
   @override
-  Future<List<Anime>> getHomeRecommendations() async {
-    final adapter = await _sourceRepository.getCurrentAdapter();
-    return adapter.getHomeRecommendations();
+  Future<SourceFallbackResult<List<Anime>>> getHomeRecommendations() {
+    return _fallbackService.run<List<Anime>>(
+      operation: 'home',
+      action: (adapter) => adapter.getHomeRecommendations(),
+      isFailureValue: (items) => items.isEmpty,
+    );
   }
 
   @override
-  Future<List<SearchResult>> search(
+  Future<SourceFallbackResult<List<SearchResult>>> search(
     String keyword, {
     int page = 1,
-  }) async {
-    final adapter = await _sourceRepository.getCurrentAdapter();
-    return adapter.search(keyword, page: page);
+  }) {
+    return _fallbackService.run<List<SearchResult>>(
+      operation: 'search',
+      action: (adapter) => adapter.search(keyword, page: page),
+    );
   }
 
   @override
-  Future<AnimeDetail> getAnimeDetail(String animeId) async {
-    final adapter = await _sourceRepository.getCurrentAdapter();
-    return adapter.getAnimeDetail(animeId);
+  Future<SourceFallbackResult<AnimeDetail>> getAnimeDetail(String animeId) {
+    return _fallbackService.run<AnimeDetail>(
+      operation: 'detail',
+      action: (adapter) => adapter.getAnimeDetail(animeId),
+      isFailureValue: _detailHasNoEpisodes,
+    );
   }
 
   @override
-  Future<List<PlaySource>> getPlaySources(String episodeId) async {
-    final adapter = await _sourceRepository.getCurrentAdapter();
-    return adapter.getPlaySources(episodeId);
+  Future<SourceFallbackResult<List<PlaySource>>> getPlaySources(
+    String episodeId,
+  ) {
+    return _fallbackService.run<List<PlaySource>>(
+      operation: 'play_sources',
+      action: (adapter) => adapter.getPlaySources(episodeId),
+      isFailureValue: (items) => items.isEmpty,
+    );
   }
 
   @override
-  Future<List<ScheduleItem>> getSchedule() async {
-    final adapter = await _sourceRepository.getCurrentAdapter();
-    return adapter.getSchedule();
+  Future<SourceFallbackResult<List<ScheduleItem>>> getSchedule() {
+    return _fallbackService.run<List<ScheduleItem>>(
+      operation: 'schedule',
+      action: (adapter) => adapter.getSchedule(),
+    );
+  }
+
+  @override
+  Future<SourceFallbackResult<AnimeDetail>> getAnimeDetailFromSource({
+    required String sourceId,
+    required String animeId,
+  }) {
+    return _fallbackService.run<AnimeDetail>(
+      operation: 'detail',
+      preferredSourceId: sourceId,
+      action: (adapter) => adapter.getAnimeDetail(animeId),
+      isFailureValue: _detailHasNoEpisodes,
+    );
+  }
+
+  @override
+  Future<SourceFallbackResult<List<PlaySource>>> getPlaySourcesFromSource({
+    required String sourceId,
+    required String episodeId,
+  }) {
+    return _fallbackService.run<List<PlaySource>>(
+      operation: 'play_sources',
+      preferredSourceId: sourceId,
+      action: (adapter) => adapter.getPlaySources(episodeId),
+      isFailureValue: (items) => items.isEmpty,
+    );
+  }
+
+  bool _detailHasNoEpisodes(AnimeDetail detail) {
+    return detail.episodes.isEmpty;
   }
 }

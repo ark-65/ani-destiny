@@ -86,17 +86,23 @@ class HistoryPage extends ConsumerWidget {
       return;
     }
 
-    final sources = await ref.read(
+    final sourceResult = await ref.read(
       playSourcesBySourceProvider(
         (sourceId: history.sourceId, episodeId: history.episodeId),
       ).future,
     );
     if (!context.mounted) return;
+    final sources = sourceResult.value;
     if (sources.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(context.l10n.noPlayableSourceFound)),
       );
       return;
+    }
+    if (sourceResult.usedFallback) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(context.l10n.sourceFallbackNotice)),
+      );
     }
     final source = history.playSourceId == null
         ? sources.first
@@ -111,6 +117,7 @@ class HistoryPage extends ConsumerWidget {
       playHeaders: source.headers,
       playSourceId: source.id,
       playSourceTitle: source.title,
+      sourceId: sourceResult.sourceId,
     );
   }
 
@@ -121,6 +128,7 @@ class HistoryPage extends ConsumerWidget {
     required Map<String, String> playHeaders,
     required String? playSourceId,
     required String? playSourceTitle,
+    String? sourceId,
   }) {
     context.push(
       '/player',
@@ -130,7 +138,7 @@ class HistoryPage extends ConsumerWidget {
         animeTitle: history.animeTitle,
         episodeTitle: history.episodeTitle,
         coverUrl: history.coverUrl,
-        sourceId: history.sourceId,
+        sourceId: sourceId ?? history.sourceId,
         playUrl: playUrl,
         playHeaders: playHeaders,
         playSourceId: playSourceId,

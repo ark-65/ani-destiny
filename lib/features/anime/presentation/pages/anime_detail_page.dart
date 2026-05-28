@@ -42,12 +42,18 @@ class AnimeDetailPage extends ConsumerWidget {
       child: detailState.when(
         loading: () => AppLoadingView(message: context.l10n.loadingDetail),
         error: (error, stackTrace) => AppErrorView(
-          message:
-              '${context.l10n.sourceTemporarilyUnavailable}\n'
+          message: '${context.l10n.sourceTemporarilyUnavailable}\n'
               '${context.l10n.sourceUnavailableSuggestion}',
-          onRetry: () => ref.invalidate(animeDetailProvider(animeId)),
+          onRetry: () => sourceId == null
+              ? ref.invalidate(animeDetailProvider(animeId))
+              : ref.invalidate(
+                  animeDetailBySourceProvider(
+                    (sourceId: sourceId, animeId: animeId),
+                  ),
+                ),
         ),
-        data: (detail) {
+        data: (result) {
+          final detail = result.value;
           final isFavorite = ref
               .watch(
                 isFavoriteProvider(
@@ -79,6 +85,10 @@ class AnimeDetailPage extends ConsumerWidget {
                   isFavorite: isFavorite ?? false,
                   onToggleFavorite: () => _toggleFavorite(ref, detail),
                 ),
+                if (result.usedFallback) ...[
+                  const SizedBox(height: 12),
+                  _FallbackNotice(message: context.l10n.sourceFallbackNotice),
+                ],
                 const SizedBox(height: 18),
                 Text(detail.description ?? context.l10n.noDescription),
                 const SizedBox(height: 24),
@@ -115,17 +125,23 @@ class AnimeDetailPage extends ConsumerWidget {
     AnimeDetail detail,
     Episode episode,
   ) async {
-    final sources = await ref.read(
+    final sourceResult = await ref.read(
       playSourcesBySourceProvider(
         (sourceId: detail.sourceId, episodeId: episode.id),
       ).future,
     );
     if (!context.mounted) return;
+    final sources = sourceResult.value;
     if (sources.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(context.l10n.noPlayableSourceFound)),
       );
       return;
+    }
+    if (sourceResult.usedFallback) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(context.l10n.sourceFallbackNotice)),
+      );
     }
     final source = await _selectPlaySource(context, sources);
     if (!context.mounted || source == null) return;
@@ -137,7 +153,7 @@ class AnimeDetailPage extends ConsumerWidget {
         animeTitle: detail.title,
         episodeTitle: episode.title,
         coverUrl: detail.coverUrl,
-        sourceId: detail.sourceId,
+        sourceId: sourceResult.sourceId,
         playSourceId: source.id,
         playSourceTitle: source.title,
         playUrl: source.url,
@@ -153,24 +169,30 @@ class AnimeDetailPage extends ConsumerWidget {
     AnimeDetail detail,
     Episode episode,
   ) async {
-    final sources = await ref.read(
+    final sourceResult = await ref.read(
       playSourcesBySourceProvider(
         (sourceId: detail.sourceId, episodeId: episode.id),
       ).future,
     );
     if (!context.mounted) return;
+    final sources = sourceResult.value;
     if (sources.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(context.l10n.noPlayableSourceFound)),
       );
       return;
     }
+    if (sourceResult.usedFallback) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(context.l10n.sourceFallbackNotice)),
+      );
+    }
     final source = await _selectDownloadSource(context, sources);
     if (!context.mounted || source == null) return;
     final taskId = await ref.read(httpDownloadServiceProvider).createTask(
           animeId: detail.id,
           episodeId: episode.id,
-          sourceId: detail.sourceId,
+          sourceId: sourceResult.sourceId,
           url: source.url,
           title: detail.title,
           episodeTitle: episode.title,
@@ -250,6 +272,24 @@ class AnimeDetailPage extends ConsumerWidget {
           ),
         );
       },
+    );
+  }
+}
+
+class _FallbackNotice extends StatelessWidget {
+  const _FallbackNotice({required this.message});
+
+  final String message;
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      color: Theme.of(context).colorScheme.tertiaryContainer,
+      child: ListTile(
+        leading: const Icon(Icons.swap_horiz_outlined),
+        title: Text(message),
+        dense: true,
+      ),
     );
   }
 }

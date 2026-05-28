@@ -14,6 +14,10 @@ class SourceDiagnostic {
     this.statusCode,
     this.exceptionType,
     this.timestamp,
+    this.fromSourceId,
+    this.toSourceId,
+    this.usedFallback = false,
+    this.reason,
   });
 
   final String sourceId;
@@ -24,4 +28,8 @@ class SourceDiagnostic {
   final int? statusCode;
   final String? exceptionType;
   final DateTime? timestamp;
+  final String? fromSourceId;
+  final String? toSourceId;
+  final bool usedFallback;
+  final String? reason;
 }
