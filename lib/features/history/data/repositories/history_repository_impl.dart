@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:drift/drift.dart';
 
 import '../../../../core/storage/app_database.dart';
@@ -45,6 +47,10 @@ class HistoryRepositoryImpl implements HistoryRepository {
             positionMs: history.position.inMilliseconds,
             durationMs: Value(history.duration?.inMilliseconds),
             sourceId: history.sourceId,
+            playSourceId: Value(history.playSourceId),
+            playSourceTitle: Value(history.playSourceTitle),
+            playUrl: Value(history.playUrl),
+            playHeadersJson: Value(_encodeHeaders(history.playHeaders)),
             updatedAt: history.updatedAt,
           ),
         );
@@ -75,7 +81,28 @@ class HistoryRepositoryImpl implements HistoryRepository {
           ? null
           : Duration(milliseconds: row.durationMs!),
       sourceId: row.sourceId,
+      playSourceId: row.playSourceId,
+      playSourceTitle: row.playSourceTitle,
+      playUrl: row.playUrl,
+      playHeaders: _decodeHeaders(row.playHeadersJson),
       updatedAt: row.updatedAt,
     );
+  }
+
+  String _encodeHeaders(Map<String, String> headers) {
+    if (headers.isEmpty) return '{}';
+    return jsonEncode(headers);
+  }
+
+  Map<String, String> _decodeHeaders(String raw) {
+    try {
+      final decoded = jsonDecode(raw);
+      if (decoded is! Map) return const {};
+      return decoded.map(
+        (key, value) => MapEntry(key.toString(), value.toString()),
+      );
+    } on Object {
+      return const {};
+    }
   }
 }

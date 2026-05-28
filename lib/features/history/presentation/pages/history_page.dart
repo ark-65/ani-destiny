@@ -8,6 +8,7 @@ import '../../../../core/widgets/app_error_view.dart';
 import '../../../../core/widgets/app_loading_view.dart';
 import '../../../../shared/widgets/adaptive_page.dart';
 import '../../../anime/presentation/providers/anime_providers.dart';
+import '../../../player/domain/entities/player_route_args.dart';
 import '../../domain/entities/watch_history.dart';
 import '../providers/history_providers.dart';
 import '../widgets/history_tile.dart';
@@ -72,6 +73,19 @@ class HistoryPage extends ConsumerWidget {
     WidgetRef ref,
     WatchHistory history,
   ) async {
+    final savedPlayUrl = history.playUrl?.trim();
+    if (savedPlayUrl != null && savedPlayUrl.isNotEmpty) {
+      _openPlayer(
+        context,
+        history,
+        playUrl: savedPlayUrl,
+        playHeaders: history.playHeaders,
+        playSourceId: history.playSourceId,
+        playSourceTitle: history.playSourceTitle,
+      );
+      return;
+    }
+
     final sources = await ref.read(
       playSourcesBySourceProvider(
         (sourceId: history.sourceId, episodeId: history.episodeId),
@@ -84,19 +98,46 @@ class HistoryPage extends ConsumerWidget {
       );
       return;
     }
+    final source = history.playSourceId == null
+        ? sources.first
+        : sources.firstWhere(
+            (source) => source.id == history.playSourceId,
+            orElse: () => sources.first,
+          );
+    _openPlayer(
+      context,
+      history,
+      playUrl: source.url,
+      playHeaders: source.headers,
+      playSourceId: source.id,
+      playSourceTitle: source.title,
+    );
+  }
+
+  void _openPlayer(
+    BuildContext context,
+    WatchHistory history, {
+    required String playUrl,
+    required Map<String, String> playHeaders,
+    required String? playSourceId,
+    required String? playSourceTitle,
+  }) {
     context.push(
-      Uri(
-        path: '/player',
-        queryParameters: {
-          'animeId': history.animeId,
-          'episodeId': history.episodeId,
-          'title': history.animeTitle,
-          'episodeTitle': history.episodeTitle,
-          'sourceId': history.sourceId,
-          'playUrl': sources.first.url,
-          if (history.coverUrl != null) 'coverUrl': history.coverUrl!,
-        },
-      ).toString(),
+      '/player',
+      extra: PlayerRouteArgs(
+        animeId: history.animeId,
+        episodeId: history.episodeId,
+        animeTitle: history.animeTitle,
+        episodeTitle: history.episodeTitle,
+        coverUrl: history.coverUrl,
+        sourceId: history.sourceId,
+        playUrl: playUrl,
+        playHeaders: playHeaders,
+        playSourceId: playSourceId,
+        playSourceTitle: playSourceTitle,
+        initialPosition:
+            history.position > Duration.zero ? history.position : null,
+      ),
     );
   }
 }

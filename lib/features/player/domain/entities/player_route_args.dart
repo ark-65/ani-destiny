@@ -1,33 +1,30 @@
-class WatchHistory {
-  const WatchHistory({
-    required this.id,
+import 'package:flutter/foundation.dart';
+
+@immutable
+class PlayerRouteArgs {
+  const PlayerRouteArgs({
     required this.animeId,
     required this.episodeId,
     required this.animeTitle,
     required this.episodeTitle,
-    required this.position,
-    required this.updatedAt,
+    required this.playUrl,
+    required this.sourceId,
     this.coverUrl,
-    this.duration,
-    this.sourceId = 'mock',
     this.playSourceId,
     this.playSourceTitle,
-    this.playUrl,
     this.playHeaders = const {},
+    this.initialPosition,
   });
 
-  final String id;
   final String animeId;
   final String episodeId;
   final String animeTitle;
   final String episodeTitle;
-  final String? coverUrl;
-  final Duration position;
-  final Duration? duration;
-  final DateTime updatedAt;
+  final String playUrl;
   final String sourceId;
+  final String? coverUrl;
   final String? playSourceId;
   final String? playSourceTitle;
-  final String? playUrl;
   final Map<String, String> playHeaders;
+  final Duration? initialPosition;
 }

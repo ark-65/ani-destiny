@@ -30,6 +30,12 @@ class HistoryTile extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(history.episodeTitle),
+          if (history.playSourceTitle != null) ...[
+            const SizedBox(height: 2),
+            Text(history.playSourceTitle!),
+          ],
+          const SizedBox(height: 2),
+          Text(_formatPosition(history.position)),
           const SizedBox(height: 6),
           LinearProgressIndicator(value: progress.clamp(0, 1).toDouble()),
         ],
@@ -40,5 +46,11 @@ class HistoryTile extends StatelessWidget {
         icon: const Icon(Icons.delete_outline),
       ),
     );
+  }
+
+  String _formatPosition(Duration position) {
+    final minutes = position.inMinutes.remainder(60).toString().padLeft(2, '0');
+    final seconds = position.inSeconds.remainder(60).toString().padLeft(2, '0');
+    return '$minutes:$seconds';
   }
 }

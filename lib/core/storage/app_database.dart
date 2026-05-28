@@ -17,6 +17,12 @@ class WatchHistoryTable extends Table {
   IntColumn get positionMs => integer().named('position_ms')();
   IntColumn get durationMs => integer().named('duration_ms').nullable()();
   TextColumn get sourceId => text().named('source_id')();
+  TextColumn get playSourceId => text().named('play_source_id').nullable()();
+  TextColumn get playSourceTitle =>
+      text().named('play_source_title').nullable()();
+  TextColumn get playUrl => text().named('play_url').nullable()();
+  TextColumn get playHeadersJson =>
+      text().named('play_headers_json').withDefault(const Constant('{}'))();
   DateTimeColumn get updatedAt => dateTime().named('updated_at')();
 
   @override
@@ -73,7 +79,7 @@ class AppDatabase extends _$AppDatabase {
       : super(executor ?? driftDatabase(name: 'ani_destiny'));
 
   @override
-  int get schemaVersion => 2;
+  int get schemaVersion => 3;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -82,6 +88,24 @@ class AppDatabase extends _$AppDatabase {
             await migrator.addColumn(
               downloadTaskTable,
               downloadTaskTable.sourceId,
+            );
+          }
+          if (from < 3) {
+            await migrator.addColumn(
+              watchHistoryTable,
+              watchHistoryTable.playSourceId,
+            );
+            await migrator.addColumn(
+              watchHistoryTable,
+              watchHistoryTable.playSourceTitle,
+            );
+            await migrator.addColumn(
+              watchHistoryTable,
+              watchHistoryTable.playUrl,
+            );
+            await migrator.addColumn(
+              watchHistoryTable,
+              watchHistoryTable.playHeadersJson,
             );
           }
         },

@@ -11,6 +11,7 @@ import '../features/download/presentation/pages/download_page.dart';
 import '../features/favorite/presentation/pages/favorite_page.dart';
 import '../features/history/presentation/pages/history_page.dart';
 import '../features/home/presentation/pages/home_page.dart';
+import '../features/player/domain/entities/player_route_args.dart';
 import '../features/player/presentation/pages/player_page.dart';
 import '../features/settings/presentation/pages/settings_page.dart';
 import '../features/source/presentation/pages/source_settings_page.dart';
@@ -76,16 +77,7 @@ final appRouter = GoRouter(
     GoRoute(
       path: '/player',
       builder: (context, state) => PlayerPage(
-        animeId: state.uri.queryParameters['animeId'] ?? '',
-        episodeId: state.uri.queryParameters['episodeId'] ?? '',
-        title: state.uri.queryParameters['title'] ?? 'AniDestiny',
-        episodeTitle: state.uri.queryParameters['episodeTitle'],
-        coverUrl: state.uri.queryParameters['coverUrl'],
-        sourceId: state.uri.queryParameters['sourceId'] ?? 'mock',
-        playUrl: state.uri.queryParameters['playUrl'] ?? '',
-        playHeaders: _decodePlayHeaders(
-          state.uri.queryParameters['playHeaders'],
-        ),
+        args: _playerArgsFromState(state),
       ),
     ),
   ],
@@ -96,6 +88,27 @@ final appRouter = GoRouter(
     ),
   ),
 );
+
+PlayerRouteArgs _playerArgsFromState(GoRouterState state) {
+  final extra = state.extra;
+  if (extra is PlayerRouteArgs) return extra;
+
+  final query = state.uri.queryParameters;
+  final title = query['title'] ?? 'AniDestiny';
+  return PlayerRouteArgs(
+    animeId: query['animeId'] ?? '',
+    episodeId: query['episodeId'] ?? '',
+    animeTitle: title,
+    episodeTitle: query['episodeTitle'] ?? title,
+    coverUrl: query['coverUrl'],
+    sourceId: query['sourceId'] ?? 'mock',
+    playUrl: query['playUrl'] ?? '',
+    playSourceId: query['playSourceId'],
+    playSourceTitle: query['playSourceTitle'],
+    playHeaders: _decodePlayHeaders(query['playHeaders']),
+    initialPosition: _decodePosition(query['initialPositionMs']),
+  );
+}
 
 Map<String, String> _decodePlayHeaders(String? raw) {
   if (raw == null || raw.trim().isEmpty) return const {};
@@ -108,4 +121,10 @@ Map<String, String> _decodePlayHeaders(String? raw) {
   } on Object {
     return const {};
   }
+}
+
+Duration? _decodePosition(String? raw) {
+  final milliseconds = int.tryParse(raw ?? '');
+  if (milliseconds == null || milliseconds <= 0) return null;
+  return Duration(milliseconds: milliseconds);
 }

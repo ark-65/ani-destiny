@@ -11,6 +11,7 @@ import '../../../download/presentation/providers/download_providers.dart';
 import '../../../history/domain/entities/watch_history.dart';
 import '../../../history/presentation/providers/history_providers.dart';
 import '../../domain/adapters/player_controller_adapter.dart';
+import '../../domain/entities/player_route_args.dart';
 import '../../domain/entities/player_state.dart';
 import '../providers/player_providers.dart';
 import '../widgets/playback_speed_sheet.dart';
@@ -19,37 +20,25 @@ import '../widgets/player_surface.dart';
 
 class PlayerPage extends ConsumerStatefulWidget {
   const PlayerPage({
-    required this.animeId,
-    required this.episodeId,
-    required this.title,
-    required this.playUrl,
-    required this.sourceId,
+    required this.args,
     super.key,
-    this.episodeTitle,
-    this.coverUrl,
-    this.playHeaders = const {},
   });
 
-  final String animeId;
-  final String episodeId;
-  final String title;
-  final String playUrl;
-  final String sourceId;
-  final String? episodeTitle;
-  final String? coverUrl;
-  final Map<String, String> playHeaders;
+  final PlayerRouteArgs args;
 
   @override
   ConsumerState<PlayerPage> createState() => _PlayerPageState();
 }
 
 class _PlayerPageState extends ConsumerState<PlayerPage> {
+  static const _historyWriteInterval = Duration(seconds: 5);
+
   late final PlayerControllerAdapter _controller;
   StreamSubscription<PlayerState>? _subscription;
-  Timer? _historyDebounce;
+  DateTime? _lastHistorySavedAt;
   PlayerState _state = PlayerState.initial();
 
-  String get _episodeTitle => widget.episodeTitle ?? widget.title;
+  PlayerRouteArgs get _args => widget.args;
 
   @override
   void initState() {
@@ -58,19 +47,14 @@ class _PlayerPageState extends ConsumerState<PlayerPage> {
     _subscription = _controller.stateStream.listen((state) {
       if (!mounted) return;
       setState(() => _state = state);
-      _historyDebounce?.cancel();
-      _historyDebounce = Timer(
-        const Duration(seconds: 2),
-        () => unawaited(_saveHistory()),
-      );
+      unawaited(_saveHistory());
     });
     unawaited(_loadPlayer());
   }
 
   @override
   void dispose() {
-    _historyDebounce?.cancel();
-    unawaited(_saveHistory());
+    unawaited(_saveHistory(force: true));
     unawaited(_subscription?.cancel());
     unawaited(_controller.dispose());
     super.dispose();
@@ -81,14 +65,14 @@ class _PlayerPageState extends ConsumerState<PlayerPage> {
     final danmakuSettings = ref.watch(danmakuSettingsProvider);
     final danmakuItems = ref.watch(
       danmakuItemsProvider(
-        (animeId: widget.animeId, episodeId: widget.episodeId),
+        (animeId: _args.animeId, episodeId: _args.episodeId),
       ),
     );
 
     return Scaffold(
       backgroundColor: Colors.black,
       appBar: AppBar(
-        title: Text(_episodeTitle),
+        title: Text(_args.episodeTitle),
         foregroundColor: Colors.white,
         backgroundColor: Colors.black,
         actions: [
@@ -112,8 +96,8 @@ class _PlayerPageState extends ConsumerState<PlayerPage> {
               children: [
                 PlayerSurface(
                   controller: _controller,
-                  title: widget.title,
-                  playUrl: widget.playUrl,
+                  title: _args.animeTitle,
+                  playUrl: _args.playUrl,
                 ),
                 if (_state.isBuffering)
                   const Center(child: CircularProgressIndicator()),
@@ -152,7 +136,7 @@ class _PlayerPageState extends ConsumerState<PlayerPage> {
               onPlayPause: () {
                 if (_state.isPlaying) {
                   unawaited(_controller.pause());
-                  unawaited(_saveHistory());
+                  unawaited(_saveHistory(force: true));
                 } else {
                   unawaited(_controller.play());
                 }
@@ -171,20 +155,32 @@ class _PlayerPageState extends ConsumerState<PlayerPage> {
     );
   }
 
-  Future<void> _saveHistory() async {
+  Future<void> _saveHistory({bool force = false}) async {
     if (!_state.isInitialized) return;
+    final now = DateTime.now();
+    final lastSavedAt = _lastHistorySavedAt;
+    if (!force &&
+        lastSavedAt != null &&
+        now.difference(lastSavedAt) < _historyWriteInterval) {
+      return;
+    }
+    _lastHistorySavedAt = now;
     await ref.read(historyRepositoryProvider).upsert(
           WatchHistory(
-            id: '${widget.sourceId}:${widget.animeId}:${widget.episodeId}',
-            animeId: widget.animeId,
-            episodeId: widget.episodeId,
-            animeTitle: widget.title,
-            episodeTitle: _episodeTitle,
-            coverUrl: widget.coverUrl,
+            id: '${_args.sourceId}:${_args.animeId}:${_args.episodeId}',
+            animeId: _args.animeId,
+            episodeId: _args.episodeId,
+            animeTitle: _args.animeTitle,
+            episodeTitle: _args.episodeTitle,
+            coverUrl: _args.coverUrl,
             position: _state.position,
             duration: _state.duration,
-            sourceId: widget.sourceId,
-            updatedAt: DateTime.now(),
+            sourceId: _args.sourceId,
+            playSourceId: _args.playSourceId,
+            playSourceTitle: _args.playSourceTitle,
+            playUrl: _args.playUrl,
+            playHeaders: _args.playHeaders,
+            updatedAt: now,
           ),
         );
   }
@@ -192,12 +188,12 @@ class _PlayerPageState extends ConsumerState<PlayerPage> {
   Future<void> _createDownload() async {
     try {
       final taskId = await ref.read(httpDownloadServiceProvider).createTask(
-            animeId: widget.animeId,
-            episodeId: widget.episodeId,
-            sourceId: widget.sourceId,
-            url: widget.playUrl,
-            title: widget.title,
-            episodeTitle: _episodeTitle,
+            animeId: _args.animeId,
+            episodeId: _args.episodeId,
+            sourceId: _args.sourceId,
+            url: _args.playUrl,
+            title: _args.animeTitle,
+            episodeTitle: _args.episodeTitle,
           );
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -219,7 +215,7 @@ class _PlayerPageState extends ConsumerState<PlayerPage> {
 
   Future<void> _loadPlayer() async {
     try {
-      if (widget.playUrl.trim().isEmpty) {
+      if (_args.playUrl.trim().isEmpty) {
         setState(
           () => _state = _state.copyWith(
             isBuffering: false,
@@ -228,7 +224,12 @@ class _PlayerPageState extends ConsumerState<PlayerPage> {
         );
         return;
       }
-      await _controller.load(widget.playUrl, headers: widget.playHeaders);
+      await _controller.load(_args.playUrl, headers: _args.playHeaders);
+      final initialPosition = _args.initialPosition;
+      if (initialPosition != null && initialPosition > Duration.zero) {
+        await _controller.seek(initialPosition);
+      }
+      unawaited(_saveHistory(force: true));
     } catch (error) {
       if (!mounted) return;
       setState(

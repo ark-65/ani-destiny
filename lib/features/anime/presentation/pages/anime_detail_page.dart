@@ -1,5 +1,3 @@
-import 'dart:convert';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -11,6 +9,7 @@ import '../../../../shared/widgets/adaptive_page.dart';
 import '../../../download/presentation/providers/download_providers.dart';
 import '../../../favorite/domain/entities/favorite_anime.dart';
 import '../../../favorite/presentation/providers/favorite_providers.dart';
+import '../../../player/domain/entities/player_route_args.dart';
 import '../../domain/entities/anime_detail.dart';
 import '../../domain/entities/episode.dart';
 import '../../domain/entities/play_source.dart';
@@ -128,18 +127,21 @@ class AnimeDetailPage extends ConsumerWidget {
     }
     final source = await _selectPlaySource(context, sources);
     if (!context.mounted || source == null) return;
-    final query = <String, String>{
-      'animeId': detail.id,
-      'episodeId': episode.id,
-      'title': detail.title,
-      'episodeTitle': episode.title,
-      'sourceId': detail.sourceId,
-      'playUrl': source.url,
-      if (source.headers.isNotEmpty)
-        'playHeaders': _encodePlayHeaders(source.headers),
-      if (detail.coverUrl != null) 'coverUrl': detail.coverUrl!,
-    };
-    context.push(Uri(path: '/player', queryParameters: query).toString());
+    context.push(
+      '/player',
+      extra: PlayerRouteArgs(
+        animeId: detail.id,
+        episodeId: episode.id,
+        animeTitle: detail.title,
+        episodeTitle: episode.title,
+        coverUrl: detail.coverUrl,
+        sourceId: detail.sourceId,
+        playSourceId: source.id,
+        playSourceTitle: source.title,
+        playUrl: source.url,
+        playHeaders: source.headers,
+      ),
+    );
   }
 
   Future<void> _createDownload(
@@ -246,9 +248,5 @@ class AnimeDetailPage extends ConsumerWidget {
         );
       },
     );
-  }
-
-  String _encodePlayHeaders(Map<String, String> headers) {
-    return base64Url.encode(utf8.encode(jsonEncode(headers)));
   }
 }
