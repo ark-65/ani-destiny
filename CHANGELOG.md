@@ -6,6 +6,8 @@
 
 ## [Unreleased]
 
+## [1.0.1] - 2026-05-28
+
 ### 🔧 CI/CD
 - 新增 Flutter 质量检查、双语 changelog 门禁、手动预发布 PR 和多平台发布工作流。
 - 发布流程改为先创建可审核的 release PR，合并后再读取中文 changelog、创建 tag、构建并发布多平台产物。
@@ -13,7 +15,6 @@
 ### 📚 文档
 - 将主 README 改为中文文档，并新增英文文档 `README_en.md`。
 - 新增中文主更新日志 `CHANGELOG.md` 和英文扩展更新日志 `CHANGELOG_en.md`。
-
 ## [1.0.0] - 2026-05-28
 
 ### ✨ 新增

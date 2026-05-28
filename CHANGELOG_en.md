@@ -6,6 +6,8 @@
 
 ## [Unreleased]
 
+## [1.0.1] - 2026-05-28
+
 ### 🔧 CI/CD
 - Added Flutter quality checks, bilingual changelog gate, manual release preparation PR, and multi-platform release workflows.
 - Changed releases to use a reviewed release PR first, then read the Chinese changelog, create the tag, build artifacts, and publish the release after merge.
@@ -13,7 +15,6 @@
 ### 📚 Documentation
 - Changed the main README to Chinese and added `README_en.md`.
 - Added the Chinese primary changelog `CHANGELOG.md` and English secondary changelog `CHANGELOG_en.md`.
-
 ## [1.0.0] - 2026-05-28
 
 ### ✨ Added
