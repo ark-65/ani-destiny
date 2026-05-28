@@ -144,7 +144,7 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
                         child: Padding(
                           padding: const EdgeInsets.all(16),
                           child: Text(
-                            _state.errorMessage!,
+                            _playbackErrorMessage(),
                             textAlign: TextAlign.center,
                           ),
                         ),
@@ -295,6 +295,13 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
     return 'loading';
   }
 
+  String _playbackErrorMessage() {
+    if (_state.errorMessage == context.l10n.playerNoPlayUrl) {
+      return context.l10n.noPlayableSourceFound;
+    }
+    return context.l10n.playbackFailedSuggestion;
+  }
+
   Future<void> _saveHistory({bool force = false}) async {
     if (!_state.isInitialized) return;
     final now = DateTime.now();
@@ -375,7 +382,7 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
       setState(
         () => _state = _state.copyWith(
           isBuffering: false,
-          errorMessage: error.toString(),
+          errorMessage: context.l10n.playbackFailedSuggestion,
         ),
       );
     }

@@ -6,7 +6,24 @@
 
 ## [Unreleased]
 
+### Planned
+- Improve source fallback behavior and Sakura failure messaging.
+- Improve playback diagnostics and feedback-ready runtime summaries.
+- Polish the download task experience.
+
 ## [1.0.1] - 2026-05-28
+
+### ✨ Added
+- Added verified cross-platform app support for Android, Windows, and macOS.
+- Added the Sakura source adapter.
+- Added video playback, watch history, favorites, and basic download tasks.
+- Added danmaku overlay, optional Dandanplay integration, and fallback.
+- Added build scripts and multi-platform release flow.
+
+### 🔄 Changed
+- Stabilized Android player lifecycle.
+- Improved playback resume from watch history.
+- Improved source diagnostics.
 
 ### 🔧 CI/CD
 - Added Flutter quality checks, bilingual changelog gate, manual release preparation PR, and multi-platform release workflows.
@@ -15,6 +32,12 @@
 ### 📚 Documentation
 - Changed the main README to Chinese and added `README_en.md`.
 - Added the Chinese primary changelog `CHANGELOG.md` and English secondary changelog `CHANGELOG_en.md`.
+
+### Known Limitations
+- Source availability depends on upstream websites.
+- Dandanplay credentials are optional; fallback is used when unavailable.
+- Download support is still basic.
+
 ## [1.0.0] - 2026-05-28
 
 ### ✨ Added

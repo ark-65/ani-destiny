@@ -68,14 +68,16 @@ class _SearchPageState extends ConsumerState<SearchPage> {
                       loading: () =>
                           AppLoadingView(message: context.l10n.searching),
                       error: (error, stackTrace) => AppErrorView(
-                        message: error.toString(),
+                        message:
+                            '${context.l10n.sourceTemporarilyUnavailable}\n'
+                            '${context.l10n.sourceUnavailableSuggestion}',
                         onRetry: () =>
                             ref.invalidate(searchResultsProvider(_query)),
                       ),
                       data: (items) {
                         if (items.isEmpty) {
                           return AppEmptyView(
-                            message: context.l10n.noMatchingAnime,
+                            message: context.l10n.sourceUnavailableSuggestion,
                           );
                         }
                         return ListView.separated(

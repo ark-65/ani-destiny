@@ -85,7 +85,9 @@ class HomePage extends ConsumerWidget {
               ),
               error: (error, stackTrace) => SliverFillRemaining(
                 child: AppErrorView(
-                  message: error.toString(),
+                  message:
+                      '${context.l10n.sourceTemporarilyUnavailable}\n'
+                      '${context.l10n.sourceUnavailableSuggestion}',
                   onRetry: () => ref.invalidate(homeRecommendationsProvider),
                 ),
               ),
@@ -93,7 +95,7 @@ class HomePage extends ConsumerWidget {
                 if (items.isEmpty) {
                   return SliverFillRemaining(
                     child: AppEmptyView(
-                      message: context.l10n.noRecommendations,
+                      message: context.l10n.sourceUnavailableSuggestion,
                     ),
                   );
                 }

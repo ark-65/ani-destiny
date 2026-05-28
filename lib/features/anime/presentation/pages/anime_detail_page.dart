@@ -42,7 +42,9 @@ class AnimeDetailPage extends ConsumerWidget {
       child: detailState.when(
         loading: () => AppLoadingView(message: context.l10n.loadingDetail),
         error: (error, stackTrace) => AppErrorView(
-          message: error.toString(),
+          message:
+              '${context.l10n.sourceTemporarilyUnavailable}\n'
+              '${context.l10n.sourceUnavailableSuggestion}',
           onRetry: () => ref.invalidate(animeDetailProvider(animeId)),
         ),
         data: (detail) {
@@ -121,7 +123,7 @@ class AnimeDetailPage extends ConsumerWidget {
     if (!context.mounted) return;
     if (sources.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(context.l10n.noPlaySource)),
+        SnackBar(content: Text(context.l10n.noPlayableSourceFound)),
       );
       return;
     }
@@ -159,7 +161,7 @@ class AnimeDetailPage extends ConsumerWidget {
     if (!context.mounted) return;
     if (sources.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(context.l10n.noDownloadSource)),
+        SnackBar(content: Text(context.l10n.noPlayableSourceFound)),
       );
       return;
     }

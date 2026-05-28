@@ -1,3 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-final appVersionLabelProvider = Provider<String>((ref) => '1.0.0');
+import '../../../../core/constants/app_constants.dart';
+
+final appVersionLabelProvider = Provider<String>(
+  (ref) => AppConstants.appVersion,
+);

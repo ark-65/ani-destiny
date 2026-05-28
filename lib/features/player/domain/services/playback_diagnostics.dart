@@ -1,3 +1,5 @@
+import '../../../../core/utils/url_sanitizer.dart';
+
 class PlaybackDiagnostics {
   const PlaybackDiagnostics({
     required this.sourceId,
@@ -41,9 +43,6 @@ class PlaybackDiagnosticsBuilder {
   }
 
   String sanitizeUrl(String rawUrl) {
-    final uri = Uri.tryParse(rawUrl);
-    if (uri == null || !uri.hasScheme) return 'invalid-url';
-    final path = uri.path.isEmpty ? '/' : uri.path;
-    return '${uri.scheme}://${uri.host}$path';
+    return sanitizeUrlForDiagnostics(rawUrl);
   }
 }

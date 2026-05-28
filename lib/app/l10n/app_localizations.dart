@@ -147,8 +147,29 @@ class AppLocalizations {
   String get about => _t('about');
   String get aboutAniDestiny => _t('aboutAniDestiny');
   String appVersion(String version) => '${_t('appVersionPrefix')}$version';
+  String get appDescription => _t('appDescription');
+  String get supportedPlatforms => _t('supportedPlatforms');
+  String get supportedPlatformsValue => _t('supportedPlatformsValue');
+  String get sourceStatus => _t('sourceStatus');
+  String get sourceStatusValue => _t('sourceStatusValue');
+  String get danmakuAbout => _t('danmakuAbout');
+  String get danmakuAboutValue => _t('danmakuAboutValue');
+  String get reportIssue => _t('reportIssue');
+  String get githubRepository => _t('githubRepository');
   String get openSource => _t('openSource');
   String get releasePage => _t('releasePage');
+  String get runtimeDiagnostics => _t('runtimeDiagnostics');
+  String get runtimeDiagnosticsSubtitle => _t('runtimeDiagnosticsSubtitle');
+  String get platform => _t('platform');
+  String get currentSourceId => _t('currentSourceId');
+  String get latestSourceDiagnostics => _t('latestSourceDiagnostics');
+  String get playbackDiagnosticsSummary => _t('playbackDiagnosticsSummary');
+  String get playbackDiagnosticsDebugHint => _t('playbackDiagnosticsDebugHint');
+  String get sourceTemporarilyUnavailable =>
+      _t('sourceTemporarilyUnavailable');
+  String get sourceUnavailableSuggestion => _t('sourceUnavailableSuggestion');
+  String get noPlayableSourceFound => _t('noPlayableSourceFound');
+  String get playbackFailedSuggestion => _t('playbackFailedSuggestion');
   String get sources => _t('sources');
   String get loadingCurrentSource => _t('loadingCurrentSource');
   String sourceSetTo(String sourceId) => '${_t('sourceSetTo')} $sourceId';
@@ -252,12 +273,12 @@ const _localizedValues = {
     'play': '播放',
     'downloads': '下载',
     'loadingDetail': '正在加载详情',
-    'noPlaySource': '暂无播放源。',
-    'noDownloadSource': '暂无可下载播放源。',
+    'noPlaySource': '未找到可播放线路，请稍后重试或切换数据源。',
+    'noDownloadSource': '未找到可下载线路，请稍后重试或切换数据源。',
     'selectPlaySource': '选择播放线路',
     'selectDownloadSource': '选择下载线路',
     'downloadTaskCreated': '已创建下载任务',
-    'playerNoPlayUrl': '暂无播放地址',
+    'playerNoPlayUrl': '未找到可播放线路',
     'playerMockReady': 'Mock 播放器就绪',
     'pause': '暂停',
     'playbackSpeed': '播放速度',
@@ -300,8 +321,28 @@ const _localizedValues = {
     'about': '关于',
     'aboutAniDestiny': 'AniDestiny',
     'appVersionPrefix': '非盈利学习项目 · v',
+    'appDescription': '一个跨平台动漫发现与播放应用。',
+    'supportedPlatforms': '支持平台',
+    'supportedPlatformsValue': 'Android / Windows / macOS',
+    'sourceStatus': '数据源状态',
+    'sourceStatusValue': 'Sakura 数据源为实验性能力，依赖上游站点可用性。',
+    'danmakuAbout': '弹幕',
+    'danmakuAboutValue': '弹弹play 为可选集成；不可用时使用 fallback。',
+    'reportIssue': '反馈问题',
+    'githubRepository': 'GitHub 仓库',
     'openSource': '开源地址',
     'releasePage': '发布地址',
+    'runtimeDiagnostics': '运行诊断',
+    'runtimeDiagnosticsSubtitle': 'Debug 模式下查看反馈用摘要，不展示敏感值。',
+    'platform': '平台',
+    'currentSourceId': '当前数据源 ID',
+    'latestSourceDiagnostics': '最近数据源诊断',
+    'playbackDiagnosticsSummary': '播放诊断摘要',
+    'playbackDiagnosticsDebugHint': '播放页 Debug 按钮可查看当前播放线路、URL 类型和 header keys。',
+    'sourceTemporarilyUnavailable': '数据源暂时不可用',
+    'sourceUnavailableSuggestion': '上游数据源可能已变化或暂时不可用，请稍后重试或切换数据源。',
+    'noPlayableSourceFound': '未找到可播放线路，请稍后重试或切换数据源。',
+    'playbackFailedSuggestion': '播放暂时失败，请稍后重试或尝试其他播放线路。',
     'sources': '数据源',
     'loadingCurrentSource': '正在加载当前数据源',
     'sourceSetTo': '数据源已切换为',
@@ -377,12 +418,13 @@ const _localizedValues = {
     'play': 'Play',
     'downloads': 'Downloads',
     'loadingDetail': 'Loading detail',
-    'noPlaySource': 'No play source available.',
-    'noDownloadSource': 'No download source available.',
+    'noPlaySource': 'No playable source found. Try another source or retry later.',
+    'noDownloadSource':
+        'No downloadable source found. Try another source or retry later.',
     'selectPlaySource': 'Select playback line',
     'selectDownloadSource': 'Select download line',
     'downloadTaskCreated': 'Download task created',
-    'playerNoPlayUrl': 'No play URL',
+    'playerNoPlayUrl': 'No playable source found',
     'playerMockReady': 'Mock player ready',
     'pause': 'Pause',
     'playbackSpeed': 'Playback speed',
@@ -426,8 +468,35 @@ const _localizedValues = {
     'about': 'About',
     'aboutAniDestiny': 'AniDestiny',
     'appVersionPrefix': 'Non-profit learning project · v',
+    'appDescription': 'A cross-platform anime discovery and playback app.',
+    'supportedPlatforms': 'Supported platforms',
+    'supportedPlatformsValue': 'Android / Windows / macOS',
+    'sourceStatus': 'Source status',
+    'sourceStatusValue':
+        'Sakura source is experimental and depends on upstream availability.',
+    'danmakuAbout': 'Danmaku',
+    'danmakuAboutValue':
+        'Dandanplay is optional; fallback is used when unavailable.',
+    'reportIssue': 'Report issue',
+    'githubRepository': 'GitHub repository',
     'openSource': 'Open source',
     'releasePage': 'Releases',
+    'runtimeDiagnostics': 'Runtime diagnostics',
+    'runtimeDiagnosticsSubtitle':
+        'Debug-only feedback summary without sensitive values.',
+    'platform': 'Platform',
+    'currentSourceId': 'Current source ID',
+    'latestSourceDiagnostics': 'Latest source diagnostics',
+    'playbackDiagnosticsSummary': 'Playback diagnostics summary',
+    'playbackDiagnosticsDebugHint':
+        'Use the debug button on the player page to view the current line, URL type, and header keys.',
+    'sourceTemporarilyUnavailable': 'Source temporarily unavailable',
+    'sourceUnavailableSuggestion':
+        'The upstream source changed or is temporarily unavailable. Try another source or retry later.',
+    'noPlayableSourceFound':
+        'No playable source found. Try another source or retry later.',
+    'playbackFailedSuggestion':
+        'Playback temporarily failed. Retry later or try another playback line.',
     'sources': 'Sources',
     'loadingCurrentSource': 'Loading current source',
     'sourceSetTo': 'Source set to',
@@ -503,12 +572,12 @@ const _localizedValues = {
     'play': '再生',
     'downloads': 'ダウンロード',
     'loadingDetail': '詳細を読み込み中',
-    'noPlaySource': '再生ソースがありません。',
-    'noDownloadSource': 'ダウンロード可能なソースがありません。',
+    'noPlaySource': '再生可能なソースが見つかりません。別のソースを試すか、後で再試行してください。',
+    'noDownloadSource': 'ダウンロード可能なソースが見つかりません。別のソースを試すか、後で再試行してください。',
     'selectPlaySource': '再生ラインを選択',
     'selectDownloadSource': 'ダウンロードラインを選択',
     'downloadTaskCreated': 'ダウンロードタスクを作成しました',
-    'playerNoPlayUrl': '再生 URL がありません',
+    'playerNoPlayUrl': '再生可能なソースが見つかりません',
     'playerMockReady': 'Mock プレイヤー準備完了',
     'pause': '一時停止',
     'playbackSpeed': '再生速度',
@@ -551,8 +620,29 @@ const _localizedValues = {
     'about': '情報',
     'aboutAniDestiny': 'AniDestiny',
     'appVersionPrefix': '非営利の学習プロジェクト · v',
+    'appDescription': 'クロスプラットフォームのアニメ検索・再生アプリです。',
+    'supportedPlatforms': '対応プラットフォーム',
+    'supportedPlatformsValue': 'Android / Windows / macOS',
+    'sourceStatus': 'ソース状態',
+    'sourceStatusValue': 'Sakura ソースは実験的で、上流サイトの可用性に依存します。',
+    'danmakuAbout': '弾幕',
+    'danmakuAboutValue': '弹弹play は任意連携です。利用できない場合は fallback を使用します。',
+    'reportIssue': '問題を報告',
+    'githubRepository': 'GitHub リポジトリ',
     'openSource': 'オープンソース',
     'releasePage': 'リリース',
+    'runtimeDiagnostics': '実行診断',
+    'runtimeDiagnosticsSubtitle': 'Debug モード限定のフィードバック用概要です。機密値は表示しません。',
+    'platform': 'プラットフォーム',
+    'currentSourceId': '現在のソース ID',
+    'latestSourceDiagnostics': '最近のソース診断',
+    'playbackDiagnosticsSummary': '再生診断の概要',
+    'playbackDiagnosticsDebugHint':
+        'プレイヤー画面の Debug ボタンで現在のライン、URL 種類、header keys を確認できます。',
+    'sourceTemporarilyUnavailable': 'ソースが一時的に利用できません',
+    'sourceUnavailableSuggestion': '上流ソースが変更されたか、一時的に利用できません。別のソースを試すか、後で再試行してください。',
+    'noPlayableSourceFound': '再生可能なソースが見つかりません。別のソースを試すか、後で再試行してください。',
+    'playbackFailedSuggestion': '再生に一時的に失敗しました。後で再試行するか、別の再生ラインを試してください。',
     'sources': 'ソース',
     'loadingCurrentSource': '現在のソースを読み込み中',
     'sourceSetTo': 'ソースを切り替えました:',

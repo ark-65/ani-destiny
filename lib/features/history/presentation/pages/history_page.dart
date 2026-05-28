@@ -94,7 +94,7 @@ class HistoryPage extends ConsumerWidget {
     if (!context.mounted) return;
     if (sources.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(context.l10n.noPlaySource)),
+        SnackBar(content: Text(context.l10n.noPlayableSourceFound)),
       );
       return;
     }

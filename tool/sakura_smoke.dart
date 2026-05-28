@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:ani_destiny/core/utils/url_sanitizer.dart';
 import 'package:ani_destiny/features/source/data/adapters/sakura_anime_source_adapter.dart';
 import 'package:ani_destiny/features/source/data/services/in_memory_source_diagnostic_recorder.dart';
 import 'package:dio/dio.dart';
@@ -44,7 +45,9 @@ Future<void> main() async {
     if (playSources.isEmpty) {
       throw StateError('Sakura play returned no sources.');
     }
-    stdout.writeln('first url: ${playSources.first.url}');
+    stdout.writeln(
+      'first url: ${sanitizeUrlForDiagnostics(playSources.first.url)}',
+    );
     stdout
         .writeln('headers keys: ${playSources.first.headers.keys.join(', ')}');
 
@@ -68,7 +71,7 @@ void _printDiagnostics(InMemorySourceDiagnosticRecorder diagnostics) {
   for (final item in items) {
     stdout.writeln(
       '${item.level.name} ${item.operation}: ${item.message}'
-      '${item.url == null ? '' : ' url=${item.url}'}'
+      '${item.url == null ? '' : ' url=${sanitizeUrlForDiagnostics(item.url!)}'}'
       '${item.statusCode == null ? '' : ' status=${item.statusCode}'}'
       '${item.exceptionType == null ? '' : ' exception=${item.exceptionType}'}',
     );

@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../app/l10n/app_localizations.dart';
+import '../../../../core/utils/url_sanitizer.dart';
 import '../../../../core/widgets/app_error_view.dart';
 import '../../../../core/widgets/app_loading_view.dart';
 import '../../../../shared/widgets/adaptive_page.dart';
@@ -43,8 +44,11 @@ class SourceSettingsPage extends ConsumerWidget {
               child: currentSource.when(
                 loading: () =>
                     AppLoadingView(message: context.l10n.loadingCurrentSource),
-                error: (error, stackTrace) =>
-                    AppErrorView(message: error.toString()),
+                error: (error, stackTrace) => AppErrorView(
+                  message:
+                      '${context.l10n.sourceTemporarilyUnavailable}\n'
+                      '${context.l10n.sourceUnavailableSuggestion}',
+                ),
                 data: (currentSourceId) => ListView(
                   children: [
                     SourceSelector(
@@ -176,7 +180,7 @@ class _SourceDiagnosticTile extends StatelessWidget {
     };
     final timestamp = diagnostic.timestamp;
     final details = [
-      if (diagnostic.url != null) diagnostic.url!,
+      if (diagnostic.url != null) sanitizeUrlForDiagnostics(diagnostic.url!),
       if (diagnostic.statusCode != null) 'HTTP ${diagnostic.statusCode}',
       if (diagnostic.exceptionType != null) diagnostic.exceptionType!,
       if (timestamp != null)

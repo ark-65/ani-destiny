@@ -48,6 +48,15 @@ flutter test
 flutter run
 ```
 
+## 本地脚本
+
+```sh
+bash scripts/clean.sh
+bash scripts/build-android-debug.sh
+```
+
+更多平台构建说明见 [docs/platform-build.md](./docs/platform-build.md)。
+
 ## 手动打包
 
 ```sh

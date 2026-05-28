@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -94,11 +95,36 @@ class SettingsPage extends ConsumerWidget {
                 ListTile(
                   leading: const Icon(Icons.auto_awesome),
                   title: Text(context.l10n.aboutAniDestiny),
-                  subtitle: Text(context.l10n.appVersion(version)),
+                  subtitle: Text(
+                    '${context.l10n.appVersion(version)}\n'
+                    '${context.l10n.appDescription}',
+                  ),
+                ),
+                ListTile(
+                  leading: const Icon(Icons.devices_outlined),
+                  title: Text(context.l10n.supportedPlatforms),
+                  subtitle: Text(context.l10n.supportedPlatformsValue),
+                ),
+                ListTile(
+                  leading: const Icon(Icons.source_outlined),
+                  title: Text(context.l10n.sourceStatus),
+                  subtitle: Text(context.l10n.sourceStatusValue),
+                ),
+                ListTile(
+                  leading: const Icon(Icons.subtitles_outlined),
+                  title: Text(context.l10n.danmakuAbout),
+                  subtitle: Text(context.l10n.danmakuAboutValue),
+                ),
+                ListTile(
+                  leading: const Icon(Icons.bug_report_outlined),
+                  title: Text(context.l10n.reportIssue),
+                  subtitle: const Text(AppConstants.issuesUrl),
+                  trailing: const Icon(Icons.open_in_new),
+                  onTap: () => _openExternalUrl(AppConstants.issuesUrl),
                 ),
                 ListTile(
                   leading: const Icon(Icons.code_outlined),
-                  title: Text(context.l10n.openSource),
+                  title: Text(context.l10n.githubRepository),
                   subtitle: const Text(AppConstants.openSourceUrl),
                   trailing: const Icon(Icons.open_in_new),
                   onTap: () => _openExternalUrl(AppConstants.openSourceUrl),
@@ -110,6 +136,14 @@ class SettingsPage extends ConsumerWidget {
                   trailing: const Icon(Icons.open_in_new),
                   onTap: () => _openExternalUrl(AppConstants.releaseUrl),
                 ),
+                if (kDebugMode)
+                  ListTile(
+                    leading: const Icon(Icons.monitor_heart_outlined),
+                    title: Text(context.l10n.runtimeDiagnostics),
+                    subtitle: Text(context.l10n.runtimeDiagnosticsSubtitle),
+                    trailing: const Icon(Icons.chevron_right),
+                    onTap: () => context.push('/settings/diagnostics'),
+                  ),
               ],
             ),
           ],

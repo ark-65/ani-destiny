@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
@@ -13,6 +14,7 @@ import '../features/history/presentation/pages/history_page.dart';
 import '../features/home/presentation/pages/home_page.dart';
 import '../features/player/domain/entities/player_route_args.dart';
 import '../features/player/presentation/pages/player_page.dart';
+import '../features/settings/presentation/pages/runtime_diagnostics_page.dart';
 import '../features/settings/presentation/pages/settings_page.dart';
 import '../features/source/presentation/pages/source_settings_page.dart';
 import '../shared/widgets/app_scaffold.dart';
@@ -72,6 +74,11 @@ final appRouter = GoRouter(
           path: '/settings/sources',
           builder: (context, state) => const SourceSettingsPage(),
         ),
+        if (kDebugMode)
+          GoRoute(
+            path: '/settings/diagnostics',
+            builder: (context, state) => const RuntimeDiagnosticsPage(),
+          ),
       ],
     ),
     GoRoute(

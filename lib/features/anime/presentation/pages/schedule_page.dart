@@ -42,7 +42,9 @@ class SchedulePage extends ConsumerWidget {
                 loading: () =>
                     AppLoadingView(message: context.l10n.loadingSchedule),
                 error: (error, stackTrace) => AppErrorView(
-                  message: error.toString(),
+                  message:
+                      '${context.l10n.sourceTemporarilyUnavailable}\n'
+                      '${context.l10n.sourceUnavailableSuggestion}',
                   onRetry: () => ref.invalidate(scheduleProvider),
                 ),
                 data: (items) {

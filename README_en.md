@@ -48,6 +48,15 @@ flutter test
 flutter run
 ```
 
+## Local Scripts
+
+```sh
+bash scripts/clean.sh
+bash scripts/build-android-debug.sh
+```
+
+See [docs/platform-build.md](./docs/platform-build.md) for platform build notes.
+
 ## Manual Packaging
 
 ```sh
