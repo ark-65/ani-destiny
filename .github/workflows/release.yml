@@ -1,0 +1,313 @@
+name: Release
+
+on:
+  pull_request:
+    types: [closed]
+    branches: [main]
+
+jobs:
+  metadata:
+    name: Prepare Release Metadata
+    if: >-
+      github.event.pull_request.merged == true &&
+      (startsWith(github.event.pull_request.head.ref, 'release/v') ||
+      contains(github.event.pull_request.labels.*.name, 'release'))
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: read
+    outputs:
+      version: ${{ steps.metadata.outputs.version }}
+      tag: ${{ steps.metadata.outputs.tag }}
+    steps:
+      - name: Fetch Sources
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.merge_commit_sha }}
+          fetch-depth: 0
+
+      - name: Prepare Release Metadata
+        id: metadata
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          VERSION="$(ruby -e 'puts File.read("pubspec.yaml")[/^version:\s*([0-9]+\.[0-9]+\.[0-9]+)(?:\+\d+)?\s*$/, 1] || abort("Missing pubspec version")')"
+          TAG="v$VERSION"
+          RELEASE_NOTE="./build/release-note.md"
+
+          ruby - "$VERSION" "$RELEASE_NOTE" <<'RUBY'
+          require "fileutils"
+
+          version = ARGV.fetch(0)
+          output = ARGV.fetch(1)
+          excluded_headings = ["### 🔧 CI/CD", "### 🧪 测试", "### 📦 构建"]
+
+          def public_release_notes(markdown, excluded_headings)
+            skip_section = false
+            notes = markdown.each_line.each_with_object([]) do |line, lines|
+              stripped = line.strip
+              if stripped.start_with?("### ")
+                skip_section = excluded_headings.include?(stripped)
+                next if skip_section
+              elsif stripped.start_with?("## ")
+                skip_section = false
+              end
+
+              lines << line unless skip_section
+            end.join.strip
+
+            notes.empty? ? markdown.strip : notes
+          end
+
+          changelog = File.read("CHANGELOG.md")
+          pattern = /^## \[#{Regexp.escape(version)}\](?: - \d{4}-\d{2}-\d{2})?\s*$\n(?<body>.*?)(?=^## \[|\z)/m
+          match = changelog.match(pattern)
+          abort("Missing CHANGELOG.md section for #{version}") unless match
+
+          body = public_release_notes(match[:body], excluded_headings)
+          abort("Empty release notes for #{version}") if body.empty?
+
+          FileUtils.mkdir_p(File.dirname(output))
+          File.write(output, body + "\n")
+          RUBY
+
+          {
+            echo "version=$VERSION"
+            echo "tag=$TAG"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Create Release Tag
+        env:
+          TAG: ${{ steps.metadata.outputs.tag }}
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          git fetch --tags origin
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          if git rev-parse "$TAG" >/dev/null 2>&1; then
+            EXISTING="$(git rev-parse "$TAG^{commit}")"
+            CURRENT="$(git rev-parse HEAD)"
+            if [[ "$EXISTING" != "$CURRENT" ]]; then
+              echo "::error::Tag $TAG already exists at $EXISTING, expected $CURRENT"
+              exit 1
+            fi
+            echo "Tag $TAG already points to current commit."
+          else
+            git tag -a "$TAG" -m "Release $TAG"
+            git push origin "$TAG"
+          fi
+
+      - name: Create Or Update Draft Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ steps.metadata.outputs.tag }}
+          RELEASE_NOTE: ./build/release-note.md
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            IS_DRAFT="$(gh release view "$TAG" --json isDraft --jq '.isDraft')"
+            if [[ "$IS_DRAFT" != "true" ]]; then
+              echo "::error::Release $TAG already exists and is not a draft."
+              exit 1
+            fi
+            gh release edit "$TAG" \
+              --title "$TAG" \
+              --notes-file "$RELEASE_NOTE" \
+              --draft=true \
+              --latest=false
+          else
+            gh release create "$TAG" \
+              --draft \
+              --title "$TAG" \
+              --notes-file "$RELEASE_NOTE" \
+              --verify-tag \
+              --latest=false
+          fi
+
+  android:
+    name: Build Android APK
+    needs: metadata
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Fetch Sources
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.merge_commit_sha }}
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: zulu
+          java-version: 17
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Install Dependencies
+        run: flutter pub get
+
+      - name: Generate Code
+        run: dart run build_runner build --delete-conflicting-outputs
+
+      - name: Build APK
+        run: flutter build apk --release
+
+      - name: Upload Android Asset
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ needs.metadata.outputs.tag }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p dist
+          cp build/app/outputs/flutter-apk/app-release.apk "dist/AniDestiny-${TAG}-android.apk"
+          gh release upload "$TAG" "dist/AniDestiny-${TAG}-android.apk" --clobber
+
+  macos:
+    name: Build macOS App
+    needs: metadata
+    runs-on: macos-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Fetch Sources
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.merge_commit_sha }}
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Install Dependencies
+        run: flutter pub get
+
+      - name: Generate Code
+        run: dart run build_runner build --delete-conflicting-outputs
+
+      - name: Build macOS
+        run: flutter build macos --release
+
+      - name: Upload macOS Asset
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ needs.metadata.outputs.tag }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p dist
+          ditto -c -k --sequesterRsrc --keepParent \
+            build/macos/Build/Products/Release/AniDestiny.app \
+            "dist/AniDestiny-${TAG}-macos.zip"
+          gh release upload "$TAG" "dist/AniDestiny-${TAG}-macos.zip" --clobber
+
+  windows:
+    name: Build Windows App
+    needs: metadata
+    runs-on: windows-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Fetch Sources
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.merge_commit_sha }}
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Install Dependencies
+        run: flutter pub get
+
+      - name: Generate Code
+        run: dart run build_runner build --delete-conflicting-outputs
+
+      - name: Build Windows
+        run: flutter build windows --release
+
+      - name: Upload Windows Asset
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ needs.metadata.outputs.tag }}
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path dist | Out-Null
+          Compress-Archive `
+            -Path build/windows/x64/runner/Release/* `
+            -DestinationPath "dist/AniDestiny-$env:TAG-windows.zip" `
+            -Force
+          gh release upload "$env:TAG" "dist/AniDestiny-$env:TAG-windows.zip" --clobber
+
+  linux:
+    name: Build Linux App
+    needs: metadata
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Fetch Sources
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.merge_commit_sha }}
+
+      - name: Install Linux Build Dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y clang cmake ninja-build pkg-config libgtk-3-dev liblzma-dev
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Install Dependencies
+        run: flutter pub get
+
+      - name: Generate Code
+        run: dart run build_runner build --delete-conflicting-outputs
+
+      - name: Build Linux
+        run: flutter build linux --release
+
+      - name: Upload Linux Asset
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ needs.metadata.outputs.tag }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p dist
+          tar -czf "dist/AniDestiny-${TAG}-linux-x64.tar.gz" \
+            -C build/linux/x64/release bundle
+          gh release upload "$TAG" "dist/AniDestiny-${TAG}-linux-x64.tar.gz" --clobber
+
+  publish:
+    name: Publish GitHub Release
+    needs: [metadata, android, macos, windows, linux]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Publish Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ needs.metadata.outputs.tag }}
+        shell: bash
+        run: gh release edit "$TAG" --draft=false --latest

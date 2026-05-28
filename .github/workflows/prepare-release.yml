@@ -1,0 +1,193 @@
+name: Prepare Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: Target SemVer version, for example 1.1.0
+        required: true
+        type: string
+      build_number:
+        description: Optional Flutter build number. Leave empty to increment the current build number.
+        required: false
+        type: string
+
+jobs:
+  prepare-release:
+    name: Prepare Release PR
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      issues: write
+      pull-requests: write
+    steps:
+      - name: Fetch Sources
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Prepare Release Branch
+        id: release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ inputs.version }}
+          BUILD_NUMBER: ${{ inputs.build_number }}
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          BRANCH="release/v$VERSION"
+          DATE="$(date -u +%Y-%m-%d)"
+          export DATE
+
+          ruby <<'RUBY'
+          version = ENV.fetch("VERSION")
+          build_number = ENV.fetch("BUILD_NUMBER", "").strip
+
+          unless version.match?(/\A\d+\.\d+\.\d+\z/)
+            abort("Invalid SemVer version: #{version}")
+          end
+
+          unless build_number.empty? || build_number.match?(/\A\d+\z/)
+            abort("Invalid Flutter build number: #{build_number}")
+          end
+
+          current = File.read("pubspec.yaml")[/^version:\s*([^\s]+)\s*$/, 1]&.strip
+          abort("Missing version in pubspec.yaml") unless current
+
+          current_version = current.split("+", 2).first
+          unless current_version.match?(/\A\d+\.\d+\.\d+\z/)
+            abort("Invalid current SemVer version: #{current_version}")
+          end
+
+          current_parts = current_version.split(".").map(&:to_i)
+          target_parts = version.split(".").map(&:to_i)
+          unless (target_parts <=> current_parts).positive?
+            abort("Target version #{version} must be greater than current version #{current_version}")
+          end
+          RUBY
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git fetch origin main "$BRANCH" || true
+          git switch -C "$BRANCH" origin/main
+          mkdir -p build
+
+          ruby <<'RUBY'
+          version = ENV.fetch("VERSION")
+          date = ENV.fetch("DATE")
+          build_number = ENV.fetch("BUILD_NUMBER", "").strip
+
+          INTERNAL_HEADINGS_ZH = ["### 🔧 CI/CD", "### 🧪 测试", "### 📦 构建"].freeze
+
+          def extract_unreleased(path)
+            content = File.read(path)
+            match = content.match(/^## \[Unreleased\]\s*$\n(?<body>.*?)(?=^## \[|\z)/m)
+            abort("Missing Unreleased section in #{path}") unless match
+
+            body = match[:body].strip
+            abort("Empty Unreleased section in #{path}") if body.empty?
+            abort("#{path} Unreleased must include at least one ### section") unless body.match?(/^### .+$/)
+
+            body
+          end
+
+          def public_release_notes(markdown, excluded_headings)
+            skip_section = false
+            notes = markdown.each_line.each_with_object([]) do |line, lines|
+              stripped = line.strip
+              if stripped.start_with?("### ")
+                skip_section = excluded_headings.include?(stripped)
+                next if skip_section
+              elsif stripped.start_with?("## ")
+                skip_section = false
+              end
+
+              lines << line unless skip_section
+            end.join.strip
+
+            notes.empty? ? markdown.strip : notes
+          end
+
+          pubspec = File.read("pubspec.yaml")
+          current = pubspec[/^version:\s*([^\s]+)\s*$/, 1]
+          current_build = current.to_s.split("+", 2)[1].to_i
+          next_build = build_number.empty? ? current_build + 1 : build_number.to_i
+          pubspec.sub!(/^version:\s*.*$/, "version: #{version}+#{next_build}")
+          File.write("pubspec.yaml", pubspec)
+
+          def archive_unreleased(path, heading, notes)
+            content = File.read(path)
+            abort("#{path} already contains #{heading}") if content.include?(heading)
+
+            replacement = "## [Unreleased]\n\n#{heading}\n\n#{notes}\n"
+            changed = content.sub(/^## \[Unreleased\]\s*$\n.*?(?=^## \[|\z)/m, replacement)
+            abort("Missing Unreleased section in #{path}") if changed == content
+            File.write(path, changed)
+          end
+
+          notes_zh = extract_unreleased("CHANGELOG.md")
+          notes_en = extract_unreleased("CHANGELOG_en.md")
+          public_notes_zh = public_release_notes(notes_zh, INTERNAL_HEADINGS_ZH)
+
+          archive_unreleased("CHANGELOG.md", "## [#{version}] - #{date}", notes_zh)
+          archive_unreleased("CHANGELOG_en.md", "## [#{version}] - #{date}", notes_en)
+
+          body = <<~BODY
+          ## 摘要
+          准备发布 `v#{version}`。
+
+          ## 发布说明
+          #{public_notes_zh}
+
+          ## 检查项
+          - [ ] 已确认版本号和构建号
+          - [ ] 已确认中文发布说明
+          - [ ] 已确认多平台产物范围
+          BODY
+
+          File.write("build/release-pr-body.md", body)
+          RUBY
+
+          {
+            echo "chore: release v$VERSION"
+            echo
+            echo "Prepared by GitHub Actions."
+          } > build/release-commit-message.txt
+
+          git add pubspec.yaml CHANGELOG.md CHANGELOG_en.md
+
+          if git diff --cached --quiet; then
+            echo "No release changes detected."
+          else
+            git commit -F build/release-commit-message.txt
+          fi
+
+          git push --force-with-lease --set-upstream origin "$BRANCH"
+
+          gh label create release \
+            --description "Release preparation pull request" \
+            --color 0366d6 \
+            --force \
+            || true
+
+          PR_NUMBER="$(gh pr list --head "$BRANCH" --base main --state open --json number --jq '.[0].number // ""')"
+          if [[ -n "$PR_NUMBER" ]]; then
+            gh pr edit "$PR_NUMBER" \
+              --title "chore: release v$VERSION" \
+              --body-file build/release-pr-body.md \
+              --add-label release
+          else
+            gh pr create \
+              --title "chore: release v$VERSION" \
+              --body-file build/release-pr-body.md \
+              --label release \
+              --base main \
+              --head "$BRANCH"
+          fi
+
+          {
+            echo "branch=$BRANCH"
+            echo "version=$VERSION"
+          } >> "$GITHUB_OUTPUT"
