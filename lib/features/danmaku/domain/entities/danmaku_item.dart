@@ -12,6 +12,7 @@ class DanmakuItem {
     required this.color,
     required this.type,
     this.sender,
+    this.source,
   });
 
   final String id;
@@ -20,4 +21,5 @@ class DanmakuItem {
   final int color;
   final DanmakuType type;
   final String? sender;
+  final String? source;
 }

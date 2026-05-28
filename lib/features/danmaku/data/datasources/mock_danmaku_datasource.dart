@@ -14,6 +14,7 @@ class MockDanmakuDataSource {
         color: 0xFFFFFFFF,
         type: DanmakuType.scroll,
         sender: 'mock',
+        source: 'mock',
       ),
       DanmakuItem(
         id: 'mock-danmaku-2',
@@ -22,6 +23,7 @@ class MockDanmakuDataSource {
         color: 0xFFFFD166,
         type: DanmakuType.scroll,
         sender: 'mock',
+        source: 'mock',
       ),
       DanmakuItem(
         id: 'mock-danmaku-3',
@@ -30,6 +32,7 @@ class MockDanmakuDataSource {
         color: 0xFF8BD3FF,
         type: DanmakuType.top,
         sender: 'mock',
+        source: 'mock',
       ),
       DanmakuItem(
         id: 'mock-danmaku-4',
@@ -38,6 +41,7 @@ class MockDanmakuDataSource {
         color: 0xFFFFFFFF,
         type: DanmakuType.bottom,
         sender: 'mock',
+        source: 'mock',
       ),
       DanmakuItem(
         id: 'mock-danmaku-5',
@@ -46,6 +50,7 @@ class MockDanmakuDataSource {
         color: 0xFFB8F2C2,
         type: DanmakuType.scroll,
         sender: 'mock',
+        source: 'mock',
       ),
     ];
   }

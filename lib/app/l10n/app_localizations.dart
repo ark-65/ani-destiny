@@ -153,6 +153,12 @@ class AppLocalizations {
   String get sourceDiagnosticsEmpty => _t('sourceDiagnosticsEmpty');
   String get sourceDiagnosticsClear => _t('sourceDiagnosticsClear');
   String get danmaku => _t('danmaku');
+  String get danmakuStatusLoading => _t('danmakuStatusLoading');
+  String get danmakuStatusDandanplay => _t('danmakuStatusDandanplay');
+  String get danmakuStatusFallback => _t('danmakuStatusFallback');
+  String get danmakuStatusEmpty => _t('danmakuStatusEmpty');
+  String get danmakuStatusUnavailable => _t('danmakuStatusUnavailable');
+  String get danmakuStatusAvailable => _t('danmakuStatusAvailable');
   String get enabled => _t('enabled');
   String opacityPercent(int percent) => '${_t('opacity')} $percent%';
   String fontSize(int size) => '${_t('fontSize')} $size';
@@ -293,6 +299,12 @@ const _localizedValues = {
     'sourceDiagnosticsEmpty': '暂无诊断记录',
     'sourceDiagnosticsClear': '清空',
     'danmaku': '弹幕',
+    'danmakuStatusLoading': '弹幕：加载中',
+    'danmakuStatusDandanplay': '弹幕：弹弹play',
+    'danmakuStatusFallback': '弹幕：fallback',
+    'danmakuStatusEmpty': '弹幕：空',
+    'danmakuStatusUnavailable': '弹幕不可用',
+    'danmakuStatusAvailable': '弹幕：可用',
     'enabled': '启用',
     'opacity': '不透明度',
     'fontSize': '字号',
@@ -408,6 +420,12 @@ const _localizedValues = {
     'sourceDiagnosticsEmpty': 'No diagnostics yet',
     'sourceDiagnosticsClear': 'Clear',
     'danmaku': 'Danmaku',
+    'danmakuStatusLoading': 'Danmaku: loading',
+    'danmakuStatusDandanplay': 'Danmaku: Dandanplay',
+    'danmakuStatusFallback': 'Danmaku: fallback',
+    'danmakuStatusEmpty': 'Danmaku: empty',
+    'danmakuStatusUnavailable': 'Danmaku unavailable',
+    'danmakuStatusAvailable': 'Danmaku: available',
     'enabled': 'Enabled',
     'opacity': 'Opacity',
     'fontSize': 'Font size',
@@ -519,6 +537,12 @@ const _localizedValues = {
     'sourceDiagnosticsEmpty': '診断記録はありません',
     'sourceDiagnosticsClear': 'クリア',
     'danmaku': '弾幕',
+    'danmakuStatusLoading': '弾幕: 読み込み中',
+    'danmakuStatusDandanplay': '弾幕: 弹弹play',
+    'danmakuStatusFallback': '弾幕: fallback',
+    'danmakuStatusEmpty': '弾幕: 空',
+    'danmakuStatusUnavailable': '弾幕は利用できません',
+    'danmakuStatusAvailable': '弾幕: 利用可能',
     'enabled': '有効',
     'opacity': '不透明度',
     'fontSize': '文字サイズ',

@@ -14,11 +14,20 @@ final mockDanmakuDataSourceProvider = Provider<MockDanmakuDataSource>((ref) {
 
 final dandanplayDanmakuDataSourceProvider =
     Provider<DandanplayDanmakuDataSource>((ref) {
-  return DandanplayDanmakuDataSource(ref.watch(dioProvider));
+  const appId = String.fromEnvironment('DANDANPLAY_APP_ID');
+  const appSecret = String.fromEnvironment('DANDANPLAY_APP_SECRET');
+  return DioDandanplayDanmakuDataSource(
+    dio: ref.watch(dioProvider),
+    credentials: const DandanplayCredentials(
+      appId: appId,
+      appSecret: appSecret,
+    ),
+  );
 });
 
 final danmakuRepositoryProvider = Provider<DanmakuRepository>((ref) {
   return DanmakuRepositoryImpl(
+    dandanplayDataSource: ref.watch(dandanplayDanmakuDataSourceProvider),
     mockDataSource: ref.watch(mockDanmakuDataSourceProvider),
   );
 });
@@ -27,12 +36,23 @@ final danmakuSettingsProvider = StateProvider<DanmakuSettings>((ref) {
   return const DanmakuSettings.defaults();
 });
 
-final danmakuItemsProvider = FutureProvider.autoDispose
-    .family<List<DanmakuItem>, ({String animeId, String episodeId})>(
+typedef DanmakuRequest = ({
+  String animeId,
+  String episodeId,
+  String animeTitle,
+  String episodeTitle,
+  int? episodeIndex,
+});
+
+final danmakuItemsProvider =
+    FutureProvider.autoDispose.family<List<DanmakuItem>, DanmakuRequest>(
   (ref, request) {
     return ref.watch(danmakuRepositoryProvider).getDanmaku(
           animeId: request.animeId,
           episodeId: request.episodeId,
+          animeTitle: request.animeTitle,
+          episodeTitle: request.episodeTitle,
+          episodeIndex: request.episodeIndex,
         );
   },
 );

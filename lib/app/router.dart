@@ -106,6 +106,7 @@ PlayerRouteArgs _playerArgsFromState(GoRouterState state) {
     playSourceId: query['playSourceId'],
     playSourceTitle: query['playSourceTitle'],
     playHeaders: _decodePlayHeaders(query['playHeaders']),
+    episodeIndex: int.tryParse(query['episodeIndex'] ?? ''),
     initialPosition: _decodePosition(query['initialPositionMs']),
   );
 }

@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../app/l10n/app_localizations.dart';
+import '../../../danmaku/domain/entities/danmaku_item.dart';
 import '../../../danmaku/presentation/providers/danmaku_providers.dart';
 import '../../../danmaku/presentation/widgets/danmaku_overlay.dart';
 import '../../../download/presentation/providers/download_providers.dart';
@@ -65,7 +66,13 @@ class _PlayerPageState extends ConsumerState<PlayerPage> {
     final danmakuSettings = ref.watch(danmakuSettingsProvider);
     final danmakuItems = ref.watch(
       danmakuItemsProvider(
-        (animeId: _args.animeId, episodeId: _args.episodeId),
+        (
+          animeId: _args.animeId,
+          episodeId: _args.episodeId,
+          animeTitle: _args.animeTitle,
+          episodeTitle: _args.episodeTitle,
+          episodeIndex: _args.episodeIndex,
+        ),
       ),
     );
 
@@ -125,6 +132,12 @@ class _PlayerPageState extends ConsumerState<PlayerPage> {
                   loading: () => const SizedBox.shrink(),
                   error: (_, __) => const SizedBox.shrink(),
                 ),
+                if (danmakuSettings.enabled)
+                  Positioned(
+                    top: 12,
+                    left: 12,
+                    child: _DanmakuStatusBadge(value: danmakuItems),
+                  ),
               ],
             ),
           ),
@@ -263,6 +276,45 @@ class _PlayerPageState extends ConsumerState<PlayerPage> {
     // TODO(ark65): Add url_launcher based external-player intents per platform.
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text(context.l10n.externalPlayerNotImplemented)),
+    );
+  }
+}
+
+class _DanmakuStatusBadge extends StatelessWidget {
+  const _DanmakuStatusBadge({required this.value});
+
+  final AsyncValue<List<DanmakuItem>> value;
+
+  @override
+  Widget build(BuildContext context) {
+    final label = value.when(
+      data: (items) {
+        if (items.isEmpty) return context.l10n.danmakuStatusEmpty;
+        final sources = items.map((item) => item.source).toSet();
+        if (sources.contains('dandanplay')) {
+          return context.l10n.danmakuStatusDandanplay;
+        }
+        if (sources.contains('mock')) return context.l10n.danmakuStatusFallback;
+        return context.l10n.danmakuStatusAvailable;
+      },
+      loading: () => context.l10n.danmakuStatusLoading,
+      error: (_, __) => context.l10n.danmakuStatusUnavailable,
+    );
+
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: Colors.black.withValues(alpha: 0.52),
+        borderRadius: BorderRadius.circular(999),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+        child: Text(
+          label,
+          style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                color: Colors.white,
+              ),
+        ),
+      ),
     );
   }
 }

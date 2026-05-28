@@ -12,6 +12,7 @@ dependencies:
   flutter_localizations:
     sdk: flutter
   collection: ^1.18.0
+  crypto: ^3.0.6
   cupertino_icons: ^1.0.8
   dio: ^5.5.0
   drift: ^2.20.0

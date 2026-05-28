@@ -140,6 +140,7 @@ class AnimeDetailPage extends ConsumerWidget {
         playSourceTitle: source.title,
         playUrl: source.url,
         playHeaders: source.headers,
+        episodeIndex: episode.index,
       ),
     );
   }

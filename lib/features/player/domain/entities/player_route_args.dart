@@ -13,6 +13,7 @@ class PlayerRouteArgs {
     this.playSourceId,
     this.playSourceTitle,
     this.playHeaders = const {},
+    this.episodeIndex,
     this.initialPosition,
   });
 
@@ -26,5 +27,6 @@ class PlayerRouteArgs {
   final String? playSourceId;
   final String? playSourceTitle;
   final Map<String, String> playHeaders;
+  final int? episodeIndex;
   final Duration? initialPosition;
 }
