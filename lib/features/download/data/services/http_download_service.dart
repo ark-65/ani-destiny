@@ -27,6 +27,7 @@ class HttpDownloadService implements DownloadService {
   Future<String> createTask({
     required String animeId,
     required String episodeId,
+    required String sourceId,
     required String url,
     required String title,
     required String episodeTitle,
@@ -38,6 +39,7 @@ class HttpDownloadService implements DownloadService {
         id: taskId,
         animeId: animeId,
         episodeId: episodeId,
+        sourceId: sourceId,
         title: title,
         episodeTitle: episodeTitle,
         url: url,
@@ -61,25 +63,25 @@ class HttpDownloadService implements DownloadService {
       );
     }
 
-    // TODO(anidestiny): Add Android/iOS storage permission handling before enabling
-    // production downloads outside the app documents directory.
-    final directory = await getApplicationDocumentsDirectory();
-    final fileName = _safeFileName('${task.title}-${task.episodeTitle}.mp4');
-    final localPath = p.join(directory.path, 'downloads', fileName);
-    await Directory(p.dirname(localPath)).create(recursive: true);
-    final token = CancelToken();
-    _tokens[taskId] = token;
-
-    await _repository.upsertTask(
-      task.copyWith(
-        localPath: localPath,
-        status: DownloadStatus.running,
-        updatedAt: DateTime.now(),
-      ),
-    );
-    _emit(taskId, task.progress, DownloadStatus.running);
-
     try {
+      // TODO(ark65): Add Android/iOS storage permission handling before enabling
+      // production downloads outside the app documents directory.
+      final directory = await getApplicationDocumentsDirectory();
+      final fileName = _safeFileName('${task.title}-${task.episodeTitle}.mp4');
+      final localPath = p.join(directory.path, 'downloads', fileName);
+      await Directory(p.dirname(localPath)).create(recursive: true);
+      final token = CancelToken();
+      _tokens[taskId] = token;
+
+      await _repository.upsertTask(
+        task.copyWith(
+          localPath: localPath,
+          status: DownloadStatus.running,
+          updatedAt: DateTime.now(),
+        ),
+      );
+      _emit(taskId, task.progress, DownloadStatus.running);
+
       await _dio.download(
         task.url,
         localPath,
@@ -87,12 +89,14 @@ class HttpDownloadService implements DownloadService {
         onReceiveProgress: (received, total) {
           if (total <= 0) return;
           final progress = (received / total).clamp(0.0, 1.0).toDouble();
-          _repository.upsertTask(
-            task.copyWith(
-              localPath: localPath,
-              status: DownloadStatus.running,
-              progress: progress,
-              updatedAt: DateTime.now(),
+          unawaited(
+            _repository.upsertTask(
+              task.copyWith(
+                localPath: localPath,
+                status: DownloadStatus.running,
+                progress: progress,
+                updatedAt: DateTime.now(),
+              ),
             ),
           );
           _emit(taskId, progress, DownloadStatus.running);
@@ -116,6 +120,16 @@ class HttpDownloadService implements DownloadService {
         ),
       );
       _emit(taskId, task.progress, DownloadStatus.failed);
+      rethrow;
+    } on Object {
+      final latest = await _repository.getTask(taskId) ?? task;
+      await _repository.upsertTask(
+        latest.copyWith(
+          status: DownloadStatus.failed,
+          updatedAt: DateTime.now(),
+        ),
+      );
+      _emit(taskId, latest.progress, DownloadStatus.failed);
       rethrow;
     } finally {
       _tokens.remove(taskId);

@@ -62,7 +62,7 @@ class _PlayerPageState extends ConsumerState<PlayerPage> {
         () => unawaited(_saveHistory()),
       );
     });
-    unawaited(_controller.load(widget.playUrl));
+    unawaited(_loadPlayer());
   }
 
   @override
@@ -109,9 +109,27 @@ class _PlayerPageState extends ConsumerState<PlayerPage> {
               fit: StackFit.expand,
               children: [
                 PlayerSurface(
+                  controller: _controller,
                   title: widget.title,
                   playUrl: widget.playUrl,
                 ),
+                if (_state.isBuffering)
+                  const Center(child: CircularProgressIndicator()),
+                if (_state.errorMessage != null)
+                  Center(
+                    child: ConstrainedBox(
+                      constraints: const BoxConstraints(maxWidth: 420),
+                      child: Card(
+                        child: Padding(
+                          padding: const EdgeInsets.all(16),
+                          child: Text(
+                            _state.errorMessage!,
+                            textAlign: TextAlign.center,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
                 danmakuItems.when(
                   data: (items) => DanmakuOverlay(
                     items: items,
@@ -155,7 +173,7 @@ class _PlayerPageState extends ConsumerState<PlayerPage> {
     if (!_state.isInitialized) return;
     await ref.read(historyRepositoryProvider).upsert(
           WatchHistory(
-            id: '${widget.animeId}-${widget.episodeId}',
+            id: '${widget.sourceId}:${widget.animeId}:${widget.episodeId}',
             animeId: widget.animeId,
             episodeId: widget.episodeId,
             animeTitle: widget.title,
@@ -170,23 +188,54 @@ class _PlayerPageState extends ConsumerState<PlayerPage> {
   }
 
   Future<void> _createDownload() async {
-    final taskId = await ref.read(httpDownloadServiceProvider).createTask(
-          animeId: widget.animeId,
-          episodeId: widget.episodeId,
-          url: widget.playUrl,
-          title: widget.title,
-          episodeTitle: _episodeTitle,
-        );
-    if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(context.l10n.downloadTaskCreated(taskId)),
-        action: SnackBarAction(
-          label: context.l10n.open,
-          onPressed: () => context.push('/downloads'),
+    try {
+      final taskId = await ref.read(httpDownloadServiceProvider).createTask(
+            animeId: widget.animeId,
+            episodeId: widget.episodeId,
+            sourceId: widget.sourceId,
+            url: widget.playUrl,
+            title: widget.title,
+            episodeTitle: _episodeTitle,
+          );
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(context.l10n.downloadTaskCreated(taskId)),
+          action: SnackBarAction(
+            label: context.l10n.open,
+            onPressed: () => context.push('/downloads'),
+          ),
         ),
-      ),
-    );
+      );
+    } catch (error) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(error.toString())),
+      );
+    }
+  }
+
+  Future<void> _loadPlayer() async {
+    try {
+      if (widget.playUrl.trim().isEmpty) {
+        setState(
+          () => _state = _state.copyWith(
+            isBuffering: false,
+            errorMessage: context.l10n.playerNoPlayUrl,
+          ),
+        );
+        return;
+      }
+      await _controller.load(widget.playUrl);
+    } catch (error) {
+      if (!mounted) return;
+      setState(
+        () => _state = _state.copyWith(
+          isBuffering: false,
+          errorMessage: error.toString(),
+        ),
+      );
+    }
   }
 
   void _showSpeedSheet() {
@@ -201,14 +250,14 @@ class _PlayerPageState extends ConsumerState<PlayerPage> {
   }
 
   void _showNextEpisodePlaceholder() {
-    // TODO(anidestiny): Resolve the next episode from AnimeDetail and load it here.
+    // TODO(ark65): Resolve the next episode from AnimeDetail and load it here.
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text(context.l10n.nextEpisodeNotImplemented)),
     );
   }
 
   void _showExternalPlayerPlaceholder() {
-    // TODO(anidestiny): Add url_launcher based external-player intents per platform.
+    // TODO(ark65): Add url_launcher based external-player intents per platform.
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text(context.l10n.externalPlayerNotImplemented)),
     );

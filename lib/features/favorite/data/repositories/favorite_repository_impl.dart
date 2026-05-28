@@ -24,9 +24,15 @@ class FavoriteRepositoryImpl implements FavoriteRepository {
   }
 
   @override
-  Stream<bool> isFavorite(String animeId) {
+  Stream<bool> isFavorite({
+    required String sourceId,
+    required String animeId,
+  }) {
     final query = _database.select(_database.favoriteAnimeTable)
-      ..where((table) => table.animeId.equals(animeId))
+      ..where(
+        (table) =>
+            table.sourceId.equals(sourceId) & table.animeId.equals(animeId),
+      )
       ..limit(1);
     return query.watchSingleOrNull().map((row) => row != null);
   }
@@ -45,22 +51,32 @@ class FavoriteRepositoryImpl implements FavoriteRepository {
   }
 
   @override
-  Future<void> remove(String animeId) {
+  Future<void> remove({
+    required String sourceId,
+    required String animeId,
+  }) {
     return (_database.delete(_database.favoriteAnimeTable)
-          ..where((table) => table.animeId.equals(animeId)))
+          ..where(
+            (table) =>
+                table.sourceId.equals(sourceId) & table.animeId.equals(animeId),
+          ))
         .go();
   }
 
   @override
   Future<void> toggle(FavoriteAnime anime) async {
     final query = _database.select(_database.favoriteAnimeTable)
-      ..where((table) => table.animeId.equals(anime.animeId))
+      ..where(
+        (table) =>
+            table.sourceId.equals(anime.sourceId) &
+            table.animeId.equals(anime.animeId),
+      )
       ..limit(1);
     final existing = await query.getSingleOrNull();
     if (existing == null) {
       await add(anime);
     } else {
-      await remove(anime.animeId);
+      await remove(sourceId: anime.sourceId, animeId: anime.animeId);
     }
   }
 

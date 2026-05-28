@@ -4,6 +4,7 @@ abstract class DownloadService {
   Future<String> createTask({
     required String animeId,
     required String episodeId,
+    required String sourceId,
     required String url,
     required String title,
     required String episodeTitle,

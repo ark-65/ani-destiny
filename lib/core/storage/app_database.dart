@@ -35,7 +35,7 @@ class FavoriteAnimeTable extends Table {
   DateTimeColumn get createdAt => dateTime().named('created_at')();
 
   @override
-  Set<Column> get primaryKey => {animeId};
+  Set<Column> get primaryKey => {sourceId, animeId};
 }
 
 @DataClassName('DownloadTaskRow')
@@ -48,6 +48,8 @@ class DownloadTaskTable extends Table {
   TextColumn get episodeId => text().named('episode_id')();
   TextColumn get title => text()();
   TextColumn get episodeTitle => text().named('episode_title')();
+  TextColumn get sourceId =>
+      text().named('source_id').withDefault(const Constant('mock'))();
   TextColumn get url => text()();
   TextColumn get localPath => text().named('local_path').nullable()();
   TextColumn get status => text()();
@@ -71,5 +73,17 @@ class AppDatabase extends _$AppDatabase {
       : super(executor ?? driftDatabase(name: 'ani_destiny'));
 
   @override
-  int get schemaVersion => 1;
+  int get schemaVersion => 2;
+
+  @override
+  MigrationStrategy get migration => MigrationStrategy(
+        onUpgrade: (migrator, from, to) async {
+          if (from < 2) {
+            await migrator.addColumn(
+              downloadTaskTable,
+              downloadTaskTable.sourceId,
+            );
+          }
+        },
+      );
 }

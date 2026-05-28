@@ -1,20 +1,37 @@
 import 'package:flutter/material.dart';
+import 'package:media_kit_video/media_kit_video.dart';
 
 import '../../../../app/l10n/app_localizations.dart';
+import '../../data/adapters/media_kit_player_adapter.dart';
+import '../../domain/adapters/player_controller_adapter.dart';
 
 class PlayerSurface extends StatelessWidget {
   const PlayerSurface({
+    required this.controller,
     required this.title,
     required this.playUrl,
     super.key,
   });
 
+  final PlayerControllerAdapter controller;
   final String title;
   final String playUrl;
 
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
+
+    final controller = this.controller;
+    if (controller is MediaKitPlayerAdapter) {
+      return ColoredBox(
+        color: Colors.black,
+        child: Video(
+          controller: controller.videoController,
+          controls: null,
+          fit: BoxFit.contain,
+        ),
+      );
+    }
 
     return ColoredBox(
       color: Colors.black,

@@ -36,6 +36,7 @@ class PlayerState {
     Duration? duration,
     double? speed,
     String? errorMessage,
+    bool clearErrorMessage = false,
   }) {
     return PlayerState(
       isInitialized: isInitialized ?? this.isInitialized,
@@ -44,7 +45,8 @@ class PlayerState {
       position: position ?? this.position,
       duration: duration ?? this.duration,
       speed: speed ?? this.speed,
-      errorMessage: errorMessage,
+      errorMessage:
+          clearErrorMessage ? null : errorMessage ?? this.errorMessage,
     );
   }
 }

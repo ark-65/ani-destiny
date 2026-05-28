@@ -12,6 +12,7 @@ class DownloadTask {
     required this.id,
     required this.animeId,
     required this.episodeId,
+    required this.sourceId,
     required this.title,
     required this.episodeTitle,
     required this.url,
@@ -25,6 +26,7 @@ class DownloadTask {
   final String id;
   final String animeId;
   final String episodeId;
+  final String sourceId;
   final String title;
   final String episodeTitle;
   final String url;
@@ -44,6 +46,7 @@ class DownloadTask {
       id: id,
       animeId: animeId,
       episodeId: episodeId,
+      sourceId: sourceId,
       title: title,
       episodeTitle: episodeTitle,
       url: url,

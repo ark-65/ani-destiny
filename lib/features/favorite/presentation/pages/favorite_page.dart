@@ -47,10 +47,17 @@ class FavoritePage extends ConsumerWidget {
                       final item = items[index];
                       return FavoriteTile(
                         favorite: item,
-                        onOpen: () => context.push('/anime/${item.animeId}'),
-                        onRemove: () => ref
-                            .read(favoriteRepositoryProvider)
-                            .remove(item.animeId),
+                        onOpen: () => context.push(
+                          Uri(
+                            path: '/anime/${item.animeId}',
+                            queryParameters: {'sourceId': item.sourceId},
+                          ).toString(),
+                        ),
+                        onRemove: () =>
+                            ref.read(favoriteRepositoryProvider).remove(
+                                  sourceId: item.sourceId,
+                                  animeId: item.animeId,
+                                ),
                       );
                     },
                     separatorBuilder: (context, index) =>

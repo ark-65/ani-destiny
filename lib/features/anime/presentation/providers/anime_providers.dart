@@ -8,6 +8,9 @@ import '../../domain/entities/schedule_item.dart';
 import '../../domain/entities/search_result.dart';
 import '../../domain/repositories/anime_repository.dart';
 
+typedef SourceAnimeRequest = ({String sourceId, String animeId});
+typedef SourceEpisodeRequest = ({String sourceId, String episodeId});
+
 final animeRepositoryProvider = Provider<AnimeRepository>((ref) {
   return AnimeRepositoryImpl(
     sourceRepository: ref.watch(sourceRepositoryProvider),
@@ -27,6 +30,20 @@ final playSourcesProvider =
     return ref.watch(animeRepositoryProvider).getPlaySources(episodeId);
   },
 );
+
+final animeDetailBySourceProvider = FutureProvider.autoDispose
+    .family<AnimeDetail, SourceAnimeRequest>((ref, request) async {
+  final registry = ref.watch(sourceRegistryProvider);
+  final adapter = registry.getById(request.sourceId) ?? registry.defaultAdapter;
+  return adapter.getAnimeDetail(request.animeId);
+});
+
+final playSourcesBySourceProvider = FutureProvider.autoDispose
+    .family<List<PlaySource>, SourceEpisodeRequest>((ref, request) async {
+  final registry = ref.watch(sourceRegistryProvider);
+  final adapter = registry.getById(request.sourceId) ?? registry.defaultAdapter;
+  return adapter.getPlaySources(request.episodeId);
+});
 
 final searchResultsProvider =
     FutureProvider.autoDispose.family<List<SearchResult>, String>(

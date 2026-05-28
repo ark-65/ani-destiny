@@ -103,6 +103,7 @@ class DownloadPage extends ConsumerWidget {
     final taskId = await ref.read(httpDownloadServiceProvider).createTask(
           animeId: 'mock-starlight-voyage',
           episodeId: 'mock-starlight-voyage-ep-1',
+          sourceId: 'mock',
           url: 'https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8',
           title: 'Starlight Voyage',
           episodeTitle: 'Episode 1 - Departure Signal',

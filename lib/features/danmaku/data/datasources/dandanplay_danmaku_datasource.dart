@@ -12,7 +12,7 @@ class DandanplayDanmakuDataSource {
     required String animeTitle,
     required String episodeTitle,
   }) async {
-    // TODO(anidestiny): Implement Dandanplay episode search, request signing, and
+    // TODO(ark65): Implement Dandanplay episode search, request signing, and
     // comment mapping after API credentials/configuration are added.
     _dio.options.baseUrl = 'https://api.dandanplay.net';
     await Future<void>.delayed(const Duration(milliseconds: 80));

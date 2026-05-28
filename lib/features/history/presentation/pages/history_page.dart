@@ -72,8 +72,11 @@ class HistoryPage extends ConsumerWidget {
     WidgetRef ref,
     WatchHistory history,
   ) async {
-    final sources =
-        await ref.read(playSourcesProvider(history.episodeId).future);
+    final sources = await ref.read(
+      playSourcesBySourceProvider(
+        (sourceId: history.sourceId, episodeId: history.episodeId),
+      ).future,
+    );
     if (!context.mounted) return;
     if (sources.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(

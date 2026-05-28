@@ -58,21 +58,21 @@ class RemoteSourceProxyAdapter implements AnimeSourceAdapter {
 
   @override
   Future<AnimeDetail> getAnimeDetail(String animeId) {
-    // TODO(anidestiny): Define the SourceProxy detail response contract before
+    // TODO(ark65): Define the SourceProxy detail response contract before
     // enabling this adapter in settings.
     return _notImplemented('detail');
   }
 
   @override
   Future<List<PlaySource>> getPlaySources(String episodeId) {
-    // TODO(anidestiny): Define the SourceProxy play-source response contract before
+    // TODO(ark65): Define the SourceProxy play-source response contract before
     // enabling this adapter in settings.
     return _notImplemented('play sources');
   }
 
   @override
   Future<List<ScheduleItem>> getSchedule() {
-    // TODO(anidestiny): Define the SourceProxy schedule response contract before
+    // TODO(ark65): Define the SourceProxy schedule response contract before
     // enabling this adapter in settings.
     return _notImplemented('schedule');
   }

@@ -19,13 +19,22 @@ class AnimeDetailPage extends ConsumerWidget {
   const AnimeDetailPage({
     required this.animeId,
     super.key,
+    this.sourceId,
   });
 
   final String animeId;
+  final String? sourceId;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final detailState = ref.watch(animeDetailProvider(animeId));
+    final sourceId = this.sourceId;
+    final detailState = sourceId == null
+        ? ref.watch(animeDetailProvider(animeId))
+        : ref.watch(
+            animeDetailBySourceProvider(
+              (sourceId: sourceId, animeId: animeId),
+            ),
+          );
 
     return SafeArea(
       child: detailState.when(
@@ -35,8 +44,13 @@ class AnimeDetailPage extends ConsumerWidget {
           onRetry: () => ref.invalidate(animeDetailProvider(animeId)),
         ),
         data: (detail) {
-          final isFavorite =
-              ref.watch(isFavoriteProvider(detail.id)).valueOrNull;
+          final isFavorite = ref
+              .watch(
+                isFavoriteProvider(
+                  (sourceId: detail.sourceId, animeId: detail.id),
+                ),
+              )
+              .valueOrNull;
 
           return AdaptivePage(
             child: ListView(
@@ -97,7 +111,11 @@ class AnimeDetailPage extends ConsumerWidget {
     AnimeDetail detail,
     Episode episode,
   ) async {
-    final sources = await ref.read(playSourcesProvider(episode.id).future);
+    final sources = await ref.read(
+      playSourcesBySourceProvider(
+        (sourceId: detail.sourceId, episodeId: episode.id),
+      ).future,
+    );
     if (!context.mounted) return;
     if (sources.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -124,7 +142,11 @@ class AnimeDetailPage extends ConsumerWidget {
     AnimeDetail detail,
     Episode episode,
   ) async {
-    final sources = await ref.read(playSourcesProvider(episode.id).future);
+    final sources = await ref.read(
+      playSourcesBySourceProvider(
+        (sourceId: detail.sourceId, episodeId: episode.id),
+      ).future,
+    );
     if (!context.mounted) return;
     if (sources.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -135,6 +157,7 @@ class AnimeDetailPage extends ConsumerWidget {
     final taskId = await ref.read(httpDownloadServiceProvider).createTask(
           animeId: detail.id,
           episodeId: episode.id,
+          sourceId: detail.sourceId,
           url: sources.first.url,
           title: detail.title,
           episodeTitle: episode.title,
