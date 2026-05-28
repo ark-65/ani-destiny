@@ -11,7 +11,9 @@ class PlayerControls extends StatelessWidget {
     required this.onSpeed,
     required this.onDownload,
     required this.onToggleDanmaku,
+    required this.onToggleFullscreen,
     required this.danmakuEnabled,
+    required this.isFullscreen,
     super.key,
   });
 
@@ -21,7 +23,9 @@ class PlayerControls extends StatelessWidget {
   final VoidCallback onSpeed;
   final VoidCallback onDownload;
   final VoidCallback onToggleDanmaku;
+  final VoidCallback onToggleFullscreen;
   final bool danmakuEnabled;
+  final bool isFullscreen;
 
   @override
   Widget build(BuildContext context) {
@@ -78,14 +82,10 @@ class PlayerControls extends StatelessWidget {
                 ),
                 IconButton(
                   tooltip: context.l10n.fullscreenPlaceholder,
-                  onPressed: () {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text(context.l10n.fullscreenNotImplemented),
-                      ),
-                    );
-                  },
-                  icon: const Icon(Icons.fullscreen),
+                  onPressed: onToggleFullscreen,
+                  icon: Icon(
+                    isFullscreen ? Icons.fullscreen_exit : Icons.fullscreen,
+                  ),
                 ),
               ],
             ),

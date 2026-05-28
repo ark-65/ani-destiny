@@ -12,6 +12,9 @@ class MockPlayerAdapter implements PlayerControllerAdapter {
   Timer? _timer;
   PlayerState _state = PlayerState.initial();
 
+  String? lastLoadedUrl;
+  Map<String, String> lastLoadedHeaders = const {};
+
   @override
   Stream<PlayerState> get stateStream => _controller.stream;
 
@@ -20,6 +23,8 @@ class MockPlayerAdapter implements PlayerControllerAdapter {
     String url, {
     Map<String, String> headers = const {},
   }) async {
+    lastLoadedUrl = url;
+    lastLoadedHeaders = Map.unmodifiable(headers);
     _state = PlayerState.initial().copyWith(
       isInitialized: true,
       duration: const Duration(minutes: 24, seconds: 12),

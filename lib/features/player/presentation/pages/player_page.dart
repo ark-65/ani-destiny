@@ -1,7 +1,9 @@
 import 'dart:async';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../app/l10n/app_localizations.dart';
@@ -14,6 +16,7 @@ import '../../../history/presentation/providers/history_providers.dart';
 import '../../domain/adapters/player_controller_adapter.dart';
 import '../../domain/entities/player_route_args.dart';
 import '../../domain/entities/player_state.dart';
+import '../../domain/services/playback_diagnostics.dart';
 import '../providers/player_providers.dart';
 import '../widgets/playback_speed_sheet.dart';
 import '../widgets/player_controls.dart';
@@ -31,22 +34,26 @@ class PlayerPage extends ConsumerStatefulWidget {
   ConsumerState<PlayerPage> createState() => _PlayerPageState();
 }
 
-class _PlayerPageState extends ConsumerState<PlayerPage> {
+class _PlayerPageState extends ConsumerState<PlayerPage>
+    with WidgetsBindingObserver {
   static const _historyWriteInterval = Duration(seconds: 5);
 
   late final PlayerControllerAdapter _controller;
   StreamSubscription<PlayerState>? _subscription;
   DateTime? _lastHistorySavedAt;
   PlayerState _state = PlayerState.initial();
+  bool _isFullscreen = false;
+  bool _isDisposed = false;
 
   PlayerRouteArgs get _args => widget.args;
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _controller = ref.read(playerRepositoryProvider).createController();
     _subscription = _controller.stateStream.listen((state) {
-      if (!mounted) return;
+      if (!mounted || _isDisposed) return;
       setState(() => _state = state);
       unawaited(_saveHistory());
     });
@@ -55,10 +62,23 @@ class _PlayerPageState extends ConsumerState<PlayerPage> {
 
   @override
   void dispose() {
+    _isDisposed = true;
+    WidgetsBinding.instance.removeObserver(this);
+    unawaited(_restoreSystemUi());
     unawaited(_saveHistory(force: true));
     unawaited(_subscription?.cancel());
     unawaited(_controller.dispose());
     super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.inactive ||
+        state == AppLifecycleState.paused ||
+        state == AppLifecycleState.detached) {
+      unawaited(_saveHistory(force: true));
+      if (_state.isPlaying) unawaited(_controller.pause());
+    }
   }
 
   @override
@@ -78,23 +98,31 @@ class _PlayerPageState extends ConsumerState<PlayerPage> {
 
     return Scaffold(
       backgroundColor: Colors.black,
-      appBar: AppBar(
-        title: Text(_args.episodeTitle),
-        foregroundColor: Colors.white,
-        backgroundColor: Colors.black,
-        actions: [
-          IconButton(
-            tooltip: context.l10n.nextEpisodePlaceholder,
-            onPressed: _showNextEpisodePlaceholder,
-            icon: const Icon(Icons.skip_next),
-          ),
-          IconButton(
-            tooltip: context.l10n.externalPlayerPlaceholder,
-            onPressed: _showExternalPlayerPlaceholder,
-            icon: const Icon(Icons.open_in_new),
-          ),
-        ],
-      ),
+      appBar: _isFullscreen
+          ? null
+          : AppBar(
+              title: Text(_args.episodeTitle),
+              foregroundColor: Colors.white,
+              backgroundColor: Colors.black,
+              actions: [
+                if (kDebugMode)
+                  IconButton(
+                    tooltip: context.l10n.playbackDiagnostics,
+                    onPressed: _showPlaybackDiagnostics,
+                    icon: const Icon(Icons.bug_report_outlined),
+                  ),
+                IconButton(
+                  tooltip: context.l10n.nextEpisodePlaceholder,
+                  onPressed: _showNextEpisodePlaceholder,
+                  icon: const Icon(Icons.skip_next),
+                ),
+                IconButton(
+                  tooltip: context.l10n.externalPlayerPlaceholder,
+                  onPressed: _showExternalPlayerPlaceholder,
+                  icon: const Icon(Icons.open_in_new),
+                ),
+              ],
+            ),
       body: Column(
         children: [
           Expanded(
@@ -157,15 +185,114 @@ class _PlayerPageState extends ConsumerState<PlayerPage> {
               onSeek: (position) => unawaited(_controller.seek(position)),
               onSpeed: _showSpeedSheet,
               onDownload: () => unawaited(_createDownload()),
+              onToggleFullscreen: () => unawaited(_toggleFullscreen()),
               onToggleDanmaku: () {
                 ref.read(danmakuSettingsProvider.notifier).state =
                     danmakuSettings.copyWith(enabled: !danmakuSettings.enabled);
               },
+              isFullscreen: _isFullscreen,
             ),
           ),
         ],
       ),
     );
+  }
+
+  Future<void> _toggleFullscreen() async {
+    if (_isFullscreen) {
+      await _exitFullscreen();
+    } else {
+      await _enterFullscreen();
+    }
+  }
+
+  Future<void> _enterFullscreen() async {
+    await SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
+    await SystemChrome.setPreferredOrientations(const [
+      DeviceOrientation.landscapeLeft,
+      DeviceOrientation.landscapeRight,
+    ]);
+    if (!mounted) return;
+    setState(() => _isFullscreen = true);
+  }
+
+  Future<void> _exitFullscreen() async {
+    await _restoreSystemUi();
+    if (!mounted) return;
+    setState(() => _isFullscreen = false);
+  }
+
+  Future<void> _restoreSystemUi() async {
+    await SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
+    await SystemChrome.setPreferredOrientations(const [
+      DeviceOrientation.portraitUp,
+    ]);
+  }
+
+  void _showPlaybackDiagnostics() {
+    final diagnostics = const PlaybackDiagnosticsBuilder().build(
+      sourceId: _args.sourceId,
+      playSourceTitle: _args.playSourceTitle,
+      playUrl: _args.playUrl,
+      headers: _args.playHeaders,
+    );
+
+    showModalBottomSheet<void>(
+      context: context,
+      showDragHandle: true,
+      builder: (context) {
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  context.l10n.playbackDiagnostics,
+                  style: Theme.of(context).textTheme.titleLarge,
+                ),
+                const SizedBox(height: 12),
+                _DiagnosticRow(
+                  label: context.l10n.playbackDiagnosticSource,
+                  value: diagnostics.sourceId,
+                ),
+                _DiagnosticRow(
+                  label: context.l10n.playbackDiagnosticLine,
+                  value: diagnostics.playSourceTitle ?? '-',
+                ),
+                _DiagnosticRow(
+                  label: context.l10n.playbackDiagnosticUrlType,
+                  value: diagnostics.urlType,
+                ),
+                _DiagnosticRow(
+                  label: context.l10n.playbackDiagnosticUrl,
+                  value: diagnostics.sanitizedUrl,
+                ),
+                _DiagnosticRow(
+                  label: context.l10n.playbackDiagnosticHeaders,
+                  value: diagnostics.headerKeys.isEmpty
+                      ? '-'
+                      : diagnostics.headerKeys.join(', '),
+                ),
+                _DiagnosticRow(
+                  label: context.l10n.playbackDiagnosticState,
+                  value: _stateLabel(),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  String _stateLabel() {
+    if (_state.errorMessage != null) return 'error';
+    if (_state.isBuffering) return 'buffering';
+    if (_state.isPlaying) return 'playing';
+    if (_state.isInitialized) return 'ready';
+    return 'loading';
   }
 
   Future<void> _saveHistory({bool force = false}) async {
@@ -276,6 +403,36 @@ class _PlayerPageState extends ConsumerState<PlayerPage> {
     // TODO(ark65): Add url_launcher based external-player intents per platform.
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text(context.l10n.externalPlayerNotImplemented)),
+    );
+  }
+}
+
+class _DiagnosticRow extends StatelessWidget {
+  const _DiagnosticRow({
+    required this.label,
+    required this.value,
+  });
+
+  final String label;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SizedBox(
+            width: 108,
+            child: Text(
+              label,
+              style: Theme.of(context).textTheme.labelMedium,
+            ),
+          ),
+          Expanded(child: SelectableText(value)),
+        ],
+      ),
     );
   }
 }

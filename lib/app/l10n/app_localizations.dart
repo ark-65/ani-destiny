@@ -115,6 +115,13 @@ class AppLocalizations {
   String get externalPlayerPlaceholder => _t('externalPlayerPlaceholder');
   String get nextEpisodeNotImplemented => _t('nextEpisodeNotImplemented');
   String get externalPlayerNotImplemented => _t('externalPlayerNotImplemented');
+  String get playbackDiagnostics => _t('playbackDiagnostics');
+  String get playbackDiagnosticSource => _t('playbackDiagnosticSource');
+  String get playbackDiagnosticLine => _t('playbackDiagnosticLine');
+  String get playbackDiagnosticUrlType => _t('playbackDiagnosticUrlType');
+  String get playbackDiagnosticUrl => _t('playbackDiagnosticUrl');
+  String get playbackDiagnosticHeaders => _t('playbackDiagnosticHeaders');
+  String get playbackDiagnosticState => _t('playbackDiagnosticState');
   String get open => _t('open');
   String get loadingFavorites => _t('loadingFavorites');
   String get favoriteEmpty => _t('favoriteEmpty');
@@ -256,12 +263,19 @@ const _localizedValues = {
     'playbackSpeed': '播放速度',
     'hideDanmaku': '隐藏弹幕',
     'showDanmaku': '显示弹幕',
-    'fullscreenPlaceholder': '全屏占位',
+    'fullscreenPlaceholder': '全屏',
     'fullscreenNotImplemented': '全屏暂未实现。',
     'nextEpisodePlaceholder': '下一集占位',
     'externalPlayerPlaceholder': '外部播放器占位',
     'nextEpisodeNotImplemented': '下一集暂未实现。',
     'externalPlayerNotImplemented': '外部播放器暂未实现。',
+    'playbackDiagnostics': '播放诊断',
+    'playbackDiagnosticSource': '数据源',
+    'playbackDiagnosticLine': '线路',
+    'playbackDiagnosticUrlType': 'URL 类型',
+    'playbackDiagnosticUrl': 'URL',
+    'playbackDiagnosticHeaders': 'Headers',
+    'playbackDiagnosticState': '状态',
     'open': '打开',
     'loadingFavorites': '正在加载收藏',
     'favoriteEmpty': '收藏的番剧会显示在这里',
@@ -374,12 +388,19 @@ const _localizedValues = {
     'playbackSpeed': 'Playback speed',
     'hideDanmaku': 'Hide danmaku',
     'showDanmaku': 'Show danmaku',
-    'fullscreenPlaceholder': 'Fullscreen placeholder',
+    'fullscreenPlaceholder': 'Fullscreen',
     'fullscreenNotImplemented': 'Fullscreen is not implemented yet.',
     'nextEpisodePlaceholder': 'Next episode placeholder',
     'externalPlayerPlaceholder': 'External player placeholder',
     'nextEpisodeNotImplemented': 'Next episode is not implemented yet.',
     'externalPlayerNotImplemented': 'External player is not implemented yet.',
+    'playbackDiagnostics': 'Playback diagnostics',
+    'playbackDiagnosticSource': 'Source',
+    'playbackDiagnosticLine': 'Line',
+    'playbackDiagnosticUrlType': 'URL type',
+    'playbackDiagnosticUrl': 'URL',
+    'playbackDiagnosticHeaders': 'Headers',
+    'playbackDiagnosticState': 'State',
     'open': 'Open',
     'loadingFavorites': 'Loading favorites',
     'favoriteEmpty': 'Favorite anime will appear here',
@@ -493,12 +514,19 @@ const _localizedValues = {
     'playbackSpeed': '再生速度',
     'hideDanmaku': '弾幕を隠す',
     'showDanmaku': '弾幕を表示',
-    'fullscreenPlaceholder': '全画面プレースホルダー',
+    'fullscreenPlaceholder': '全画面',
     'fullscreenNotImplemented': '全画面はまだ実装されていません。',
     'nextEpisodePlaceholder': '次のエピソード',
     'externalPlayerPlaceholder': '外部プレイヤー',
     'nextEpisodeNotImplemented': '次のエピソードはまだ実装されていません。',
     'externalPlayerNotImplemented': '外部プレイヤーはまだ実装されていません。',
+    'playbackDiagnostics': '再生診断',
+    'playbackDiagnosticSource': 'ソース',
+    'playbackDiagnosticLine': 'ライン',
+    'playbackDiagnosticUrlType': 'URL 種類',
+    'playbackDiagnosticUrl': 'URL',
+    'playbackDiagnosticHeaders': 'Headers',
+    'playbackDiagnosticState': '状態',
     'open': '開く',
     'loadingFavorites': 'お気に入りを読み込み中',
     'favoriteEmpty': 'お気に入り作品がここに表示されます',
