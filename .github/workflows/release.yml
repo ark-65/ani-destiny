@@ -315,6 +315,7 @@ jobs:
       - name: Publish Release
         env:
           GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
           TAG: ${{ needs.metadata.outputs.tag }}
         shell: bash
         run: gh release edit "$TAG" --draft=false --latest
