@@ -31,16 +31,55 @@ class SourceSelector extends StatelessWidget {
               title: Text(
                 context.l10n.sourceDisplayName(source.id, source.name),
               ),
-              subtitle: Text(
-                context.l10n.sourceDisplayDescription(
-                  source.id,
-                  source.description ?? source.id,
-                ),
+              subtitle: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('id: ${source.id}'),
+                  Text(
+                    context.l10n.sourceDisplayDescription(
+                      source.id,
+                      source.description ?? source.id,
+                    ),
+                  ),
+                  if (source.id == currentSourceId)
+                    Text(context.l10n.sourceCurrent),
+                  if (source.id == 'sakura')
+                    Padding(
+                      padding: const EdgeInsets.only(top: 6),
+                      child: DecoratedBox(
+                        decoration: BoxDecoration(
+                          color:
+                              Theme.of(context).colorScheme.secondaryContainer,
+                          borderRadius: BorderRadius.circular(999),
+                        ),
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 3,
+                          ),
+                          child: Text(
+                            context.l10n.sourceExperimentalBadge,
+                            style: Theme.of(context)
+                                .textTheme
+                                .labelSmall
+                                ?.copyWith(
+                                  color: Theme.of(context)
+                                      .colorScheme
+                                      .onSecondaryContainer,
+                                ),
+                          ),
+                        ),
+                      ),
+                    ),
+                ],
               ),
               secondary: Icon(
-                source.id == 'mock'
-                    ? Icons.check_circle_outline
-                    : Icons.construction_outlined,
+                switch (source.id) {
+                  'mock' => Icons.check_circle_outline,
+                  'sakura' => Icons.science_outlined,
+                  'remote-proxy' => Icons.cloud_queue_outlined,
+                  _ => Icons.construction_outlined,
+                },
               ),
             ),
         ],

@@ -1,26 +1,26 @@
 import 'dart:async';
 import 'dart:typed_data';
 
+import 'package:ani_destiny/core/error/app_exception.dart';
 import 'package:ani_destiny/features/source/data/adapters/sakura_anime_source_adapter.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
   test(
-      'SakuraAnimeSourceAdapter parses search, detail, schedule, and play data',
+      'Sakura adapter parses fake home, search, detail, schedule, and play data',
       () async {
-    final dio = Dio()
-      ..httpClientAdapter = const _FakeHttpClientAdapter(
-        responses: {
-          '/': _homeHtml,
-          '/latest/': _latestHtml,
-          '/search': _searchHtml,
-          '/vod/2026406456.html': _detailHtml,
-          '/_get_plays/2026406456/ep1': _playJson,
-        },
-      );
+    final fake = _FakeHttpClientAdapter(
+      responses: {
+        '/': _homeHtml,
+        '/latest/': _latestHtml,
+        '/search': _searchHtml,
+        '/vod/2026406456.html': _detailHtml,
+        '/_get_plays/2026406456/ep1': _playJson,
+      },
+    );
     final adapter = SakuraAnimeSourceAdapter(
-      dio: dio,
+      dio: Dio()..httpClientAdapter = fake,
       baseUrl: 'https://example.test',
     );
 
@@ -31,6 +31,7 @@ void main() {
     final search = await adapter.search('王者');
     expect(search.single.animeId, '2026406456');
     expect(search.single.description, contains('拥有独树一帜力量'));
+    expect(fake.requests.any((uri) => uri.path == '/search'), isTrue);
 
     final detail = await adapter.getAnimeDetail(search.single.animeId);
     expect(detail.title, '最强王者的第二人生 第二季');
@@ -47,9 +48,10 @@ void main() {
       'https://cdn.example.test/video/index.m3u8',
     );
     expect(
-      playSources.first.headers['referer'],
+      playSources.first.headers['Referer'],
       'https://example.test/vod-play/2026406456/ep1.html',
     );
+    expect(playSources.first.headers, contains('User-Agent'));
     expect(playSources.last.title, '备用线路');
     expect(playSources.last.quality, 'HLS');
 
@@ -58,14 +60,95 @@ void main() {
     expect(schedule.single.weekday, DateTime(2026, 5, 28).weekday);
     expect(schedule.single.updateTime, '2026-05-28 第01集');
   });
+
+  test('Sakura adapter falls back to latest when home cards are missing',
+      () async {
+    final adapter = SakuraAnimeSourceAdapter(
+      dio: Dio()
+        ..httpClientAdapter = _FakeHttpClientAdapter(
+          responses: {
+            '/': '<html><body></body></html>',
+            '/latest/': _latestHtml,
+          },
+        ),
+      baseUrl: 'https://example.test',
+    );
+
+    final home = await adapter.getHomeRecommendations();
+    expect(home.single.id, '2026406456');
+    expect(home.single.status, '第01集');
+  });
+
+  test('Sakura adapter normalizes absolute and relative URLs', () async {
+    final adapter = SakuraAnimeSourceAdapter(
+      dio: Dio()
+        ..httpClientAdapter = _FakeHttpClientAdapter(
+          responses: {
+            '/vod/2026406456.html': _detailHtml,
+            '/_get_plays/2026406456/ep1': _playJson,
+          },
+        ),
+      baseUrl: 'https://example.test/root/',
+    );
+
+    final detail = await adapter.getAnimeDetail(
+      'https://example.test/vod/2026406456.html?from=search',
+    );
+    expect(detail.id, '2026406456');
+
+    final playSources = await adapter.getPlaySources(
+      'https://example.test/vod-play/2026406456/ep1.html?line=1',
+    );
+    expect(playSources.last.url, 'https://example.test/media/backup.m3u8');
+  });
+
+  test('Sakura adapter parses play source script fallback', () async {
+    final adapter = SakuraAnimeSourceAdapter(
+      dio: Dio()
+        ..httpClientAdapter = _FakeHttpClientAdapter(
+          responses: {
+            '/_get_plays/2026406456/ep1': _playScriptHtml,
+          },
+        ),
+      baseUrl: 'https://example.test',
+    );
+
+    final sources = await adapter.getPlaySources('2026406456/ep1');
+    expect(sources, hasLength(1));
+    expect(sources.single.title, 'script-line');
+    expect(sources.single.url, 'https://example.test/video/script.m3u8');
+  });
+
+  test('Sakura adapter throws AppException for empty detail episodes',
+      () async {
+    final adapter = SakuraAnimeSourceAdapter(
+      dio: Dio()
+        ..httpClientAdapter = _FakeHttpClientAdapter(
+          responses: {
+            '/vod/2026406456.html': _detailWithoutEpisodesHtml,
+          },
+        ),
+      baseUrl: 'https://example.test',
+    );
+
+    await expectLater(
+      adapter.getAnimeDetail('2026406456'),
+      throwsA(
+        isA<AppException>().having(
+          (error) => error.code,
+          'code',
+          'sakura_parse_detail_episodes_failed',
+        ),
+      ),
+    );
+  });
 }
 
 class _FakeHttpClientAdapter implements HttpClientAdapter {
-  const _FakeHttpClientAdapter({
-    required this.responses,
-  });
+  _FakeHttpClientAdapter({required this.responses});
 
   final Map<String, String> responses;
+  final List<Uri> requests = [];
 
   @override
   void close({bool force = false}) {}
@@ -76,6 +159,7 @@ class _FakeHttpClientAdapter implements HttpClientAdapter {
     Stream<Uint8List>? requestStream,
     Future<void>? cancelFuture,
   ) async {
+    requests.add(options.uri);
     final body = responses[options.uri.path];
     if (body == null) {
       return ResponseBody.fromString(
@@ -148,6 +232,16 @@ const _detailHtml = '''
 </html>
 ''';
 
+const _detailWithoutEpisodesHtml = '''
+<html>
+  <body>
+    <h1 class="names">最强王者的第二人生 第二季</h1>
+    <h5>动漫介绍</h5>
+    <div>动漫介绍正文。</div>
+  </body>
+</html>
+''';
+
 const _latestHtml = '''
 <html>
   <body>
@@ -178,4 +272,18 @@ const _playJson = '''
     }
   ]
 }
+''';
+
+const _playScriptHtml = '''
+<html>
+  <body>
+    <script>
+      window.playerData = {
+        "video_plays": [
+          {"play_data": "/video/script.m3u8", "src_site": "script-line"}
+        ]
+      };
+    </script>
+  </body>
+</html>
 ''';

@@ -146,6 +146,12 @@ class AppLocalizations {
   String get loadingCurrentSource => _t('loadingCurrentSource');
   String sourceSetTo(String sourceId) => '${_t('sourceSetTo')} $sourceId';
   String get sourceV1Note => _t('sourceV1Note');
+  String get sourceCurrent => _t('sourceCurrent');
+  String get sourceExperimentalBadge => _t('sourceExperimentalBadge');
+  String get sourceDiagnostics => _t('sourceDiagnostics');
+  String get sourceDiagnosticsSubtitle => _t('sourceDiagnosticsSubtitle');
+  String get sourceDiagnosticsEmpty => _t('sourceDiagnosticsEmpty');
+  String get sourceDiagnosticsClear => _t('sourceDiagnosticsClear');
   String get danmaku => _t('danmaku');
   String get enabled => _t('enabled');
   String opacityPercent(int percent) => '${_t('opacity')} $percent%';
@@ -200,7 +206,8 @@ const _localizedValues = {
     'mockSourceName': 'Mock 动漫数据源',
     'mockSourceDescription': '本地 Mock 数据源，用来保证 AniDestiny 第一版可运行。',
     'sakuraSourceName': 'Sakura Anime',
-    'sakuraSourceDescription': '实验性真实数据源，支持搜索、详情、剧集和播放源解析。',
+    'sakuraSourceDescription':
+        'Website parser source. Experimental source. It may fail if the upstream site changes.',
     'remoteProxySourceName': '远程数据源代理',
     'remoteProxySourceDescription': '预留给未来自建代理服务，第一版不强依赖。',
     'sourceLoading': '数据源：加载中',
@@ -279,6 +286,12 @@ const _localizedValues = {
     'loadingCurrentSource': '正在加载当前数据源',
     'sourceSetTo': '数据源已切换为',
     'sourceV1Note': 'Mock 数据源最稳定；Sakura Anime 已接入基础解析，但可能受站点结构变化影响。',
+    'sourceCurrent': '当前启用',
+    'sourceExperimentalBadge': 'Experimental',
+    'sourceDiagnostics': '数据源诊断',
+    'sourceDiagnosticsSubtitle': '查看最近的数据源请求和解析状态。',
+    'sourceDiagnosticsEmpty': '暂无诊断记录',
+    'sourceDiagnosticsClear': '清空',
     'danmaku': '弹幕',
     'enabled': '启用',
     'opacity': '不透明度',
@@ -305,7 +318,7 @@ const _localizedValues = {
         'Local mock source used to keep AniDestiny runnable.',
     'sakuraSourceName': 'Sakura Anime',
     'sakuraSourceDescription':
-        'Experimental real source for search, detail, episodes, and play URLs.',
+        'Website parser source. Experimental source. It may fail if the upstream site changes.',
     'remoteProxySourceName': 'Remote Source Proxy',
     'remoteProxySourceDescription':
         'Future self-hosted proxy adapter. Not required for first version.',
@@ -387,6 +400,13 @@ const _localizedValues = {
     'sourceSetTo': 'Source set to',
     'sourceV1Note':
         'Mock is the most stable source. Sakura Anime has basic parsing, but site changes can still break it.',
+    'sourceCurrent': 'Current',
+    'sourceExperimentalBadge': 'Experimental',
+    'sourceDiagnostics': 'Source diagnostics',
+    'sourceDiagnosticsSubtitle':
+        'View recent source request and parser status.',
+    'sourceDiagnosticsEmpty': 'No diagnostics yet',
+    'sourceDiagnosticsClear': 'Clear',
     'danmaku': 'Danmaku',
     'enabled': 'Enabled',
     'opacity': 'Opacity',
@@ -411,7 +431,8 @@ const _localizedValues = {
     'mockSourceName': 'Mock アニメソース',
     'mockSourceDescription': 'AniDestiny 初版を動作させるためのローカル Mock ソースです。',
     'sakuraSourceName': 'Sakura Anime',
-    'sakuraSourceDescription': '検索、詳細、エピソード、再生 URL に対応した実験的な実データソースです。',
+    'sakuraSourceDescription':
+        'Website parser source. Experimental source. It may fail if the upstream site changes.',
     'remoteProxySourceName': 'リモートソースプロキシ',
     'remoteProxySourceDescription': '将来の自前プロキシ用 Adapter です。初版では必須ではありません。',
     'sourceLoading': 'ソース: 読み込み中',
@@ -491,6 +512,12 @@ const _localizedValues = {
     'sourceSetTo': 'ソースを切り替えました:',
     'sourceV1Note':
         'Mock が最も安定しています。Sakura Anime は基本解析に対応しましたが、サイト構造の変更で壊れる可能性があります。',
+    'sourceCurrent': '現在使用中',
+    'sourceExperimentalBadge': 'Experimental',
+    'sourceDiagnostics': 'ソース診断',
+    'sourceDiagnosticsSubtitle': '最近のソース要求と解析状態を確認します。',
+    'sourceDiagnosticsEmpty': '診断記録はありません',
+    'sourceDiagnosticsClear': 'クリア',
     'danmaku': '弾幕',
     'enabled': '有効',
     'opacity': '不透明度',
