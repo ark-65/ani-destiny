@@ -6,6 +6,9 @@
 
 ## [Unreleased]
 
+### 📚 Documentation
+- Clarified release asset platform selection and changed the Android debug artifact example to use a version placeholder.
+
 ## [1.0.2] - 2026-05-29
 
 ### ✨ Added
