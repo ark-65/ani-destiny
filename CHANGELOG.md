@@ -7,6 +7,8 @@
 ## [Unreleased]
 
 ### ✨ 新增
+- 新增标准品牌资源目录，接入现有 AniDestiny logo 作为 README 和平台图标源资源。
+- 新增基于现有 logo 同步生成的 Android、Windows 和 macOS 平台图标资源。
 - 新增发布页入口、运行诊断页和可复制的反馈摘要，方便用户反馈播放和数据源问题。
 - 新增数据源健康状态、失败计数、最近问题摘要和手动重置能力。
 - 新增所选数据源不可用时自动回退到可用备用数据源的能力。
@@ -25,12 +27,15 @@
 - 修复空详情剧集和空播放源未被视为数据源失败的问题，确保自动 fallback 能够生效。
 
 ### 🔧 CI/CD
+- 调整 macOS 和 Windows release asset 命名，补充平台和架构后缀。
 - 修复 release rebuild、Linux release 依赖和 release 发布 checkout 上下文。
 - 调整预发布 PR 和正式 GitHub Release 的发布说明生成规则，只输出【新增】【变更】【修复】面向用户章节。
 - 新增 `changelog correction` PR label 通道，允许受控修正已发布 changelog 段落，同时仍要求更新 `[Unreleased]`。
 - 新增 Android debug 构建脚本和清理脚本，补充 post-release 验证配置。
 
 ### 📚 文档
+- 更新 README 视觉展示、平台说明、截图占位和品牌资源说明。
+- 补充平台构建文档中的平台图标路径和 release asset 命名规范。
 - 更新中英文 README 和平台构建说明。
 - 将发布后新增的 changelog 内容移回 `[Unreleased]`，避免继续修改已发布的 `1.0.1` 记录。
 

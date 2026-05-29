@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="assets/branding/ani_destiny_logo.png" alt="AniDestiny" width="180">
+</p>
+
 # AniDestiny
 
 > 中文 | [English](./README_en.md)
@@ -21,12 +25,17 @@ AniDestiny 当前以客户端数据源适配器为核心：
 - 更新日志：[CHANGELOG.md](./CHANGELOG.md)
 - English changelog: [CHANGELOG_en.md](./CHANGELOG_en.md)
 
+## 平台
+
+AniDestiny 当前面向 Android、macOS、Windows 和 Linux 构建验证。
+
 ## 项目标识
 
 - App 名称：AniDestiny
 - Flutter package：ani_destiny
 - Android applicationId：com.ark65.anidestiny
 - iOS bundleId：com.ark65.anidestiny
+- 品牌资源：`assets/branding/`
 
 ## 当前能力
 
@@ -37,6 +46,10 @@ AniDestiny 当前以客户端数据源适配器为核心：
 - 历史记录、收藏、下载任务的本地持久化。
 - 多语言界面：中文、英文、日文。
 - Android、macOS、Windows、Linux 的发布构建流程。
+
+## Screenshots
+
+Screenshots will be added in a future release.
 
 ## 开发命令
 
@@ -87,8 +100,8 @@ flutter build linux --release
 Release CI 会上传：
 
 - Android APK
-- macOS ZIP
-- Windows ZIP
+- macOS universal ZIP
+- Windows x64 ZIP
 - Linux tar.gz
 
 ## License Notice
