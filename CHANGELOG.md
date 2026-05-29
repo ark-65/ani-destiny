@@ -13,9 +13,10 @@
 - 新增持久化数据源健康状态和手动重置支持。
 - 新增 fallback 提示，让用户知道当前是否正在展示备用数据。
 - 新增最近失败和 fallback 事件的数据源诊断信息。
+- 新增运行诊断中的数据源健康概览和最近 fallback 事件。
 
 ### 🔄 变更
-- 改进首页、搜索、详情、排期和历史流程在所选数据源暂时不可用时的恢复路径。
+- 改进首页、搜索、详情、排期、历史和播放页面在所选数据源暂时不可用时的恢复路径。
 - 改进 Source Settings，显示健康状态、失败次数和重置控件。
 - 改进播放诊断和 URL 脱敏，避免反馈摘要暴露 query token、header 值或其他敏感信息。
 - 搜索空结果保持为正常空状态，不再作为数据源失败触发 fallback。
@@ -23,7 +24,14 @@
 ### 🐛 修复
 - 修复空详情剧集和空播放源未被视为数据源失败的问题，确保自动 fallback 能够生效。
 
+### 🔧 CI/CD
+- 修复 release rebuild、Linux release 依赖和 release 发布 checkout 上下文。
+- 调整预发布 PR 和正式 GitHub Release 的发布说明生成规则，只输出【新增】【变更】【修复】面向用户章节。
+- 新增 `changelog correction` PR label 通道，允许受控修正已发布 changelog 段落，同时仍要求更新 `[Unreleased]`。
+- 新增 Android debug 构建脚本和清理脚本，补充 post-release 验证配置。
+
 ### 📚 文档
+- 更新中英文 README 和平台构建说明。
 - 将发布后新增的 changelog 内容移回 `[Unreleased]`，避免继续修改已发布的 `1.0.1` 记录。
 
 ### 已知限制

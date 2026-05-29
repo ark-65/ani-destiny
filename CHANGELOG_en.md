@@ -13,9 +13,10 @@
 - Added persistent source health state and reset support.
 - Added fallback notices so users can tell when fallback data is being shown.
 - Added source diagnostics for recent failures and fallback events.
+- Added source health summaries and recent fallback events to runtime diagnostics.
 
 ### 🔄 Changed
-- Improved Home, Search, Detail, Schedule, and History flows when the selected source is temporarily unavailable.
+- Improved Home, Search, Detail, Schedule, History, and Player flows when the selected source is temporarily unavailable.
 - Improved Source Settings with health status, failure count, and reset controls.
 - Improved playback diagnostics and URL sanitization to avoid exposing query tokens, header values, or other sensitive details in feedback summaries.
 - Kept empty search results as a normal empty state instead of treating them as source failures that trigger fallback.
@@ -23,7 +24,14 @@
 ### 🐛 Fixed
 - Fixed empty detail episodes and empty play-source lists not being treated as source failures, allowing automatic fallback to run.
 
+### 🔧 CI/CD
+- Fixed release rebuild handling, Linux release dependencies, and release publishing checkout context.
+- Changed release preparation PRs and GitHub Release notes to publish only user-facing Added, Changed, and Fixed sections.
+- Added a `changelog correction` PR label path for controlled fixes to released changelog sections while still requiring `[Unreleased]` updates.
+- Added Android debug build and clean scripts, plus post-release validation configuration.
+
 ### 📚 Documentation
+- Updated the Chinese and English READMEs and platform build notes.
 - Moved post-release changelog content back under `[Unreleased]` so the released `1.0.1` record stays stable.
 
 ### Known Limitations
