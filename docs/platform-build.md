@@ -36,7 +36,7 @@ build/app/outputs/flutter-apk/app-debug.apk
 Suggested local artifact name:
 
 ```txt
-AniDestiny-v1.0.1-android-debug.apk
+AniDestiny-v<version>-android-debug.apk
 ```
 
 ## App Icon Assets
@@ -116,6 +116,18 @@ requires signing certificates and the App Store release flow, so it is not part
 of the current public release artifacts.
 
 Before publishing a release, complete [release-checklist.md](./release-checklist.md).
+
+## Choosing Release Assets
+
+- Android users should install `AniDestiny-v<version>-android-universal.apk`.
+- Windows users should extract `AniDestiny-v<version>-windows-x64.zip` and run
+  `ani_destiny.exe`.
+- macOS users should extract `AniDestiny-v<version>-macos-universal.zip` and
+  open AniDestiny.app. Current artifacts are not distributed through the Mac App
+  Store, so Gatekeeper may require a manual allow step when the source is
+  trusted.
+- Linux users should extract `AniDestiny-v<version>-linux-x64.tar.gz` and run
+  it for the target desktop environment.
 
 ## Release Asset Naming
 

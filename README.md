@@ -113,6 +113,13 @@ Release CI 会上传：
 - Windows x64 ZIP
 - Linux tar.gz
 
+## 下载说明
+
+- Android：下载 `AniDestiny-v<version>-android-universal.apk`，在 Android 设备上安装。
+- Windows：下载 `AniDestiny-v<version>-windows-x64.zip`，解压后运行 `ani_destiny.exe`。
+- macOS：下载 `AniDestiny-v<version>-macos-universal.zip`，解压后打开 AniDestiny.app。当前产物未走商店签名流程，若系统拦截，请只在信任来源时通过系统安全设置允许打开。
+- Linux：下载 `AniDestiny-v<version>-linux-x64.tar.gz`，解压后按平台环境运行。
+
 ## License Notice
 
 This project is inspired by Animius.

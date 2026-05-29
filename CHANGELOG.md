@@ -6,6 +6,9 @@
 
 ## [Unreleased]
 
+### 📚 文档
+- 明确 release assets 的平台选择说明，并将 Android debug 示例命名改为版本占位符。
+
 ## [1.0.2] - 2026-05-29
 
 ### ✨ 新增
