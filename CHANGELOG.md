@@ -32,6 +32,8 @@
 - 修复空详情剧集和空播放源未被视为数据源失败的问题，确保自动 fallback 能够生效。
 
 ### 🔧 CI/CD
+- 新增 release preflight 脚本和发布前质量门禁 checklist。
+- 调整 Android release asset 命名为 universal APK 后缀，并记录 arm64 命名规范。
 - 调整 macOS 和 Windows release asset 命名，补充平台和架构后缀。
 - 修复 release rebuild、Linux release 依赖和 release 发布 checkout 上下文。
 - 调整预发布 PR 和正式 GitHub Release 的发布说明生成规则，只输出【新增】【变更】【修复】面向用户章节。
@@ -39,6 +41,8 @@
 - 新增 Android debug 构建脚本和清理脚本，补充 post-release 验证配置。
 
 ### 📚 文档
+- 新增 Android、Windows、macOS 发布 smoke checklist。
+- 补充 release asset 命名、Windows 构建验证和当前功能边界说明。
 - 新增下载路径、Android 权限策略和暂未实现范围说明。
 - 更新 README 视觉展示、平台说明、截图占位和品牌资源说明。
 - 补充平台构建文档中的平台图标路径和 release asset 命名规范。

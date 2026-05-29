@@ -66,9 +66,10 @@ flutter run
 ```sh
 bash scripts/clean.sh
 bash scripts/build-android-debug.sh
+bash scripts/preflight-release.sh
 ```
 
-更多平台构建说明见 [docs/platform-build.md](./docs/platform-build.md)，下载路径和权限策略见 [docs/downloads.md](./docs/downloads.md)。
+更多平台构建说明见 [docs/platform-build.md](./docs/platform-build.md)，发布前检查见 [docs/release-checklist.md](./docs/release-checklist.md)，下载路径和权限策略见 [docs/downloads.md](./docs/downloads.md)。
 
 ## 手动打包
 
@@ -99,7 +100,7 @@ flutter build linux --release
 
 Release CI 会上传：
 
-- Android APK
+- Android universal APK
 - macOS universal ZIP
 - Windows x64 ZIP
 - Linux tar.gz

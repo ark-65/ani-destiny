@@ -183,8 +183,8 @@ jobs:
         run: |
           set -euo pipefail
           mkdir -p dist
-          cp build/app/outputs/flutter-apk/app-release.apk "dist/AniDestiny-${TAG}-android.apk"
-          gh release upload "$TAG" "dist/AniDestiny-${TAG}-android.apk" --clobber
+          cp build/app/outputs/flutter-apk/app-release.apk "dist/AniDestiny-${TAG}-android-universal.apk"
+          gh release upload "$TAG" "dist/AniDestiny-${TAG}-android-universal.apk" --clobber
 
   macos:
     name: Build macOS App
