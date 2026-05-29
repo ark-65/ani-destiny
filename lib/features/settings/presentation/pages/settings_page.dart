@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -116,6 +117,12 @@ class SettingsPage extends ConsumerWidget {
                   subtitle: Text(context.l10n.danmakuAboutValue),
                 ),
                 ListTile(
+                  leading: const Icon(Icons.content_copy_outlined),
+                  title: Text(context.l10n.copyDiagnostics),
+                  subtitle: Text(context.l10n.diagnosticsPrivacyNote),
+                  onTap: () => _copyDiagnostics(context, ref),
+                ),
+                ListTile(
                   leading: const Icon(Icons.bug_report_outlined),
                   title: Text(context.l10n.reportIssue),
                   subtitle: const Text(AppConstants.issuesUrl),
@@ -160,5 +167,21 @@ class SettingsPage extends ConsumerWidget {
   Future<void> _openExternalUrl(String url) async {
     final uri = Uri.parse(url);
     await launchUrl(uri, mode: LaunchMode.externalApplication);
+  }
+
+  Future<void> _copyDiagnostics(BuildContext context, WidgetRef ref) async {
+    try {
+      final markdown = await ref.read(feedbackPackageMarkdownProvider.future);
+      await Clipboard.setData(ClipboardData(text: markdown));
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(context.l10n.diagnosticsCopied)),
+      );
+    } catch (error) {
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(context.l10n.diagnosticsCopyFailed)),
+      );
+    }
   }
 }

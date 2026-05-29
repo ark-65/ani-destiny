@@ -10,6 +10,8 @@
 - Added download type detection for direct files, HLS/m3u8, BT placeholders, and unknown URLs.
 - Added an HLS/m3u8 manifest parser foundation for media and master playlists.
 - Added download task fields for failure reasons, headers, byte progress, and local paths.
+- Added a Copy diagnostics entry in Settings that generates a sanitized Markdown feedback summary.
+- Added a feedback diagnostics package with app version, platform, source health, fallback, playback, danmaku, and download task status.
 - Added a standard brand asset directory using the existing AniDestiny logo as the README and platform icon source.
 - Added Android, Windows, and macOS platform icon assets generated from the existing logo.
 - Added a release page entry, runtime diagnostics page, and copyable feedback summary for playback and source issues.
@@ -44,6 +46,7 @@
 
 ### 📚 Documentation
 - Added Windows CI build output path, temporary artifact, and EXE / taskbar icon verification notes.
+- Added an issue reporting guide for playback, source, danmaku, and download diagnostics.
 - Added Android, Windows, and macOS release smoke checklists.
 - Added release asset naming, Windows build verification, and current capability boundary notes.
 - Added download path, Android permission policy, and not-yet-implemented scope notes.

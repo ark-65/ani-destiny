@@ -22,6 +22,7 @@ AniDestiny 当前以客户端数据源适配器为核心：
 
 - 开源仓库：<https://github.com/ark-65/ani-destiny>
 - 发布页面：<https://github.com/ark-65/ani-destiny/releases>
+- 问题反馈指南：[docs/reporting-issues.md](./docs/reporting-issues.md)
 - 更新日志：[CHANGELOG.md](./CHANGELOG.md)
 - English changelog: [CHANGELOG_en.md](./CHANGELOG_en.md)
 
@@ -44,6 +45,7 @@ AniDestiny 当前面向 Android、macOS、Windows 和 Linux 构建验证。
 - 播放页基础播放控制、倍速、全屏、播放诊断。
 - Dandanplay 弹幕接入结构和 Mock fallback。
 - 历史记录、收藏、下载任务的本地持久化，支持直链下载和 HLS/BT 类型识别占位。
+- 设置页可复制已脱敏诊断摘要，用于反馈播放、数据源、弹幕和下载问题。
 - 多语言界面：中文、英文、日文。
 - Android、macOS、Windows、Linux 的发布构建流程。
 
@@ -70,6 +72,12 @@ bash scripts/preflight-release.sh
 ```
 
 更多平台构建说明见 [docs/platform-build.md](./docs/platform-build.md)，发布前检查见 [docs/release-checklist.md](./docs/release-checklist.md)，下载路径和权限策略见 [docs/downloads.md](./docs/downloads.md)。
+
+## 问题反馈
+
+反馈播放、数据源、弹幕或下载问题时，请提供 App 版本、平台、复现步骤、数据源名称、是否使用 fallback，以及从设置页复制的已脱敏诊断摘要。不要提交账号凭据、cookie、token 或包含 query 参数的完整 URL。
+
+更多说明见 [docs/reporting-issues.md](./docs/reporting-issues.md)。
 
 ## 手动打包
 
