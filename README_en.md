@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="assets/branding/ani_destiny_logo.png" alt="AniDestiny" width="180">
+</p>
+
 # AniDestiny
 
 > [中文](./README.md) | English
@@ -21,12 +25,17 @@ AniDestiny currently uses a client-side source adapter architecture:
 - Chinese changelog: [CHANGELOG.md](./CHANGELOG.md)
 - English changelog: [CHANGELOG_en.md](./CHANGELOG_en.md)
 
+## Platforms
+
+AniDestiny currently validates builds for Android, macOS, Windows, and Linux.
+
 ## Project Identity
 
 - App Name: AniDestiny
 - Flutter package: ani_destiny
 - Android applicationId: com.ark65.anidestiny
 - iOS bundleId: com.ark65.anidestiny
+- Brand assets: `assets/branding/`
 
 ## Current Features
 
@@ -37,6 +46,10 @@ AniDestiny currently uses a client-side source adapter architecture:
 - Local persistence for watch history, favorites, and download tasks.
 - UI localization: Chinese, English, and Japanese.
 - Release build workflow for Android, macOS, Windows, and Linux.
+
+## Screenshots
+
+Screenshots will be added in a future release.
 
 ## Development
 
@@ -87,8 +100,8 @@ This repository uses a reviewed release PR flow:
 Release CI uploads:
 
 - Android APK
-- macOS ZIP
-- Windows ZIP
+- macOS universal ZIP
+- Windows x64 ZIP
 - Linux tar.gz
 
 ## License Notice

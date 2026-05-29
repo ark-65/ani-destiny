@@ -223,8 +223,8 @@ jobs:
           mkdir -p dist
           ditto -c -k --sequesterRsrc --keepParent \
             build/macos/Build/Products/Release/AniDestiny.app \
-            "dist/AniDestiny-${TAG}-macos.zip"
-          gh release upload "$TAG" "dist/AniDestiny-${TAG}-macos.zip" --clobber
+            "dist/AniDestiny-${TAG}-macos-universal.zip"
+          gh release upload "$TAG" "dist/AniDestiny-${TAG}-macos-universal.zip" --clobber
 
   windows:
     name: Build Windows App
@@ -262,9 +262,9 @@ jobs:
           New-Item -ItemType Directory -Force -Path dist | Out-Null
           Compress-Archive `
             -Path build/windows/x64/runner/Release/* `
-            -DestinationPath "dist/AniDestiny-$env:TAG-windows.zip" `
+            -DestinationPath "dist/AniDestiny-$env:TAG-windows-x64.zip" `
             -Force
-          gh release upload "$env:TAG" "dist/AniDestiny-$env:TAG-windows.zip" --clobber
+          gh release upload "$env:TAG" "dist/AniDestiny-$env:TAG-windows-x64.zip" --clobber
 
   linux:
     name: Build Linux App

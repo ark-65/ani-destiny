@@ -7,6 +7,8 @@
 ## [Unreleased]
 
 ### ✨ Added
+- Added a standard brand asset directory using the existing AniDestiny logo as the README and platform icon source.
+- Added Android, Windows, and macOS platform icon assets generated from the existing logo.
 - Added a release page entry, runtime diagnostics page, and copyable feedback summary for playback and source issues.
 - Added source health state, failure counts, recent issue summaries, and manual reset support.
 - Added automatic fallback from the selected source to available backup sources.
@@ -25,12 +27,15 @@
 - Fixed empty detail episodes and empty play-source lists not being treated as source failures, allowing automatic fallback to run.
 
 ### 🔧 CI/CD
+- Changed macOS and Windows release asset names to include platform and architecture suffixes.
 - Fixed release rebuild handling, Linux release dependencies, and release publishing checkout context.
 - Changed release preparation PRs and GitHub Release notes to publish only user-facing Added, Changed, and Fixed sections.
 - Added a `changelog correction` PR label path for controlled fixes to released changelog sections while still requiring `[Unreleased]` updates.
 - Added Android debug build and clean scripts, plus post-release validation configuration.
 
 ### 📚 Documentation
+- Updated README visuals, platform notes, screenshot placeholders, and brand asset references.
+- Added platform icon paths and release asset naming notes to platform build documentation.
 - Updated the Chinese and English READMEs and platform build notes.
 - Moved post-release changelog content back under `[Unreleased]` so the released `1.0.1` record stays stable.
 
