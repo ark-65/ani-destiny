@@ -7,6 +7,9 @@
 ## [Unreleased]
 
 ### ✨ Added
+- Added download type detection for direct files, HLS/m3u8, BT placeholders, and unknown URLs.
+- Added an HLS/m3u8 manifest parser foundation for media and master playlists.
+- Added download task fields for failure reasons, headers, byte progress, and local paths.
 - Added a standard brand asset directory using the existing AniDestiny logo as the README and platform icon source.
 - Added Android, Windows, and macOS platform icon assets generated from the existing logo.
 - Added a release page entry, runtime diagnostics page, and copyable feedback summary for playback and source issues.
@@ -18,6 +21,8 @@
 - Added source health summaries and recent fallback events to runtime diagnostics.
 
 ### 🔄 Changed
+- Redesigned the download task model and states; the downloads page now shows task type, status, progress, failure reason, and local path.
+- Stabilized the direct-file download path while keeping HLS offline and BT downloads clearly marked as not implemented yet.
 - Improved Home, Search, Detail, Schedule, History, and Player flows when the selected source is temporarily unavailable.
 - Improved Source Settings with health status, failure count, and reset controls.
 - Improved playback diagnostics and URL sanitization to avoid exposing query tokens, header values, or other sensitive details in feedback summaries.
@@ -34,6 +39,7 @@
 - Added Android debug build and clean scripts, plus post-release validation configuration.
 
 ### 📚 Documentation
+- Added download path, Android permission policy, and not-yet-implemented scope notes.
 - Updated README visuals, platform notes, screenshot placeholders, and brand asset references.
 - Added platform icon paths and release asset naming notes to platform build documentation.
 - Updated the Chinese and English READMEs and platform build notes.

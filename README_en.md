@@ -43,7 +43,7 @@ AniDestiny currently validates builds for Android, macOS, Windows, and Linux.
 - Sakura live source parsing for home, search, detail, play sources, and diagnostics.
 - Player controls, speed selection, fullscreen mode, and playback diagnostics.
 - Dandanplay danmaku integration structure with mock fallback.
-- Local persistence for watch history, favorites, and download tasks.
+- Local persistence for watch history, favorites, and download tasks, with direct-file download support and HLS/BT type detection placeholders.
 - UI localization: Chinese, English, and Japanese.
 - Release build workflow for Android, macOS, Windows, and Linux.
 
@@ -68,7 +68,7 @@ bash scripts/clean.sh
 bash scripts/build-android-debug.sh
 ```
 
-See [docs/platform-build.md](./docs/platform-build.md) for platform build notes.
+See [docs/platform-build.md](./docs/platform-build.md) for platform build notes and [docs/downloads.md](./docs/downloads.md) for download paths and permission policy.
 
 ## Manual Packaging
 

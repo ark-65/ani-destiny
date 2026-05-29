@@ -4,6 +4,7 @@ import '../../../../core/network/dio_provider.dart';
 import '../../../../core/storage/database_provider.dart';
 import '../../data/repositories/download_repository_impl.dart';
 import '../../data/services/bt_download_service_placeholder.dart';
+import '../../data/services/download_task_creator.dart';
 import '../../data/services/http_download_service.dart';
 import '../../domain/entities/download_progress.dart';
 import '../../domain/entities/download_task.dart';
@@ -19,6 +20,10 @@ final httpDownloadServiceProvider = Provider<DownloadService>((ref) {
     dio: ref.watch(dioProvider),
     repository: ref.watch(downloadRepositoryProvider),
   );
+});
+
+final downloadTaskCreatorProvider = Provider<DownloadTaskCreator>((ref) {
+  return DownloadTaskCreator(ref.watch(httpDownloadServiceProvider));
 });
 
 final btDownloadServiceProvider = Provider<DownloadService>((ref) {

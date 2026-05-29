@@ -1,4 +1,5 @@
 import '../../domain/entities/download_progress.dart';
+import '../../domain/entities/download_source.dart';
 import '../../domain/services/download_service.dart';
 
 class BtDownloadServicePlaceholder implements DownloadService {
@@ -9,7 +10,7 @@ class BtDownloadServicePlaceholder implements DownloadService {
     required String animeId,
     required String episodeId,
     required String sourceId,
-    required String url,
+    required DownloadSource source,
     required String title,
     required String episodeTitle,
   }) {

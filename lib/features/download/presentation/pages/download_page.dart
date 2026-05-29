@@ -87,6 +87,11 @@ class DownloadPage extends ConsumerWidget {
                         onCancel: () => unawaited(
                           ref.read(httpDownloadServiceProvider).cancel(task.id),
                         ),
+                        onRemove: () => unawaited(
+                          ref.read(downloadRepositoryProvider).deleteTask(
+                                task.id,
+                              ),
+                        ),
                       );
                     },
                   );
@@ -100,7 +105,7 @@ class DownloadPage extends ConsumerWidget {
   }
 
   Future<void> _createMockTask(BuildContext context, WidgetRef ref) async {
-    final taskId = await ref.read(httpDownloadServiceProvider).createTask(
+    final taskId = await ref.read(downloadTaskCreatorProvider).create(
           animeId: 'mock-starlight-voyage',
           episodeId: 'mock-starlight-voyage-ep-1',
           sourceId: 'mock',

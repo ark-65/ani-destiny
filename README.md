@@ -43,7 +43,7 @@ AniDestiny 当前面向 Android、macOS、Windows 和 Linux 构建验证。
 - Sakura 真实数据源解析，支持首页、搜索、详情、播放源和诊断信息。
 - 播放页基础播放控制、倍速、全屏、播放诊断。
 - Dandanplay 弹幕接入结构和 Mock fallback。
-- 历史记录、收藏、下载任务的本地持久化。
+- 历史记录、收藏、下载任务的本地持久化，支持直链下载和 HLS/BT 类型识别占位。
 - 多语言界面：中文、英文、日文。
 - Android、macOS、Windows、Linux 的发布构建流程。
 
@@ -68,7 +68,7 @@ bash scripts/clean.sh
 bash scripts/build-android-debug.sh
 ```
 
-更多平台构建说明见 [docs/platform-build.md](./docs/platform-build.md)。
+更多平台构建说明见 [docs/platform-build.md](./docs/platform-build.md)，下载路径和权限策略见 [docs/downloads.md](./docs/downloads.md)。
 
 ## 手动打包
 

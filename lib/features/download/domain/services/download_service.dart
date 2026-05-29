@@ -1,11 +1,12 @@
 import '../entities/download_progress.dart';
+import '../entities/download_source.dart';
 
 abstract class DownloadService {
   Future<String> createTask({
     required String animeId,
     required String episodeId,
     required String sourceId,
-    required String url,
+    required DownloadSource source,
     required String title,
     required String episodeTitle,
   });
