@@ -6,6 +6,8 @@
 
 ## [Unreleased]
 
+## [1.0.2] - 2026-05-29
+
 ### ✨ Added
 - Added download type detection for direct files, HLS/m3u8, BT placeholders, and unknown URLs.
 - Added an HLS/m3u8 manifest parser foundation for media and master playlists.
@@ -60,7 +62,6 @@
 - Source availability still depends on upstream websites.
 - Dandanplay credentials are optional; fallback is used when unavailable.
 - Download support is still basic.
-
 ## [1.0.1] - 2026-05-28
 
 ### 🔧 CI/CD
