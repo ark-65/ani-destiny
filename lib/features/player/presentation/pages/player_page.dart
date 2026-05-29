@@ -334,13 +334,14 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
 
   Future<void> _createDownload() async {
     try {
-      final taskId = await ref.read(httpDownloadServiceProvider).createTask(
+      final taskId = await ref.read(downloadTaskCreatorProvider).create(
             animeId: _args.animeId,
             episodeId: _args.episodeId,
             sourceId: _args.sourceId,
             url: _args.playUrl,
             title: _args.animeTitle,
             episodeTitle: _args.episodeTitle,
+            headers: _args.playHeaders,
           );
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(

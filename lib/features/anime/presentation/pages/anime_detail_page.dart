@@ -189,13 +189,14 @@ class AnimeDetailPage extends ConsumerWidget {
     }
     final source = await _selectDownloadSource(context, sources);
     if (!context.mounted || source == null) return;
-    final taskId = await ref.read(httpDownloadServiceProvider).createTask(
+    final taskId = await ref.read(downloadTaskCreatorProvider).create(
           animeId: detail.id,
           episodeId: episode.id,
           sourceId: sourceResult.sourceId,
           url: source.url,
           title: detail.title,
           episodeTitle: episode.title,
+          headers: source.headers,
         );
     if (!context.mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(

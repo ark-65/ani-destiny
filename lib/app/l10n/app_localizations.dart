@@ -136,6 +136,27 @@ class AppLocalizations {
       '${_t('mockDownloadTaskCreated')}: $taskId';
   String get start => _t('start');
   String get cancel => _t('cancel');
+  String get remove => _t('remove');
+  String get downloadProgress => _t('downloadProgress');
+  String get downloadLocalPath => _t('downloadLocalPath');
+  String get downloadBasicPauseNote => _t('downloadBasicPauseNote');
+  String get downloadKindDirectFile => _t('downloadKindDirectFile');
+  String get downloadKindHls => _t('downloadKindHls');
+  String get downloadKindBt => _t('downloadKindBt');
+  String get downloadKindUnknown => _t('downloadKindUnknown');
+  String get downloadFailureUnsupportedType =>
+      _t('downloadFailureUnsupportedType');
+  String get downloadFailurePermissionDenied =>
+      _t('downloadFailurePermissionDenied');
+  String get downloadFailureNetworkError => _t('downloadFailureNetworkError');
+  String get downloadFailureSourceUnavailable =>
+      _t('downloadFailureSourceUnavailable');
+  String get downloadFailureInvalidUrl => _t('downloadFailureInvalidUrl');
+  String get downloadFailureInvalidManifest =>
+      _t('downloadFailureInvalidManifest');
+  String get downloadFailureStorageUnavailable =>
+      _t('downloadFailureStorageUnavailable');
+  String get downloadFailureUnknown => _t('downloadFailureUnknown');
   String get playback => _t('playback');
   String get sourceSettings => _t('sourceSettings');
   String get sourceSettingsSubtitle => _t('sourceSettingsSubtitle');
@@ -202,12 +223,14 @@ class AppLocalizations {
   String opacityPercent(int percent) => '${_t('opacity')} $percent%';
   String fontSize(int size) => '${_t('fontSize')} $size';
   String speedValue(String value) => '${_t('speed')} ${value}x';
-  String get queued => _t('queued');
-  String get running => _t('running');
+  String get pending => _t('pending');
+  String get preparing => _t('preparing');
+  String get downloading => _t('downloading');
   String get paused => _t('paused');
   String get completed => _t('completed');
   String get failed => _t('failed');
   String get canceled => _t('canceled');
+  String get unsupported => _t('unsupported');
 }
 
 extension AppLocalizationsX on BuildContext {
@@ -321,6 +344,22 @@ const _localizedValues = {
     'mockDownloadTaskCreated': '已创建 Mock 下载任务',
     'start': '开始',
     'cancel': '取消',
+    'remove': '移除',
+    'downloadProgress': '进度',
+    'downloadLocalPath': '本地路径',
+    'downloadBasicPauseNote': '暂停为基础能力，继续时可能重新下载。',
+    'downloadKindDirectFile': '直链文件',
+    'downloadKindHls': 'HLS / m3u8',
+    'downloadKindBt': 'BT 占位',
+    'downloadKindUnknown': '未知类型',
+    'downloadFailureUnsupportedType': '暂不支持该类型',
+    'downloadFailurePermissionDenied': '权限不足',
+    'downloadFailureNetworkError': '网络错误',
+    'downloadFailureSourceUnavailable': '数据源不可用',
+    'downloadFailureInvalidUrl': 'URL 无效',
+    'downloadFailureInvalidManifest': 'm3u8 无效',
+    'downloadFailureStorageUnavailable': '存储不可用',
+    'downloadFailureUnknown': '未知错误',
     'playback': '播放',
     'sourceSettings': '数据源设置',
     'sourceSettingsSubtitle': 'Mock 最稳定，Sakura Anime 可用于实验性真实解析',
@@ -387,12 +426,14 @@ const _localizedValues = {
     'opacity': '不透明度',
     'fontSize': '字号',
     'speed': '速度',
-    'queued': '等待中',
-    'running': '下载中',
+    'pending': '等待中',
+    'preparing': '准备中',
+    'downloading': '下载中',
     'paused': '已暂停',
     'completed': '已完成',
     'failed': '失败',
     'canceled': '已取消',
+    'unsupported': '暂不支持',
   },
   'en': {
     'appName': 'AniDestiny',
@@ -480,6 +521,23 @@ const _localizedValues = {
     'mockDownloadTaskCreated': 'Mock download task created',
     'start': 'Start',
     'cancel': 'Cancel',
+    'remove': 'Remove',
+    'downloadProgress': 'Progress',
+    'downloadLocalPath': 'Local path',
+    'downloadBasicPauseNote':
+        'Pause support is basic and may restart the download.',
+    'downloadKindDirectFile': 'Direct file',
+    'downloadKindHls': 'HLS / m3u8',
+    'downloadKindBt': 'BT placeholder',
+    'downloadKindUnknown': 'Unknown type',
+    'downloadFailureUnsupportedType': 'Unsupported type',
+    'downloadFailurePermissionDenied': 'Permission denied',
+    'downloadFailureNetworkError': 'Network error',
+    'downloadFailureSourceUnavailable': 'Source unavailable',
+    'downloadFailureInvalidUrl': 'Invalid URL',
+    'downloadFailureInvalidManifest': 'Invalid m3u8',
+    'downloadFailureStorageUnavailable': 'Storage unavailable',
+    'downloadFailureUnknown': 'Unknown error',
     'playback': 'Playback',
     'sourceSettings': 'Source settings',
     'sourceSettingsSubtitle':
@@ -556,12 +614,14 @@ const _localizedValues = {
     'opacity': 'Opacity',
     'fontSize': 'Font size',
     'speed': 'Speed',
-    'queued': 'Queued',
-    'running': 'Running',
+    'pending': 'Pending',
+    'preparing': 'Preparing',
+    'downloading': 'Downloading',
     'paused': 'Paused',
     'completed': 'Completed',
     'failed': 'Failed',
     'canceled': 'Canceled',
+    'unsupported': 'Unsupported',
   },
   'ja': {
     'appName': 'AniDestiny',
@@ -645,6 +705,22 @@ const _localizedValues = {
     'mockDownloadTaskCreated': 'Mock ダウンロードタスクを作成しました',
     'start': '開始',
     'cancel': 'キャンセル',
+    'remove': '削除',
+    'downloadProgress': '進捗',
+    'downloadLocalPath': 'ローカルパス',
+    'downloadBasicPauseNote': '一時停止は基本機能です。再開時に再ダウンロードされる場合があります。',
+    'downloadKindDirectFile': '直接ファイル',
+    'downloadKindHls': 'HLS / m3u8',
+    'downloadKindBt': 'BT プレースホルダー',
+    'downloadKindUnknown': '不明な種類',
+    'downloadFailureUnsupportedType': '未対応の種類',
+    'downloadFailurePermissionDenied': '権限がありません',
+    'downloadFailureNetworkError': 'ネットワークエラー',
+    'downloadFailureSourceUnavailable': 'ソースを利用できません',
+    'downloadFailureInvalidUrl': 'URL が無効です',
+    'downloadFailureInvalidManifest': 'm3u8 が無効です',
+    'downloadFailureStorageUnavailable': 'ストレージを利用できません',
+    'downloadFailureUnknown': '不明なエラー',
     'playback': '再生',
     'sourceSettings': 'ソース設定',
     'sourceSettingsSubtitle': 'Mock が最も安定しています。Sakura Anime は実験的な解析ソースです',
@@ -713,11 +789,13 @@ const _localizedValues = {
     'opacity': '不透明度',
     'fontSize': '文字サイズ',
     'speed': '速度',
-    'queued': '待機中',
-    'running': 'ダウンロード中',
+    'pending': '待機中',
+    'preparing': '準備中',
+    'downloading': 'ダウンロード中',
     'paused': '一時停止中',
     'completed': '完了',
     'failed': '失敗',
     'canceled': 'キャンセル済み',
+    'unsupported': '未対応',
   },
 };

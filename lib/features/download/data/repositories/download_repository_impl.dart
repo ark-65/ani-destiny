@@ -1,6 +1,10 @@
+import 'dart:convert';
+
 import 'package:drift/drift.dart';
 
 import '../../../../core/storage/app_database.dart';
+import '../../domain/entities/download_failure_reason.dart';
+import '../../domain/entities/download_kind.dart';
 import '../../domain/entities/download_task.dart';
 import '../../domain/repositories/download_repository.dart';
 
@@ -43,9 +47,15 @@ class DownloadRepositoryImpl implements DownloadRepository {
             title: task.title,
             episodeTitle: task.episodeTitle,
             url: task.url,
+            kind: Value(task.kind.name),
+            headersJson: Value(jsonEncode(task.headers)),
             localPath: Value(task.localPath),
             status: task.status.name,
+            failureReason: Value(task.failureReason.name),
+            failureMessage: Value(task.failureMessage),
             progress: task.progress,
+            totalBytes: Value(task.totalBytes),
+            downloadedBytes: Value(task.downloadedBytes),
             createdAt: task.createdAt,
             updatedAt: task.updatedAt,
           ),
@@ -68,14 +78,29 @@ class DownloadRepositoryImpl implements DownloadRepository {
       title: row.title,
       episodeTitle: row.episodeTitle,
       url: row.url,
+      kind: downloadKindFromName(row.kind),
+      headers: _headersFromJson(row.headersJson),
       localPath: row.localPath,
-      status: DownloadStatus.values.firstWhere(
-        (status) => status.name == row.status,
-        orElse: () => DownloadStatus.queued,
-      ),
+      status: downloadStatusFromName(row.status),
+      failureReason: downloadFailureReasonFromName(row.failureReason),
+      failureMessage: row.failureMessage,
       progress: row.progress,
+      totalBytes: row.totalBytes,
+      downloadedBytes: row.downloadedBytes,
       createdAt: row.createdAt,
       updatedAt: row.updatedAt,
     );
+  }
+
+  Map<String, String> _headersFromJson(String value) {
+    try {
+      final decoded = jsonDecode(value);
+      if (decoded is! Map) return const {};
+      return decoded.map(
+        (key, value) => MapEntry(key.toString(), value.toString()),
+      );
+    } on Object {
+      return const {};
+    }
   }
 }

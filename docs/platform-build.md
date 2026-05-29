@@ -75,6 +75,11 @@ The macOS AppIcon images are stored under:
 macos/Runner/Assets.xcassets/AppIcon.appiconset/
 ```
 
+## Download Storage
+
+Download implementation notes, default paths, and Android permission guidance
+are documented in [downloads.md](./downloads.md).
+
 ## Release Builds
 
 ```sh

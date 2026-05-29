@@ -57,9 +57,19 @@ class DownloadTaskTable extends Table {
   TextColumn get sourceId =>
       text().named('source_id').withDefault(const Constant('mock'))();
   TextColumn get url => text()();
+  TextColumn get kind =>
+      text().named('kind').withDefault(const Constant('unknown'))();
+  TextColumn get headersJson =>
+      text().named('headers_json').withDefault(const Constant('{}'))();
   TextColumn get localPath => text().named('local_path').nullable()();
   TextColumn get status => text()();
+  TextColumn get failureReason =>
+      text().named('failure_reason').withDefault(const Constant('none'))();
+  TextColumn get failureMessage => text().named('failure_message').nullable()();
   RealColumn get progress => real()();
+  IntColumn get totalBytes => integer().named('total_bytes').nullable()();
+  IntColumn get downloadedBytes =>
+      integer().named('downloaded_bytes').withDefault(const Constant(0))();
   DateTimeColumn get createdAt => dateTime().named('created_at')();
   DateTimeColumn get updatedAt => dateTime().named('updated_at')();
 
@@ -79,7 +89,7 @@ class AppDatabase extends _$AppDatabase {
       : super(executor ?? driftDatabase(name: 'ani_destiny'));
 
   @override
-  int get schemaVersion => 3;
+  int get schemaVersion => 4;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -106,6 +116,32 @@ class AppDatabase extends _$AppDatabase {
             await migrator.addColumn(
               watchHistoryTable,
               watchHistoryTable.playHeadersJson,
+            );
+          }
+          if (from < 4) {
+            await migrator.addColumn(
+              downloadTaskTable,
+              downloadTaskTable.kind,
+            );
+            await migrator.addColumn(
+              downloadTaskTable,
+              downloadTaskTable.headersJson,
+            );
+            await migrator.addColumn(
+              downloadTaskTable,
+              downloadTaskTable.failureReason,
+            );
+            await migrator.addColumn(
+              downloadTaskTable,
+              downloadTaskTable.failureMessage,
+            );
+            await migrator.addColumn(
+              downloadTaskTable,
+              downloadTaskTable.totalBytes,
+            );
+            await migrator.addColumn(
+              downloadTaskTable,
+              downloadTaskTable.downloadedBytes,
             );
           }
         },
