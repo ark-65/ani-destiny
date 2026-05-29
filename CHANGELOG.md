@@ -33,6 +33,7 @@
 - 修复空详情剧集和空播放源未被视为数据源失败的问题，确保自动 fallback 能够生效。
 
 ### 🔧 CI/CD
+- 新增 Windows Build CI job，在 `windows-latest` 上验证 `flutter build windows --release` 并上传临时 Windows x64 artifact。
 - 新增 release preflight 脚本和发布前质量门禁 checklist。
 - 调整 Android release asset 命名为 universal APK 后缀，并记录 arm64 命名规范。
 - 调整 macOS 和 Windows release asset 命名，补充平台和架构后缀。
@@ -42,6 +43,7 @@
 - 新增 Android debug 构建脚本和清理脚本，补充 post-release 验证配置。
 
 ### 📚 文档
+- 补充 Windows CI 构建产物路径、临时 artifact 和 exe/taskbar icon 验证说明。
 - 新增 Android、Windows、macOS 发布 smoke checklist。
 - 补充 release asset 命名、Windows 构建验证和当前功能边界说明。
 - 新增下载路径、Android 权限策略和暂未实现范围说明。

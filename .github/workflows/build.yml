@@ -43,3 +43,66 @@ jobs:
 
       - name: Test
         run: flutter test
+
+  windows:
+    name: Windows Build
+    runs-on: windows-latest
+    steps:
+      - name: Fetch Sources
+        uses: actions/checkout@v4
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Show Flutter Version
+        run: flutter --version
+
+      - name: Enable Windows Desktop
+        run: flutter config --enable-windows-desktop
+
+      - name: Install Dependencies
+        run: flutter pub get
+
+      - name: Generate Code
+        run: dart run build_runner build --delete-conflicting-outputs
+
+      - name: Analyze
+        run: flutter analyze
+
+      - name: Test
+        run: flutter test
+
+      - name: Build Windows
+        run: flutter build windows --release
+
+      - name: Verify Windows Output
+        shell: pwsh
+        run: |
+          $releaseDir = "build/windows/x64/runner/Release"
+          $exePath = Join-Path $releaseDir "ani_destiny.exe"
+          $iconPath = "windows/runner/resources/app_icon.ico"
+
+          if (!(Test-Path $releaseDir)) {
+            throw "Missing Windows release directory: $releaseDir"
+          }
+
+          if (!(Test-Path $exePath)) {
+            throw "Missing Windows executable: $exePath"
+          }
+
+          if (!(Test-Path $iconPath)) {
+            throw "Missing Windows app icon: $iconPath"
+          }
+
+          Get-ChildItem $releaseDir
+
+      - name: Upload Windows Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: AniDestiny-windows-x64-ci
+          path: build/windows/x64/runner/Release/
+          if-no-files-found: error
+          retention-days: 7

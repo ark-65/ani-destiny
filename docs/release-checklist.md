@@ -13,7 +13,8 @@ Use this checklist before publishing a new AniDestiny release.
 - `bash scripts/preflight-release.sh` passed.
 - Android debug build passed.
 - macOS build passed on macOS.
-- Windows build passed on Windows or Windows CI.
+- Windows Build CI passed on `windows-latest`.
+- Windows CI artifact is available for inspection when needed.
 
 ## Android
 
@@ -32,6 +33,7 @@ Use this checklist before publishing a new AniDestiny release.
 
 - Launch app.
 - Check EXE and taskbar icon.
+- Confirm `ani_destiny.exe` exists in `build/windows/x64/runner/Release/`.
 - Search.
 - Play video.
 - Create direct download task.
