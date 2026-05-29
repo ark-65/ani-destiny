@@ -6,24 +6,37 @@
 
 ## [Unreleased]
 
-### Planned
-- Improve source fallback behavior and Sakura failure messaging.
-- Improve playback diagnostics and feedback-ready runtime summaries.
-- Polish the download task experience.
-
-## [1.0.1] - 2026-05-28
-
 ### ✨ Added
-- Added verified cross-platform app support for Android, Windows, and macOS.
-- Added the Sakura source adapter.
-- Added video playback, watch history, favorites, and basic download tasks.
-- Added danmaku overlay, optional Dandanplay integration, and fallback.
-- Added build scripts and multi-platform release flow.
+- Added a release page entry, runtime diagnostics page, and copyable feedback summary for playback and source issues.
+- Added source health state, failure counts, recent issue summaries, and manual reset support.
+- Added a service-layer source fallback path that falls back to Sakura or Mock when the selected source is unavailable and marks fallback data.
+- Added fallback notices for Home, Search, Detail, Schedule, and history resume flows.
+- Added source health summaries and recent fallback events to runtime diagnostics.
 
 ### 🔄 Changed
-- Stabilized Android player lifecycle.
-- Improved playback resume from watch history.
-- Improved source diagnostics.
+- Improved error messaging and recovery paths across Home, Search, Detail, Schedule, History, and Player pages when upstream sources fail.
+- Improved playback diagnostics and URL sanitization to avoid exposing query tokens, header values, or other sensitive details in feedback summaries.
+- Kept empty search results as a normal empty state instead of treating them as source failures that trigger fallback.
+
+### 🐛 Fixed
+- Fixed empty detail episodes and empty play-source lists not being treated as source failures, allowing automatic fallback to run.
+
+### 🔧 CI/CD
+- Fixed release rebuild handling, Linux release dependencies, and release publishing checkout context.
+- Changed release preparation PRs and GitHub Release notes to publish only user-facing Added, Changed, and Fixed sections.
+- Added a `changelog correction` PR label path for controlled fixes to released changelog sections while still requiring `[Unreleased]` updates.
+- Added Android debug build and clean scripts, plus post-release validation configuration.
+
+### 📚 Documentation
+- Updated the Chinese and English READMEs and platform build notes.
+- Moved post-release changelog content back under `[Unreleased]` so the released `1.0.1` record stays stable.
+
+### Known Limitations
+- Source availability depends on upstream websites.
+- Dandanplay credentials are optional; fallback is used when unavailable.
+- Download support is still basic.
+
+## [1.0.1] - 2026-05-28
 
 ### 🔧 CI/CD
 - Added Flutter quality checks, bilingual changelog gate, manual release preparation PR, and multi-platform release workflows.
@@ -32,11 +45,6 @@
 ### 📚 Documentation
 - Changed the main README to Chinese and added `README_en.md`.
 - Added the Chinese primary changelog `CHANGELOG.md` and English secondary changelog `CHANGELOG_en.md`.
-
-### Known Limitations
-- Source availability depends on upstream websites.
-- Dandanplay credentials are optional; fallback is used when unavailable.
-- Download support is still basic.
 
 ## [1.0.0] - 2026-05-28
 

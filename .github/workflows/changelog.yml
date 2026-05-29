@@ -48,6 +48,13 @@ jobs:
             exit 0
           fi
 
+          if has_label "changelog correction"; then
+            export ALLOW_RELEASED_CHANGELOG_CORRECTION=true
+            echo "Released changelog correction label detected; released changelog sections may be corrected."
+          else
+            export ALLOW_RELEASED_CHANGELOG_CORRECTION=false
+          fi
+
           git fetch --no-tags --depth=1 origin "$BASE_REF:refs/remotes/origin/$BASE_REF"
 
           changed_files="$(git diff --name-only "origin/$BASE_REF"...HEAD)"
@@ -69,6 +76,7 @@ jobs:
 
           base_ref = ENV.fetch("BASE_REF")
           base_revision = "origin/#{base_ref}"
+          allow_released_changelog_correction = ENV.fetch("ALLOW_RELEASED_CHANGELOG_CORRECTION") == "true"
           changelogs = ["CHANGELOG.md", "CHANGELOG_en.md"].freeze
 
           def read_from_git(revision, path)
@@ -106,8 +114,10 @@ jobs:
               abort("#{path} must update the Unreleased section, not only released changelog sections")
             end
 
-            if base_released != head_released
+            if base_released != head_released && !allow_released_changelog_correction
               abort("#{path} must not modify released changelog sections in regular PRs")
+            elsif base_released != head_released
+              warn("#{path} modifies released changelog sections under the changelog correction label")
             end
 
             assert_no_duplicate_sections(head_content, path)

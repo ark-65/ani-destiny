@@ -48,23 +48,28 @@ jobs:
 
           version = ARGV.fetch(0)
           output = ARGV.fetch(1)
-          excluded_headings = ["### 🔧 CI/CD", "### 🧪 测试", "### 📦 构建"]
+          public_release_headings_zh = [
+            /\A###\s+(?:✨\s*)?新增\z/,
+            /\A###\s+(?:🔄\s*)?变更\z/,
+            /\A###\s+(?:🐛\s*|🐞\s*)?修复\z/,
+          ].freeze
+          public_release_note_fallback_zh = "暂无面向用户的新版本说明。"
 
-          def public_release_notes(markdown, excluded_headings)
-            skip_section = false
+          def public_release_notes(markdown, allowed_heading_patterns)
+            include_section = false
             notes = markdown.each_line.each_with_object([]) do |line, lines|
               stripped = line.strip
               if stripped.start_with?("### ")
-                skip_section = excluded_headings.include?(stripped)
-                next if skip_section
+                include_section = allowed_heading_patterns.any? { |pattern| stripped.match?(pattern) }
+                next unless include_section
               elsif stripped.start_with?("## ")
-                skip_section = false
+                include_section = false
               end
 
-              lines << line unless skip_section
+              lines << line if include_section
             end.join.strip
 
-            notes.empty? ? markdown.strip : notes
+            notes
           end
 
           changelog = File.read("CHANGELOG.md")
@@ -72,8 +77,8 @@ jobs:
           match = changelog.match(pattern)
           abort("Missing CHANGELOG.md section for #{version}") unless match
 
-          body = public_release_notes(match[:body], excluded_headings)
-          abort("Empty release notes for #{version}") if body.empty?
+          body = public_release_notes(match[:body], public_release_headings_zh)
+          body = public_release_note_fallback_zh if body.empty?
 
           FileUtils.mkdir_p(File.dirname(output))
           File.write(output, body + "\n")

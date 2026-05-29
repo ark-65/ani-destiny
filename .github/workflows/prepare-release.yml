@@ -82,7 +82,12 @@ jobs:
           date = ENV.fetch("DATE")
           build_number = ENV.fetch("BUILD_NUMBER", "").strip
 
-          INTERNAL_HEADINGS_ZH = ["### 🔧 CI/CD", "### 🧪 测试", "### 📦 构建"].freeze
+          PUBLIC_RELEASE_HEADINGS_ZH = [
+            /\A###\s+(?:✨\s*)?新增\z/,
+            /\A###\s+(?:🔄\s*)?变更\z/,
+            /\A###\s+(?:🐛\s*|🐞\s*)?修复\z/,
+          ].freeze
+          PUBLIC_RELEASE_NOTE_FALLBACK_ZH = "暂无面向用户的新版本说明。"
 
           def extract_unreleased(path)
             content = File.read(path)
@@ -96,21 +101,21 @@ jobs:
             body
           end
 
-          def public_release_notes(markdown, excluded_headings)
-            skip_section = false
+          def public_release_notes(markdown, allowed_heading_patterns)
+            include_section = false
             notes = markdown.each_line.each_with_object([]) do |line, lines|
               stripped = line.strip
               if stripped.start_with?("### ")
-                skip_section = excluded_headings.include?(stripped)
-                next if skip_section
+                include_section = allowed_heading_patterns.any? { |pattern| stripped.match?(pattern) }
+                next unless include_section
               elsif stripped.start_with?("## ")
-                skip_section = false
+                include_section = false
               end
 
-              lines << line unless skip_section
+              lines << line if include_section
             end.join.strip
 
-            notes.empty? ? markdown.strip : notes
+            notes
           end
 
           pubspec = File.read("pubspec.yaml")
@@ -132,7 +137,8 @@ jobs:
 
           notes_zh = extract_unreleased("CHANGELOG.md")
           notes_en = extract_unreleased("CHANGELOG_en.md")
-          public_notes_zh = public_release_notes(notes_zh, INTERNAL_HEADINGS_ZH)
+          public_notes_zh = public_release_notes(notes_zh, PUBLIC_RELEASE_HEADINGS_ZH)
+          public_notes_zh = PUBLIC_RELEASE_NOTE_FALLBACK_ZH if public_notes_zh.empty?
 
           archive_unreleased("CHANGELOG.md", "## [#{version}] - #{date}", notes_zh)
           archive_unreleased("CHANGELOG_en.md", "## [#{version}] - #{date}", notes_en)
