@@ -33,6 +33,7 @@
 - Fixed empty detail episodes and empty play-source lists not being treated as source failures, allowing automatic fallback to run.
 
 ### 🔧 CI/CD
+- Added a Windows Build CI job that verifies `flutter build windows --release` on `windows-latest` and uploads a temporary Windows x64 artifact.
 - Added a release preflight script and pre-release quality gate checklist.
 - Changed Android release asset naming to use the universal APK suffix and documented the arm64 naming rule.
 - Changed macOS and Windows release asset names to include platform and architecture suffixes.
@@ -42,6 +43,7 @@
 - Added Android debug build and clean scripts, plus post-release validation configuration.
 
 ### 📚 Documentation
+- Added Windows CI build output path, temporary artifact, and EXE / taskbar icon verification notes.
 - Added Android, Windows, and macOS release smoke checklists.
 - Added release asset naming, Windows build verification, and current capability boundary notes.
 - Added download path, Android permission policy, and not-yet-implemented scope notes.

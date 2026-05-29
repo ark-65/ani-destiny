@@ -74,6 +74,18 @@ The Windows icon is stored at:
 windows/runner/resources/app_icon.ico
 ```
 
+The Windows runner resource file references that icon from:
+
+```txt
+windows/runner/Runner.rc
+```
+
+After a Windows release build, the executable should be available at:
+
+```txt
+build/windows/x64/runner/Release/ani_destiny.exe
+```
+
 ## macOS Icon
 
 The macOS AppIcon images are stored under:
@@ -96,9 +108,12 @@ flutter build windows --release
 flutter build linux --release
 ```
 
-Windows builds require a Windows host or runner. macOS builds require a macOS
-host or runner. iOS distribution requires signing certificates and the App Store
-release flow, so it is not part of the current public release artifacts.
+Windows builds require a Windows host or runner. Pull requests are verified by
+the `Windows Build` GitHub Actions job on `windows-latest`, which builds
+`build/windows/x64/runner/Release/` and uploads a short-lived CI artifact for
+inspection. macOS builds require a macOS host or runner. iOS distribution
+requires signing certificates and the App Store release flow, so it is not part
+of the current public release artifacts.
 
 Before publishing a release, complete [release-checklist.md](./release-checklist.md).
 
