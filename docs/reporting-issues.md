@@ -3,6 +3,15 @@
 When reporting playback, source, danmaku, or download issues, include enough
 context for maintainers to reproduce the problem.
 
+## Choose A Template
+
+- Use **Bug report** for general app problems.
+- Use **Playback or source issue** for source availability, search/detail,
+  playback, danmaku, or download-source issues.
+- Use **Feature request** for new capabilities or workflow improvements.
+
+For common fixes, see [troubleshooting.md](./troubleshooting.md).
+
 ## Recommended Details
 
 - App version.
@@ -32,3 +41,9 @@ and local usernames in file paths.
 - Full URLs with query parameters.
 - Dandanplay app secrets.
 - Full HTML pages or large logs.
+
+## Useful Links
+
+- Releases: <https://github.com/ark-65/ani-destiny/releases>
+- Issue templates: <https://github.com/ark-65/ani-destiny/issues/new/choose>
+- Troubleshooting: [troubleshooting.md](./troubleshooting.md)

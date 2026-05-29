@@ -23,6 +23,7 @@ AniDestiny 当前以客户端数据源适配器为核心：
 - 开源仓库：<https://github.com/ark-65/ani-destiny>
 - 发布页面：<https://github.com/ark-65/ani-destiny/releases>
 - 问题反馈指南：[docs/reporting-issues.md](./docs/reporting-issues.md)
+- 故障排查：[docs/troubleshooting.md](./docs/troubleshooting.md)
 - 更新日志：[CHANGELOG.md](./CHANGELOG.md)
 - English changelog: [CHANGELOG_en.md](./CHANGELOG_en.md)
 
@@ -75,9 +76,9 @@ bash scripts/preflight-release.sh
 
 ## 问题反馈
 
-反馈播放、数据源、弹幕或下载问题时，请提供 App 版本、平台、复现步骤、数据源名称、是否使用 fallback，以及从设置页复制的已脱敏诊断摘要。不要提交账号凭据、cookie、token 或包含 query 参数的完整 URL。
+反馈播放、数据源、弹幕或下载问题时，请优先使用 GitHub Issue 模板，并提供 App 版本、平台、复现步骤、数据源名称、是否使用 fallback，以及从设置页复制的已脱敏诊断摘要。不要提交账号凭据、cookie、token 或包含 query 参数的完整 URL。
 
-更多说明见 [docs/reporting-issues.md](./docs/reporting-issues.md)。
+更多说明见 [docs/reporting-issues.md](./docs/reporting-issues.md)，常见问题见 [docs/troubleshooting.md](./docs/troubleshooting.md)。
 
 ## 手动打包
 

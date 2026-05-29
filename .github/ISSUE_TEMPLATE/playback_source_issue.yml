@@ -1,0 +1,99 @@
+name: Playback or source issue
+description: Report search, detail, playback, danmaku, source fallback, or download-source problems.
+title: "[Playback/Source]: "
+labels: ["bug", "source"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Use this template for source availability, search/detail parsing, playback, danmaku, or download-source issues.
+
+        Please do not paste cookies, tokens, credentials, Dandanplay app secrets, or full media URLs.
+  - type: input
+    id: app-version
+    attributes:
+      label: App version
+      placeholder: "1.0.2"
+    validations:
+      required: true
+  - type: dropdown
+    id: issue-area
+    attributes:
+      label: Issue area
+      options:
+        - Source issue
+        - Search or detail issue
+        - Playback issue
+        - Danmaku issue
+        - Download issue
+        - Other
+    validations:
+      required: true
+  - type: dropdown
+    id: platform
+    attributes:
+      label: Platform
+      options:
+        - Android
+        - Windows
+        - macOS
+        - Linux
+        - Other
+    validations:
+      required: true
+  - type: input
+    id: source-name
+    attributes:
+      label: Source name
+      description: "Example: Sakura, Mock, or the name shown in Source Settings."
+      placeholder: "Sakura"
+  - type: input
+    id: anime-title
+    attributes:
+      label: Anime title
+      description: The title shown in the app.
+  - type: input
+    id: episode
+    attributes:
+      label: Episode title or number
+  - type: input
+    id: playback-line
+    attributes:
+      label: Playback source or line
+      description: If visible, include the line name only. Do not paste the full media URL.
+  - type: dropdown
+    id: fallback-banner
+    attributes:
+      label: Did a fallback notice appear?
+      options:
+        - "Yes"
+        - "No"
+        - "Not sure"
+  - type: dropdown
+    id: other-source
+    attributes:
+      label: Does another source or line work?
+      options:
+        - "Yes"
+        - "No"
+        - "Not tested"
+        - "Not applicable"
+  - type: input
+    id: region
+    attributes:
+      label: General network region
+      description: Optional. Country or region is enough; do not include account or network identifiers.
+      placeholder: "Example: Japan, Singapore, US West"
+  - type: textarea
+    id: symptoms
+    attributes:
+      label: What happened?
+      description: Describe the user-visible error or broken behavior.
+    validations:
+      required: true
+  - type: textarea
+    id: diagnostics
+    attributes:
+      label: Sanitized diagnostics package
+      description: Paste the text from Settings -> Copy diagnostics.
+      render: markdown

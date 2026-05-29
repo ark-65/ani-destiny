@@ -1,0 +1,78 @@
+name: Bug report
+description: Report a reproducible AniDestiny problem.
+title: "[Bug]: "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for helping improve AniDestiny. Before submitting, open Settings in the app and choose **Copy diagnostics** when possible.
+
+        Do not include credentials, cookies, tokens, full URLs with query parameters, or Dandanplay app secrets.
+  - type: input
+    id: app-version
+    attributes:
+      label: App version
+      description: "Example: 1.0.2"
+      placeholder: "1.0.2"
+    validations:
+      required: true
+  - type: dropdown
+    id: platform
+    attributes:
+      label: Platform
+      options:
+        - Android
+        - Windows
+        - macOS
+        - Linux
+        - Other
+    validations:
+      required: true
+  - type: input
+    id: install-source
+    attributes:
+      label: Install source or release asset
+      description: "Example: AniDestiny-v1.0.2-windows-x64.zip"
+      placeholder: "AniDestiny-v1.0.2-windows-x64.zip"
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+      description: What did you expect to happen?
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual behavior
+      description: What happened instead?
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      description: List the exact steps from app launch to the problem.
+      placeholder: |
+        1. Open ...
+        2. Tap ...
+        3. See ...
+    validations:
+      required: true
+  - type: textarea
+    id: diagnostics
+    attributes:
+      label: Sanitized diagnostics package
+      description: Paste the text from Settings -> Copy diagnostics.
+      render: markdown
+  - type: textarea
+    id: media
+    attributes:
+      label: Screenshots or recordings
+      description: Attach screenshots or recordings if they help explain the issue.
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs
+      description: Paste short logs if available. Review them first and remove sensitive values.
