@@ -21,6 +21,7 @@
 - Added source health summaries and recent fallback events to runtime diagnostics.
 
 ### 🔄 Changed
+- Refreshed AniDestiny logo artwork and synced the README brand image, Android launcher icon, Windows icon, and macOS AppIcon.
 - Redesigned the download task model and states; the downloads page now shows task type, status, progress, failure reason, and local path.
 - Stabilized the direct-file download path while keeping HLS offline and BT downloads clearly marked as not implemented yet.
 - Improved Home, Search, Detail, Schedule, History, and Player flows when the selected source is temporarily unavailable.
