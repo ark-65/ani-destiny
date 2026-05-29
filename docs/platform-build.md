@@ -13,11 +13,18 @@ flutter analyze
 flutter test
 ```
 
+For release readiness, run:
+
+```sh
+bash scripts/preflight-release.sh
+```
+
 ## Local Scripts
 
 ```sh
 bash scripts/clean.sh
 bash scripts/build-android-debug.sh
+bash scripts/preflight-release.sh
 ```
 
 The Android debug APK is written to:
@@ -93,14 +100,21 @@ Windows builds require a Windows host or runner. macOS builds require a macOS
 host or runner. iOS distribution requires signing certificates and the App Store
 release flow, so it is not part of the current public release artifacts.
 
+Before publishing a release, complete [release-checklist.md](./release-checklist.md).
+
 ## Release Asset Naming
 
 Release assets should use stable platform and architecture suffixes:
 
 ```txt
-AniDestiny-v1.0.1-android-debug.apk
-AniDestiny-v1.0.1-android.apk
-AniDestiny-v1.0.1-macos-universal.zip
-AniDestiny-v1.0.1-windows-x64.zip
-AniDestiny-v1.0.1-linux-x64.tar.gz
+AniDestiny-v<version>-android-debug.apk
+AniDestiny-v<version>-android-universal.apk
+AniDestiny-v<version>-android-arm64.apk
+AniDestiny-v<version>-macos-universal.zip
+AniDestiny-v<version>-windows-x64.zip
+AniDestiny-v<version>-linux-x64.tar.gz
 ```
+
+The current release workflow uploads the universal Android APK. If a future
+release adds split APKs, the arm64 artifact should use the
+`AniDestiny-v<version>-android-arm64.apk` name.

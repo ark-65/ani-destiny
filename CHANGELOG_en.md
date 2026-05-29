@@ -32,6 +32,8 @@
 - Fixed empty detail episodes and empty play-source lists not being treated as source failures, allowing automatic fallback to run.
 
 ### 🔧 CI/CD
+- Added a release preflight script and pre-release quality gate checklist.
+- Changed Android release asset naming to use the universal APK suffix and documented the arm64 naming rule.
 - Changed macOS and Windows release asset names to include platform and architecture suffixes.
 - Fixed release rebuild handling, Linux release dependencies, and release publishing checkout context.
 - Changed release preparation PRs and GitHub Release notes to publish only user-facing Added, Changed, and Fixed sections.
@@ -39,6 +41,8 @@
 - Added Android debug build and clean scripts, plus post-release validation configuration.
 
 ### 📚 Documentation
+- Added Android, Windows, and macOS release smoke checklists.
+- Added release asset naming, Windows build verification, and current capability boundary notes.
 - Added download path, Android permission policy, and not-yet-implemented scope notes.
 - Updated README visuals, platform notes, screenshot placeholders, and brand asset references.
 - Added platform icon paths and release asset naming notes to platform build documentation.

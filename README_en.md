@@ -66,9 +66,10 @@ flutter run
 ```sh
 bash scripts/clean.sh
 bash scripts/build-android-debug.sh
+bash scripts/preflight-release.sh
 ```
 
-See [docs/platform-build.md](./docs/platform-build.md) for platform build notes and [docs/downloads.md](./docs/downloads.md) for download paths and permission policy.
+See [docs/platform-build.md](./docs/platform-build.md) for platform build notes, [docs/release-checklist.md](./docs/release-checklist.md) for pre-release checks, and [docs/downloads.md](./docs/downloads.md) for download paths and permission policy.
 
 ## Manual Packaging
 
@@ -99,7 +100,7 @@ This repository uses a reviewed release PR flow:
 
 Release CI uploads:
 
-- Android APK
+- Android universal APK
 - macOS universal ZIP
 - Windows x64 ZIP
 - Linux tar.gz
