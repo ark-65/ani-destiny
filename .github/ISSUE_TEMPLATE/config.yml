@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Troubleshooting guide
+    url: https://github.com/ark-65/ani-destiny/blob/main/docs/troubleshooting.md
+    about: Check common source, playback, danmaku, download, and install issues before opening a report.
+  - name: Reporting guide
+    url: https://github.com/ark-65/ani-destiny/blob/main/docs/reporting-issues.md
+    about: Learn how to copy diagnostics and choose the right issue template.

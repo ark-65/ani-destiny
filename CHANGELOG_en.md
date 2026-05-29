@@ -7,6 +7,9 @@
 ## [Unreleased]
 
 ### 📚 Documentation
+- Added GitHub issue templates for general bugs, playback/source issues, and feature requests.
+- Added troubleshooting documentation for source, playback, danmaku, download, install, and diagnostics-copy flows.
+- Updated README and reporting docs to guide users toward templates and sanitized diagnostics.
 - Clarified release asset platform selection and changed the Android debug artifact example to use a version placeholder.
 
 ## [1.0.2] - 2026-05-29

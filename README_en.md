@@ -23,6 +23,7 @@ AniDestiny currently uses a client-side source adapter architecture:
 - Open source: <https://github.com/ark-65/ani-destiny>
 - Releases: <https://github.com/ark-65/ani-destiny/releases>
 - Issue reporting guide: [docs/reporting-issues.md](./docs/reporting-issues.md)
+- Troubleshooting: [docs/troubleshooting.md](./docs/troubleshooting.md)
 - Chinese changelog: [CHANGELOG.md](./CHANGELOG.md)
 - English changelog: [CHANGELOG_en.md](./CHANGELOG_en.md)
 
@@ -75,9 +76,9 @@ See [docs/platform-build.md](./docs/platform-build.md) for platform build notes,
 
 ## Reporting Issues
 
-When reporting playback, source, danmaku, or download issues, include the app version, platform, reproduction steps, source name, whether fallback was used, and the sanitized diagnostics copied from Settings. Do not include account credentials, cookies, tokens, or full URLs with query parameters.
+When reporting playback, source, danmaku, or download issues, please use the GitHub issue templates and include the app version, platform, reproduction steps, source name, whether fallback was used, and the sanitized diagnostics copied from Settings. Do not include account credentials, cookies, tokens, or full URLs with query parameters.
 
-See [docs/reporting-issues.md](./docs/reporting-issues.md) for details.
+See [docs/reporting-issues.md](./docs/reporting-issues.md) for details and [docs/troubleshooting.md](./docs/troubleshooting.md) for common fixes.
 
 ## Manual Packaging
 
