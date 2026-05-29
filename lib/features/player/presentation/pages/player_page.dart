@@ -57,6 +57,7 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
       setState(() => _state = state);
       unawaited(_saveHistory());
     });
+    _recordPlaybackDiagnostics();
     unawaited(_loadPlayer());
   }
 
@@ -230,12 +231,7 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
   }
 
   void _showPlaybackDiagnostics() {
-    final diagnostics = const PlaybackDiagnosticsBuilder().build(
-      sourceId: _args.sourceId,
-      playSourceTitle: _args.playSourceTitle,
-      playUrl: _args.playUrl,
-      headers: _args.playHeaders,
-    );
+    final diagnostics = _recordPlaybackDiagnostics();
 
     showModalBottomSheet<void>(
       context: context,
@@ -285,6 +281,17 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
         );
       },
     );
+  }
+
+  PlaybackDiagnostics _recordPlaybackDiagnostics() {
+    final diagnostics = const PlaybackDiagnosticsBuilder().build(
+      sourceId: _args.sourceId,
+      playSourceTitle: _args.playSourceTitle,
+      playUrl: _args.playUrl,
+      headers: _args.playHeaders,
+    );
+    ref.read(lastPlaybackDiagnosticsProvider.notifier).state = diagnostics;
+    return diagnostics;
   }
 
   String _stateLabel() {

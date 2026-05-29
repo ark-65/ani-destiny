@@ -10,6 +10,8 @@
 - 新增下载任务类型识别，区分直链文件、HLS/m3u8、BT 占位和未知类型。
 - 新增 HLS/m3u8 manifest 解析基础能力，可识别 media playlist 和 master playlist。
 - 新增下载失败原因、headers、字节进度和本地路径等任务字段。
+- 新增设置页“复制诊断信息”入口，可生成已脱敏的 Markdown 反馈摘要。
+- 新增反馈诊断包，汇总 App 版本、平台、数据源健康、fallback、播放、弹幕和下载任务状态。
 - 新增标准品牌资源目录，接入现有 AniDestiny logo 作为 README 和平台图标源资源。
 - 新增基于现有 logo 同步生成的 Android、Windows 和 macOS 平台图标资源。
 - 新增发布页入口、运行诊断页和可复制的反馈摘要，方便用户反馈播放和数据源问题。
@@ -44,6 +46,7 @@
 
 ### 📚 文档
 - 补充 Windows CI 构建产物路径、临时 artifact 和 exe/taskbar icon 验证说明。
+- 新增问题反馈指南，说明反馈播放、数据源、弹幕和下载问题时需要提供的诊断信息。
 - 新增 Android、Windows、macOS 发布 smoke checklist。
 - 补充 release asset 命名、Windows 构建验证和当前功能边界说明。
 - 新增下载路径、Android 权限策略和暂未实现范围说明。

@@ -9,6 +9,7 @@ Use this checklist before publishing a new AniDestiny release.
 - Release notes are prepared from user-facing Added, Changed, and Fixed sections.
 - Source fallback smoke passed.
 - Download task smoke passed.
+- Copy diagnostics smoke passed.
 - App icon smoke passed.
 - `bash scripts/preflight-release.sh` passed.
 - Android debug build passed.
@@ -28,6 +29,7 @@ Use this checklist before publishing a new AniDestiny release.
 - Create direct download task.
 - Verify unsupported HLS task message.
 - Verify source fallback notice when the selected source is unavailable.
+- Copy diagnostics from Settings and confirm no credential values or URL query parameters are included.
 
 ## Windows
 
@@ -39,6 +41,7 @@ Use this checklist before publishing a new AniDestiny release.
 - Create direct download task.
 - Verify unsupported HLS task message.
 - Check source fallback notice.
+- Copy diagnostics from Settings and confirm no credential values or URL query parameters are included.
 - Confirm release ZIP name is `AniDestiny-v<version>-windows-x64.zip`.
 
 ## macOS
@@ -51,6 +54,7 @@ Use this checklist before publishing a new AniDestiny release.
 - Check history resume.
 - Create direct download task.
 - Verify unsupported HLS task message.
+- Copy diagnostics from Settings and confirm no credential values or URL query parameters are included.
 - Confirm release ZIP name is `AniDestiny-v<version>-macos-universal.zip`.
 
 ## Feature Notes
@@ -61,3 +65,4 @@ Use this checklist before publishing a new AniDestiny release.
 - BT / magnet links are detected as placeholders, but BT download is not implemented.
 - Dandanplay is optional and should fall back cleanly when unavailable.
 - Platform icon assets should appear on Android launcher, Windows taskbar / EXE, and macOS Dock.
+- Feedback diagnostics should include app, platform, source, playback, danmaku, and download summaries without credential values, request header values, full URL query parameters, or local usernames.

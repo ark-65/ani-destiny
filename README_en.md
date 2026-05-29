@@ -22,6 +22,7 @@ AniDestiny currently uses a client-side source adapter architecture:
 
 - Open source: <https://github.com/ark-65/ani-destiny>
 - Releases: <https://github.com/ark-65/ani-destiny/releases>
+- Issue reporting guide: [docs/reporting-issues.md](./docs/reporting-issues.md)
 - Chinese changelog: [CHANGELOG.md](./CHANGELOG.md)
 - English changelog: [CHANGELOG_en.md](./CHANGELOG_en.md)
 
@@ -44,6 +45,7 @@ AniDestiny currently validates builds for Android, macOS, Windows, and Linux.
 - Player controls, speed selection, fullscreen mode, and playback diagnostics.
 - Dandanplay danmaku integration structure with mock fallback.
 - Local persistence for watch history, favorites, and download tasks, with direct-file download support and HLS/BT type detection placeholders.
+- Sanitized diagnostics can be copied from Settings for playback, source, danmaku, and download issue reports.
 - UI localization: Chinese, English, and Japanese.
 - Release build workflow for Android, macOS, Windows, and Linux.
 
@@ -70,6 +72,12 @@ bash scripts/preflight-release.sh
 ```
 
 See [docs/platform-build.md](./docs/platform-build.md) for platform build notes, [docs/release-checklist.md](./docs/release-checklist.md) for pre-release checks, and [docs/downloads.md](./docs/downloads.md) for download paths and permission policy.
+
+## Reporting Issues
+
+When reporting playback, source, danmaku, or download issues, include the app version, platform, reproduction steps, source name, whether fallback was used, and the sanitized diagnostics copied from Settings. Do not include account credentials, cookies, tokens, or full URLs with query parameters.
+
+See [docs/reporting-issues.md](./docs/reporting-issues.md) for details.
 
 ## Manual Packaging
 

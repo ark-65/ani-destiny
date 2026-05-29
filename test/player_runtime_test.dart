@@ -58,7 +58,7 @@ void main() {
     expect(diagnostics.urlType, 'm3u8');
     expect(
       diagnostics.sanitizedUrl,
-      'https://cdn.example.test/path/video.m3u8',
+      'https://cdn.example.test/.../video.m3u8',
     );
     expect(diagnostics.sanitizedUrl, isNot(contains('token')));
     expect(diagnostics.headerKeys, ['Referer', 'User-Agent']);

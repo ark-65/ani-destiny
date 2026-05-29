@@ -175,6 +175,10 @@ class AppLocalizations {
   String get sourceStatusValue => _t('sourceStatusValue');
   String get danmakuAbout => _t('danmakuAbout');
   String get danmakuAboutValue => _t('danmakuAboutValue');
+  String get copyDiagnostics => _t('copyDiagnostics');
+  String get diagnosticsCopied => _t('diagnosticsCopied');
+  String get diagnosticsCopyFailed => _t('diagnosticsCopyFailed');
+  String get diagnosticsPrivacyNote => _t('diagnosticsPrivacyNote');
   String get reportIssue => _t('reportIssue');
   String get githubRepository => _t('githubRepository');
   String get openSource => _t('openSource');
@@ -378,6 +382,10 @@ const _localizedValues = {
     'sourceStatusValue': 'Sakura 数据源为实验性能力，依赖上游站点可用性。',
     'danmakuAbout': '弹幕',
     'danmakuAboutValue': '弹弹play 为可选集成；不可用时使用 fallback。',
+    'copyDiagnostics': '复制诊断信息',
+    'diagnosticsCopied': '诊断信息已复制',
+    'diagnosticsCopyFailed': '复制诊断信息失败',
+    'diagnosticsPrivacyNote': '将生成已脱敏的反馈摘要，不包含敏感值。',
     'reportIssue': '反馈问题',
     'githubRepository': 'GitHub 仓库',
     'openSource': '开源地址',
@@ -559,6 +567,11 @@ const _localizedValues = {
     'danmakuAbout': 'Danmaku',
     'danmakuAboutValue':
         'Dandanplay is optional; fallback is used when unavailable.',
+    'copyDiagnostics': 'Copy diagnostics',
+    'diagnosticsCopied': 'Diagnostics copied',
+    'diagnosticsCopyFailed': 'Failed to copy diagnostics',
+    'diagnosticsPrivacyNote':
+        'Generates a sanitized feedback summary without sensitive values.',
     'reportIssue': 'Report issue',
     'githubRepository': 'GitHub repository',
     'openSource': 'Open source',
@@ -739,6 +752,10 @@ const _localizedValues = {
     'sourceStatusValue': 'Sakura ソースは実験的で、上流サイトの可用性に依存します。',
     'danmakuAbout': '弾幕',
     'danmakuAboutValue': '弹弹play は任意連携です。利用できない場合は fallback を使用します。',
+    'copyDiagnostics': '診断情報をコピー',
+    'diagnosticsCopied': '診断情報をコピーしました',
+    'diagnosticsCopyFailed': '診断情報のコピーに失敗しました',
+    'diagnosticsPrivacyNote': '機密値を含まないフィードバック概要を生成します。',
     'reportIssue': '問題を報告',
     'githubRepository': 'GitHub リポジトリ',
     'openSource': 'オープンソース',
