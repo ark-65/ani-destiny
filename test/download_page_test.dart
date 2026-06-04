@@ -55,6 +55,58 @@ void main() {
     expect(find.text('Clear ended tasks'), findsNothing);
     expect(repository.deletedTaskIds, isEmpty);
   });
+
+  testWidgets(
+    'clear ended tasks continues after one deletion fails and shows summary',
+    (tester) async {
+      final repository = _FakeDownloadRepository(
+        [
+          _task('pending', DownloadStatus.pending),
+          _task('completed', DownloadStatus.completed),
+          _task('failed', DownloadStatus.failed),
+          _task('canceled', DownloadStatus.canceled),
+          _task('unsupported', DownloadStatus.unsupported),
+        ],
+        failingDeleteTaskIds: {'failed'},
+      );
+
+      await tester.pumpWidget(_TestApp(repository: repository));
+      await tester.pump();
+
+      await tester.tap(
+        find.widgetWithText(OutlinedButton, 'Clear ended tasks'),
+      );
+      await tester.pump();
+
+      expect(
+        repository.deleteAttempts,
+        ['completed', 'failed', 'canceled', 'unsupported'],
+      );
+      expect(
+        repository.deletedTaskIds,
+        ['completed', 'canceled', 'unsupported'],
+      );
+      expect(find.text('Cleared 3 ended tasks, 1 failed.'), findsOneWidget);
+    },
+  );
+
+  testWidgets('remove action failures surface a snackbar', (tester) async {
+    final repository = _FakeDownloadRepository(
+      [
+        _task('completed', DownloadStatus.completed),
+      ],
+      failingDeleteTaskIds: {'completed'},
+    );
+
+    await tester.pumpWidget(_TestApp(repository: repository));
+    await tester.pump();
+
+    await tester.tap(find.byTooltip('Remove'));
+    await tester.pump();
+
+    expect(repository.deleteAttempts, ['completed']);
+    expect(find.text('Bad state: delete failed for completed'), findsOneWidget);
+  });
 }
 
 class _TestApp extends StatelessWidget {
@@ -84,13 +136,22 @@ class _TestApp extends StatelessWidget {
 }
 
 class _FakeDownloadRepository implements DownloadRepository {
-  _FakeDownloadRepository(this._tasks);
+  _FakeDownloadRepository(
+    this._tasks, {
+    this.failingDeleteTaskIds = const {},
+  });
 
   final List<DownloadTask> _tasks;
+  final Set<String> failingDeleteTaskIds;
+  final List<String> deleteAttempts = [];
   final List<String> deletedTaskIds = [];
 
   @override
   Future<void> deleteTask(String taskId) async {
+    deleteAttempts.add(taskId);
+    if (failingDeleteTaskIds.contains(taskId)) {
+      throw StateError('delete failed for $taskId');
+    }
     deletedTaskIds.add(taskId);
   }
 

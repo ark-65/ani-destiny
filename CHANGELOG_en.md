@@ -14,6 +14,7 @@
 - Fixed download progress labels showing values outside `0%` to `100%`, so out-of-range progress no longer leaks into the list UI.
 - Fixed canceled download tasks being rendered as errors and reported as the latest diagnostics issue, avoiding misleading warnings after user-initiated cancellation.
 - Fixed the downloads page only allowing one-by-one cleanup, adding a single action to clear completed, failed, canceled, and unsupported tasks together.
+- Fixed batch cleanup stopping on the first deletion failure with no feedback, so the downloads page now keeps clearing the remaining ended tasks and reports the result; pause, cancel, and remove failures also surface immediately.
 
 ### 📚 Documentation
 - Added GitHub issue templates for general bugs, playback/source issues, and feature requests.

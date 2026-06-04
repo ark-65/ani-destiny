@@ -75,7 +75,11 @@ class DownloadPage extends ConsumerWidget {
                       if (removableTaskIds.isNotEmpty) ...[
                         OutlinedButton.icon(
                           onPressed: () => unawaited(
-                            _clearRemovableTasks(ref, removableTaskIds),
+                            _clearRemovableTasks(
+                              context,
+                              ref,
+                              removableTaskIds,
+                            ),
                           ),
                           icon: const Icon(Icons.clear_all),
                           label: Text(context.l10n.clearEndedDownloads),
@@ -98,19 +102,28 @@ class DownloadPage extends ConsumerWidget {
                                 ),
                               ),
                               onPause: () => unawaited(
-                                ref
-                                    .read(httpDownloadServiceProvider)
-                                    .pause(task.id),
+                                _runTaskAction(
+                                  context,
+                                  () => ref
+                                      .read(httpDownloadServiceProvider)
+                                      .pause(task.id),
+                                ),
                               ),
                               onCancel: () => unawaited(
-                                ref
-                                    .read(httpDownloadServiceProvider)
-                                    .cancel(task.id),
+                                _runTaskAction(
+                                  context,
+                                  () => ref
+                                      .read(httpDownloadServiceProvider)
+                                      .cancel(task.id),
+                                ),
                               ),
                               onRemove: () => unawaited(
-                                ref
-                                    .read(downloadRepositoryProvider)
-                                    .deleteTask(task.id),
+                                _runTaskAction(
+                                  context,
+                                  () => ref
+                                      .read(downloadRepositoryProvider)
+                                      .deleteTask(task.id),
+                                ),
                               ),
                             );
                           },
@@ -157,13 +170,31 @@ class DownloadPage extends ConsumerWidget {
   }
 
   Future<void> _clearRemovableTasks(
+    BuildContext context,
     WidgetRef ref,
     List<String> taskIds,
   ) async {
     final repository = ref.read(downloadRepositoryProvider);
+    var clearedCount = 0;
+    var failedCount = 0;
     for (final taskId in taskIds) {
-      await repository.deleteTask(taskId);
+      try {
+        await repository.deleteTask(taskId);
+        clearedCount += 1;
+      } catch (_) {
+        failedCount += 1;
+      }
     }
+    if (!context.mounted) return;
+    final message = failedCount == 0
+        ? context.l10n.clearEndedDownloadsResult(clearedCount)
+        : context.l10n.clearEndedDownloadsPartialResult(
+            clearedCount,
+            failedCount,
+          );
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message)),
+    );
   }
 
   List<String> _removableTaskIds(List<DownloadTask> items) {
