@@ -71,6 +71,7 @@ class _DownloadPageState extends ConsumerState<DownloadPage> {
                 ),
                 data: (items) {
                   final removableTaskIds = _removableTaskIds(items);
+                  final clearableTaskIds = _clearableTaskIds(removableTaskIds);
                   if (items.isEmpty) {
                     return AppEmptyView(
                       message: context.l10n.downloadsEmpty,
@@ -83,13 +84,14 @@ class _DownloadPageState extends ConsumerState<DownloadPage> {
                       if (removableTaskIds.isNotEmpty) ...[
                         OutlinedButton.icon(
                           key: const ValueKey('downloads-clear-ended-tasks'),
-                          onPressed: _isClearingEndedTasks
-                              ? null
-                              : () => unawaited(
-                                    _handleClearRemovableTasks(
-                                      removableTaskIds,
-                                    ),
-                                  ),
+                          onPressed:
+                              _isClearingEndedTasks || clearableTaskIds.isEmpty
+                                  ? null
+                                  : () => unawaited(
+                                        _handleClearRemovableTasks(
+                                          clearableTaskIds,
+                                        ),
+                                      ),
                           icon: _isClearingEndedTasks
                               ? const SizedBox.square(
                                   dimension: 18,
@@ -109,7 +111,7 @@ class _DownloadPageState extends ConsumerState<DownloadPage> {
                             final task = items[index];
                             final isBusy = _busyTaskIds.contains(task.id) ||
                                 (_isClearingEndedTasks &&
-                                    removableTaskIds.contains(task.id));
+                                    clearableTaskIds.contains(task.id));
                             return DownloadTaskTile(
                               task: task,
                               isBusy: isBusy,
@@ -254,6 +256,12 @@ class _DownloadPageState extends ConsumerState<DownloadPage> {
     return items
         .where(_isRemovableTask)
         .map((task) => task.id)
+        .toList(growable: false);
+  }
+
+  List<String> _clearableTaskIds(List<String> removableTaskIds) {
+    return removableTaskIds
+        .where((taskId) => !_busyTaskIds.contains(taskId))
         .toList(growable: false);
   }
 

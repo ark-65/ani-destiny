@@ -184,6 +184,48 @@ void main() {
       findsNothing,
     );
   });
+
+  testWidgets(
+    'clear ended tasks skips entries already being removed individually',
+    (tester) async {
+      final deleteBlockers = {
+        'completed': Completer<void>(),
+      };
+      final repository = _FakeDownloadRepository(
+        [
+          _task('completed', DownloadStatus.completed),
+          _task('failed', DownloadStatus.failed),
+        ],
+        deleteBlockers: {
+          for (final entry in deleteBlockers.entries)
+            entry.key: entry.value.future,
+        },
+      );
+
+      await _pumpDownloadPage(tester, repository);
+
+      final removeButton =
+          find.byKey(const ValueKey('download-task-remove-completed'));
+      final clearButton =
+          find.byKey(const ValueKey('downloads-clear-ended-tasks'));
+
+      await tester.tap(removeButton);
+      await tester.pump();
+
+      expect(repository.deleteAttempts, ['completed']);
+      expect(tester.widget<OutlinedButton>(clearButton).onPressed, isNull);
+
+      await tester.tap(clearButton, warnIfMissed: false);
+      await tester.pump();
+
+      expect(repository.deleteAttempts, ['completed']);
+
+      deleteBlockers['completed']!.complete();
+      await tester.pump();
+      await tester.pump();
+      expect(repository.deletedTaskIds, ['completed']);
+    },
+  );
 }
 
 Future<void> _pumpDownloadPage(
@@ -225,11 +267,13 @@ class _FakeDownloadRepository implements DownloadRepository {
     this._tasks, {
     this.failingDeleteTaskIds = const {},
     this.deleteBlocker,
+    this.deleteBlockers = const {},
   });
 
   final List<DownloadTask> _tasks;
   final Set<String> failingDeleteTaskIds;
   final Future<void>? deleteBlocker;
+  final Map<String, Future<void>> deleteBlockers;
   final List<String> deleteAttempts = [];
   final List<String> deletedTaskIds = [];
 
@@ -238,6 +282,10 @@ class _FakeDownloadRepository implements DownloadRepository {
     deleteAttempts.add(taskId);
     if (deleteBlocker != null) {
       await deleteBlocker;
+    }
+    final perTaskBlocker = deleteBlockers[taskId];
+    if (perTaskBlocker != null) {
+      await perTaskBlocker;
     }
     if (failingDeleteTaskIds.contains(taskId)) {
       throw StateError('delete failed for $taskId');
