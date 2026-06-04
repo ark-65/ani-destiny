@@ -18,6 +18,7 @@
 - Fixed batch cleanup staying tappable while it was already running, so the same ended tasks cannot be deleted repeatedly.
 - Fixed per-task start, pause, cancel, retry, and remove actions staying tappable while they were already running, so each task now enters a busy state and blocks duplicate taps.
 - Fixed ended tasks that were already being removed individually still being picked up by batch cleanup, preventing duplicate concurrent deletion attempts for the same task.
+- Fixed batch cleanup still being available while an ended task action was already running, preventing overlapping cleanup flows and confusing feedback.
 
 ### 🔧 CI/CD
 - Stabilized widget-test targeting for downloads cleanup and task actions so Flutter CI does not misread button structure differences as failures.

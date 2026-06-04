@@ -72,6 +72,9 @@ class _DownloadPageState extends ConsumerState<DownloadPage> {
                 data: (items) {
                   final removableTaskIds = _removableTaskIds(items);
                   final clearableTaskIds = _clearableTaskIds(removableTaskIds);
+                  final hasBusyRemovableTask = removableTaskIds.any(
+                    _busyTaskIds.contains,
+                  );
                   if (items.isEmpty) {
                     return AppEmptyView(
                       message: context.l10n.downloadsEmpty,
@@ -85,7 +88,9 @@ class _DownloadPageState extends ConsumerState<DownloadPage> {
                         OutlinedButton.icon(
                           key: const ValueKey('downloads-clear-ended-tasks'),
                           onPressed:
-                              _isClearingEndedTasks || clearableTaskIds.isEmpty
+                              _isClearingEndedTasks ||
+                                      hasBusyRemovableTask ||
+                                      clearableTaskIds.isEmpty
                                   ? null
                                   : () => unawaited(
                                         _handleClearRemovableTasks(
