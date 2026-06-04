@@ -164,9 +164,9 @@ class DownloadTaskTile extends StatelessWidget {
         ],
       DownloadStatus.failed => [
           IconButton(
-            tooltip: context.l10n.start,
+            tooltip: context.l10n.retry,
             onPressed: onStart,
-            icon: const Icon(Icons.play_arrow),
+            icon: const Icon(Icons.refresh),
           ),
           IconButton(
             tooltip: context.l10n.remove,

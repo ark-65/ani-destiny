@@ -10,6 +10,7 @@
 - Fixed completed download tasks not offering direct removal, so finished records can now be cleared from the list.
 - Fixed failed download tasks only offering cancel, so they now keep retry and allow direct removal.
 - Fixed failed download tasks still showing the pause note even though they only support retry or removal.
+- Fixed failed download tasks still showing a generic Start action, replacing it with a clear Retry label and icon.
 
 ### 📚 Documentation
 - Added GitHub issue templates for general bugs, playback/source issues, and feature requests.
