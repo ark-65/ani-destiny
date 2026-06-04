@@ -131,6 +131,7 @@ class AppLocalizations {
   String get deleteHistory => _t('deleteHistory');
   String get loadingDownloads => _t('loadingDownloads');
   String get downloadsEmpty => _t('downloadsEmpty');
+  String get clearEndedDownloads => _t('clearEndedDownloads');
   String get mock => _t('mock');
   String mockDownloadTaskCreated(String taskId) =>
       '${_t('mockDownloadTaskCreated')}: $taskId';
@@ -344,6 +345,7 @@ const _localizedValues = {
     'deleteHistory': '删除历史',
     'loadingDownloads': '正在加载下载',
     'downloadsEmpty': '下载任务会显示在这里',
+    'clearEndedDownloads': '清理已结束任务',
     'mock': 'Mock',
     'mockDownloadTaskCreated': '已创建 Mock 下载任务',
     'start': '开始',
@@ -525,6 +527,7 @@ const _localizedValues = {
     'deleteHistory': 'Delete history',
     'loadingDownloads': 'Loading downloads',
     'downloadsEmpty': 'Download tasks will appear here',
+    'clearEndedDownloads': 'Clear ended tasks',
     'mock': 'Mock',
     'mockDownloadTaskCreated': 'Mock download task created',
     'start': 'Start',
@@ -714,6 +717,7 @@ const _localizedValues = {
     'deleteHistory': '履歴を削除',
     'loadingDownloads': 'ダウンロードを読み込み中',
     'downloadsEmpty': 'ダウンロードタスクがここに表示されます',
+    'clearEndedDownloads': '終了済みタスクを整理',
     'mock': 'Mock',
     'mockDownloadTaskCreated': 'Mock ダウンロードタスクを作成しました',
     'start': '開始',

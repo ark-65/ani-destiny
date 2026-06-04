@@ -9,6 +9,7 @@ import '../../../../core/widgets/app_empty_view.dart';
 import '../../../../core/widgets/app_error_view.dart';
 import '../../../../core/widgets/app_loading_view.dart';
 import '../../../../shared/widgets/adaptive_page.dart';
+import '../../domain/entities/download_task.dart';
 import '../providers/download_providers.dart';
 import '../widgets/download_task_tile.dart';
 
@@ -61,39 +62,61 @@ class DownloadPage extends ConsumerWidget {
                   onRetry: () => ref.invalidate(downloadTasksProvider),
                 ),
                 data: (items) {
+                  final removableTaskIds = _removableTaskIds(items);
                   if (items.isEmpty) {
                     return AppEmptyView(
                       message: context.l10n.downloadsEmpty,
                       icon: Icons.download_outlined,
                     );
                   }
-                  return ListView.builder(
-                    itemCount: items.length,
-                    itemBuilder: (context, index) {
-                      final task = items[index];
-                      return DownloadTaskTile(
-                        task: task,
-                        onStart: () => unawaited(
-                          _runTaskAction(
-                            context,
-                            () => ref.read(httpDownloadServiceProvider).start(
-                                  task.id,
-                                ),
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                      if (removableTaskIds.isNotEmpty) ...[
+                        OutlinedButton.icon(
+                          onPressed: () => unawaited(
+                            _clearRemovableTasks(ref, removableTaskIds),
                           ),
+                          icon: const Icon(Icons.clear_all),
+                          label: Text(context.l10n.clearEndedDownloads),
                         ),
-                        onPause: () => unawaited(
-                          ref.read(httpDownloadServiceProvider).pause(task.id),
-                        ),
-                        onCancel: () => unawaited(
-                          ref.read(httpDownloadServiceProvider).cancel(task.id),
-                        ),
-                        onRemove: () => unawaited(
-                          ref.read(downloadRepositoryProvider).deleteTask(
-                                task.id,
+                        const SizedBox(height: 12),
+                      ],
+                      Expanded(
+                        child: ListView.builder(
+                          itemCount: items.length,
+                          itemBuilder: (context, index) {
+                            final task = items[index];
+                            return DownloadTaskTile(
+                              task: task,
+                              onStart: () => unawaited(
+                                _runTaskAction(
+                                  context,
+                                  () => ref
+                                      .read(httpDownloadServiceProvider)
+                                      .start(task.id),
+                                ),
                               ),
+                              onPause: () => unawaited(
+                                ref
+                                    .read(httpDownloadServiceProvider)
+                                    .pause(task.id),
+                              ),
+                              onCancel: () => unawaited(
+                                ref
+                                    .read(httpDownloadServiceProvider)
+                                    .cancel(task.id),
+                              ),
+                              onRemove: () => unawaited(
+                                ref
+                                    .read(downloadRepositoryProvider)
+                                    .deleteTask(task.id),
+                              ),
+                            );
+                          },
                         ),
-                      );
-                    },
+                      ),
+                    ],
                   );
                 },
               ),
@@ -131,5 +154,37 @@ class DownloadPage extends ConsumerWidget {
         SnackBar(content: Text(error.toString())),
       );
     }
+  }
+
+  Future<void> _clearRemovableTasks(
+    WidgetRef ref,
+    List<String> taskIds,
+  ) async {
+    final repository = ref.read(downloadRepositoryProvider);
+    for (final taskId in taskIds) {
+      await repository.deleteTask(taskId);
+    }
+  }
+
+  List<String> _removableTaskIds(List<DownloadTask> items) {
+    return items
+        .where(_isRemovableTask)
+        .map((task) => task.id)
+        .toList(growable: false);
+  }
+
+  bool _isRemovableTask(DownloadTask task) {
+    return switch (task.status) {
+      DownloadStatus.completed ||
+      DownloadStatus.failed ||
+      DownloadStatus.canceled ||
+      DownloadStatus.unsupported =>
+        true,
+      DownloadStatus.pending ||
+      DownloadStatus.preparing ||
+      DownloadStatus.downloading ||
+      DownloadStatus.paused =>
+        false,
+    };
   }
 }
