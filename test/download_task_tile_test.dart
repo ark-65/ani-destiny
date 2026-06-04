@@ -84,6 +84,10 @@ void main() {
     expect(retryButton, findsOneWidget);
     expect(removeButton, findsOneWidget);
     expect(find.byTooltip('Cancel'), findsNothing);
+    expect(
+      find.text('Pause is basic support and may restart the download when resumed.'),
+      findsNothing,
+    );
 
     await tester.tap(retryButton);
     await tester.pump();

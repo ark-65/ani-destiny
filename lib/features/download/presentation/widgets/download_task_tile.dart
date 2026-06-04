@@ -104,15 +104,15 @@ class DownloadTaskTile extends StatelessWidget {
   bool _showPauseNote(DownloadTask task) {
     return task.kind == DownloadKind.directFile &&
         switch (task.status) {
-          DownloadStatus.pending ||
-          DownloadStatus.preparing ||
-          DownloadStatus.downloading ||
-          DownloadStatus.paused ||
-          DownloadStatus.failed =>
-            true,
-          DownloadStatus.completed ||
-          DownloadStatus.canceled ||
-          DownloadStatus.unsupported =>
+      DownloadStatus.pending ||
+      DownloadStatus.preparing ||
+      DownloadStatus.downloading ||
+      DownloadStatus.paused =>
+        true,
+      DownloadStatus.failed ||
+      DownloadStatus.completed ||
+      DownloadStatus.canceled ||
+      DownloadStatus.unsupported =>
             false,
         };
   }
