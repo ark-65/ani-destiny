@@ -22,6 +22,7 @@ class DownloadPage extends ConsumerStatefulWidget {
 
 class _DownloadPageState extends ConsumerState<DownloadPage> {
   var _isClearingEndedTasks = false;
+  final Set<String> _busyTaskIds = <String>{};
 
   @override
   Widget build(BuildContext context) {
@@ -106,11 +107,16 @@ class _DownloadPageState extends ConsumerState<DownloadPage> {
                           itemCount: items.length,
                           itemBuilder: (context, index) {
                             final task = items[index];
+                            final isBusy = _busyTaskIds.contains(task.id) ||
+                                (_isClearingEndedTasks &&
+                                    removableTaskIds.contains(task.id));
                             return DownloadTaskTile(
                               task: task,
+                              isBusy: isBusy,
                               onStart: () => unawaited(
                                 _runTaskAction(
                                   context,
+                                  task.id,
                                   () => ref
                                       .read(httpDownloadServiceProvider)
                                       .start(task.id),
@@ -119,6 +125,7 @@ class _DownloadPageState extends ConsumerState<DownloadPage> {
                               onPause: () => unawaited(
                                 _runTaskAction(
                                   context,
+                                  task.id,
                                   () => ref
                                       .read(httpDownloadServiceProvider)
                                       .pause(task.id),
@@ -127,6 +134,7 @@ class _DownloadPageState extends ConsumerState<DownloadPage> {
                               onCancel: () => unawaited(
                                 _runTaskAction(
                                   context,
+                                  task.id,
                                   () => ref
                                       .read(httpDownloadServiceProvider)
                                       .cancel(task.id),
@@ -135,6 +143,7 @@ class _DownloadPageState extends ConsumerState<DownloadPage> {
                               onRemove: () => unawaited(
                                 _runTaskAction(
                                   context,
+                                  task.id,
                                   () => ref
                                       .read(downloadRepositoryProvider)
                                       .deleteTask(task.id),
@@ -172,8 +181,13 @@ class _DownloadPageState extends ConsumerState<DownloadPage> {
 
   Future<void> _runTaskAction(
     BuildContext context,
+    String taskId,
     Future<void> Function() action,
   ) async {
+    if (_busyTaskIds.contains(taskId)) return;
+    setState(() {
+      _busyTaskIds.add(taskId);
+    });
     try {
       await action();
     } catch (error) {
@@ -181,6 +195,14 @@ class _DownloadPageState extends ConsumerState<DownloadPage> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(error.toString())),
       );
+    } finally {
+      if (mounted) {
+        setState(() {
+          _busyTaskIds.remove(taskId);
+        });
+      } else {
+        _busyTaskIds.remove(taskId);
+      }
     }
   }
 

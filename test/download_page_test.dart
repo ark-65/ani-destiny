@@ -143,6 +143,47 @@ void main() {
     expect(repository.deleteAttempts, ['completed']);
     expect(find.text('Bad state: delete failed for completed'), findsOneWidget);
   });
+
+  testWidgets('remove action stays disabled while deletion is still running', (
+    tester,
+  ) async {
+    final deleteBlocker = Completer<void>();
+    final repository = _FakeDownloadRepository(
+      [
+        _task('completed', DownloadStatus.completed),
+      ],
+      deleteBlocker: deleteBlocker.future,
+    );
+
+    await _pumpDownloadPage(tester, repository);
+
+    final removeButton =
+        find.byKey(const ValueKey('download-task-remove-completed'));
+    await tester.tap(removeButton);
+    await tester.pump();
+
+    expect(repository.deleteAttempts, ['completed']);
+    expect(
+      find.byKey(const ValueKey('download-task-busy-completed')),
+      findsOneWidget,
+    );
+    expect(tester.widget<IconButton>(removeButton).onPressed, isNull);
+
+    await tester.tap(removeButton, warnIfMissed: false);
+    await tester.pump();
+
+    expect(repository.deleteAttempts, ['completed']);
+
+    deleteBlocker.complete();
+    await tester.pump();
+    await tester.pump();
+
+    expect(repository.deletedTaskIds, ['completed']);
+    expect(
+      find.byKey(const ValueKey('download-task-busy-completed')),
+      findsNothing,
+    );
+  });
 }
 
 Future<void> _pumpDownloadPage(

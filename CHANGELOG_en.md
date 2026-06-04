@@ -16,6 +16,7 @@
 - Fixed the downloads page only allowing one-by-one cleanup, adding a single action to clear completed, failed, canceled, and unsupported tasks together.
 - Fixed batch cleanup stopping on the first deletion failure with no feedback, so the downloads page now keeps clearing the remaining ended tasks and reports the result; pause, cancel, and remove failures also surface immediately.
 - Fixed batch cleanup staying tappable while it was already running, so the same ended tasks cannot be deleted repeatedly.
+- Fixed per-task start, pause, cancel, retry, and remove actions staying tappable while they were already running, so each task now enters a busy state and blocks duplicate taps.
 
 ### 🔧 CI/CD
 - Stabilized widget-test targeting for downloads cleanup and task actions so Flutter CI does not misread button structure differences as failures.

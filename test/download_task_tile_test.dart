@@ -17,6 +17,7 @@ void main() {
       _buildTileApp(
         DownloadTaskTile(
           task: _task(status: DownloadStatus.completed),
+          isBusy: false,
           onStart: () {},
           onPause: () {},
           onCancel: () {},
@@ -48,6 +49,7 @@ void main() {
       _buildTileApp(
         DownloadTaskTile(
           task: _task(status: DownloadStatus.failed),
+          isBusy: false,
           onStart: () {
             startTapped = true;
           },
@@ -99,6 +101,7 @@ void main() {
             failureReason: DownloadFailureReason.canceled,
             failureMessage: 'Download canceled.',
           ),
+          isBusy: false,
           onStart: () {},
           onPause: () {},
           onCancel: () {},
@@ -132,6 +135,7 @@ void main() {
           children: [
             DownloadTaskTile(
               task: _task(status: DownloadStatus.downloading, progress: 1.2),
+              isBusy: false,
               onStart: () {},
               onPause: () {},
               onCancel: () {},
@@ -139,6 +143,7 @@ void main() {
             ),
             DownloadTaskTile(
               task: _task(status: DownloadStatus.downloading, progress: -0.2),
+              isBusy: false,
               onStart: () {},
               onPause: () {},
               onCancel: () {},
@@ -154,6 +159,38 @@ void main() {
     expect(find.text('Progress: 0% · 1.0 KB / 1.0 KB'), findsOneWidget);
     expect(find.textContaining('Progress: 120%'), findsNothing);
     expect(find.textContaining('Progress: -20%'), findsNothing);
+  });
+
+  testWidgets('busy download tasks disable actions and show inline progress', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      _buildTileApp(
+        DownloadTaskTile(
+          task: _task(status: DownloadStatus.failed),
+          isBusy: true,
+          onStart: () {},
+          onPause: () {},
+          onCancel: () {},
+          onRemove: () {},
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    final retryButton =
+        find.byKey(const ValueKey('download-task-retry-task-1'));
+    final removeButton =
+        find.byKey(const ValueKey('download-task-remove-task-1'));
+
+    expect(retryButton, findsOneWidget);
+    expect(removeButton, findsOneWidget);
+    expect(
+      find.byKey(const ValueKey('download-task-busy-task-1')),
+      findsOneWidget,
+    );
+    expect(tester.widget<IconButton>(retryButton).onPressed, isNull);
+    expect(tester.widget<IconButton>(removeButton).onPressed, isNull);
   });
 }
 

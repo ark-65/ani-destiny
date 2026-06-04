@@ -8,6 +8,7 @@ import '../../domain/entities/download_task.dart';
 class DownloadTaskTile extends StatelessWidget {
   const DownloadTaskTile({
     required this.task,
+    required this.isBusy,
     required this.onStart,
     required this.onPause,
     required this.onCancel,
@@ -16,6 +17,7 @@ class DownloadTaskTile extends StatelessWidget {
   });
 
   final DownloadTask task;
+  final bool isBusy;
   final VoidCallback onStart;
   final VoidCallback onPause;
   final VoidCallback onCancel;
@@ -95,6 +97,16 @@ class DownloadTaskTile extends StatelessWidget {
                   )
                 else
                   const Spacer(),
+                if (isBusy) ...[
+                  SizedBox.square(
+                    dimension: 18,
+                    child: CircularProgressIndicator(
+                      key: ValueKey('download-task-busy-${task.id}'),
+                      strokeWidth: 2,
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                ],
                 ..._actions(context),
               ],
             ),
@@ -136,13 +148,13 @@ class DownloadTaskTile extends StatelessWidget {
           IconButton(
             key: ValueKey('download-task-start-${task.id}'),
             tooltip: context.l10n.start,
-            onPressed: onStart,
+            onPressed: isBusy ? null : onStart,
             icon: const Icon(Icons.play_arrow),
           ),
           IconButton(
             key: ValueKey('download-task-cancel-${task.id}'),
             tooltip: context.l10n.cancel,
-            onPressed: onCancel,
+            onPressed: isBusy ? null : onCancel,
             icon: const Icon(Icons.close),
           ),
         ],
@@ -150,7 +162,7 @@ class DownloadTaskTile extends StatelessWidget {
           IconButton(
             key: ValueKey('download-task-cancel-${task.id}'),
             tooltip: context.l10n.cancel,
-            onPressed: onCancel,
+            onPressed: isBusy ? null : onCancel,
             icon: const Icon(Icons.close),
           ),
         ],
@@ -158,13 +170,13 @@ class DownloadTaskTile extends StatelessWidget {
           IconButton(
             key: ValueKey('download-task-pause-${task.id}'),
             tooltip: context.l10n.pause,
-            onPressed: onPause,
+            onPressed: isBusy ? null : onPause,
             icon: const Icon(Icons.pause),
           ),
           IconButton(
             key: ValueKey('download-task-cancel-${task.id}'),
             tooltip: context.l10n.cancel,
-            onPressed: onCancel,
+            onPressed: isBusy ? null : onCancel,
             icon: const Icon(Icons.close),
           ),
         ],
@@ -172,13 +184,13 @@ class DownloadTaskTile extends StatelessWidget {
           IconButton(
             key: ValueKey('download-task-start-${task.id}'),
             tooltip: context.l10n.start,
-            onPressed: onStart,
+            onPressed: isBusy ? null : onStart,
             icon: const Icon(Icons.play_arrow),
           ),
           IconButton(
             key: ValueKey('download-task-cancel-${task.id}'),
             tooltip: context.l10n.cancel,
-            onPressed: onCancel,
+            onPressed: isBusy ? null : onCancel,
             icon: const Icon(Icons.close),
           ),
         ],
@@ -186,13 +198,13 @@ class DownloadTaskTile extends StatelessWidget {
           IconButton(
             key: ValueKey('download-task-retry-${task.id}'),
             tooltip: context.l10n.retry,
-            onPressed: onStart,
+            onPressed: isBusy ? null : onStart,
             icon: const Icon(Icons.refresh),
           ),
           IconButton(
             key: ValueKey('download-task-remove-${task.id}'),
             tooltip: context.l10n.remove,
-            onPressed: onRemove,
+            onPressed: isBusy ? null : onRemove,
             icon: const Icon(Icons.delete_outline),
           ),
         ],
@@ -203,7 +215,7 @@ class DownloadTaskTile extends StatelessWidget {
           IconButton(
             key: ValueKey('download-task-remove-${task.id}'),
             tooltip: context.l10n.remove,
-            onPressed: onRemove,
+            onPressed: isBusy ? null : onRemove,
             icon: const Icon(Icons.delete_outline),
           ),
         ],
