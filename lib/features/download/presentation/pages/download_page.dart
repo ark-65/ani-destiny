@@ -13,11 +13,18 @@ import '../../domain/entities/download_task.dart';
 import '../providers/download_providers.dart';
 import '../widgets/download_task_tile.dart';
 
-class DownloadPage extends ConsumerWidget {
+class DownloadPage extends ConsumerStatefulWidget {
   const DownloadPage({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<DownloadPage> createState() => _DownloadPageState();
+}
+
+class _DownloadPageState extends ConsumerState<DownloadPage> {
+  var _isClearingEndedTasks = false;
+
+  @override
+  Widget build(BuildContext context) {
     final tasks = ref.watch(downloadTasksProvider);
 
     return SafeArea(
@@ -74,14 +81,21 @@ class DownloadPage extends ConsumerWidget {
                     children: [
                       if (removableTaskIds.isNotEmpty) ...[
                         OutlinedButton.icon(
-                          onPressed: () => unawaited(
-                            _clearRemovableTasks(
-                              context,
-                              ref,
-                              removableTaskIds,
-                            ),
-                          ),
-                          icon: const Icon(Icons.clear_all),
+                          onPressed: _isClearingEndedTasks
+                              ? null
+                              : () => unawaited(
+                                    _handleClearRemovableTasks(
+                                      removableTaskIds,
+                                    ),
+                                  ),
+                          icon: _isClearingEndedTasks
+                              ? const SizedBox.square(
+                                  dimension: 18,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                  ),
+                                )
+                              : const Icon(Icons.clear_all),
                           label: Text(context.l10n.clearEndedDownloads),
                         ),
                         const SizedBox(height: 12),
@@ -195,6 +209,22 @@ class DownloadPage extends ConsumerWidget {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text(message)),
     );
+  }
+
+  Future<void> _handleClearRemovableTasks(List<String> taskIds) async {
+    if (_isClearingEndedTasks) return;
+    setState(() {
+      _isClearingEndedTasks = true;
+    });
+    try {
+      await _clearRemovableTasks(context, ref, taskIds);
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isClearingEndedTasks = false;
+        });
+      }
+    }
   }
 
   List<String> _removableTaskIds(List<DownloadTask> items) {

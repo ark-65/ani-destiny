@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:ani_destiny/app/l10n/app_localizations.dart';
 import 'package:ani_destiny/features/download/domain/entities/download_failure_reason.dart';
 import 'package:ani_destiny/features/download/domain/entities/download_kind.dart';
@@ -90,6 +92,49 @@ void main() {
     },
   );
 
+  testWidgets(
+    'clear ended tasks stays disabled while cleanup is still running',
+    (tester) async {
+      final deleteBlocker = Completer<void>();
+      final repository = _FakeDownloadRepository(
+        [
+          _task('completed', DownloadStatus.completed),
+          _task('failed', DownloadStatus.failed),
+        ],
+        deleteBlocker: deleteBlocker.future,
+      );
+
+      await tester.pumpWidget(_TestApp(repository: repository));
+      await tester.pump();
+
+      final clearButton = find.widgetWithText(
+        OutlinedButton,
+        'Clear ended tasks',
+      );
+      await tester.tap(clearButton);
+      await tester.pump();
+
+      expect(repository.deleteAttempts, ['completed']);
+      expect(find.byType(CircularProgressIndicator), findsOneWidget);
+      expect(
+        tester.widget<OutlinedButton>(clearButton).onPressed,
+        isNull,
+      );
+
+      await tester.tap(clearButton, warnIfMissed: false);
+      await tester.pump();
+
+      expect(repository.deleteAttempts, ['completed']);
+
+      deleteBlocker.complete();
+      await tester.pump();
+      await tester.pump();
+
+      expect(repository.deletedTaskIds, ['completed', 'failed']);
+      expect(find.byType(CircularProgressIndicator), findsNothing);
+    },
+  );
+
   testWidgets('remove action failures surface a snackbar', (tester) async {
     final repository = _FakeDownloadRepository(
       [
@@ -139,16 +184,21 @@ class _FakeDownloadRepository implements DownloadRepository {
   _FakeDownloadRepository(
     this._tasks, {
     this.failingDeleteTaskIds = const {},
+    this.deleteBlocker,
   });
 
   final List<DownloadTask> _tasks;
   final Set<String> failingDeleteTaskIds;
+  final Future<void>? deleteBlocker;
   final List<String> deleteAttempts = [];
   final List<String> deletedTaskIds = [];
 
   @override
   Future<void> deleteTask(String taskId) async {
     deleteAttempts.add(taskId);
+    if (deleteBlocker != null) {
+      await deleteBlocker;
+    }
     if (failingDeleteTaskIds.contains(taskId)) {
       throw StateError('delete failed for $taskId');
     }
