@@ -150,7 +150,7 @@ class DownloadTaskTile extends StatelessWidget {
             icon: const Icon(Icons.close),
           ),
         ],
-      DownloadStatus.paused || DownloadStatus.failed => [
+      DownloadStatus.paused => [
           IconButton(
             tooltip: context.l10n.start,
             onPressed: onStart,
@@ -160,6 +160,18 @@ class DownloadTaskTile extends StatelessWidget {
             tooltip: context.l10n.cancel,
             onPressed: onCancel,
             icon: const Icon(Icons.close),
+          ),
+        ],
+      DownloadStatus.failed => [
+          IconButton(
+            tooltip: context.l10n.start,
+            onPressed: onStart,
+            icon: const Icon(Icons.play_arrow),
+          ),
+          IconButton(
+            tooltip: context.l10n.remove,
+            onPressed: onRemove,
+            icon: const Icon(Icons.delete_outline),
           ),
         ],
       DownloadStatus.completed ||

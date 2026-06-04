@@ -6,6 +6,9 @@
 
 ## [Unreleased]
 
+### 🐛 Fixed
+- Fixed failed download tasks only offering cancel, so they now keep retry and allow direct removal.
+
 ### 📚 Documentation
 - Added GitHub issue templates for general bugs, playback/source issues, and feature requests.
 - Added troubleshooting documentation for source, playback, danmaku, download, install, and diagnostics-copy flows.

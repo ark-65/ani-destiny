@@ -45,6 +45,54 @@ void main() {
 
     expect(removeTapped, isTrue);
   });
+
+  testWidgets('failed download tasks expose retry and remove actions', (
+    tester,
+  ) async {
+    var startTapped = false;
+    var removeTapped = false;
+
+    await tester.pumpWidget(
+      MaterialApp(
+        locale: const Locale('en'),
+        supportedLocales: AppLocalizations.supportedLocales,
+        localizationsDelegates: const [
+          AppLocalizations.delegate,
+          GlobalMaterialLocalizations.delegate,
+          GlobalCupertinoLocalizations.delegate,
+          GlobalWidgetsLocalizations.delegate,
+        ],
+        home: Scaffold(
+          body: DownloadTaskTile(
+            task: _task(status: DownloadStatus.failed),
+            onStart: () {
+              startTapped = true;
+            },
+            onPause: () {},
+            onCancel: () {},
+            onRemove: () {
+              removeTapped = true;
+            },
+          ),
+        ),
+      ),
+    );
+
+    final retryButton = find.byTooltip('Start');
+    final removeButton = find.byTooltip('Remove');
+
+    expect(retryButton, findsOneWidget);
+    expect(removeButton, findsOneWidget);
+    expect(find.byTooltip('Cancel'), findsNothing);
+
+    await tester.tap(retryButton);
+    await tester.pump();
+    await tester.tap(removeButton);
+    await tester.pump();
+
+    expect(startTapped, isTrue);
+    expect(removeTapped, isTrue);
+  });
 }
 
 DownloadTask _task({required DownloadStatus status}) {
