@@ -86,7 +86,9 @@ void main() {
     expect(find.byTooltip('Cancel'), findsNothing);
     expect(find.byIcon(Icons.refresh), findsOneWidget);
     expect(
-      find.text('Pause is basic support and may restart the download when resumed.'),
+      find.text(
+        'Pause is basic support and may restart the download when resumed.',
+      ),
       findsNothing,
     );
 
@@ -98,9 +100,54 @@ void main() {
     expect(startTapped, isTrue);
     expect(removeTapped, isTrue);
   });
+
+  testWidgets('download progress label stays within 0 to 100 percent', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        locale: const Locale('en'),
+        supportedLocales: AppLocalizations.supportedLocales,
+        localizationsDelegates: const [
+          AppLocalizations.delegate,
+          GlobalMaterialLocalizations.delegate,
+          GlobalCupertinoLocalizations.delegate,
+          GlobalWidgetsLocalizations.delegate,
+        ],
+        home: Scaffold(
+          body: Column(
+            children: [
+              DownloadTaskTile(
+                task: _task(status: DownloadStatus.downloading, progress: 1.2),
+                onStart: () {},
+                onPause: () {},
+                onCancel: () {},
+                onRemove: () {},
+              ),
+              DownloadTaskTile(
+                task: _task(status: DownloadStatus.downloading, progress: -0.2),
+                onStart: () {},
+                onPause: () {},
+                onCancel: () {},
+                onRemove: () {},
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+
+    expect(find.text('Progress: 100% · 1.0 KB / 1.0 KB'), findsOneWidget);
+    expect(find.text('Progress: 0% · 1.0 KB / 1.0 KB'), findsOneWidget);
+    expect(find.textContaining('Progress: 120%'), findsNothing);
+    expect(find.textContaining('Progress: -20%'), findsNothing);
+  });
 }
 
-DownloadTask _task({required DownloadStatus status}) {
+DownloadTask _task({
+  required DownloadStatus status,
+  double progress = 1,
+}) {
   final now = DateTime(2026, 6, 4, 1, 0);
   return DownloadTask(
     id: 'task-1',
@@ -113,7 +160,7 @@ DownloadTask _task({required DownloadStatus status}) {
     kind: DownloadKind.directFile,
     status: status,
     failureReason: DownloadFailureReason.none,
-    progress: 1,
+    progress: progress,
     totalBytes: 1024,
     downloadedBytes: 1024,
     createdAt: now,

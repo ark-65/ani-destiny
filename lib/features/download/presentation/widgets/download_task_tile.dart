@@ -104,15 +104,15 @@ class DownloadTaskTile extends StatelessWidget {
   bool _showPauseNote(DownloadTask task) {
     return task.kind == DownloadKind.directFile &&
         switch (task.status) {
-      DownloadStatus.pending ||
-      DownloadStatus.preparing ||
-      DownloadStatus.downloading ||
-      DownloadStatus.paused =>
-        true,
-      DownloadStatus.failed ||
-      DownloadStatus.completed ||
-      DownloadStatus.canceled ||
-      DownloadStatus.unsupported =>
+          DownloadStatus.pending ||
+          DownloadStatus.preparing ||
+          DownloadStatus.downloading ||
+          DownloadStatus.paused =>
+            true,
+          DownloadStatus.failed ||
+          DownloadStatus.completed ||
+          DownloadStatus.canceled ||
+          DownloadStatus.unsupported =>
             false,
         };
   }
@@ -188,7 +188,8 @@ class DownloadTaskTile extends StatelessWidget {
   }
 
   String _progressLabel(BuildContext context, DownloadTask task) {
-    final percent = '${(task.progress * 100).round()}%';
+    final clampedProgress = task.progress.clamp(0.0, 1.0).toDouble();
+    final percent = '${(clampedProgress * 100).round()}%';
     final totalBytes = task.totalBytes;
     if (totalBytes == null || totalBytes <= 0) {
       return '${context.l10n.downloadProgress}: $percent';
