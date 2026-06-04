@@ -81,6 +81,7 @@ class _DownloadPageState extends ConsumerState<DownloadPage> {
                     children: [
                       if (removableTaskIds.isNotEmpty) ...[
                         OutlinedButton.icon(
+                          key: const ValueKey('downloads-clear-ended-tasks'),
                           onPressed: _isClearingEndedTasks
                               ? null
                               : () => unawaited(

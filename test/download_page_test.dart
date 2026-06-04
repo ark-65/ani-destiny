@@ -24,13 +24,10 @@ void main() {
       _task('unsupported', DownloadStatus.unsupported),
     ]);
 
-    await tester.pumpWidget(_TestApp(repository: repository));
-    await tester.pump();
+    await _pumpDownloadPage(tester, repository);
 
-    final clearButton = find.widgetWithText(
-      OutlinedButton,
-      'Clear ended tasks',
-    );
+    final clearButton =
+        find.byKey(const ValueKey('downloads-clear-ended-tasks'));
     expect(clearButton, findsOneWidget);
 
     await tester.tap(clearButton);
@@ -51,8 +48,7 @@ void main() {
       _task('paused', DownloadStatus.paused),
     ]);
 
-    await tester.pumpWidget(_TestApp(repository: repository));
-    await tester.pump();
+    await _pumpDownloadPage(tester, repository);
 
     expect(find.text('Clear ended tasks'), findsNothing);
     expect(repository.deletedTaskIds, isEmpty);
@@ -72,12 +68,10 @@ void main() {
         failingDeleteTaskIds: {'failed'},
       );
 
-      await tester.pumpWidget(_TestApp(repository: repository));
-      await tester.pump();
+      await _pumpDownloadPage(tester, repository);
 
-      await tester.tap(
-        find.widgetWithText(OutlinedButton, 'Clear ended tasks'),
-      );
+      await tester
+          .tap(find.byKey(const ValueKey('downloads-clear-ended-tasks')));
       await tester.pump();
 
       expect(
@@ -104,13 +98,10 @@ void main() {
         deleteBlocker: deleteBlocker.future,
       );
 
-      await tester.pumpWidget(_TestApp(repository: repository));
-      await tester.pump();
+      await _pumpDownloadPage(tester, repository);
 
-      final clearButton = find.widgetWithText(
-        OutlinedButton,
-        'Clear ended tasks',
-      );
+      final clearButton =
+          find.byKey(const ValueKey('downloads-clear-ended-tasks'));
       await tester.tap(clearButton);
       await tester.pump();
 
@@ -143,15 +134,23 @@ void main() {
       failingDeleteTaskIds: {'completed'},
     );
 
-    await tester.pumpWidget(_TestApp(repository: repository));
-    await tester.pump();
+    await _pumpDownloadPage(tester, repository);
 
-    await tester.tap(find.byTooltip('Remove'));
+    await tester
+        .tap(find.byKey(const ValueKey('download-task-remove-completed')));
     await tester.pump();
 
     expect(repository.deleteAttempts, ['completed']);
     expect(find.text('Bad state: delete failed for completed'), findsOneWidget);
   });
+}
+
+Future<void> _pumpDownloadPage(
+  WidgetTester tester,
+  DownloadRepository repository,
+) async {
+  await tester.pumpWidget(_TestApp(repository: repository));
+  await tester.pumpAndSettle();
 }
 
 class _TestApp extends StatelessWidget {

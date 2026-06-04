@@ -63,7 +63,10 @@ class DownloadTaskTile extends StatelessWidget {
               value: task.progress.clamp(0, 1).toDouble(),
             ),
             const SizedBox(height: 8),
-            Text(_progressLabel(context, task)),
+            Text(
+              _progressLabel(context, task),
+              key: ValueKey('download-task-progress-${task.id}'),
+            ),
             if (_showFailureMessage(task)) ...[
               const SizedBox(height: 6),
               Text(
@@ -131,11 +134,13 @@ class DownloadTaskTile extends StatelessWidget {
     return switch (task.status) {
       DownloadStatus.pending => [
           IconButton(
+            key: ValueKey('download-task-start-${task.id}'),
             tooltip: context.l10n.start,
             onPressed: onStart,
             icon: const Icon(Icons.play_arrow),
           ),
           IconButton(
+            key: ValueKey('download-task-cancel-${task.id}'),
             tooltip: context.l10n.cancel,
             onPressed: onCancel,
             icon: const Icon(Icons.close),
@@ -143,6 +148,7 @@ class DownloadTaskTile extends StatelessWidget {
         ],
       DownloadStatus.preparing => [
           IconButton(
+            key: ValueKey('download-task-cancel-${task.id}'),
             tooltip: context.l10n.cancel,
             onPressed: onCancel,
             icon: const Icon(Icons.close),
@@ -150,11 +156,13 @@ class DownloadTaskTile extends StatelessWidget {
         ],
       DownloadStatus.downloading => [
           IconButton(
+            key: ValueKey('download-task-pause-${task.id}'),
             tooltip: context.l10n.pause,
             onPressed: onPause,
             icon: const Icon(Icons.pause),
           ),
           IconButton(
+            key: ValueKey('download-task-cancel-${task.id}'),
             tooltip: context.l10n.cancel,
             onPressed: onCancel,
             icon: const Icon(Icons.close),
@@ -162,11 +170,13 @@ class DownloadTaskTile extends StatelessWidget {
         ],
       DownloadStatus.paused => [
           IconButton(
+            key: ValueKey('download-task-start-${task.id}'),
             tooltip: context.l10n.start,
             onPressed: onStart,
             icon: const Icon(Icons.play_arrow),
           ),
           IconButton(
+            key: ValueKey('download-task-cancel-${task.id}'),
             tooltip: context.l10n.cancel,
             onPressed: onCancel,
             icon: const Icon(Icons.close),
@@ -174,11 +184,13 @@ class DownloadTaskTile extends StatelessWidget {
         ],
       DownloadStatus.failed => [
           IconButton(
+            key: ValueKey('download-task-retry-${task.id}'),
             tooltip: context.l10n.retry,
             onPressed: onStart,
             icon: const Icon(Icons.refresh),
           ),
           IconButton(
+            key: ValueKey('download-task-remove-${task.id}'),
             tooltip: context.l10n.remove,
             onPressed: onRemove,
             icon: const Icon(Icons.delete_outline),
@@ -189,6 +201,7 @@ class DownloadTaskTile extends StatelessWidget {
       DownloadStatus.canceled =>
         [
           IconButton(
+            key: ValueKey('download-task-remove-${task.id}'),
             tooltip: context.l10n.remove,
             onPressed: onRemove,
             icon: const Icon(Icons.delete_outline),

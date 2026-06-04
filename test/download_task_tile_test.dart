@@ -14,30 +14,22 @@ void main() {
     var removeTapped = false;
 
     await tester.pumpWidget(
-      MaterialApp(
-        locale: const Locale('en'),
-        supportedLocales: AppLocalizations.supportedLocales,
-        localizationsDelegates: const [
-          AppLocalizations.delegate,
-          GlobalMaterialLocalizations.delegate,
-          GlobalCupertinoLocalizations.delegate,
-          GlobalWidgetsLocalizations.delegate,
-        ],
-        home: Scaffold(
-          body: DownloadTaskTile(
-            task: _task(status: DownloadStatus.completed),
-            onStart: () {},
-            onPause: () {},
-            onCancel: () {},
-            onRemove: () {
-              removeTapped = true;
-            },
-          ),
+      _buildTileApp(
+        DownloadTaskTile(
+          task: _task(status: DownloadStatus.completed),
+          onStart: () {},
+          onPause: () {},
+          onCancel: () {},
+          onRemove: () {
+            removeTapped = true;
+          },
         ),
       ),
     );
+    await tester.pumpAndSettle();
 
-    final removeButton = find.byTooltip('Remove');
+    final removeButton =
+        find.byKey(const ValueKey('download-task-remove-task-1'));
     expect(removeButton, findsOneWidget);
 
     await tester.tap(removeButton);
@@ -53,33 +45,26 @@ void main() {
     var removeTapped = false;
 
     await tester.pumpWidget(
-      MaterialApp(
-        locale: const Locale('en'),
-        supportedLocales: AppLocalizations.supportedLocales,
-        localizationsDelegates: const [
-          AppLocalizations.delegate,
-          GlobalMaterialLocalizations.delegate,
-          GlobalCupertinoLocalizations.delegate,
-          GlobalWidgetsLocalizations.delegate,
-        ],
-        home: Scaffold(
-          body: DownloadTaskTile(
-            task: _task(status: DownloadStatus.failed),
-            onStart: () {
-              startTapped = true;
-            },
-            onPause: () {},
-            onCancel: () {},
-            onRemove: () {
-              removeTapped = true;
-            },
-          ),
+      _buildTileApp(
+        DownloadTaskTile(
+          task: _task(status: DownloadStatus.failed),
+          onStart: () {
+            startTapped = true;
+          },
+          onPause: () {},
+          onCancel: () {},
+          onRemove: () {
+            removeTapped = true;
+          },
         ),
       ),
     );
+    await tester.pumpAndSettle();
 
-    final retryButton = find.byTooltip('Retry');
-    final removeButton = find.byTooltip('Remove');
+    final retryButton =
+        find.byKey(const ValueKey('download-task-retry-task-1'));
+    final removeButton =
+        find.byKey(const ValueKey('download-task-remove-task-1'));
 
     expect(retryButton, findsOneWidget);
     expect(removeButton, findsOneWidget);
@@ -107,34 +92,26 @@ void main() {
     var removeTapped = false;
 
     await tester.pumpWidget(
-      MaterialApp(
-        locale: const Locale('en'),
-        supportedLocales: AppLocalizations.supportedLocales,
-        localizationsDelegates: const [
-          AppLocalizations.delegate,
-          GlobalMaterialLocalizations.delegate,
-          GlobalCupertinoLocalizations.delegate,
-          GlobalWidgetsLocalizations.delegate,
-        ],
-        home: Scaffold(
-          body: DownloadTaskTile(
-            task: _task(
-              status: DownloadStatus.canceled,
-              failureReason: DownloadFailureReason.canceled,
-              failureMessage: 'Download canceled.',
-            ),
-            onStart: () {},
-            onPause: () {},
-            onCancel: () {},
-            onRemove: () {
-              removeTapped = true;
-            },
+      _buildTileApp(
+        DownloadTaskTile(
+          task: _task(
+            status: DownloadStatus.canceled,
+            failureReason: DownloadFailureReason.canceled,
+            failureMessage: 'Download canceled.',
           ),
+          onStart: () {},
+          onPause: () {},
+          onCancel: () {},
+          onRemove: () {
+            removeTapped = true;
+          },
         ),
       ),
     );
+    await tester.pumpAndSettle();
 
-    final removeButton = find.byTooltip('Remove');
+    final removeButton =
+        find.byKey(const ValueKey('download-task-remove-task-1'));
 
     expect(removeButton, findsOneWidget);
     expect(find.byIcon(Icons.error_outline), findsNothing);
@@ -150,43 +127,48 @@ void main() {
     tester,
   ) async {
     await tester.pumpWidget(
-      MaterialApp(
-        locale: const Locale('en'),
-        supportedLocales: AppLocalizations.supportedLocales,
-        localizationsDelegates: const [
-          AppLocalizations.delegate,
-          GlobalMaterialLocalizations.delegate,
-          GlobalCupertinoLocalizations.delegate,
-          GlobalWidgetsLocalizations.delegate,
-        ],
-        home: Scaffold(
-          body: Column(
-            children: [
-              DownloadTaskTile(
-                task: _task(status: DownloadStatus.downloading, progress: 1.2),
-                onStart: () {},
-                onPause: () {},
-                onCancel: () {},
-                onRemove: () {},
-              ),
-              DownloadTaskTile(
-                task: _task(status: DownloadStatus.downloading, progress: -0.2),
-                onStart: () {},
-                onPause: () {},
-                onCancel: () {},
-                onRemove: () {},
-              ),
-            ],
-          ),
+      _buildTileApp(
+        Column(
+          children: [
+            DownloadTaskTile(
+              task: _task(status: DownloadStatus.downloading, progress: 1.2),
+              onStart: () {},
+              onPause: () {},
+              onCancel: () {},
+              onRemove: () {},
+            ),
+            DownloadTaskTile(
+              task: _task(status: DownloadStatus.downloading, progress: -0.2),
+              onStart: () {},
+              onPause: () {},
+              onCancel: () {},
+              onRemove: () {},
+            ),
+          ],
         ),
       ),
     );
+    await tester.pumpAndSettle();
 
     expect(find.text('Progress: 100% · 1.0 KB / 1.0 KB'), findsOneWidget);
     expect(find.text('Progress: 0% · 1.0 KB / 1.0 KB'), findsOneWidget);
     expect(find.textContaining('Progress: 120%'), findsNothing);
     expect(find.textContaining('Progress: -20%'), findsNothing);
   });
+}
+
+Widget _buildTileApp(Widget child) {
+  return MaterialApp(
+    locale: const Locale('en'),
+    supportedLocales: AppLocalizations.supportedLocales,
+    localizationsDelegates: const [
+      AppLocalizations.delegate,
+      GlobalMaterialLocalizations.delegate,
+      GlobalCupertinoLocalizations.delegate,
+      GlobalWidgetsLocalizations.delegate,
+    ],
+    home: Scaffold(body: child),
+  );
 }
 
 DownloadTask _task({
