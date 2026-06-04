@@ -101,6 +101,51 @@ void main() {
     expect(removeTapped, isTrue);
   });
 
+  testWidgets('canceled download tasks stay removable without error styling', (
+    tester,
+  ) async {
+    var removeTapped = false;
+
+    await tester.pumpWidget(
+      MaterialApp(
+        locale: const Locale('en'),
+        supportedLocales: AppLocalizations.supportedLocales,
+        localizationsDelegates: const [
+          AppLocalizations.delegate,
+          GlobalMaterialLocalizations.delegate,
+          GlobalCupertinoLocalizations.delegate,
+          GlobalWidgetsLocalizations.delegate,
+        ],
+        home: Scaffold(
+          body: DownloadTaskTile(
+            task: _task(
+              status: DownloadStatus.canceled,
+              failureReason: DownloadFailureReason.canceled,
+              failureMessage: 'Download canceled.',
+            ),
+            onStart: () {},
+            onPause: () {},
+            onCancel: () {},
+            onRemove: () {
+              removeTapped = true;
+            },
+          ),
+        ),
+      ),
+    );
+
+    final removeButton = find.byTooltip('Remove');
+
+    expect(removeButton, findsOneWidget);
+    expect(find.byIcon(Icons.error_outline), findsNothing);
+    expect(find.text('Download canceled.'), findsNothing);
+
+    await tester.tap(removeButton);
+    await tester.pump();
+
+    expect(removeTapped, isTrue);
+  });
+
   testWidgets('download progress label stays within 0 to 100 percent', (
     tester,
   ) async {
@@ -147,6 +192,8 @@ void main() {
 DownloadTask _task({
   required DownloadStatus status,
   double progress = 1,
+  DownloadFailureReason failureReason = DownloadFailureReason.none,
+  String? failureMessage,
 }) {
   final now = DateTime(2026, 6, 4, 1, 0);
   return DownloadTask(
@@ -159,7 +206,8 @@ DownloadTask _task({
     url: 'https://cdn.example.test/video.mp4',
     kind: DownloadKind.directFile,
     status: status,
-    failureReason: DownloadFailureReason.none,
+    failureReason: failureReason,
+    failureMessage: failureMessage,
     progress: progress,
     totalBytes: 1024,
     downloadedBytes: 1024,

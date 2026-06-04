@@ -145,7 +145,8 @@ class FeedbackPackageCollector {
           (task) =>
               task.status == DownloadStatus.failed ||
               task.status == DownloadStatus.unsupported ||
-              task.failureReason != DownloadFailureReason.none,
+              (task.failureReason != DownloadFailureReason.none &&
+                  task.failureReason != DownloadFailureReason.canceled),
         )
         .toList(growable: false)
       ..sort((a, b) => b.updatedAt.compareTo(a.updatedAt));

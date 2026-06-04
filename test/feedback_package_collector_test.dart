@@ -86,4 +86,47 @@ void main() {
     expect(lower, isNot(contains('token')));
     expect(lower, isNot(contains('secret')));
   });
+
+  test('collector does not treat canceled downloads as the latest issue', () {
+    final now = DateTime.utc(2026, 6, 5, 1, 2, 3);
+    final package = FeedbackPackageCollector(
+      appName: 'AniDestiny',
+      appVersion: '1.0.2',
+      platform: 'android',
+      currentSourceId: 'sakura',
+      sourceHealth: const [],
+      sourceDiagnostics: const [],
+      fallbackEvents: const [],
+      playbackDiagnostics: null,
+      danmakuEnabled: false,
+      dandanplayAppIdConfigured: false,
+      dandanplayAppSecretConfigured: false,
+      downloadTasks: [
+        DownloadTask(
+          id: 'task-canceled',
+          animeId: 'anime-1',
+          episodeId: 'episode-1',
+          sourceId: 'sakura',
+          title: 'Anime',
+          episodeTitle: 'Episode 1',
+          url: 'https://cdn.example.test/video.mp4',
+          kind: DownloadKind.directFile,
+          status: DownloadStatus.canceled,
+          failureReason: DownloadFailureReason.canceled,
+          failureMessage: 'Download canceled.',
+          progress: 0.25,
+          downloadedBytes: 256,
+          createdAt: now,
+          updatedAt: now,
+        ),
+      ],
+    ).collect(generatedAt: now);
+
+    final markdown = const FeedbackPackageFormatter().format(package);
+
+    expect(markdown, contains('- canceled: 1'));
+    expect(markdown, contains('- Latest issue: none'));
+    expect(markdown, isNot(contains('reason=canceled')));
+    expect(markdown, isNot(contains('Download canceled.')));
+  });
 }

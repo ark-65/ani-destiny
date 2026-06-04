@@ -12,6 +12,7 @@
 - Fixed failed download tasks still showing the pause note even though they only support retry or removal.
 - Fixed failed download tasks still showing a generic Start action, replacing it with a clear Retry label and icon.
 - Fixed download progress labels showing values outside `0%` to `100%`, so out-of-range progress no longer leaks into the list UI.
+- Fixed canceled download tasks being rendered as errors and reported as the latest diagnostics issue, avoiding misleading warnings after user-initiated cancellation.
 
 ### 📚 Documentation
 - Added GitHub issue templates for general bugs, playback/source issues, and feature requests.

@@ -84,5 +84,6 @@ void main() {
     expect(task, isNotNull);
     expect(task!.status, DownloadStatus.canceled);
     expect(task.failureReason, DownloadFailureReason.canceled);
+    expect(task.failureMessage, isNull);
   });
 }

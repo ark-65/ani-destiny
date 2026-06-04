@@ -51,7 +51,7 @@ class DownloadTaskTile extends StatelessWidget {
                   icon: Icons.category_outlined,
                   label: _kindLabel(context, task.kind),
                 ),
-                if (task.failureReason != DownloadFailureReason.none)
+                if (_showFailureReason(task))
                   _InfoChip(
                     icon: Icons.error_outline,
                     label: _failureLabel(context, task.failureReason),
@@ -64,7 +64,7 @@ class DownloadTaskTile extends StatelessWidget {
             ),
             const SizedBox(height: 8),
             Text(_progressLabel(context, task)),
-            if (task.failureMessage != null) ...[
+            if (_showFailureMessage(task)) ...[
               const SizedBox(height: 6),
               Text(
                 task.failureMessage!,
@@ -115,6 +115,16 @@ class DownloadTaskTile extends StatelessWidget {
           DownloadStatus.unsupported =>
             false,
         };
+  }
+
+  bool _showFailureReason(DownloadTask task) {
+    return task.failureReason != DownloadFailureReason.none &&
+        task.status != DownloadStatus.canceled;
+  }
+
+  bool _showFailureMessage(DownloadTask task) {
+    return task.failureMessage != null &&
+        task.status != DownloadStatus.canceled;
   }
 
   List<Widget> _actions(BuildContext context) {
