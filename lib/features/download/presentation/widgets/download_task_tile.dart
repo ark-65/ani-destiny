@@ -162,8 +162,10 @@ class DownloadTaskTile extends StatelessWidget {
             icon: const Icon(Icons.close),
           ),
         ],
-      DownloadStatus.completed => const [],
-      DownloadStatus.unsupported || DownloadStatus.canceled => [
+      DownloadStatus.completed ||
+      DownloadStatus.unsupported ||
+      DownloadStatus.canceled =>
+        [
           IconButton(
             tooltip: context.l10n.remove,
             onPressed: onRemove,
