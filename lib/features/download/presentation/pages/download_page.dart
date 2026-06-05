@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -14,7 +15,12 @@ import '../providers/download_providers.dart';
 import '../widgets/download_task_tile.dart';
 
 class DownloadPage extends ConsumerStatefulWidget {
-  const DownloadPage({super.key});
+  const DownloadPage({
+    this.showDebugMockAction = kDebugMode,
+    super.key,
+  });
+
+  final bool showDebugMockAction;
 
   @override
   ConsumerState<DownloadPage> createState() => _DownloadPageState();
@@ -53,11 +59,12 @@ class _DownloadPageState extends ConsumerState<DownloadPage> {
                     style: Theme.of(context).textTheme.headlineSmall,
                   ),
                 ),
-                FilledButton.icon(
-                  onPressed: () => unawaited(_createMockTask(context, ref)),
-                  icon: const Icon(Icons.add),
-                  label: Text(context.l10n.mock),
-                ),
+                if (widget.showDebugMockAction)
+                  FilledButton.icon(
+                    onPressed: () => unawaited(_createMockTask(context, ref)),
+                    icon: const Icon(Icons.add),
+                    label: Text(context.l10n.mock),
+                  ),
               ],
             ),
             const SizedBox(height: 12),
@@ -87,16 +94,15 @@ class _DownloadPageState extends ConsumerState<DownloadPage> {
                       if (removableTaskIds.isNotEmpty) ...[
                         OutlinedButton.icon(
                           key: const ValueKey('downloads-clear-ended-tasks'),
-                          onPressed:
-                              _isClearingEndedTasks ||
-                                      hasBusyRemovableTask ||
-                                      clearableTaskIds.isEmpty
-                                  ? null
-                                  : () => unawaited(
-                                        _handleClearRemovableTasks(
-                                          clearableTaskIds,
-                                        ),
-                                      ),
+                          onPressed: _isClearingEndedTasks ||
+                                  hasBusyRemovableTask ||
+                                  clearableTaskIds.isEmpty
+                              ? null
+                              : () => unawaited(
+                                    _handleClearRemovableTasks(
+                                      clearableTaskIds,
+                                    ),
+                                  ),
                           icon: _isClearingEndedTasks
                               ? const SizedBox.square(
                                   dimension: 18,
