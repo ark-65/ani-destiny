@@ -7,6 +7,7 @@
 ## [Unreleased]
 
 ### 🐛 Fixed
+- Fixed Source Settings still describing Mock as the most stable source, replacing it with neutral copy that matches the production default `sakura`.
 - Fixed the search empty state still telling users to search the Mock source, replacing it with neutral copy for normal browsing.
 - Fixed the downloads page exposing the Mock test-task action to regular users by default; it now only appears in debug builds.
 - Fixed the player route falling back to the Mock source when `sourceId` is missing, so it now uses the default production source `sakura`.
