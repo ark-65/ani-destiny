@@ -131,6 +131,11 @@ class AppLocalizations {
   String get deleteHistory => _t('deleteHistory');
   String get loadingDownloads => _t('loadingDownloads');
   String get downloadsEmpty => _t('downloadsEmpty');
+  String get clearEndedDownloads => _t('clearEndedDownloads');
+  String clearEndedDownloadsResult(int count) =>
+      '${_t('clearEndedDownloadsResultPrefix')}$count${_t('clearEndedDownloadsResultSuffix')}';
+  String clearEndedDownloadsPartialResult(int clearedCount, int failedCount) =>
+      '${_t('clearEndedDownloadsPartialResultPrefix')}$clearedCount${_t('clearEndedDownloadsPartialResultMiddle')}$failedCount${_t('clearEndedDownloadsPartialResultSuffix')}';
   String get mock => _t('mock');
   String mockDownloadTaskCreated(String taskId) =>
       '${_t('mockDownloadTaskCreated')}: $taskId';
@@ -344,6 +349,12 @@ const _localizedValues = {
     'deleteHistory': '删除历史',
     'loadingDownloads': '正在加载下载',
     'downloadsEmpty': '下载任务会显示在这里',
+    'clearEndedDownloads': '清理已结束任务',
+    'clearEndedDownloadsResultPrefix': '已清理 ',
+    'clearEndedDownloadsResultSuffix': ' 个已结束任务。',
+    'clearEndedDownloadsPartialResultPrefix': '已清理 ',
+    'clearEndedDownloadsPartialResultMiddle': ' 个已结束任务，',
+    'clearEndedDownloadsPartialResultSuffix': ' 个清理失败。',
     'mock': 'Mock',
     'mockDownloadTaskCreated': '已创建 Mock 下载任务',
     'start': '开始',
@@ -525,6 +536,12 @@ const _localizedValues = {
     'deleteHistory': 'Delete history',
     'loadingDownloads': 'Loading downloads',
     'downloadsEmpty': 'Download tasks will appear here',
+    'clearEndedDownloads': 'Clear ended tasks',
+    'clearEndedDownloadsResultPrefix': 'Cleared ',
+    'clearEndedDownloadsResultSuffix': ' ended tasks.',
+    'clearEndedDownloadsPartialResultPrefix': 'Cleared ',
+    'clearEndedDownloadsPartialResultMiddle': ' ended tasks, ',
+    'clearEndedDownloadsPartialResultSuffix': ' failed.',
     'mock': 'Mock',
     'mockDownloadTaskCreated': 'Mock download task created',
     'start': 'Start',
@@ -714,6 +731,12 @@ const _localizedValues = {
     'deleteHistory': '履歴を削除',
     'loadingDownloads': 'ダウンロードを読み込み中',
     'downloadsEmpty': 'ダウンロードタスクがここに表示されます',
+    'clearEndedDownloads': '終了済みタスクを整理',
+    'clearEndedDownloadsResultPrefix': '終了済みタスクを ',
+    'clearEndedDownloadsResultSuffix': ' 件整理しました。',
+    'clearEndedDownloadsPartialResultPrefix': '終了済みタスクを ',
+    'clearEndedDownloadsPartialResultMiddle': ' 件整理し、',
+    'clearEndedDownloadsPartialResultSuffix': ' 件は失敗しました。',
     'mock': 'Mock',
     'mockDownloadTaskCreated': 'Mock ダウンロードタスクを作成しました',
     'start': '開始',

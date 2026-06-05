@@ -8,6 +8,7 @@ import '../../domain/entities/download_task.dart';
 class DownloadTaskTile extends StatelessWidget {
   const DownloadTaskTile({
     required this.task,
+    required this.isBusy,
     required this.onStart,
     required this.onPause,
     required this.onCancel,
@@ -16,6 +17,7 @@ class DownloadTaskTile extends StatelessWidget {
   });
 
   final DownloadTask task;
+  final bool isBusy;
   final VoidCallback onStart;
   final VoidCallback onPause;
   final VoidCallback onCancel;
@@ -51,7 +53,7 @@ class DownloadTaskTile extends StatelessWidget {
                   icon: Icons.category_outlined,
                   label: _kindLabel(context, task.kind),
                 ),
-                if (task.failureReason != DownloadFailureReason.none)
+                if (_showFailureReason(task))
                   _InfoChip(
                     icon: Icons.error_outline,
                     label: _failureLabel(context, task.failureReason),
@@ -63,8 +65,11 @@ class DownloadTaskTile extends StatelessWidget {
               value: task.progress.clamp(0, 1).toDouble(),
             ),
             const SizedBox(height: 8),
-            Text(_progressLabel(context, task)),
-            if (task.failureMessage != null) ...[
+            Text(
+              _progressLabel(context, task),
+              key: ValueKey('download-task-progress-${task.id}'),
+            ),
+            if (_showFailureMessage(task)) ...[
               const SizedBox(height: 6),
               Text(
                 task.failureMessage!,
@@ -92,6 +97,16 @@ class DownloadTaskTile extends StatelessWidget {
                   )
                 else
                   const Spacer(),
+                if (isBusy) ...[
+                  SizedBox.square(
+                    dimension: 18,
+                    child: CircularProgressIndicator(
+                      key: ValueKey('download-task-busy-${task.id}'),
+                      strokeWidth: 2,
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                ],
                 ..._actions(context),
               ],
             ),
@@ -107,9 +122,9 @@ class DownloadTaskTile extends StatelessWidget {
           DownloadStatus.pending ||
           DownloadStatus.preparing ||
           DownloadStatus.downloading ||
-          DownloadStatus.paused ||
-          DownloadStatus.failed =>
+          DownloadStatus.paused =>
             true,
+          DownloadStatus.failed ||
           DownloadStatus.completed ||
           DownloadStatus.canceled ||
           DownloadStatus.unsupported =>
@@ -117,56 +132,90 @@ class DownloadTaskTile extends StatelessWidget {
         };
   }
 
+  bool _showFailureReason(DownloadTask task) {
+    return task.failureReason != DownloadFailureReason.none &&
+        task.status != DownloadStatus.canceled;
+  }
+
+  bool _showFailureMessage(DownloadTask task) {
+    return task.failureMessage != null &&
+        task.status != DownloadStatus.canceled;
+  }
+
   List<Widget> _actions(BuildContext context) {
     return switch (task.status) {
       DownloadStatus.pending => [
           IconButton(
+            key: ValueKey('download-task-start-${task.id}'),
             tooltip: context.l10n.start,
-            onPressed: onStart,
+            onPressed: isBusy ? null : onStart,
             icon: const Icon(Icons.play_arrow),
           ),
           IconButton(
+            key: ValueKey('download-task-cancel-${task.id}'),
             tooltip: context.l10n.cancel,
-            onPressed: onCancel,
+            onPressed: isBusy ? null : onCancel,
             icon: const Icon(Icons.close),
           ),
         ],
       DownloadStatus.preparing => [
           IconButton(
+            key: ValueKey('download-task-cancel-${task.id}'),
             tooltip: context.l10n.cancel,
-            onPressed: onCancel,
+            onPressed: isBusy ? null : onCancel,
             icon: const Icon(Icons.close),
           ),
         ],
       DownloadStatus.downloading => [
           IconButton(
+            key: ValueKey('download-task-pause-${task.id}'),
             tooltip: context.l10n.pause,
-            onPressed: onPause,
+            onPressed: isBusy ? null : onPause,
             icon: const Icon(Icons.pause),
           ),
           IconButton(
+            key: ValueKey('download-task-cancel-${task.id}'),
             tooltip: context.l10n.cancel,
-            onPressed: onCancel,
+            onPressed: isBusy ? null : onCancel,
             icon: const Icon(Icons.close),
           ),
         ],
-      DownloadStatus.paused || DownloadStatus.failed => [
+      DownloadStatus.paused => [
           IconButton(
+            key: ValueKey('download-task-start-${task.id}'),
             tooltip: context.l10n.start,
-            onPressed: onStart,
+            onPressed: isBusy ? null : onStart,
             icon: const Icon(Icons.play_arrow),
           ),
           IconButton(
+            key: ValueKey('download-task-cancel-${task.id}'),
             tooltip: context.l10n.cancel,
-            onPressed: onCancel,
+            onPressed: isBusy ? null : onCancel,
             icon: const Icon(Icons.close),
           ),
         ],
-      DownloadStatus.completed => const [],
-      DownloadStatus.unsupported || DownloadStatus.canceled => [
+      DownloadStatus.failed => [
           IconButton(
+            key: ValueKey('download-task-retry-${task.id}'),
+            tooltip: context.l10n.retry,
+            onPressed: isBusy ? null : onStart,
+            icon: const Icon(Icons.refresh),
+          ),
+          IconButton(
+            key: ValueKey('download-task-remove-${task.id}'),
             tooltip: context.l10n.remove,
-            onPressed: onRemove,
+            onPressed: isBusy ? null : onRemove,
+            icon: const Icon(Icons.delete_outline),
+          ),
+        ],
+      DownloadStatus.completed ||
+      DownloadStatus.unsupported ||
+      DownloadStatus.canceled =>
+        [
+          IconButton(
+            key: ValueKey('download-task-remove-${task.id}'),
+            tooltip: context.l10n.remove,
+            onPressed: isBusy ? null : onRemove,
             icon: const Icon(Icons.delete_outline),
           ),
         ],
@@ -174,7 +223,8 @@ class DownloadTaskTile extends StatelessWidget {
   }
 
   String _progressLabel(BuildContext context, DownloadTask task) {
-    final percent = '${(task.progress * 100).round()}%';
+    final clampedProgress = task.progress.clamp(0.0, 1.0).toDouble();
+    final percent = '${(clampedProgress * 100).round()}%';
     final totalBytes = task.totalBytes;
     if (totalBytes == null || totalBytes <= 0) {
       return '${context.l10n.downloadProgress}: $percent';

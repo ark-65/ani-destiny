@@ -6,6 +6,24 @@
 
 ## [Unreleased]
 
+### 🐛 Fixed
+- Fixed completed download tasks not offering direct removal, so finished records can now be cleared from the list.
+- Fixed failed download tasks only offering cancel, so they now keep retry and allow direct removal.
+- Fixed failed download tasks still showing the pause note even though they only support retry or removal.
+- Fixed failed download tasks still showing a generic Start action, replacing it with a clear Retry label and icon.
+- Fixed download progress labels showing values outside `0%` to `100%`, so out-of-range progress no longer leaks into the list UI.
+- Fixed canceled download tasks being rendered as errors and reported as the latest diagnostics issue, avoiding misleading warnings after user-initiated cancellation.
+- Fixed the downloads page only allowing one-by-one cleanup, adding a single action to clear completed, failed, canceled, and unsupported tasks together.
+- Fixed batch cleanup stopping on the first deletion failure with no feedback, so the downloads page now keeps clearing the remaining ended tasks and reports the result; pause, cancel, and remove failures also surface immediately.
+- Fixed batch cleanup staying tappable while it was already running, so the same ended tasks cannot be deleted repeatedly.
+- Fixed per-task start, pause, cancel, retry, and remove actions staying tappable while they were already running, so each task now enters a busy state and blocks duplicate taps.
+- Fixed ended tasks that were already being removed individually still being picked up by batch cleanup, preventing duplicate concurrent deletion attempts for the same task.
+- Fixed batch cleanup still being available while an ended task action was already running, preventing overlapping cleanup flows and confusing feedback.
+
+### 🔧 CI/CD
+- Stabilized widget-test targeting for downloads cleanup and task actions so Flutter CI does not misread button structure differences as failures.
+- Fixed flaky busy-state test waits and overly broad cleanup loading assertions so CI no longer fails on active progress indicators.
+
 ### 📚 Documentation
 - Added GitHub issue templates for general bugs, playback/source issues, and feature requests.
 - Added troubleshooting documentation for source, playback, danmaku, download, install, and diagnostics-copy flows.

@@ -227,7 +227,7 @@ class HttpDownloadService implements DownloadService {
     final updated = task.copyWith(
       status: DownloadStatus.canceled,
       failureReason: DownloadFailureReason.canceled,
-      failureMessage: 'Download canceled.',
+      failureMessage: null,
       updatedAt: DateTime.now(),
     );
     await _repository.upsertTask(updated);
