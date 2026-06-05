@@ -22,6 +22,7 @@
 
 ### 🔧 CI/CD
 - Stabilized widget-test targeting for downloads cleanup and task actions so Flutter CI does not misread button structure differences as failures.
+- Fixed flaky busy-state test waits and overly broad cleanup loading assertions so CI no longer fails on active progress indicators.
 
 ### 📚 Documentation
 - Added GitHub issue templates for general bugs, playback/source issues, and feature requests.

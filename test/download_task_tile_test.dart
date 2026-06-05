@@ -27,7 +27,7 @@ void main() {
         ),
       ),
     );
-    await tester.pumpAndSettle();
+    await tester.pump();
 
     final removeButton =
         find.byKey(const ValueKey('download-task-remove-task-1'));
@@ -61,7 +61,7 @@ void main() {
         ),
       ),
     );
-    await tester.pumpAndSettle();
+    await tester.pump();
 
     final retryButton =
         find.byKey(const ValueKey('download-task-retry-task-1'));
@@ -176,7 +176,7 @@ void main() {
         ),
       ),
     );
-    await tester.pumpAndSettle();
+    await tester.pump();
 
     final retryButton =
         find.byKey(const ValueKey('download-task-retry-task-1'));

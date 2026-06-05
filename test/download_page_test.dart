@@ -106,7 +106,10 @@ void main() {
       await tester.pump();
 
       expect(repository.deleteAttempts, ['completed']);
-      expect(find.byType(CircularProgressIndicator), findsOneWidget);
+      expect(
+        find.byKey(const ValueKey('download-task-busy-completed')),
+        findsOneWidget,
+      );
       expect(
         tester.widget<OutlinedButton>(clearButton).onPressed,
         isNull,
@@ -122,7 +125,10 @@ void main() {
       await tester.pump();
 
       expect(repository.deletedTaskIds, ['completed', 'failed']);
-      expect(find.byType(CircularProgressIndicator), findsNothing);
+      expect(
+        find.byKey(const ValueKey('download-task-busy-completed')),
+        findsNothing,
+      );
     },
   );
 
