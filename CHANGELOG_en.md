@@ -9,6 +9,7 @@
 ### 🐛 Fixed
 - Fixed the downloads page exposing the Mock test-task action to regular users by default; it now only appears in debug builds.
 - Fixed the player route falling back to the Mock source when `sourceId` is missing, so it now uses the default production source `sakura`.
+- Fixed episode cards and the watch-history model still defaulting missing source metadata to Mock, so they now align with the production default source `sakura`.
 - Fixed completed download tasks not offering direct removal, so finished records can now be cleared from the list.
 - Fixed failed download tasks only offering cancel, so they now keep retry and allow direct removal.
 - Fixed failed download tasks still showing the pause note even though they only support retry or removal.
