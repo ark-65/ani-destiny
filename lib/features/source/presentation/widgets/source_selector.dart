@@ -65,7 +65,6 @@ class _SourceOption extends StatelessWidget {
       subtitle: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('id: ${source.id}'),
           Text(
             context.l10n.sourceDisplayDescription(
               source.id,

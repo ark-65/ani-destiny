@@ -7,6 +7,7 @@
 ## [Unreleased]
 
 ### 🐛 Fixed
+- Fixed Source Settings exposing raw technical identifiers like `id: mock` and `id: sakura` to users, so it now shows only localized names and descriptions.
 - Fixed Source Settings still describing Mock as the most stable source, replacing it with neutral copy that matches the production default `sakura`.
 - Fixed the search empty state still telling users to search the Mock source, replacing it with neutral copy for normal browsing.
 - Fixed the downloads page exposing the Mock test-task action to regular users by default; it now only appears in debug builds.
