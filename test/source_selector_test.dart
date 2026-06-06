@@ -47,6 +47,7 @@ void main() {
         ),
       ),
     );
+    await tester.pumpAndSettle();
 
     expect(find.textContaining('id:'), findsNothing);
     expect(find.text('Mock Anime Source'), findsOneWidget);

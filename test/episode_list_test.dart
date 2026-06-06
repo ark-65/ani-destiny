@@ -36,6 +36,7 @@ void main() {
           ),
         ),
       );
+      await tester.pumpAndSettle();
 
       expect(find.text('Sakura Anime'), findsOneWidget);
       expect(find.text('Mock 动漫数据源'), findsNothing);
