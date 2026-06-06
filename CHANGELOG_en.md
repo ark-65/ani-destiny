@@ -7,6 +7,7 @@
 ## [Unreleased]
 
 ### 🐛 Fixed
+- Fixed release builds still exposing the Mock source in Source Settings to regular users; the settings list now keeps only production-selectable sources and migrates old Mock selections back to the default `sakura` source.
 - Fixed Source Settings exposing raw technical identifiers like `id: mock` and `id: sakura` to users, so it now shows only localized names and descriptions.
 - Fixed Source Settings still describing Mock as the most stable source, replacing it with neutral copy that matches the production default `sakura`.
 - Fixed the search empty state still telling users to search the Mock source, replacing it with neutral copy for normal browsing.
