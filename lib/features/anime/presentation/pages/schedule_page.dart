@@ -75,8 +75,13 @@ class SchedulePage extends ConsumerWidget {
                                 for (final item in dayItems)
                                   ListTile(
                                     title: Text(item.title),
-                                    subtitle:
-                                        Text(item.updateTime ?? item.sourceId),
+                                    subtitle: Text(
+                                      item.updateTime ??
+                                          context.l10n.sourceDisplayName(
+                                            item.sourceId,
+                                            item.sourceId,
+                                          ),
+                                    ),
                                     leading: const Icon(Icons.event_available),
                                     onTap: () => context.push(
                                       '/anime/${item.animeId}?sourceId=${Uri.encodeQueryComponent(item.sourceId)}',

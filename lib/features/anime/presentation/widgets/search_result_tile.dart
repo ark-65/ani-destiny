@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../../app/l10n/app_localizations.dart';
 import '../../domain/entities/search_result.dart';
 
 class SearchResultTile extends StatelessWidget {
@@ -14,6 +15,8 @@ class SearchResultTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+
     return ListTile(
       onTap: onTap,
       leading: ClipRRect(
@@ -33,7 +36,8 @@ class SearchResultTile extends StatelessWidget {
       ),
       title: Text(result.title),
       subtitle: Text(
-        result.description ?? result.sourceId,
+        result.description ??
+            l10n.sourceDisplayName(result.sourceId, result.sourceId),
         maxLines: 2,
         overflow: TextOverflow.ellipsis,
       ),
