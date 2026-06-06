@@ -12,6 +12,7 @@
 - Fixed Source Settings still describing Mock as the most stable source, replacing it with neutral copy that matches the production default `sakura`.
 - Fixed the search empty state still telling users to search the Mock source, replacing it with neutral copy for normal browsing.
 - Fixed the downloads page exposing the Mock test-task action to regular users by default; it now only appears in debug builds.
+- Fixed the player placeholder still exposing Mock wording to regular users, replacing it with a neutral playback preview hint.
 - Fixed the player route falling back to the Mock source when `sourceId` is missing, so it now uses the default production source `sakura`.
 - Fixed episode cards and the watch-history model still defaulting missing source metadata to Mock, so they now align with the production default source `sakura`.
 - Fixed completed download tasks not offering direct removal, so finished records can now be cleared from the list.

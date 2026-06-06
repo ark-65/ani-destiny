@@ -104,7 +104,7 @@ class AppLocalizations {
   String downloadTaskCreated(String taskId) =>
       '${_t('downloadTaskCreated')}: $taskId';
   String get playerNoPlayUrl => _t('playerNoPlayUrl');
-  String get playerMockReady => _t('playerMockReady');
+  String get playerReadyHint => _t('playerReadyHint');
   String get pause => _t('pause');
   String get playbackSpeed => _t('playbackSpeed');
   String get hideDanmaku => _t('hideDanmaku');
@@ -322,7 +322,7 @@ const _localizedValues = {
     'selectDownloadSource': '选择下载线路',
     'downloadTaskCreated': '已创建下载任务',
     'playerNoPlayUrl': '未找到可播放线路',
-    'playerMockReady': 'Mock 播放器就绪',
+    'playerReadyHint': '播放器预览已就绪',
     'pause': '暂停',
     'playbackSpeed': '播放速度',
     'hideDanmaku': '隐藏弹幕',
@@ -509,7 +509,7 @@ const _localizedValues = {
     'selectDownloadSource': 'Select download line',
     'downloadTaskCreated': 'Download task created',
     'playerNoPlayUrl': 'No playable source found',
-    'playerMockReady': 'Mock player ready',
+    'playerReadyHint': 'Playback preview ready',
     'pause': 'Pause',
     'playbackSpeed': 'Playback speed',
     'hideDanmaku': 'Hide danmaku',
@@ -704,7 +704,7 @@ const _localizedValues = {
     'selectDownloadSource': 'ダウンロードラインを選択',
     'downloadTaskCreated': 'ダウンロードタスクを作成しました',
     'playerNoPlayUrl': '再生可能なソースが見つかりません',
-    'playerMockReady': 'Mock プレイヤー準備完了',
+    'playerReadyHint': '再生プレビューの準備完了',
     'pause': '一時停止',
     'playbackSpeed': '再生速度',
     'hideDanmaku': '弾幕を隠す',

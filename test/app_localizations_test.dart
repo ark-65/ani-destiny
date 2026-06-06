@@ -28,4 +28,15 @@ void main() {
       expect(l10n.sourceV1Note.toLowerCase(), isNot(contains('mock')));
     }
   });
+
+  test('player placeholder copy no longer exposes mock wording', () {
+    for (final locale in const [
+      Locale('zh'),
+      Locale('en'),
+      Locale('ja'),
+    ]) {
+      final l10n = AppLocalizations(locale);
+      expect(l10n.playerReadyHint.toLowerCase(), isNot(contains('mock')));
+    }
+  });
 }
