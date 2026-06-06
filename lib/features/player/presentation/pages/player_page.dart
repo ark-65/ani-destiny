@@ -251,7 +251,7 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
                 const SizedBox(height: 12),
                 _DiagnosticRow(
                   label: context.l10n.playbackDiagnosticSource,
-                  value: diagnostics.sourceId,
+                  value: context.l10n.sourceDisplayLabel(diagnostics.sourceId),
                 ),
                 _DiagnosticRow(
                   label: context.l10n.playbackDiagnosticLine,

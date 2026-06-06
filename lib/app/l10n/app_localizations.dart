@@ -59,6 +59,10 @@ class AppLocalizations {
     };
   }
 
+  String sourceDisplayLabel(String sourceId) {
+    return sourceDisplayName(sourceId, sourceId);
+  }
+
   String sourceDisplayDescription(String sourceId, String fallback) {
     return switch (sourceId) {
       'mock' => _t('mockSourceDescription'),
@@ -191,6 +195,7 @@ class AppLocalizations {
   String get runtimeDiagnostics => _t('runtimeDiagnostics');
   String get runtimeDiagnosticsSubtitle => _t('runtimeDiagnosticsSubtitle');
   String get platform => _t('platform');
+  String get currentSource => _t('currentSource');
   String get currentSourceId => _t('currentSourceId');
   String get latestSourceDiagnostics => _t('latestSourceDiagnostics');
   String get playbackDiagnosticsSummary => _t('playbackDiagnosticsSummary');
@@ -221,6 +226,8 @@ class AppLocalizations {
   String get sourceStatusReset => _t('sourceStatusReset');
   String get sourceFallbackEvents => _t('sourceFallbackEvents');
   String get sourceFallbackEventsEmpty => _t('sourceFallbackEventsEmpty');
+  String sourceTransitionLabel(String fromSourceId, String toSourceId) =>
+      '${sourceDisplayLabel(fromSourceId)} -> ${sourceDisplayLabel(toSourceId)}';
   String get danmaku => _t('danmaku');
   String get danmakuStatusLoading => _t('danmakuStatusLoading');
   String get danmakuStatusDandanplay => _t('danmakuStatusDandanplay');
@@ -404,6 +411,7 @@ const _localizedValues = {
     'runtimeDiagnostics': '运行诊断',
     'runtimeDiagnosticsSubtitle': 'Debug 模式下查看反馈用摘要，不展示敏感值。',
     'platform': '平台',
+    'currentSource': '当前数据源',
     'currentSourceId': '当前数据源 ID',
     'latestSourceDiagnostics': '最近数据源诊断',
     'playbackDiagnosticsSummary': '播放诊断摘要',
@@ -597,6 +605,7 @@ const _localizedValues = {
     'runtimeDiagnosticsSubtitle':
         'Debug-only feedback summary without sensitive values.',
     'platform': 'Platform',
+    'currentSource': 'Current source',
     'currentSourceId': 'Current source ID',
     'latestSourceDiagnostics': 'Latest source diagnostics',
     'playbackDiagnosticsSummary': 'Playback diagnostics summary',
@@ -786,6 +795,7 @@ const _localizedValues = {
     'runtimeDiagnostics': '実行診断',
     'runtimeDiagnosticsSubtitle': 'Debug モード限定のフィードバック用概要です。機密値は表示しません。',
     'platform': 'プラットフォーム',
+    'currentSource': '現在のソース',
     'currentSourceId': '現在のソース ID',
     'latestSourceDiagnostics': '最近のソース診断',
     'playbackDiagnosticsSummary': '再生診断の概要',
