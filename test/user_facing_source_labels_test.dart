@@ -13,6 +13,23 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
+  test('unknown source ids fall back to neutral localized labels', () {
+    const l10n = AppLocalizations(Locale('en'));
+
+    expect(
+      l10n.sourceDisplayName('beta-source', 'beta-source'),
+      'Unknown source',
+    );
+    expect(
+      l10n.sourceDisplayName('beta-source', 'Beta Source'),
+      'Beta Source',
+    );
+    expect(
+      l10n.sourceDisplayDescription('beta-source', 'beta-source'),
+      'No description is available for this source yet.',
+    );
+  });
+
   testWidgets('favorite tiles show localized source names', (tester) async {
     await tester.pumpWidget(
       _buildLocalizedApp(

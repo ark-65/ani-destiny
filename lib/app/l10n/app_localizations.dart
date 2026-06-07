@@ -55,7 +55,11 @@ class AppLocalizations {
       'mock' => _t('mockSourceName'),
       'sakura' => _t('sakuraSourceName'),
       'remote-proxy' => _t('remoteProxySourceName'),
-      _ => fallback,
+      _ => _sourceFallbackText(
+          sourceId: sourceId,
+          fallback: fallback,
+          unknownText: _t('sourceUnknownName'),
+        ),
     };
   }
 
@@ -68,8 +72,24 @@ class AppLocalizations {
       'mock' => _t('mockSourceDescription'),
       'sakura' => _t('sakuraSourceDescription'),
       'remote-proxy' => _t('remoteProxySourceDescription'),
-      _ => fallback,
+      _ => _sourceFallbackText(
+          sourceId: sourceId,
+          fallback: fallback,
+          unknownText: _t('sourceUnknownDescription'),
+        ),
     };
+  }
+
+  String _sourceFallbackText({
+    required String sourceId,
+    required String fallback,
+    required String unknownText,
+  }) {
+    final normalizedFallback = fallback.trim();
+    if (normalizedFallback.isEmpty || normalizedFallback == sourceId) {
+      return unknownText;
+    }
+    return fallback;
   }
 
   String get sourceLoading => _t('sourceLoading');
@@ -294,6 +314,8 @@ const _localizedValues = {
         'Website parser source. Experimental source. It may fail if the upstream site changes.',
     'remoteProxySourceName': '远程数据源代理',
     'remoteProxySourceDescription': '预留给未来自建代理服务，第一版不强依赖。',
+    'sourceUnknownName': '未知数据源',
+    'sourceUnknownDescription': '暂未提供该数据源说明。',
     'sourceLoading': '数据源：加载中',
     'sourceUnknown': '数据源：未知',
     'schedule': '更新时间表',
@@ -480,6 +502,9 @@ const _localizedValues = {
     'remoteProxySourceName': 'Remote Source Proxy',
     'remoteProxySourceDescription':
         'Future self-hosted proxy adapter. Not required for first version.',
+    'sourceUnknownName': 'Unknown source',
+    'sourceUnknownDescription':
+        'No description is available for this source yet.',
     'sourceLoading': 'Source: loading',
     'sourceUnknown': 'Source: unknown',
     'schedule': 'Schedule',
@@ -678,6 +703,8 @@ const _localizedValues = {
         'Website parser source. Experimental source. It may fail if the upstream site changes.',
     'remoteProxySourceName': 'リモートソースプロキシ',
     'remoteProxySourceDescription': '将来の自前プロキシ用 Adapter です。初版では必須ではありません。',
+    'sourceUnknownName': '不明なソース',
+    'sourceUnknownDescription': 'このソースの説明はまだありません。',
     'sourceLoading': 'ソース: 読み込み中',
     'sourceUnknown': 'ソース: 不明',
     'schedule': '放送予定',
