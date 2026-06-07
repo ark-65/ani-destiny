@@ -1,8 +1,10 @@
 import 'dart:async';
+import 'dart:ui' as ui;
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../app/l10n/app_localizations.dart';
 import '../../../../core/constants/app_constants.dart';
 import '../../../../core/diagnostics/feedback_package.dart';
 import '../../../../core/diagnostics/feedback_package_collector.dart';
@@ -23,6 +25,12 @@ final feedbackPackageProvider =
   final downloadTasks = await _downloadTasks(ref);
   const dandanplayAppId = String.fromEnvironment('DANDANPLAY_APP_ID');
   const dandanplayAppSecret = String.fromEnvironment('DANDANPLAY_APP_SECRET');
+  final l10n = AppLocalizations(
+    AppLocalizations.resolve(
+      ui.PlatformDispatcher.instance.locale,
+      AppLocalizations.supportedLocales,
+    ),
+  );
 
   return FeedbackPackageCollector(
     appName: AppConstants.appName,
@@ -45,6 +53,7 @@ final feedbackPackageProvider =
     dandanplayAppIdConfigured: dandanplayAppId.isNotEmpty,
     dandanplayAppSecretConfigured: dandanplayAppSecret.isNotEmpty,
     downloadTasks: downloadTasks,
+    sourceLabelForId: l10n.sourceDisplayLabel,
   ).collect();
 });
 
