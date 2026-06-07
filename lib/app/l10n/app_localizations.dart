@@ -310,8 +310,7 @@ const _localizedValues = {
     'mockSourceName': 'Mock 动漫数据源',
     'mockSourceDescription': '本地 Mock 数据源，用来保证 AniDestiny 第一版可运行。',
     'sakuraSourceName': 'Sakura Anime',
-    'sakuraSourceDescription':
-        'Website parser source. Experimental source. It may fail if the upstream site changes.',
+    'sakuraSourceDescription': '默认网页解析数据源；如上游站点波动，可稍后重试或切换其他数据源。',
     'remoteProxySourceName': '远程数据源代理',
     'remoteProxySourceDescription': '预留给未来自建代理服务，第一版不强依赖。',
     'sourceUnknownName': '未知数据源',
@@ -419,7 +418,7 @@ const _localizedValues = {
     'supportedPlatforms': '支持平台',
     'supportedPlatformsValue': 'Android / Windows / macOS',
     'sourceStatus': '数据源状态',
-    'sourceStatusValue': 'Sakura 数据源为实验性能力，依赖上游站点可用性。',
+    'sourceStatusValue': 'Sakura 数据源依赖上游站点可用性；解析波动时可稍后重试或切换其他数据源。',
     'danmakuAbout': '弹幕',
     'danmakuAboutValue': '弹弹play 为可选集成；不可用时使用 fallback。',
     'copyDiagnostics': '复制诊断信息',
@@ -498,7 +497,7 @@ const _localizedValues = {
         'Local mock source used to keep AniDestiny runnable.',
     'sakuraSourceName': 'Sakura Anime',
     'sakuraSourceDescription':
-        'Website parser source. Experimental source. It may fail if the upstream site changes.',
+        'Default web parser source. If upstream availability changes, retry later or switch sources.',
     'remoteProxySourceName': 'Remote Source Proxy',
     'remoteProxySourceDescription':
         'Future self-hosted proxy adapter. Not required for first version.',
@@ -613,7 +612,7 @@ const _localizedValues = {
     'supportedPlatformsValue': 'Android / Windows / macOS',
     'sourceStatus': 'Source status',
     'sourceStatusValue':
-        'Sakura source is experimental and depends on upstream availability.',
+        'Sakura source depends on upstream availability. Retry later or switch sources if parsing changes.',
     'danmakuAbout': 'Danmaku',
     'danmakuAboutValue':
         'Dandanplay is optional; fallback is used when unavailable.',
@@ -700,7 +699,7 @@ const _localizedValues = {
     'mockSourceDescription': 'AniDestiny 初版を動作させるためのローカル Mock ソースです。',
     'sakuraSourceName': 'Sakura Anime',
     'sakuraSourceDescription':
-        'Website parser source. Experimental source. It may fail if the upstream site changes.',
+        '既定のWeb解析ソースです。上流サイトの可用性が変わった場合は、後で再試行するか別のソースに切り替えてください。',
     'remoteProxySourceName': 'リモートソースプロキシ',
     'remoteProxySourceDescription': '将来の自前プロキシ用 Adapter です。初版では必須ではありません。',
     'sourceUnknownName': '不明なソース',
@@ -808,7 +807,8 @@ const _localizedValues = {
     'supportedPlatforms': '対応プラットフォーム',
     'supportedPlatformsValue': 'Android / Windows / macOS',
     'sourceStatus': 'ソース状態',
-    'sourceStatusValue': 'Sakura ソースは実験的で、上流サイトの可用性に依存します。',
+    'sourceStatusValue':
+        'Sakura ソースは上流サイトの可用性に依存します。解析結果が不安定な場合は、後で再試行するか別のソースに切り替えてください。',
     'danmakuAbout': '弾幕',
     'danmakuAboutValue': '弹弹play は任意連携です。利用できない場合は fallback を使用します。',
     'copyDiagnostics': '診断情報をコピー',

@@ -26,6 +26,14 @@ void main() {
         isNot(contains('mock')),
       );
       expect(l10n.sourceV1Note.toLowerCase(), isNot(contains('mock')));
+      expect(
+        l10n.sourceDisplayDescription('sakura', 'ignored').toLowerCase(),
+        isNot(contains('experimental')),
+      );
+      expect(
+        l10n.sourceStatusValue.toLowerCase(),
+        isNot(contains('experimental')),
+      );
     }
   });
 

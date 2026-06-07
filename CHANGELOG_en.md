@@ -8,6 +8,7 @@
 
 ### 🐛 Fixed
 - Fixed Source Settings still labeling the production default `sakura` source as `Experimental`; it now shows a clear default-source badge instead.
+- Fixed Source Settings and the settings-page source status still describing the production default `sakura` source as experimental; they now use consistent default-source and retry guidance copy.
 - Fixed unknown sources still exposing internal `sourceId` values when no readable name or description was available, falling back to neutral localized copy instead.
 - Fixed the copied feedback diagnostics package still exposing raw internal source ids like `sakura` and `mock`; it now shows localized source names instead.
 - Fixed runtime diagnostics, source diagnostics, and player diagnostics still showing raw internal source ids like `sakura` and `mock` to users; they now consistently show localized source names instead.

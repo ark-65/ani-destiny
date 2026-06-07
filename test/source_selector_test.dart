@@ -52,8 +52,14 @@ void main() {
     expect(find.textContaining('id:'), findsNothing);
     expect(find.text('Mock Anime Source'), findsOneWidget);
     expect(find.text('Sakura Anime'), findsOneWidget);
+    expect(
+      find.text(
+        'Default web parser source. If upstream availability changes, retry later or switch sources.',
+      ),
+      findsOneWidget,
+    );
     expect(find.text('Default source'), findsOneWidget);
-    expect(find.text('Experimental'), findsNothing);
+    expect(find.textContaining('Experimental'), findsNothing);
   });
 }
 
