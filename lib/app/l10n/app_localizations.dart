@@ -229,7 +229,7 @@ class AppLocalizations {
   String sourceSetTo(String sourceId) => '${_t('sourceSetTo')} $sourceId';
   String get sourceV1Note => _t('sourceV1Note');
   String get sourceCurrent => _t('sourceCurrent');
-  String get sourceExperimentalBadge => _t('sourceExperimentalBadge');
+  String get sourceDefaultBadge => _t('sourceDefaultBadge');
   String get sourceDiagnostics => _t('sourceDiagnostics');
   String get sourceDiagnosticsSubtitle => _t('sourceDiagnosticsSubtitle');
   String get sourceDiagnosticsEmpty => _t('sourceDiagnosticsEmpty');
@@ -448,7 +448,7 @@ const _localizedValues = {
     'sourceSetTo': '数据源已切换为',
     'sourceV1Note': 'Sakura Anime 是当前默认数据源；如受上游站点变化影响，请切换其他数据源或稍后重试。',
     'sourceCurrent': '当前启用',
-    'sourceExperimentalBadge': 'Experimental',
+    'sourceDefaultBadge': '默认源',
     'sourceDiagnostics': '数据源诊断',
     'sourceDiagnosticsSubtitle': '查看最近的数据源请求和解析状态。',
     'sourceDiagnosticsEmpty': '暂无诊断记录',
@@ -649,7 +649,7 @@ const _localizedValues = {
     'sourceV1Note':
         'Sakura Anime is the current default source. If upstream changes affect parsing, switch sources or retry later.',
     'sourceCurrent': 'Current',
-    'sourceExperimentalBadge': 'Experimental',
+    'sourceDefaultBadge': 'Default source',
     'sourceDiagnostics': 'Source diagnostics',
     'sourceDiagnosticsSubtitle':
         'View recent source request and parser status.',
@@ -839,7 +839,7 @@ const _localizedValues = {
     'sourceV1Note':
         'Sakura Anime が現在の既定ソースです。上流サイトの変更で解析に影響が出た場合は、別のソースに切り替えるか後でもう一度お試しください。',
     'sourceCurrent': '現在使用中',
-    'sourceExperimentalBadge': 'Experimental',
+    'sourceDefaultBadge': '既定ソース',
     'sourceDiagnostics': 'ソース診断',
     'sourceDiagnosticsSubtitle': '最近のソース要求と解析状態を確認します。',
     'sourceDiagnosticsEmpty': '診断記録はありません',

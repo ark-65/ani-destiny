@@ -112,7 +112,7 @@ class _SourceOption extends StatelessWidget {
                     vertical: 3,
                   ),
                   child: Text(
-                    context.l10n.sourceExperimentalBadge,
+                    context.l10n.sourceDefaultBadge,
                     style: Theme.of(context).textTheme.labelSmall?.copyWith(
                           color: Theme.of(context)
                               .colorScheme
