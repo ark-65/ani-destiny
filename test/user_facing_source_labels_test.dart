@@ -90,7 +90,13 @@ void main() {
 
     await tester.pumpAndSettle();
 
-    expect(find.text('Sakura Anime'), findsOneWidget);
+    final sourceLabel = find.text('Sakura Anime');
+    if (sourceLabel.evaluate().isEmpty) {
+      await tester.tap(find.byKey(const ValueKey('schedule-weekday-1')));
+      await tester.pumpAndSettle();
+    }
+
+    expect(sourceLabel, findsOneWidget);
     expect(find.text('sakura'), findsNothing);
   });
 }

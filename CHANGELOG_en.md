@@ -32,6 +32,7 @@
 - Fixed batch cleanup still being available while an ended task action was already running, preventing overlapping cleanup flows and confusing feedback.
 
 ### 🔧 CI/CD
+- Stabilized the schedule localization widget test across Flutter environments so `Sakura Anime` assertions no longer depend on `ExpansionTile` starting expanded.
 - Fixed Source Settings and episode-list widget tests waiting too little for localization setup, avoiding false text-assertion failures during PR validation.
 - Stabilized widget-test targeting for downloads cleanup and task actions so Flutter CI does not misread button structure differences as failures.
 - Fixed flaky busy-state test waits and overly broad cleanup loading assertions so CI no longer fails on active progress indicators.

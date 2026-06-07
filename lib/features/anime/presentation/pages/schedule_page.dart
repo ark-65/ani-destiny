@@ -69,11 +69,15 @@ class SchedulePage extends ConsumerWidget {
                             final weekday = weekdays[index];
                             final dayItems = grouped[weekday] ?? [];
                             return ExpansionTile(
+                              key: ValueKey('schedule-weekday-$weekday'),
                               initiallyExpanded: index == 0,
                               title: Text(_weekdayName(context, weekday)),
                               children: [
                                 for (final item in dayItems)
                                   ListTile(
+                                    key: ValueKey(
+                                      'schedule-item-${item.sourceId}-${item.animeId}',
+                                    ),
                                     title: Text(item.title),
                                     subtitle: Text(
                                       item.updateTime ??
