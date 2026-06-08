@@ -7,6 +7,7 @@ import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../app/l10n/app_localizations.dart';
+import '../../../anime/presentation/providers/anime_providers.dart';
 import '../../../danmaku/domain/entities/danmaku_item.dart';
 import '../../../danmaku/presentation/providers/danmaku_providers.dart';
 import '../../../danmaku/presentation/widgets/danmaku_overlay.dart';
@@ -17,6 +18,7 @@ import '../../domain/adapters/player_controller_adapter.dart';
 import '../../domain/entities/player_route_args.dart';
 import '../../domain/entities/player_state.dart';
 import '../../domain/services/playback_diagnostics.dart';
+import '../../domain/services/next_episode_navigation.dart';
 import '../providers/player_providers.dart';
 import '../widgets/playback_speed_sheet.dart';
 import '../widgets/player_controls.dart';
@@ -39,18 +41,21 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
   static const _historyWriteInterval = Duration(seconds: 5);
 
   late final PlayerControllerAdapter _controller;
+  late PlayerRouteArgs _currentArgs;
   StreamSubscription<PlayerState>? _subscription;
   DateTime? _lastHistorySavedAt;
   PlayerState _state = PlayerState.initial();
   bool _isFullscreen = false;
   bool _isDisposed = false;
+  bool _isSwitchingEpisode = false;
 
-  PlayerRouteArgs get _args => widget.args;
+  PlayerRouteArgs get _args => _currentArgs;
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+    _currentArgs = widget.args;
     _controller = ref.read(playerRepositoryProvider).createController();
     _subscription = _controller.stateStream.listen((state) {
       if (!mounted || _isDisposed) return;
@@ -113,9 +118,16 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
                     icon: const Icon(Icons.bug_report_outlined),
                   ),
                 IconButton(
-                  tooltip: context.l10n.nextEpisodePlaceholder,
-                  onPressed: _showNextEpisodePlaceholder,
-                  icon: const Icon(Icons.skip_next),
+                  tooltip: context.l10n.nextEpisode,
+                  onPressed: _isSwitchingEpisode
+                      ? null
+                      : () => unawaited(_playNextEpisode()),
+                  icon: _isSwitchingEpisode
+                      ? const SizedBox.square(
+                          dimension: 18,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : const Icon(Icons.skip_next),
                 ),
                 IconButton(
                   tooltip: context.l10n.externalPlayerPlaceholder,
@@ -368,9 +380,14 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
     }
   }
 
-  Future<void> _loadPlayer() async {
+  Future<void> _loadPlayer({
+    PlayerRouteArgs? args,
+    bool autoplay = false,
+    double? playbackSpeed,
+  }) async {
+    final routeArgs = args ?? _args;
     try {
-      if (_args.playUrl.trim().isEmpty) {
+      if (routeArgs.playUrl.trim().isEmpty) {
         setState(
           () => _state = _state.copyWith(
             isBuffering: false,
@@ -379,11 +396,20 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
         );
         return;
       }
-      await _controller.load(_args.playUrl, headers: _args.playHeaders);
-      final initialPosition = _args.initialPosition;
+      await _controller.load(routeArgs.playUrl, headers: routeArgs.playHeaders);
+      final initialPosition = routeArgs.initialPosition;
       if (initialPosition != null && initialPosition > Duration.zero) {
         await _controller.seek(initialPosition);
       }
+      if (playbackSpeed != null &&
+          playbackSpeed > 0 &&
+          (playbackSpeed - 1).abs() > 0.001) {
+        await _controller.setSpeed(playbackSpeed);
+      }
+      if (autoplay) {
+        await _controller.play();
+      }
+      _recordPlaybackDiagnostics();
       unawaited(_saveHistory(force: true));
     } catch (error) {
       if (!mounted) return;
@@ -407,17 +433,98 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
     );
   }
 
-  void _showNextEpisodePlaceholder() {
-    // TODO(ark65): Resolve the next episode from AnimeDetail and load it here.
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(context.l10n.nextEpisodeNotImplemented)),
-    );
+  Future<void> _playNextEpisode() async {
+    if (_isSwitchingEpisode) return;
+
+    final currentArgs = _args;
+    final shouldResumePlayback = _state.isPlaying;
+    final playbackSpeed = _state.speed;
+
+    setState(() => _isSwitchingEpisode = true);
+    try {
+      final detailResult = await ref.read(
+        animeDetailBySourceProvider(
+          (sourceId: currentArgs.sourceId, animeId: currentArgs.animeId),
+        ).future,
+      );
+      if (!mounted) return;
+      final nextEpisode = resolveNextEpisode(
+        episodes: detailResult.value.episodes,
+        currentEpisodeId: currentArgs.episodeId,
+        currentEpisodeIndex: currentArgs.episodeIndex,
+      );
+      if (nextEpisode == null) {
+        _showSnackBar(context.l10n.nextEpisodeUnavailable);
+        return;
+      }
+
+      final playSourceResult = await ref.read(
+        playSourcesBySourceProvider(
+          (sourceId: detailResult.sourceId, episodeId: nextEpisode.id),
+        ).future,
+      );
+      if (!mounted) return;
+      final sources = playSourceResult.value;
+      if (sources.isEmpty) {
+        _showSnackBar(context.l10n.noPlayableSourceFound);
+        return;
+      }
+
+      final selectedSource = selectPreferredPlaySource(
+        sources,
+        preferredSourceId: currentArgs.playSourceId,
+        preferredSourceTitle: currentArgs.playSourceTitle,
+      );
+      await _saveHistory(force: true);
+      if (!mounted) return;
+
+      final nextArgs = currentArgs.copyWith(
+        episodeId: nextEpisode.id,
+        episodeTitle: nextEpisode.title,
+        sourceId: playSourceResult.sourceId,
+        playSourceId: selectedSource.id,
+        playSourceTitle: selectedSource.title,
+        playUrl: selectedSource.url,
+        playHeaders: selectedSource.headers,
+        episodeIndex: nextEpisode.index,
+        initialPosition: null,
+      );
+
+      setState(() {
+        _currentArgs = nextArgs;
+        _state = PlayerState.initial();
+        _lastHistorySavedAt = null;
+      });
+
+      await _loadPlayer(
+        args: nextArgs,
+        autoplay: shouldResumePlayback,
+        playbackSpeed: playbackSpeed,
+      );
+      if (!mounted) return;
+      if (detailResult.usedFallback || playSourceResult.usedFallback) {
+        _showSnackBar(context.l10n.sourceFallbackNotice);
+      }
+    } catch (error) {
+      if (!mounted) return;
+      _showSnackBar(context.l10n.sourceTemporarilyUnavailable);
+    } finally {
+      if (mounted) {
+        setState(() => _isSwitchingEpisode = false);
+      }
+    }
   }
 
   void _showExternalPlayerPlaceholder() {
     // TODO(ark65): Add url_launcher based external-player intents per platform.
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text(context.l10n.externalPlayerNotImplemented)),
+    );
+  }
+
+  void _showSnackBar(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message)),
     );
   }
 }

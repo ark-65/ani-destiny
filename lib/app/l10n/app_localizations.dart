@@ -135,9 +135,10 @@ class AppLocalizations {
   String get showDanmaku => _t('showDanmaku');
   String get fullscreenPlaceholder => _t('fullscreenPlaceholder');
   String get fullscreenNotImplemented => _t('fullscreenNotImplemented');
-  String get nextEpisodePlaceholder => _t('nextEpisodePlaceholder');
+  String get nextEpisode => _t('nextEpisode');
   String get externalPlayerPlaceholder => _t('externalPlayerPlaceholder');
   String get nextEpisodeNotImplemented => _t('nextEpisodeNotImplemented');
+  String get nextEpisodeUnavailable => _t('nextEpisodeUnavailable');
   String get externalPlayerNotImplemented => _t('externalPlayerNotImplemented');
   String get playbackDiagnostics => _t('playbackDiagnostics');
   String get playbackDiagnosticSource => _t('playbackDiagnosticSource');
@@ -357,9 +358,10 @@ const _localizedValues = {
     'showDanmaku': '显示弹幕',
     'fullscreenPlaceholder': '全屏',
     'fullscreenNotImplemented': '全屏暂未实现。',
-    'nextEpisodePlaceholder': '下一集占位',
+    'nextEpisode': '下一集',
     'externalPlayerPlaceholder': '外部播放器占位',
     'nextEpisodeNotImplemented': '下一集暂未实现。',
+    'nextEpisodeUnavailable': '当前已经是最后一集了。',
     'externalPlayerNotImplemented': '外部播放器暂未实现。',
     'playbackDiagnostics': '播放诊断',
     'playbackDiagnosticSource': '数据源',
@@ -548,9 +550,11 @@ const _localizedValues = {
     'showDanmaku': 'Show danmaku',
     'fullscreenPlaceholder': 'Fullscreen',
     'fullscreenNotImplemented': 'Fullscreen is not implemented yet.',
-    'nextEpisodePlaceholder': 'Next episode placeholder',
+    'nextEpisode': 'Next episode',
     'externalPlayerPlaceholder': 'External player placeholder',
     'nextEpisodeNotImplemented': 'Next episode is not implemented yet.',
+    'nextEpisodeUnavailable':
+        'You are already on the latest available episode.',
     'externalPlayerNotImplemented': 'External player is not implemented yet.',
     'playbackDiagnostics': 'Playback diagnostics',
     'playbackDiagnosticSource': 'Source',
@@ -746,9 +750,10 @@ const _localizedValues = {
     'showDanmaku': '弾幕を表示',
     'fullscreenPlaceholder': '全画面',
     'fullscreenNotImplemented': '全画面はまだ実装されていません。',
-    'nextEpisodePlaceholder': '次のエピソード',
+    'nextEpisode': '次のエピソード',
     'externalPlayerPlaceholder': '外部プレイヤー',
     'nextEpisodeNotImplemented': '次のエピソードはまだ実装されていません。',
+    'nextEpisodeUnavailable': 'すでに最新の配信済みエピソードです。',
     'externalPlayerNotImplemented': '外部プレイヤーはまだ実装されていません。',
     'playbackDiagnostics': '再生診断',
     'playbackDiagnosticSource': 'ソース',

@@ -2,7 +2,10 @@ import 'package:ani_destiny/app/router.dart';
 import 'package:ani_destiny/core/constants/app_constants.dart';
 import 'package:ani_destiny/features/player/data/adapters/mock_player_adapter.dart';
 import 'package:ani_destiny/features/player/domain/entities/player_route_args.dart';
+import 'package:ani_destiny/features/player/domain/services/next_episode_navigation.dart';
 import 'package:ani_destiny/features/player/domain/services/playback_diagnostics.dart';
+import 'package:ani_destiny/features/anime/domain/entities/episode.dart';
+import 'package:ani_destiny/features/anime/domain/entities/play_source.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
@@ -55,6 +58,117 @@ void main() {
     expect(adapter.lastLoadedUrl, 'https://cdn.example.test/video.m3u8');
     expect(adapter.lastLoadedHeaders['Referer'], 'https://example.test/player');
     await adapter.dispose();
+  });
+
+  test('PlayerRouteArgs copyWith updates episode playback fields', () {
+    const args = PlayerRouteArgs(
+      animeId: 'anime-1',
+      episodeId: 'episode-1',
+      animeTitle: 'Anime',
+      episodeTitle: 'Episode 1',
+      playUrl: 'https://cdn.example.test/1.m3u8',
+      sourceId: 'sakura',
+      playSourceId: 'line-1',
+      playSourceTitle: 'Line 1',
+      playHeaders: {'Referer': 'https://example.test/1'},
+      episodeIndex: 1,
+      initialPosition: Duration(minutes: 3),
+    );
+
+    final next = args.copyWith(
+      episodeId: 'episode-2',
+      episodeTitle: 'Episode 2',
+      playUrl: 'https://cdn.example.test/2.m3u8',
+      playSourceId: 'line-2',
+      playSourceTitle: 'Line 2',
+      playHeaders: const {'Referer': 'https://example.test/2'},
+      episodeIndex: 2,
+      initialPosition: null,
+    );
+
+    expect(next.animeId, 'anime-1');
+    expect(next.episodeId, 'episode-2');
+    expect(next.episodeTitle, 'Episode 2');
+    expect(next.playSourceId, 'line-2');
+    expect(next.initialPosition, isNull);
+  });
+
+  test(
+      'resolveNextEpisode prefers the current episode id and returns null at the end',
+      () {
+    const episodes = [
+      Episode(id: 'ep-1', animeId: 'anime-1', title: 'Episode 1', index: 1),
+      Episode(id: 'ep-2', animeId: 'anime-1', title: 'Episode 2', index: 2),
+      Episode(id: 'ep-3', animeId: 'anime-1', title: 'Episode 3', index: 3),
+    ];
+
+    expect(
+      resolveNextEpisode(
+        episodes: episodes,
+        currentEpisodeId: 'ep-2',
+        currentEpisodeIndex: 2,
+      )?.id,
+      'ep-3',
+    );
+    expect(
+      resolveNextEpisode(
+        episodes: episodes,
+        currentEpisodeId: 'ep-3',
+        currentEpisodeIndex: 3,
+      ),
+      isNull,
+    );
+  });
+
+  test('resolveNextEpisode falls back to the episode index when the id changes',
+      () {
+    const episodes = [
+      Episode(id: 'ep-1-new', animeId: 'anime-1', title: 'Episode 1', index: 1),
+      Episode(id: 'ep-2-new', animeId: 'anime-1', title: 'Episode 2', index: 2),
+    ];
+
+    expect(
+      resolveNextEpisode(
+        episodes: episodes,
+        currentEpisodeId: 'legacy-ep-1',
+        currentEpisodeIndex: 1,
+      )?.id,
+      'ep-2-new',
+    );
+  });
+
+  test('selectPreferredPlaySource keeps the current line when possible', () {
+    const sources = [
+      PlaySource(
+        id: 'line-1',
+        episodeId: 'ep-2',
+        title: 'Line 1',
+        url: 'https://cdn.example.test/1.m3u8',
+      ),
+      PlaySource(
+        id: 'line-2',
+        episodeId: 'ep-2',
+        title: 'Line 2',
+        url: 'https://cdn.example.test/2.m3u8',
+      ),
+    ];
+
+    expect(
+      selectPreferredPlaySource(
+        sources,
+        preferredSourceId: 'line-2',
+        preferredSourceTitle: 'Line 1',
+      ).id,
+      'line-2',
+    );
+    expect(
+      selectPreferredPlaySource(
+        sources,
+        preferredSourceTitle: 'Line 2',
+      ).id,
+      'line-2',
+    );
+    expect(selectPreferredPlaySource(sources).id, 'line-1');
   });
 
   test('PlaybackDiagnosticsBuilder hides query tokens and keeps header keys',
