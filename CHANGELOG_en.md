@@ -7,6 +7,7 @@
 ## [Unreleased]
 
 ### 🐛 Fixed
+- Fixed the player page Next episode action only showing a placeholder snackbar; it now switches to the next episode in place while preserving the current play line and playback speed when possible.
 - Fixed Source Settings still labeling the production default `sakura` source as `Experimental`; it now shows a clear default-source badge instead.
 - Fixed Source Settings and the settings-page source status still describing the production default `sakura` source as experimental; they now use consistent default-source and retry guidance copy.
 - Fixed the source-localization widget tests using pages without a `Material/Scaffold` host and asserting against non-rendered exact labels, avoiding false CI failures on PR validation.
