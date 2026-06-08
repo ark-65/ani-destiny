@@ -166,6 +166,33 @@ void main() {
     );
   });
 
+  test(
+      'resolveNextEpisode falls back to the episode number when title formats change',
+      () {
+    const episodes = [
+      Episode(
+        id: 'ep-12-remux',
+        animeId: 'anime-1',
+        title: 'EP12',
+      ),
+      Episode(
+        id: 'ep-13-remux',
+        animeId: 'anime-1',
+        title: 'Episode 13',
+      ),
+    ];
+
+    expect(
+      resolveNextEpisode(
+        episodes: episodes,
+        currentEpisodeId: 'legacy-ep-12',
+        currentEpisodeIndex: 1200,
+        currentEpisodeTitle: '第12集',
+      )?.id,
+      'ep-13-remux',
+    );
+  });
+
   test('selectPreferredPlaySource keeps the current line when possible', () {
     const sources = [
       PlaySource(

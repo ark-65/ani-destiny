@@ -7,6 +7,7 @@
 ## [Unreleased]
 
 ### 🐛 Fixed
+- Fixed next-episode switching still failing when upstream episode titles changed between formats like `第12集`, `Episode 12`, and `EP12`; the player now keeps matching by episode number in the title when needed.
 - Fixed next-episode playback stopping after refreshed episode data changed both the current episode id and index; the player now falls back to the current title when it still matches.
 - Fixed fullscreen playback controls losing access to the Next episode action by adding the same entry point to the fullscreen control bar with the existing switching busy state.
 - Fixed next-episode switching failing to keep the current playback line when upstream line ids changed but the line titles only differed by spacing or letter case.

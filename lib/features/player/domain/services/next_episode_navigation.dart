@@ -25,6 +25,14 @@ Episode? resolveNextEpisode({
       );
     }
   }
+  if (currentPosition == -1) {
+    final episodeNumber = _extractEpisodeNumber(currentEpisodeTitle);
+    if (episodeNumber != null) {
+      currentPosition = episodes.indexWhere(
+        (episode) => _extractEpisodeNumber(episode.title) == episodeNumber,
+      );
+    }
+  }
   if (currentPosition < 0 || currentPosition >= episodes.length - 1) {
     return null;
   }
@@ -64,4 +72,28 @@ String _normalizeSourceTitle(String? value) {
 String _normalizeEpisodeTitle(String? value) {
   if (value == null) return '';
   return value.trim().toLowerCase().replaceAll(RegExp(r'\s+'), ' ');
+}
+
+int? _extractEpisodeNumber(String? value) {
+  if (value == null) return null;
+
+  final trimmed = value.trim();
+  if (trimmed.isEmpty) return null;
+
+  final patterns = <RegExp>[
+    RegExp(r'第\s*0*(\d+)\s*[集话話]', caseSensitive: false),
+    RegExp(r'\bepisode\s*0*(\d+)\b', caseSensitive: false),
+    RegExp(r'\bep\s*0*(\d+)\b', caseSensitive: false),
+    RegExp(r'#\s*0*(\d+)\b', caseSensitive: false),
+  ];
+
+  for (final pattern in patterns) {
+    final match = pattern.firstMatch(trimmed);
+    final raw = match?.group(1);
+    if (raw == null) continue;
+    final parsed = int.tryParse(raw);
+    if (parsed != null) return parsed;
+  }
+
+  return null;
 }
