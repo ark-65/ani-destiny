@@ -171,6 +171,34 @@ void main() {
     expect(selectPreferredPlaySource(sources).id, 'line-1');
   });
 
+  test(
+      'selectPreferredPlaySource matches the current line by normalized title when ids change',
+      () {
+    const sources = [
+      PlaySource(
+        id: 'line-1-next',
+        episodeId: 'ep-2',
+        title: ' line 1 ',
+        url: 'https://cdn.example.test/1.m3u8',
+      ),
+      PlaySource(
+        id: 'line-2-next',
+        episodeId: 'ep-2',
+        title: 'Line 2',
+        url: 'https://cdn.example.test/2.m3u8',
+      ),
+    ];
+
+    expect(
+      selectPreferredPlaySource(
+        sources,
+        preferredSourceId: 'legacy-line-1',
+        preferredSourceTitle: 'LINE   1',
+      ).id,
+      'line-1-next',
+    );
+  });
+
   test('PlaybackDiagnosticsBuilder hides query tokens and keeps header keys',
       () {
     final diagnostics = const PlaybackDiagnosticsBuilder().build(

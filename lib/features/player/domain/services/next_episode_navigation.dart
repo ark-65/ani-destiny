@@ -30,7 +30,7 @@ PlaySource selectPreferredPlaySource(
 }) {
   assert(sources.isNotEmpty, 'sources must not be empty');
 
-  final normalizedTitle = preferredSourceTitle?.trim() ?? '';
+  final normalizedTitle = _normalizeSourceTitle(preferredSourceTitle);
   for (final source in sources) {
     if (preferredSourceId != null && source.id == preferredSourceId) {
       return source;
@@ -38,9 +38,16 @@ PlaySource selectPreferredPlaySource(
   }
   if (normalizedTitle.isNotEmpty) {
     for (final source in sources) {
-      if (source.title == normalizedTitle) return source;
+      if (_normalizeSourceTitle(source.title) == normalizedTitle) {
+        return source;
+      }
     }
   }
 
   return sources.first;
+}
+
+String _normalizeSourceTitle(String? value) {
+  if (value == null) return '';
+  return value.trim().toLowerCase().replaceAll(RegExp(r'\s+'), ' ');
 }
