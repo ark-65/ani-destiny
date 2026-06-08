@@ -9,11 +9,13 @@ class PlayerControls extends StatelessWidget {
     required this.onPlayPause,
     required this.onSeek,
     required this.onSpeed,
+    required this.onNextEpisode,
     required this.onDownload,
     required this.onToggleDanmaku,
     required this.onToggleFullscreen,
     required this.danmakuEnabled,
     required this.isFullscreen,
+    required this.isSwitchingEpisode,
     super.key,
   });
 
@@ -21,11 +23,13 @@ class PlayerControls extends StatelessWidget {
   final VoidCallback onPlayPause;
   final ValueChanged<Duration> onSeek;
   final VoidCallback onSpeed;
+  final VoidCallback? onNextEpisode;
   final VoidCallback onDownload;
   final VoidCallback onToggleDanmaku;
   final VoidCallback onToggleFullscreen;
   final bool danmakuEnabled;
   final bool isFullscreen;
+  final bool isSwitchingEpisode;
 
   @override
   Widget build(BuildContext context) {
@@ -64,6 +68,17 @@ class PlayerControls extends StatelessWidget {
                   onPressed: onSpeed,
                   icon: const Icon(Icons.speed),
                 ),
+                if (isFullscreen)
+                  IconButton(
+                    tooltip: context.l10n.nextEpisode,
+                    onPressed: onNextEpisode,
+                    icon: isSwitchingEpisode
+                        ? const SizedBox.square(
+                            dimension: 18,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          )
+                        : const Icon(Icons.skip_next),
+                  ),
                 IconButton(
                   tooltip: danmakuEnabled
                       ? context.l10n.hideDanmaku

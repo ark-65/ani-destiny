@@ -197,6 +197,9 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
               },
               onSeek: (position) => unawaited(_controller.seek(position)),
               onSpeed: _showSpeedSheet,
+              onNextEpisode: _isSwitchingEpisode
+                  ? null
+                  : () => unawaited(_playNextEpisode()),
               onDownload: () => unawaited(_createDownload()),
               onToggleFullscreen: () => unawaited(_toggleFullscreen()),
               onToggleDanmaku: () {
@@ -204,6 +207,7 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
                     danmakuSettings.copyWith(enabled: !danmakuSettings.enabled);
               },
               isFullscreen: _isFullscreen,
+              isSwitchingEpisode: _isSwitchingEpisode,
             ),
           ),
         ],

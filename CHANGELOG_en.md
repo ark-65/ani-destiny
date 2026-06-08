@@ -7,6 +7,7 @@
 ## [Unreleased]
 
 ### 🐛 Fixed
+- Fixed fullscreen playback controls losing access to the Next episode action by adding the same entry point to the fullscreen control bar with the existing switching busy state.
 - Fixed next-episode switching failing to keep the current playback line when upstream line ids changed but the line titles only differed by spacing or letter case.
 - Fixed the player page Next episode action only showing a placeholder snackbar; it now switches to the next episode in place while preserving the current play line and playback speed when possible.
 - Fixed Source Settings still labeling the production default `sakura` source as `Experimental`; it now shows a clear default-source badge instead.
