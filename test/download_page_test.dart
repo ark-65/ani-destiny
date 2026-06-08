@@ -232,20 +232,47 @@ void main() {
       expect(repository.deletedTaskIds, ['completed']);
     },
   );
+
+  testWidgets('mock task action stays hidden outside debug mode', (
+    tester,
+  ) async {
+    final repository = _FakeDownloadRepository([
+      _task('completed', DownloadStatus.completed),
+    ]);
+
+    await _pumpDownloadPage(
+      tester,
+      repository,
+      showDebugMockAction: false,
+    );
+
+    expect(find.text('Mock'), findsNothing);
+    expect(find.byIcon(Icons.add), findsNothing);
+  });
 }
 
 Future<void> _pumpDownloadPage(
   WidgetTester tester,
-  DownloadRepository repository,
-) async {
-  await tester.pumpWidget(_TestApp(repository: repository));
+  DownloadRepository repository, {
+  bool showDebugMockAction = true,
+}) async {
+  await tester.pumpWidget(
+    _TestApp(
+      repository: repository,
+      showDebugMockAction: showDebugMockAction,
+    ),
+  );
   await tester.pumpAndSettle();
 }
 
 class _TestApp extends StatelessWidget {
-  const _TestApp({required this.repository});
+  const _TestApp({
+    required this.repository,
+    required this.showDebugMockAction,
+  });
 
   final DownloadRepository repository;
+  final bool showDebugMockAction;
 
   @override
   Widget build(BuildContext context) {
@@ -253,16 +280,18 @@ class _TestApp extends StatelessWidget {
       overrides: [
         downloadRepositoryProvider.overrideWithValue(repository),
       ],
-      child: const MaterialApp(
-        locale: Locale('en'),
+      child: MaterialApp(
+        locale: const Locale('en'),
         supportedLocales: AppLocalizations.supportedLocales,
-        localizationsDelegates: [
+        localizationsDelegates: const [
           AppLocalizations.delegate,
           GlobalMaterialLocalizations.delegate,
           GlobalCupertinoLocalizations.delegate,
           GlobalWidgetsLocalizations.delegate,
         ],
-        home: Scaffold(body: DownloadPage()),
+        home: Scaffold(
+          body: DownloadPage(showDebugMockAction: showDebugMockAction),
+        ),
       ),
     );
   }

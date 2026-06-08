@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
+import '../core/constants/app_constants.dart';
 import 'l10n/app_localizations.dart';
 import '../features/anime/presentation/pages/anime_detail_page.dart';
 import '../features/anime/presentation/pages/schedule_page.dart';
@@ -84,7 +85,7 @@ final appRouter = GoRouter(
     GoRoute(
       path: '/player',
       builder: (context, state) => PlayerPage(
-        args: _playerArgsFromState(state),
+        args: playerRouteArgsFromUri(state.uri, extra: state.extra),
       ),
     ),
   ],
@@ -96,11 +97,11 @@ final appRouter = GoRouter(
   ),
 );
 
-PlayerRouteArgs _playerArgsFromState(GoRouterState state) {
-  final extra = state.extra;
+@visibleForTesting
+PlayerRouteArgs playerRouteArgsFromUri(Uri uri, {Object? extra}) {
   if (extra is PlayerRouteArgs) return extra;
 
-  final query = state.uri.queryParameters;
+  final query = uri.queryParameters;
   final title = query['title'] ?? 'AniDestiny';
   return PlayerRouteArgs(
     animeId: query['animeId'] ?? '',
@@ -108,7 +109,7 @@ PlayerRouteArgs _playerArgsFromState(GoRouterState state) {
     animeTitle: title,
     episodeTitle: query['episodeTitle'] ?? title,
     coverUrl: query['coverUrl'],
-    sourceId: query['sourceId'] ?? 'mock',
+    sourceId: query['sourceId'] ?? AppConstants.defaultSourceId,
     playUrl: query['playUrl'] ?? '',
     playSourceId: query['playSourceId'],
     playSourceTitle: query['playSourceTitle'],

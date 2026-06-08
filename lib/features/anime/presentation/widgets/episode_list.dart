@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../../app/l10n/app_localizations.dart';
+import '../../../../core/constants/app_constants.dart';
 import '../../domain/entities/episode.dart';
 
 class EpisodeList extends StatelessWidget {
@@ -33,7 +34,12 @@ class EpisodeList extends StatelessWidget {
                 child: Text('${episode.index ?? 0}'),
               ),
               title: Text(episode.title),
-              subtitle: Text(episode.sourceId ?? 'mock'),
+              subtitle: Text(
+                context.l10n.sourceDisplayName(
+                  episode.sourceId ?? AppConstants.defaultSourceId,
+                  episode.sourceId ?? AppConstants.defaultSourceId,
+                ),
+              ),
               trailing: Wrap(
                 spacing: 4,
                 children: [

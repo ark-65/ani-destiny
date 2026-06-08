@@ -87,6 +87,66 @@ void main() {
     expect(lower, isNot(contains('secret')));
   });
 
+  test('collector can localize user-facing source labels in feedback output',
+      () {
+    final now = DateTime.utc(2026, 6, 8, 1, 2, 3);
+    final package = FeedbackPackageCollector(
+      appName: 'AniDestiny',
+      appVersion: '1.0.2',
+      platform: 'android',
+      currentSourceId: 'sakura',
+      sourceHealth: const [
+        SourceHealth(
+          sourceId: 'sakura',
+          status: SourceHealthStatus.healthy,
+          failureCount: 0,
+        ),
+      ],
+      sourceDiagnostics: const [
+        SourceDiagnostic(
+          sourceId: 'sakura',
+          operation: 'detail',
+          level: SourceDiagnosticLevel.info,
+          message: 'loaded',
+        ),
+      ],
+      fallbackEvents: [
+        SourceFallbackEvent(
+          fromSourceId: 'sakura',
+          toSourceId: 'mock',
+          operation: 'detail',
+          reason: 'fallback',
+          timestamp: now,
+        ),
+      ],
+      playbackDiagnostics: const PlaybackDiagnostics(
+        sourceId: 'sakura',
+        playSourceTitle: 'Line 1',
+        urlType: 'm3u8',
+        sanitizedUrl: 'https://cdn.example.test/.../video.m3u8',
+        headerKeys: [],
+      ),
+      danmakuEnabled: true,
+      dandanplayAppIdConfigured: false,
+      dandanplayAppSecretConfigured: false,
+      downloadTasks: const [],
+      sourceLabelForId: _sourceLabelForId,
+    ).collect(generatedAt: now);
+
+    final markdown = const FeedbackPackageFormatter().format(package);
+
+    expect(markdown, contains('- Current source: Sakura Anime'));
+    expect(markdown, contains('- Sakura Anime: healthy, failures=0'));
+    expect(markdown, contains('detail: Sakura Anime -> Mock Anime Source'));
+    expect(markdown, contains('- Sakura Anime/detail: loaded'));
+    expect(markdown, contains('- Source: Sakura Anime'));
+    expect(markdown, isNot(contains('- Current source: sakura')));
+    expect(markdown, isNot(contains('- sakura: healthy, failures=0')));
+    expect(markdown, isNot(contains('detail: sakura -> mock')));
+    expect(markdown, isNot(contains('- sakura/detail: loaded')));
+    expect(markdown, isNot(contains('- Source: sakura')));
+  });
+
   test('collector does not treat canceled downloads as the latest issue', () {
     final now = DateTime.utc(2026, 6, 5, 1, 2, 3);
     final package = FeedbackPackageCollector(
@@ -129,4 +189,12 @@ void main() {
     expect(markdown, isNot(contains('reason=canceled')));
     expect(markdown, isNot(contains('Download canceled.')));
   });
+}
+
+String _sourceLabelForId(String sourceId) {
+  return switch (sourceId) {
+    'mock' => 'Mock Anime Source',
+    'sakura' => 'Sakura Anime',
+    _ => sourceId,
+  };
 }

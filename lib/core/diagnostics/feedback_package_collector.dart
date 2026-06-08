@@ -22,7 +22,8 @@ class FeedbackPackageCollector {
     required this.dandanplayAppIdConfigured,
     required this.dandanplayAppSecretConfigured,
     required this.downloadTasks,
-  });
+    String Function(String sourceId)? sourceLabelForId,
+  }) : _sourceLabelForId = sourceLabelForId ?? _identitySourceLabel;
 
   final String appName;
   final String appVersion;
@@ -36,6 +37,9 @@ class FeedbackPackageCollector {
   final bool dandanplayAppIdConfigured;
   final bool dandanplayAppSecretConfigured;
   final List<DownloadTask> downloadTasks;
+  final String Function(String sourceId) _sourceLabelForId;
+
+  static String _identitySourceLabel(String sourceId) => sourceId;
 
   FeedbackPackage collect({DateTime? generatedAt}) {
     return FeedbackPackage(
@@ -52,7 +56,7 @@ class FeedbackPackageCollector {
 
   String _sourceSummary() {
     final lines = <String>[
-      '- Current source: ${currentSourceId ?? 'Unavailable'}',
+      '- Current source: ${_sourceLabelOrUnavailable(currentSourceId)}',
     ];
 
     if (sourceHealth.isEmpty) {
@@ -61,7 +65,7 @@ class FeedbackPackageCollector {
       lines.add('- Health:');
       for (final health in sourceHealth) {
         lines.add(
-          '  - ${health.sourceId}: ${health.status.name}, '
+          '  - ${_sourceLabel(health.sourceId)}: ${health.status.name}, '
           'failures=${health.failureCount}',
         );
         if (health.lastErrorMessage != null) {
@@ -78,8 +82,9 @@ class FeedbackPackageCollector {
       lines.add('- Recent fallback events:');
       for (final event in fallbackEvents.take(6)) {
         lines.add(
-          '  - ${event.operation}: ${event.fromSourceId} -> '
-          '${event.toSourceId}, reason=${sanitizeError(event.reason)}',
+          '  - ${event.operation}: ${_sourceLabel(event.fromSourceId)} -> '
+          '${_sourceLabel(event.toSourceId)}, '
+          'reason=${sanitizeError(event.reason)}',
         );
       }
     }
@@ -96,7 +101,7 @@ class FeedbackPackageCollector {
           if (diagnostic.exceptionType != null) diagnostic.exceptionType!,
         ].join(', ');
         lines.add(
-          '  - ${diagnostic.sourceId}/${diagnostic.operation}: '
+          '  - ${_sourceLabel(diagnostic.sourceId)}/${diagnostic.operation}: '
           '${sanitizeError(diagnostic.message)} ($details)',
         );
       }
@@ -112,7 +117,7 @@ class FeedbackPackageCollector {
     }
 
     return [
-      '- Source: ${diagnostics.sourceId}',
+      '- Source: ${_sourceLabel(diagnostics.sourceId)}',
       '- Line: ${diagnostics.playSourceTitle ?? 'Unavailable'}',
       '- URL type: ${diagnostics.urlType}',
       '- URL: ${diagnostics.sanitizedUrl}',
@@ -128,6 +133,13 @@ class FeedbackPackageCollector {
           '$dandanplayAppSecretConfigured',
       '- Fallback provider: available',
     ].join('\n');
+  }
+
+  String _sourceLabel(String sourceId) => _sourceLabelForId(sourceId);
+
+  String _sourceLabelOrUnavailable(String? sourceId) {
+    if (sourceId == null) return 'Unavailable';
+    return _sourceLabel(sourceId);
   }
 
   String _downloadSummary() {

@@ -65,7 +65,6 @@ class _SourceOption extends StatelessWidget {
       subtitle: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('id: ${source.id}'),
           Text(
             context.l10n.sourceDisplayDescription(
               source.id,
@@ -113,7 +112,7 @@ class _SourceOption extends StatelessWidget {
                     vertical: 3,
                   ),
                   child: Text(
-                    context.l10n.sourceExperimentalBadge,
+                    context.l10n.sourceDefaultBadge,
                     style: Theme.of(context).textTheme.labelSmall?.copyWith(
                           color: Theme.of(context)
                               .colorScheme

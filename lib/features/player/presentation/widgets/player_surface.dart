@@ -58,7 +58,7 @@ class PlayerSurface extends StatelessWidget {
               Text(
                 playUrl.isEmpty
                     ? context.l10n.playerNoPlayUrl
-                    : context.l10n.playerMockReady,
+                    : context.l10n.playerReadyHint,
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
                       color: Colors.white70,
                     ),

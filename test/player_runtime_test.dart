@@ -1,3 +1,5 @@
+import 'package:ani_destiny/app/router.dart';
+import 'package:ani_destiny/core/constants/app_constants.dart';
 import 'package:ani_destiny/features/player/data/adapters/mock_player_adapter.dart';
 import 'package:ani_destiny/features/player/domain/entities/player_route_args.dart';
 import 'package:ani_destiny/features/player/domain/services/playback_diagnostics.dart';
@@ -25,6 +27,18 @@ void main() {
     expect(args.playSourceId, 'line-1');
     expect(args.playHeaders['Referer'], contains('example.test'));
     expect(args.episodeIndex, 1);
+  });
+
+  test('player route falls back to the app default source', () {
+    final args = playerRouteArgsFromUri(
+      Uri.parse(
+        'https://anidestiny.test/player?animeId=anime-1&episodeId=episode-1&playUrl=https%3A%2F%2Fcdn.example.test%2Fvideo.m3u8',
+      ),
+    );
+
+    expect(args.sourceId, AppConstants.defaultSourceId);
+    expect(args.animeId, 'anime-1');
+    expect(args.episodeId, 'episode-1');
   });
 
   test('MockPlayerAdapter load stores URL and headers for verification',

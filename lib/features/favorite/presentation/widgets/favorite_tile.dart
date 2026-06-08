@@ -21,7 +21,9 @@ class FavoriteTile extends StatelessWidget {
       onTap: onOpen,
       leading: const CircleAvatar(child: Icon(Icons.favorite)),
       title: Text(favorite.title),
-      subtitle: Text(favorite.sourceId),
+      subtitle: Text(
+        context.l10n.sourceDisplayName(favorite.sourceId, favorite.sourceId),
+      ),
       trailing: IconButton(
         tooltip: context.l10n.removeFavorite,
         onPressed: onRemove,

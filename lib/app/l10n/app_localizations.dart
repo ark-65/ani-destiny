@@ -55,8 +55,16 @@ class AppLocalizations {
       'mock' => _t('mockSourceName'),
       'sakura' => _t('sakuraSourceName'),
       'remote-proxy' => _t('remoteProxySourceName'),
-      _ => fallback,
+      _ => _sourceFallbackText(
+          sourceId: sourceId,
+          fallback: fallback,
+          unknownText: _t('sourceUnknownName'),
+        ),
     };
+  }
+
+  String sourceDisplayLabel(String sourceId) {
+    return sourceDisplayName(sourceId, sourceId);
   }
 
   String sourceDisplayDescription(String sourceId, String fallback) {
@@ -64,8 +72,24 @@ class AppLocalizations {
       'mock' => _t('mockSourceDescription'),
       'sakura' => _t('sakuraSourceDescription'),
       'remote-proxy' => _t('remoteProxySourceDescription'),
-      _ => fallback,
+      _ => _sourceFallbackText(
+          sourceId: sourceId,
+          fallback: fallback,
+          unknownText: _t('sourceUnknownDescription'),
+        ),
     };
+  }
+
+  String _sourceFallbackText({
+    required String sourceId,
+    required String fallback,
+    required String unknownText,
+  }) {
+    final normalizedFallback = fallback.trim();
+    if (normalizedFallback.isEmpty || normalizedFallback == sourceId) {
+      return unknownText;
+    }
+    return fallback;
   }
 
   String get sourceLoading => _t('sourceLoading');
@@ -104,7 +128,7 @@ class AppLocalizations {
   String downloadTaskCreated(String taskId) =>
       '${_t('downloadTaskCreated')}: $taskId';
   String get playerNoPlayUrl => _t('playerNoPlayUrl');
-  String get playerMockReady => _t('playerMockReady');
+  String get playerReadyHint => _t('playerReadyHint');
   String get pause => _t('pause');
   String get playbackSpeed => _t('playbackSpeed');
   String get hideDanmaku => _t('hideDanmaku');
@@ -191,6 +215,7 @@ class AppLocalizations {
   String get runtimeDiagnostics => _t('runtimeDiagnostics');
   String get runtimeDiagnosticsSubtitle => _t('runtimeDiagnosticsSubtitle');
   String get platform => _t('platform');
+  String get currentSource => _t('currentSource');
   String get currentSourceId => _t('currentSourceId');
   String get latestSourceDiagnostics => _t('latestSourceDiagnostics');
   String get playbackDiagnosticsSummary => _t('playbackDiagnosticsSummary');
@@ -204,7 +229,7 @@ class AppLocalizations {
   String sourceSetTo(String sourceId) => '${_t('sourceSetTo')} $sourceId';
   String get sourceV1Note => _t('sourceV1Note');
   String get sourceCurrent => _t('sourceCurrent');
-  String get sourceExperimentalBadge => _t('sourceExperimentalBadge');
+  String get sourceDefaultBadge => _t('sourceDefaultBadge');
   String get sourceDiagnostics => _t('sourceDiagnostics');
   String get sourceDiagnosticsSubtitle => _t('sourceDiagnosticsSubtitle');
   String get sourceDiagnosticsEmpty => _t('sourceDiagnosticsEmpty');
@@ -221,6 +246,8 @@ class AppLocalizations {
   String get sourceStatusReset => _t('sourceStatusReset');
   String get sourceFallbackEvents => _t('sourceFallbackEvents');
   String get sourceFallbackEventsEmpty => _t('sourceFallbackEventsEmpty');
+  String sourceTransitionLabel(String fromSourceId, String toSourceId) =>
+      '${sourceDisplayLabel(fromSourceId)} -> ${sourceDisplayLabel(toSourceId)}';
   String get danmaku => _t('danmaku');
   String get danmakuStatusLoading => _t('danmakuStatusLoading');
   String get danmakuStatusDandanplay => _t('danmakuStatusDandanplay');
@@ -283,10 +310,11 @@ const _localizedValues = {
     'mockSourceName': 'Mock 动漫数据源',
     'mockSourceDescription': '本地 Mock 数据源，用来保证 AniDestiny 第一版可运行。',
     'sakuraSourceName': 'Sakura Anime',
-    'sakuraSourceDescription':
-        'Website parser source. Experimental source. It may fail if the upstream site changes.',
+    'sakuraSourceDescription': '默认网页解析数据源；如上游站点波动，可稍后重试或切换其他数据源。',
     'remoteProxySourceName': '远程数据源代理',
     'remoteProxySourceDescription': '预留给未来自建代理服务，第一版不强依赖。',
+    'sourceUnknownName': '未知数据源',
+    'sourceUnknownDescription': '暂未提供该数据源说明。',
     'sourceLoading': '数据源：加载中',
     'sourceUnknown': '数据源：未知',
     'schedule': '更新时间表',
@@ -294,7 +322,7 @@ const _localizedValues = {
     'loadingAnime': '正在加载番剧',
     'noRecommendations': '暂无推荐番剧',
     'searchHint': '番剧标题、标签或关键词',
-    'searchEmpty': '搜索 Mock 数据源里的番剧',
+    'searchEmpty': '搜索番剧、标签或关键词，开始浏览内容',
     'searching': '正在搜索',
     'noMatchingAnime': '没有匹配的番剧',
     'back': '返回',
@@ -322,7 +350,7 @@ const _localizedValues = {
     'selectDownloadSource': '选择下载线路',
     'downloadTaskCreated': '已创建下载任务',
     'playerNoPlayUrl': '未找到可播放线路',
-    'playerMockReady': 'Mock 播放器就绪',
+    'playerReadyHint': '播放器预览已就绪',
     'pause': '暂停',
     'playbackSpeed': '播放速度',
     'hideDanmaku': '隐藏弹幕',
@@ -377,7 +405,7 @@ const _localizedValues = {
     'downloadFailureUnknown': '未知错误',
     'playback': '播放',
     'sourceSettings': '数据源设置',
-    'sourceSettingsSubtitle': 'Mock 最稳定，Sakura Anime 可用于实验性真实解析',
+    'sourceSettingsSubtitle': '默认使用 Sakura Anime，可按可用性切换数据源',
     'danmakuSettings': '弹幕设置',
     'appearance': '外观',
     'system': '跟随系统',
@@ -390,7 +418,7 @@ const _localizedValues = {
     'supportedPlatforms': '支持平台',
     'supportedPlatformsValue': 'Android / Windows / macOS',
     'sourceStatus': '数据源状态',
-    'sourceStatusValue': 'Sakura 数据源为实验性能力，依赖上游站点可用性。',
+    'sourceStatusValue': 'Sakura 数据源依赖上游站点可用性；解析波动时可稍后重试或切换其他数据源。',
     'danmakuAbout': '弹幕',
     'danmakuAboutValue': '弹弹play 为可选集成；不可用时使用 fallback。',
     'copyDiagnostics': '复制诊断信息',
@@ -404,6 +432,7 @@ const _localizedValues = {
     'runtimeDiagnostics': '运行诊断',
     'runtimeDiagnosticsSubtitle': 'Debug 模式下查看反馈用摘要，不展示敏感值。',
     'platform': '平台',
+    'currentSource': '当前数据源',
     'currentSourceId': '当前数据源 ID',
     'latestSourceDiagnostics': '最近数据源诊断',
     'playbackDiagnosticsSummary': '播放诊断摘要',
@@ -416,9 +445,9 @@ const _localizedValues = {
     'sources': '数据源',
     'loadingCurrentSource': '正在加载当前数据源',
     'sourceSetTo': '数据源已切换为',
-    'sourceV1Note': 'Mock 数据源最稳定；Sakura Anime 已接入基础解析，但可能受站点结构变化影响。',
+    'sourceV1Note': 'Sakura Anime 是当前默认数据源；如受上游站点变化影响，请切换其他数据源或稍后重试。',
     'sourceCurrent': '当前启用',
-    'sourceExperimentalBadge': 'Experimental',
+    'sourceDefaultBadge': '默认源',
     'sourceDiagnostics': '数据源诊断',
     'sourceDiagnosticsSubtitle': '查看最近的数据源请求和解析状态。',
     'sourceDiagnosticsEmpty': '暂无诊断记录',
@@ -468,10 +497,13 @@ const _localizedValues = {
         'Local mock source used to keep AniDestiny runnable.',
     'sakuraSourceName': 'Sakura Anime',
     'sakuraSourceDescription':
-        'Website parser source. Experimental source. It may fail if the upstream site changes.',
+        'Default web parser source. If upstream availability changes, retry later or switch sources.',
     'remoteProxySourceName': 'Remote Source Proxy',
     'remoteProxySourceDescription':
         'Future self-hosted proxy adapter. Not required for first version.',
+    'sourceUnknownName': 'Unknown source',
+    'sourceUnknownDescription':
+        'No description is available for this source yet.',
     'sourceLoading': 'Source: loading',
     'sourceUnknown': 'Source: unknown',
     'schedule': 'Schedule',
@@ -479,7 +511,7 @@ const _localizedValues = {
     'loadingAnime': 'Loading anime',
     'noRecommendations': 'No recommendations yet',
     'searchHint': 'Anime title, tag, or mood',
-    'searchEmpty': 'Search the mock source to find anime',
+    'searchEmpty': 'Search anime, tags, or keywords to start browsing',
     'searching': 'Searching',
     'noMatchingAnime': 'No matching anime',
     'back': 'Back',
@@ -509,7 +541,7 @@ const _localizedValues = {
     'selectDownloadSource': 'Select download line',
     'downloadTaskCreated': 'Download task created',
     'playerNoPlayUrl': 'No playable source found',
-    'playerMockReady': 'Mock player ready',
+    'playerReadyHint': 'Playback preview ready',
     'pause': 'Pause',
     'playbackSpeed': 'Playback speed',
     'hideDanmaku': 'Hide danmaku',
@@ -566,7 +598,7 @@ const _localizedValues = {
     'playback': 'Playback',
     'sourceSettings': 'Source settings',
     'sourceSettingsSubtitle':
-        'Mock is most stable. Sakura Anime is available as an experimental parser',
+        'Sakura Anime is the default source. Switch sources when availability changes.',
     'danmakuSettings': 'Danmaku settings',
     'appearance': 'Appearance',
     'system': 'System',
@@ -580,7 +612,7 @@ const _localizedValues = {
     'supportedPlatformsValue': 'Android / Windows / macOS',
     'sourceStatus': 'Source status',
     'sourceStatusValue':
-        'Sakura source is experimental and depends on upstream availability.',
+        'Sakura source depends on upstream availability. Retry later or switch sources if parsing changes.',
     'danmakuAbout': 'Danmaku',
     'danmakuAboutValue':
         'Dandanplay is optional; fallback is used when unavailable.',
@@ -597,6 +629,7 @@ const _localizedValues = {
     'runtimeDiagnosticsSubtitle':
         'Debug-only feedback summary without sensitive values.',
     'platform': 'Platform',
+    'currentSource': 'Current source',
     'currentSourceId': 'Current source ID',
     'latestSourceDiagnostics': 'Latest source diagnostics',
     'playbackDiagnosticsSummary': 'Playback diagnostics summary',
@@ -613,9 +646,9 @@ const _localizedValues = {
     'loadingCurrentSource': 'Loading current source',
     'sourceSetTo': 'Source set to',
     'sourceV1Note':
-        'Mock is the most stable source. Sakura Anime has basic parsing, but site changes can still break it.',
+        'Sakura Anime is the current default source. If upstream changes affect parsing, switch sources or retry later.',
     'sourceCurrent': 'Current',
-    'sourceExperimentalBadge': 'Experimental',
+    'sourceDefaultBadge': 'Default source',
     'sourceDiagnostics': 'Source diagnostics',
     'sourceDiagnosticsSubtitle':
         'View recent source request and parser status.',
@@ -666,9 +699,11 @@ const _localizedValues = {
     'mockSourceDescription': 'AniDestiny 初版を動作させるためのローカル Mock ソースです。',
     'sakuraSourceName': 'Sakura Anime',
     'sakuraSourceDescription':
-        'Website parser source. Experimental source. It may fail if the upstream site changes.',
+        '既定のWeb解析ソースです。上流サイトの可用性が変わった場合は、後で再試行するか別のソースに切り替えてください。',
     'remoteProxySourceName': 'リモートソースプロキシ',
     'remoteProxySourceDescription': '将来の自前プロキシ用 Adapter です。初版では必須ではありません。',
+    'sourceUnknownName': '不明なソース',
+    'sourceUnknownDescription': 'このソースの説明はまだありません。',
     'sourceLoading': 'ソース: 読み込み中',
     'sourceUnknown': 'ソース: 不明',
     'schedule': '放送予定',
@@ -676,7 +711,7 @@ const _localizedValues = {
     'loadingAnime': '作品を読み込み中',
     'noRecommendations': 'おすすめはまだありません',
     'searchHint': '作品名、タグ、キーワード',
-    'searchEmpty': 'Mock ソースから作品を検索',
+    'searchEmpty': '作品名やキーワードを検索して視聴を始めましょう',
     'searching': '検索中',
     'noMatchingAnime': '一致する作品がありません',
     'back': '戻る',
@@ -704,7 +739,7 @@ const _localizedValues = {
     'selectDownloadSource': 'ダウンロードラインを選択',
     'downloadTaskCreated': 'ダウンロードタスクを作成しました',
     'playerNoPlayUrl': '再生可能なソースが見つかりません',
-    'playerMockReady': 'Mock プレイヤー準備完了',
+    'playerReadyHint': '再生プレビューの準備完了',
     'pause': '一時停止',
     'playbackSpeed': '再生速度',
     'hideDanmaku': '弾幕を隠す',
@@ -759,7 +794,7 @@ const _localizedValues = {
     'downloadFailureUnknown': '不明なエラー',
     'playback': '再生',
     'sourceSettings': 'ソース設定',
-    'sourceSettingsSubtitle': 'Mock が最も安定しています。Sakura Anime は実験的な解析ソースです',
+    'sourceSettingsSubtitle': 'Sakura Anime を既定ソースとして使用し、可用性に応じて切り替えられます',
     'danmakuSettings': '弾幕設定',
     'appearance': '外観',
     'system': 'システム',
@@ -772,7 +807,8 @@ const _localizedValues = {
     'supportedPlatforms': '対応プラットフォーム',
     'supportedPlatformsValue': 'Android / Windows / macOS',
     'sourceStatus': 'ソース状態',
-    'sourceStatusValue': 'Sakura ソースは実験的で、上流サイトの可用性に依存します。',
+    'sourceStatusValue':
+        'Sakura ソースは上流サイトの可用性に依存します。解析結果が不安定な場合は、後で再試行するか別のソースに切り替えてください。',
     'danmakuAbout': '弾幕',
     'danmakuAboutValue': '弹弹play は任意連携です。利用できない場合は fallback を使用します。',
     'copyDiagnostics': '診断情報をコピー',
@@ -786,6 +822,7 @@ const _localizedValues = {
     'runtimeDiagnostics': '実行診断',
     'runtimeDiagnosticsSubtitle': 'Debug モード限定のフィードバック用概要です。機密値は表示しません。',
     'platform': 'プラットフォーム',
+    'currentSource': '現在のソース',
     'currentSourceId': '現在のソース ID',
     'latestSourceDiagnostics': '最近のソース診断',
     'playbackDiagnosticsSummary': '再生診断の概要',
@@ -800,9 +837,9 @@ const _localizedValues = {
     'loadingCurrentSource': '現在のソースを読み込み中',
     'sourceSetTo': 'ソースを切り替えました:',
     'sourceV1Note':
-        'Mock が最も安定しています。Sakura Anime は基本解析に対応しましたが、サイト構造の変更で壊れる可能性があります。',
+        'Sakura Anime が現在の既定ソースです。上流サイトの変更で解析に影響が出た場合は、別のソースに切り替えるか後でもう一度お試しください。',
     'sourceCurrent': '現在使用中',
-    'sourceExperimentalBadge': 'Experimental',
+    'sourceDefaultBadge': '既定ソース',
     'sourceDiagnostics': 'ソース診断',
     'sourceDiagnosticsSubtitle': '最近のソース要求と解析状態を確認します。',
     'sourceDiagnosticsEmpty': '診断記録はありません',

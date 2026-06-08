@@ -54,6 +54,47 @@ void main() {
     final repository = SourceRepositoryImpl(
       registry: registry,
       preferences: SharedPreferences.getInstance,
+      allowDebugSources: false,
+    );
+
+    expect(await repository.getCurrentSourceId(), 'sakura');
+  });
+
+  test('SourceRepository hides mock from release source listings', () {
+    final registry = SourceRegistry(
+      adapters: [
+        MockAnimeSourceAdapter(),
+        const _FakeSourceAdapter(id: 'sakura'),
+      ],
+    );
+    final repository = SourceRepositoryImpl(
+      registry: registry,
+      preferences: SharedPreferences.getInstance,
+      allowDebugSources: false,
+    );
+
+    expect(
+      repository.getSources().map((source) => source.id),
+      ['sakura'],
+    );
+  });
+
+  test('SourceRepository migrates stored mock selection in release mode',
+      () async {
+    SharedPreferences.setMockInitialValues({
+      'current_source_id': 'mock',
+      'source_default_version': 3,
+    });
+    final registry = SourceRegistry(
+      adapters: [
+        MockAnimeSourceAdapter(),
+        const _FakeSourceAdapter(id: 'sakura'),
+      ],
+    );
+    final repository = SourceRepositoryImpl(
+      registry: registry,
+      preferences: SharedPreferences.getInstance,
+      allowDebugSources: false,
     );
 
     expect(await repository.getCurrentSourceId(), 'sakura');
@@ -75,6 +116,26 @@ void main() {
     await repository.setCurrentSourceId('mock');
 
     expect(await repository.getCurrentSourceId(), 'mock');
+  });
+
+  test('SourceRepository rejects selecting mock in release mode', () async {
+    SharedPreferences.setMockInitialValues({});
+    final registry = SourceRegistry(
+      adapters: [
+        MockAnimeSourceAdapter(),
+        const _FakeSourceAdapter(id: 'sakura'),
+      ],
+    );
+    final repository = SourceRepositoryImpl(
+      registry: registry,
+      preferences: SharedPreferences.getInstance,
+      allowDebugSources: false,
+    );
+
+    await expectLater(
+      () => repository.setCurrentSourceId('mock'),
+      throwsArgumentError,
+    );
   });
 }
 

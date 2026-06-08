@@ -7,6 +7,21 @@
 ## [Unreleased]
 
 ### 🐛 Fixed
+- Fixed Source Settings still labeling the production default `sakura` source as `Experimental`; it now shows a clear default-source badge instead.
+- Fixed Source Settings and the settings-page source status still describing the production default `sakura` source as experimental; they now use consistent default-source and retry guidance copy.
+- Fixed the source-localization widget tests using pages without a `Material/Scaffold` host and asserting against non-rendered exact labels, avoiding false CI failures on PR validation.
+- Fixed unknown sources still exposing internal `sourceId` values when no readable name or description was available, falling back to neutral localized copy instead.
+- Fixed the copied feedback diagnostics package still exposing raw internal source ids like `sakura` and `mock`; it now shows localized source names instead.
+- Fixed runtime diagnostics, source diagnostics, and player diagnostics still showing raw internal source ids like `sakura` and `mock` to users; they now consistently show localized source names instead.
+- Fixed favorites, search results, and schedule rows falling back to raw internal source ids like `sakura` and `mock` when no descriptive copy was available; they now show localized source names instead.
+- Fixed release builds still exposing the Mock source in Source Settings to regular users; the settings list now keeps only production-selectable sources and migrates old Mock selections back to the default `sakura` source.
+- Fixed Source Settings exposing raw technical identifiers like `id: mock` and `id: sakura` to users, so it now shows only localized names and descriptions.
+- Fixed Source Settings still describing Mock as the most stable source, replacing it with neutral copy that matches the production default `sakura`.
+- Fixed the search empty state still telling users to search the Mock source, replacing it with neutral copy for normal browsing.
+- Fixed the downloads page exposing the Mock test-task action to regular users by default; it now only appears in debug builds.
+- Fixed the player placeholder still exposing Mock wording to regular users, replacing it with a neutral playback preview hint.
+- Fixed the player route falling back to the Mock source when `sourceId` is missing, so it now uses the default production source `sakura`.
+- Fixed episode cards and the watch-history model still defaulting missing source metadata to Mock, so they now align with the production default source `sakura`.
 - Fixed completed download tasks not offering direct removal, so finished records can now be cleared from the list.
 - Fixed failed download tasks only offering cancel, so they now keep retry and allow direct removal.
 - Fixed failed download tasks still showing the pause note even though they only support retry or removal.
@@ -21,6 +36,8 @@
 - Fixed batch cleanup still being available while an ended task action was already running, preventing overlapping cleanup flows and confusing feedback.
 
 ### 🔧 CI/CD
+- Stabilized the schedule localization widget test across Flutter environments so `Sakura Anime` assertions no longer depend on `ExpansionTile` starting expanded.
+- Fixed Source Settings and episode-list widget tests waiting too little for localization setup, avoiding false text-assertion failures during PR validation.
 - Stabilized widget-test targeting for downloads cleanup and task actions so Flutter CI does not misread button structure differences as failures.
 - Fixed flaky busy-state test waits and overly broad cleanup loading assertions so CI no longer fails on active progress indicators.
 

@@ -232,7 +232,9 @@ class _SourceHealthTile extends StatelessWidget {
     return ListTile(
       contentPadding: EdgeInsets.zero,
       leading: const Icon(Icons.monitor_heart_outlined),
-      title: Text('${health.sourceId} · ${_statusLabel(context)}'),
+      title: Text(
+        '${context.l10n.sourceDisplayLabel(health.sourceId)} · ${_statusLabel(context)}',
+      ),
       subtitle: Text(
         [
           context.l10n.sourceFailureCount(health.failureCount),
@@ -263,7 +265,7 @@ class _FallbackEventTile extends StatelessWidget {
       contentPadding: EdgeInsets.zero,
       leading: const Icon(Icons.swap_horiz_outlined),
       title: Text(
-        '${event.operation}: ${event.fromSourceId} -> ${event.toSourceId}',
+        '${event.operation}: ${context.l10n.sourceTransitionLabel(event.fromSourceId, event.toSourceId)}',
       ),
       subtitle: Text(event.reason),
     );
@@ -290,7 +292,10 @@ class _SourceDiagnosticTile extends StatelessWidget {
       if (diagnostic.usedFallback &&
           diagnostic.fromSourceId != null &&
           diagnostic.toSourceId != null)
-        '${diagnostic.fromSourceId} -> ${diagnostic.toSourceId}',
+        context.l10n.sourceTransitionLabel(
+          diagnostic.fromSourceId!,
+          diagnostic.toSourceId!,
+        ),
       if (diagnostic.reason != null) diagnostic.reason!,
       if (timestamp != null)
         '${timestamp.hour.toString().padLeft(2, '0')}:${timestamp.minute.toString().padLeft(2, '0')}:${timestamp.second.toString().padLeft(2, '0')}',
@@ -299,7 +304,9 @@ class _SourceDiagnosticTile extends StatelessWidget {
     return ListTile(
       contentPadding: EdgeInsets.zero,
       leading: Icon(Icons.circle, color: color, size: 12),
-      title: Text('${diagnostic.sourceId} · ${diagnostic.operation}'),
+      title: Text(
+        '${context.l10n.sourceDisplayLabel(diagnostic.sourceId)} · ${diagnostic.operation}',
+      ),
       subtitle: Text(
         [
           diagnostic.message,

@@ -71,8 +71,10 @@ class RuntimeDiagnosticsPage extends ConsumerWidget {
                   icon: Icons.devices_outlined,
                 ),
                 _DiagnosticTile(
-                  label: context.l10n.currentSourceId,
-                  value: currentSourceId ?? '-',
+                  label: context.l10n.currentSource,
+                  value: currentSourceId == null
+                      ? '-'
+                      : context.l10n.sourceDisplayLabel(currentSourceId),
                   icon: Icons.source_outlined,
                 ),
               ],
@@ -156,7 +158,8 @@ class _SourceHealthTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return _DiagnosticTile(
-      label: '${health.sourceId} · ${_statusLabel(context)}',
+      label:
+          '${context.l10n.sourceDisplayLabel(health.sourceId)} · ${_statusLabel(context)}',
       value: [
         context.l10n.sourceFailureCount(health.failureCount),
         if (health.lastErrorMessage != null)
@@ -183,7 +186,8 @@ class _FallbackEventTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return _DiagnosticTile(
-      label: '${event.operation}: ${event.fromSourceId} -> ${event.toSourceId}',
+      label:
+          '${event.operation}: ${context.l10n.sourceTransitionLabel(event.fromSourceId, event.toSourceId)}',
       value: event.reason,
       icon: Icons.swap_horiz_outlined,
     );
@@ -225,13 +229,18 @@ class _SourceDiagnosticTile extends StatelessWidget {
       if (diagnostic.usedFallback &&
           diagnostic.fromSourceId != null &&
           diagnostic.toSourceId != null)
-        '${diagnostic.fromSourceId} -> ${diagnostic.toSourceId}',
+        context.l10n.sourceTransitionLabel(
+          diagnostic.fromSourceId!,
+          diagnostic.toSourceId!,
+        ),
       if (diagnostic.reason != null) diagnostic.reason!,
     ];
 
     return ListTile(
       leading: Icon(_iconForLevel(diagnostic.level)),
-      title: Text('${diagnostic.sourceId} · ${diagnostic.operation}'),
+      title: Text(
+        '${context.l10n.sourceDisplayLabel(diagnostic.sourceId)} · ${diagnostic.operation}',
+      ),
       subtitle: SelectableText(
         [
           diagnostic.message,

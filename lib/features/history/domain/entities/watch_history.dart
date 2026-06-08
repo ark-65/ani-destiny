@@ -1,3 +1,5 @@
+import '../../../../core/constants/app_constants.dart';
+
 class WatchHistory {
   const WatchHistory({
     required this.id,
@@ -9,7 +11,7 @@ class WatchHistory {
     required this.updatedAt,
     this.coverUrl,
     this.duration,
-    this.sourceId = 'mock',
+    this.sourceId = AppConstants.defaultSourceId,
     this.playSourceId,
     this.playSourceTitle,
     this.playUrl,
