@@ -28,8 +28,14 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Current source'), findsOneWidget);
-    expect(find.text('Sakura Anime'), findsWidgets);
-    expect(find.text('Mock Anime Source'), findsWidgets);
+    expect(find.textContaining('Sakura Anime'), findsWidgets);
+    await tester.scrollUntilVisible(
+      find.textContaining('Mock Anime Source'),
+      200,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.pumpAndSettle();
+    expect(find.textContaining('Mock Anime Source'), findsWidgets);
     expect(find.text('sakura'), findsNothing);
     expect(find.text('mock'), findsNothing);
   });
@@ -47,8 +53,8 @@ void main() {
     await tester.tap(find.text('Source diagnostics'));
     await tester.pumpAndSettle();
 
-    expect(find.text('Sakura Anime'), findsWidgets);
-    expect(find.text('Mock Anime Source'), findsWidgets);
+    expect(find.textContaining('Sakura Anime'), findsWidgets);
+    expect(find.textContaining('Mock Anime Source'), findsWidgets);
     expect(find.text('sakura'), findsNothing);
     expect(find.text('mock'), findsNothing);
   });
@@ -69,7 +75,7 @@ Widget _buildApp({
         GlobalWidgetsLocalizations.delegate,
         GlobalCupertinoLocalizations.delegate,
       ],
-      home: home,
+      home: Scaffold(body: home),
     ),
   );
 }

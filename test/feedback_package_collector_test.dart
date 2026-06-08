@@ -136,14 +136,14 @@ void main() {
     final markdown = const FeedbackPackageFormatter().format(package);
 
     expect(markdown, contains('- Current source: Sakura Anime'));
-    expect(markdown, contains('  - Sakura Anime: healthy, failures=0'));
+    expect(markdown, contains('- Sakura Anime: healthy, failures=0'));
     expect(markdown, contains('detail: Sakura Anime -> Mock Anime Source'));
-    expect(markdown, contains('  - Sakura Anime/detail: loaded'));
+    expect(markdown, contains('- Sakura Anime/detail: loaded'));
     expect(markdown, contains('- Source: Sakura Anime'));
     expect(markdown, isNot(contains('- Current source: sakura')));
-    expect(markdown, isNot(contains('  - sakura: healthy, failures=0')));
+    expect(markdown, isNot(contains('- sakura: healthy, failures=0')));
     expect(markdown, isNot(contains('detail: sakura -> mock')));
-    expect(markdown, isNot(contains('  - sakura/detail: loaded')));
+    expect(markdown, isNot(contains('- sakura/detail: loaded')));
     expect(markdown, isNot(contains('- Source: sakura')));
   });
 

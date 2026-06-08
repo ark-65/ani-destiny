@@ -107,13 +107,7 @@ void main() {
 
     await tester.pumpAndSettle();
 
-    final sourceLabel = find.text('Sakura Anime');
-    if (sourceLabel.evaluate().isEmpty) {
-      await tester.tap(find.byKey(const ValueKey('schedule-weekday-1')));
-      await tester.pumpAndSettle();
-    }
-
-    expect(sourceLabel, findsOneWidget);
+    expect(find.text('Sakura Anime'), findsOneWidget);
     expect(find.text('sakura'), findsNothing);
   });
 }
@@ -128,7 +122,7 @@ Widget _buildLocalizedApp({required Widget home}) {
       GlobalWidgetsLocalizations.delegate,
       GlobalCupertinoLocalizations.delegate,
     ],
-    home: home,
+    home: Scaffold(body: home),
   );
 }
 
