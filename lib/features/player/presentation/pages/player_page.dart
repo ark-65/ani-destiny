@@ -456,6 +456,7 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
         episodes: detailResult.value.episodes,
         currentEpisodeId: currentArgs.episodeId,
         currentEpisodeIndex: currentArgs.episodeIndex,
+        currentEpisodeTitle: currentArgs.episodeTitle,
       );
       if (nextEpisode == null) {
         _showSnackBar(context.l10n.nextEpisodeUnavailable);

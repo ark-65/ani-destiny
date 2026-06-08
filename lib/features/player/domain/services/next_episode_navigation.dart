@@ -5,6 +5,7 @@ Episode? resolveNextEpisode({
   required List<Episode> episodes,
   required String currentEpisodeId,
   int? currentEpisodeIndex,
+  String? currentEpisodeTitle,
 }) {
   if (episodes.isEmpty) return null;
 
@@ -15,6 +16,14 @@ Episode? resolveNextEpisode({
     currentPosition = episodes.indexWhere(
       (episode) => episode.index == currentEpisodeIndex,
     );
+  }
+  if (currentPosition == -1) {
+    final normalizedTitle = _normalizeEpisodeTitle(currentEpisodeTitle);
+    if (normalizedTitle.isNotEmpty) {
+      currentPosition = episodes.indexWhere(
+        (episode) => _normalizeEpisodeTitle(episode.title) == normalizedTitle,
+      );
+    }
   }
   if (currentPosition < 0 || currentPosition >= episodes.length - 1) {
     return null;
@@ -48,6 +57,11 @@ PlaySource selectPreferredPlaySource(
 }
 
 String _normalizeSourceTitle(String? value) {
+  if (value == null) return '';
+  return value.trim().toLowerCase().replaceAll(RegExp(r'\s+'), ' ');
+}
+
+String _normalizeEpisodeTitle(String? value) {
   if (value == null) return '';
   return value.trim().toLowerCase().replaceAll(RegExp(r'\s+'), ' ');
 }

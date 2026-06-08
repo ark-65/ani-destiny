@@ -137,6 +137,35 @@ void main() {
     );
   });
 
+  test(
+      'resolveNextEpisode falls back to the normalized title when ids and indexes change',
+      () {
+    const episodes = [
+      Episode(
+        id: 'ep-1-remux',
+        animeId: 'anime-1',
+        title: '  Episode   1 ',
+        index: 101,
+      ),
+      Episode(
+        id: 'ep-2-remux',
+        animeId: 'anime-1',
+        title: 'Episode 2',
+        index: 102,
+      ),
+    ];
+
+    expect(
+      resolveNextEpisode(
+        episodes: episodes,
+        currentEpisodeId: 'legacy-ep-1',
+        currentEpisodeIndex: 1,
+        currentEpisodeTitle: 'episode 1',
+      )?.id,
+      'ep-2-remux',
+    );
+  });
+
   test('selectPreferredPlaySource keeps the current line when possible', () {
     const sources = [
       PlaySource(
