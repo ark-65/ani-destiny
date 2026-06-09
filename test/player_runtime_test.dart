@@ -93,6 +93,25 @@ void main() {
     expect(next.initialPosition, isNull);
   });
 
+  test('PlayerRouteArgs copyWith keeps initialPosition unless explicitly reset',
+      () {
+    const args = PlayerRouteArgs(
+      animeId: 'anime-1',
+      episodeId: 'episode-1',
+      animeTitle: 'Anime',
+      episodeTitle: 'Episode 1',
+      playUrl: 'https://cdn.example.test/1.m3u8',
+      sourceId: 'sakura',
+      initialPosition: Duration(minutes: 4),
+    );
+
+    final preserved = args.copyWith(episodeTitle: 'Episode 1 Preview');
+    final cleared = args.copyWith(initialPosition: null);
+
+    expect(preserved.initialPosition, const Duration(minutes: 4));
+    expect(cleared.initialPosition, isNull);
+  });
+
   test(
       'resolveNextEpisode prefers the current episode id and returns null at the end',
       () {

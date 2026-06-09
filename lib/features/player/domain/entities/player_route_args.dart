@@ -2,6 +2,8 @@ import 'package:flutter/foundation.dart';
 
 @immutable
 class PlayerRouteArgs {
+  static const _initialPositionUnset = Object();
+
   const PlayerRouteArgs({
     required this.animeId,
     required this.episodeId,
@@ -42,7 +44,7 @@ class PlayerRouteArgs {
     String? playSourceTitle,
     Map<String, String>? playHeaders,
     int? episodeIndex,
-    Duration? initialPosition,
+    Object? initialPosition = _initialPositionUnset,
   }) {
     return PlayerRouteArgs(
       animeId: animeId ?? this.animeId,
@@ -56,7 +58,9 @@ class PlayerRouteArgs {
       playSourceTitle: playSourceTitle ?? this.playSourceTitle,
       playHeaders: playHeaders ?? this.playHeaders,
       episodeIndex: episodeIndex ?? this.episodeIndex,
-      initialPosition: initialPosition,
+      initialPosition: identical(initialPosition, _initialPositionUnset)
+          ? this.initialPosition
+          : initialPosition as Duration?,
     );
   }
 }
