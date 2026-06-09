@@ -334,11 +334,19 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
   }
 
   String _stateLabel() {
-    if (_state.errorMessage != null) return 'error';
-    if (_state.isBuffering) return 'buffering';
-    if (_state.isPlaying) return 'playing';
-    if (_state.isInitialized) return 'ready';
-    return 'loading';
+    if (_state.errorMessage != null) {
+      return context.l10n.playbackDiagnosticStateError;
+    }
+    if (_state.isBuffering) {
+      return context.l10n.playbackDiagnosticStateBuffering;
+    }
+    if (_state.isPlaying) {
+      return context.l10n.playbackDiagnosticStatePlaying;
+    }
+    if (_state.isInitialized) {
+      return context.l10n.playbackDiagnosticStateReady;
+    }
+    return context.l10n.playbackDiagnosticStateLoading;
   }
 
   String _playbackErrorMessage() {

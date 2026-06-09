@@ -116,6 +116,13 @@ void main() {
       ),
       findsOneWidget,
     );
+
+    await tester.tap(find.byTooltip('Playback diagnostics'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('State'), findsOneWidget);
+    expect(find.text('Failed'), findsOneWidget);
+    expect(find.text('error'), findsNothing);
   });
 }
 

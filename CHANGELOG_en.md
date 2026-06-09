@@ -7,6 +7,7 @@
 ## [Unreleased]
 
 ### 🐛 Fixed
+- Fixed the player playback-diagnostics sheet showing raw internal English state values; it now uses localized user-facing state labels.
 - Fixed playback diagnostics keeping the previous line details after a player load failure or empty play URL; the diagnostics snapshot now refreshes as soon as each load attempt starts.
 - Fixed `PlayerRouteArgs.copyWith()` clearing resume progress while only updating other playback fields; it now preserves `initialPosition` by default and only resets it when `null` is passed explicitly.
 - Fixed system back leaving the player page immediately in fullscreen; it now exits fullscreen first and only leaves the page on the next back action.

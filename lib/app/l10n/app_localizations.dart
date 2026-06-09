@@ -147,6 +147,14 @@ class AppLocalizations {
   String get playbackDiagnosticUrl => _t('playbackDiagnosticUrl');
   String get playbackDiagnosticHeaders => _t('playbackDiagnosticHeaders');
   String get playbackDiagnosticState => _t('playbackDiagnosticState');
+  String get playbackDiagnosticStateLoading =>
+      _t('playbackDiagnosticStateLoading');
+  String get playbackDiagnosticStateReady => _t('playbackDiagnosticStateReady');
+  String get playbackDiagnosticStatePlaying =>
+      _t('playbackDiagnosticStatePlaying');
+  String get playbackDiagnosticStateBuffering =>
+      _t('playbackDiagnosticStateBuffering');
+  String get playbackDiagnosticStateError => _t('playbackDiagnosticStateError');
   String get open => _t('open');
   String get loadingFavorites => _t('loadingFavorites');
   String get favoriteEmpty => _t('favoriteEmpty');
@@ -370,6 +378,11 @@ const _localizedValues = {
     'playbackDiagnosticUrl': 'URL',
     'playbackDiagnosticHeaders': 'Headers',
     'playbackDiagnosticState': '状态',
+    'playbackDiagnosticStateLoading': '加载中',
+    'playbackDiagnosticStateReady': '就绪',
+    'playbackDiagnosticStatePlaying': '播放中',
+    'playbackDiagnosticStateBuffering': '缓冲中',
+    'playbackDiagnosticStateError': '播放失败',
     'open': '打开',
     'loadingFavorites': '正在加载收藏',
     'favoriteEmpty': '收藏的番剧会显示在这里',
@@ -563,6 +576,11 @@ const _localizedValues = {
     'playbackDiagnosticUrl': 'URL',
     'playbackDiagnosticHeaders': 'Headers',
     'playbackDiagnosticState': 'State',
+    'playbackDiagnosticStateLoading': 'Loading',
+    'playbackDiagnosticStateReady': 'Ready',
+    'playbackDiagnosticStatePlaying': 'Playing',
+    'playbackDiagnosticStateBuffering': 'Buffering',
+    'playbackDiagnosticStateError': 'Failed',
     'open': 'Open',
     'loadingFavorites': 'Loading favorites',
     'favoriteEmpty': 'Favorite anime will appear here',
@@ -762,6 +780,11 @@ const _localizedValues = {
     'playbackDiagnosticUrl': 'URL',
     'playbackDiagnosticHeaders': 'Headers',
     'playbackDiagnosticState': '状態',
+    'playbackDiagnosticStateLoading': '読み込み中',
+    'playbackDiagnosticStateReady': '準備完了',
+    'playbackDiagnosticStatePlaying': '再生中',
+    'playbackDiagnosticStateBuffering': 'バッファ中',
+    'playbackDiagnosticStateError': '再生失敗',
     'open': '開く',
     'loadingFavorites': 'お気に入りを読み込み中',
     'favoriteEmpty': 'お気に入り作品がここに表示されます',
