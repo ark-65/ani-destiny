@@ -142,8 +142,8 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
                         : const Icon(Icons.skip_next),
                   ),
                   IconButton(
-                    tooltip: context.l10n.externalPlayerPlaceholder,
-                    onPressed: _showExternalPlayerPlaceholder,
+                    tooltip: context.l10n.externalPlayer,
+                    onPressed: () => unawaited(_openExternalPlayer()),
                     icon: const Icon(Icons.open_in_new),
                   ),
                 ],
@@ -551,11 +551,22 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
     }
   }
 
-  void _showExternalPlayerPlaceholder() {
-    // TODO(ark65): Add url_launcher based external-player intents per platform.
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(context.l10n.externalPlayerNotImplemented)),
-    );
+  Future<void> _openExternalPlayer() async {
+    final rawUrl = _args.playUrl.trim();
+    final uri = Uri.tryParse(rawUrl);
+    if (rawUrl.isEmpty || uri == null || !uri.hasScheme) {
+      _showSnackBar(context.l10n.noPlayableSourceFound);
+      return;
+    }
+
+    try {
+      final launched = await ref.read(externalPlayerLauncherProvider)(uri);
+      if (!mounted || launched) return;
+      _showSnackBar(context.l10n.externalPlayerUnavailable);
+    } catch (_) {
+      if (!mounted) return;
+      _showSnackBar(context.l10n.externalPlayerUnavailable);
+    }
   }
 
   void _showSnackBar(String message) {

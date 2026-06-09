@@ -136,9 +136,11 @@ class AppLocalizations {
   String get fullscreenPlaceholder => _t('fullscreenPlaceholder');
   String get fullscreenNotImplemented => _t('fullscreenNotImplemented');
   String get nextEpisode => _t('nextEpisode');
+  String get externalPlayer => _t('externalPlayer');
   String get externalPlayerPlaceholder => _t('externalPlayerPlaceholder');
   String get nextEpisodeNotImplemented => _t('nextEpisodeNotImplemented');
   String get nextEpisodeUnavailable => _t('nextEpisodeUnavailable');
+  String get externalPlayerUnavailable => _t('externalPlayerUnavailable');
   String get externalPlayerNotImplemented => _t('externalPlayerNotImplemented');
   String get playbackDiagnostics => _t('playbackDiagnostics');
   String get playbackDiagnosticSource => _t('playbackDiagnosticSource');
@@ -367,9 +369,11 @@ const _localizedValues = {
     'fullscreenPlaceholder': '全屏',
     'fullscreenNotImplemented': '全屏暂未实现。',
     'nextEpisode': '下一集',
+    'externalPlayer': '外部播放器',
     'externalPlayerPlaceholder': '外部播放器占位',
     'nextEpisodeNotImplemented': '下一集暂未实现。',
     'nextEpisodeUnavailable': '当前已经是最后一集了。',
+    'externalPlayerUnavailable': '暂时无法交给外部播放器打开，请稍后重试。',
     'externalPlayerNotImplemented': '外部播放器暂未实现。',
     'playbackDiagnostics': '播放诊断',
     'playbackDiagnosticSource': '数据源',
@@ -564,10 +568,13 @@ const _localizedValues = {
     'fullscreenPlaceholder': 'Fullscreen',
     'fullscreenNotImplemented': 'Fullscreen is not implemented yet.',
     'nextEpisode': 'Next episode',
+    'externalPlayer': 'External player',
     'externalPlayerPlaceholder': 'External player placeholder',
     'nextEpisodeNotImplemented': 'Next episode is not implemented yet.',
     'nextEpisodeUnavailable':
         'You are already on the latest available episode.',
+    'externalPlayerUnavailable':
+        'Could not open in an external player. Try again later.',
     'externalPlayerNotImplemented': 'External player is not implemented yet.',
     'playbackDiagnostics': 'Playback diagnostics',
     'playbackDiagnosticSource': 'Source',
@@ -769,9 +776,11 @@ const _localizedValues = {
     'fullscreenPlaceholder': '全画面',
     'fullscreenNotImplemented': '全画面はまだ実装されていません。',
     'nextEpisode': '次のエピソード',
+    'externalPlayer': '外部プレイヤー',
     'externalPlayerPlaceholder': '外部プレイヤー',
     'nextEpisodeNotImplemented': '次のエピソードはまだ実装されていません。',
     'nextEpisodeUnavailable': 'すでに最新の配信済みエピソードです。',
+    'externalPlayerUnavailable': '外部プレイヤーで開けませんでした。しばらくしてからもう一度お試しください。',
     'externalPlayerNotImplemented': '外部プレイヤーはまだ実装されていません。',
     'playbackDiagnostics': '再生診断',
     'playbackDiagnosticSource': 'ソース',

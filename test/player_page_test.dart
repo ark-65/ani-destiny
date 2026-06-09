@@ -124,6 +124,60 @@ void main() {
     expect(find.text('Failed'), findsOneWidget);
     expect(find.text('error'), findsNothing);
   });
+
+  testWidgets('external player action launches the current playback url', (
+    tester,
+  ) async {
+    Uri? launchedUri;
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          playerRepositoryProvider
+              .overrideWithValue(const _FakePlayerRepository()),
+          historyRepositoryProvider.overrideWithValue(_FakeHistoryRepository()),
+          danmakuRepositoryProvider.overrideWithValue(_FakeDanmakuRepository()),
+          externalPlayerLauncherProvider.overrideWithValue((uri) async {
+            launchedUri = uri;
+            return true;
+          }),
+        ],
+        child: _buildPlayerApp(_args),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byTooltip('External player'));
+    await tester.pumpAndSettle();
+
+    expect(launchedUri?.toString(), 'https://cdn.example.test/video.m3u8');
+  });
+
+  testWidgets('external player action shows feedback when launch fails', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          playerRepositoryProvider
+              .overrideWithValue(const _FakePlayerRepository()),
+          historyRepositoryProvider.overrideWithValue(_FakeHistoryRepository()),
+          danmakuRepositoryProvider.overrideWithValue(_FakeDanmakuRepository()),
+          externalPlayerLauncherProvider.overrideWithValue((_) async => false),
+        ],
+        child: _buildPlayerApp(_args),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byTooltip('External player'));
+    await tester.pumpAndSettle();
+
+    expect(
+      find.text('Could not open in an external player. Try again later.'),
+      findsOneWidget,
+    );
+  });
 }
 
 Widget _buildApp() {
@@ -229,6 +283,13 @@ class _ThrowingPlayerRepository implements PlayerRepository {
   PlayerControllerAdapter createController() => _ThrowingPlayerAdapter();
 }
 
+class _FakePlayerRepository implements PlayerRepository {
+  const _FakePlayerRepository();
+
+  @override
+  PlayerControllerAdapter createController() => _FakePlayerControllerAdapter();
+}
+
 class _ThrowingPlayerAdapter implements PlayerControllerAdapter {
   @override
   Stream<PlayerState> get stateStream => const Stream.empty();
@@ -243,6 +304,32 @@ class _ThrowingPlayerAdapter implements PlayerControllerAdapter {
   }) async {
     throw StateError('load failed');
   }
+
+  @override
+  Future<void> pause() async {}
+
+  @override
+  Future<void> play() async {}
+
+  @override
+  Future<void> seek(Duration position) async {}
+
+  @override
+  Future<void> setSpeed(double speed) async {}
+}
+
+class _FakePlayerControllerAdapter implements PlayerControllerAdapter {
+  @override
+  Stream<PlayerState> get stateStream => const Stream.empty();
+
+  @override
+  Future<void> dispose() async {}
+
+  @override
+  Future<void> load(
+    String url, {
+    Map<String, String> headers = const {},
+  }) async {}
 
   @override
   Future<void> pause() async {}

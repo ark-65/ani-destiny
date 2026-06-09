@@ -7,6 +7,7 @@
 ## [Unreleased]
 
 ### 🐛 Fixed
+- Fixed the player External player action only showing a placeholder snackbar; it now hands the current playback URL to the system external player and reports a clear failure message when handoff is unavailable.
 - Fixed the player playback-diagnostics sheet showing raw internal English state values; it now uses localized user-facing state labels.
 - Fixed playback diagnostics keeping the previous line details after a player load failure or empty play URL; the diagnostics snapshot now refreshes as soon as each load attempt starts.
 - Fixed `PlayerRouteArgs.copyWith()` clearing resume progress while only updating other playback fields; it now preserves `initialPosition` by default and only resets it when `null` is passed explicitly.
