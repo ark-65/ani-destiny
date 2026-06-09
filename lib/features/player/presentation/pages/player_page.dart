@@ -558,6 +558,10 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
       _showSnackBar(context.l10n.noPlayableSourceFound);
       return;
     }
+    if (_args.playHeaders.isNotEmpty) {
+      _showSnackBar(context.l10n.externalPlayerHeadersUnsupported);
+      return;
+    }
 
     try {
       final launched = await ref.read(externalPlayerLauncherProvider)(uri);

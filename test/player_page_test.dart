@@ -178,6 +178,40 @@ void main() {
       findsOneWidget,
     );
   });
+
+  testWidgets(
+      'external player action explains when the stream depends on request headers',
+      (tester) async {
+    Uri? launchedUri;
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          playerRepositoryProvider
+              .overrideWithValue(const _FakePlayerRepository()),
+          historyRepositoryProvider.overrideWithValue(_FakeHistoryRepository()),
+          danmakuRepositoryProvider.overrideWithValue(_FakeDanmakuRepository()),
+          externalPlayerLauncherProvider.overrideWithValue((uri) async {
+            launchedUri = uri;
+            return true;
+          }),
+        ],
+        child: _buildPlayerApp(_failingArgs),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byTooltip('External player'));
+    await tester.pumpAndSettle();
+
+    expect(launchedUri, isNull);
+    expect(
+      find.text(
+        'This stream needs request headers, so it cannot be opened in an external player yet.',
+      ),
+      findsOneWidget,
+    );
+  });
 }
 
 Widget _buildApp() {

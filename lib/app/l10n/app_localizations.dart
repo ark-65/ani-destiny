@@ -140,6 +140,8 @@ class AppLocalizations {
   String get externalPlayerPlaceholder => _t('externalPlayerPlaceholder');
   String get nextEpisodeNotImplemented => _t('nextEpisodeNotImplemented');
   String get nextEpisodeUnavailable => _t('nextEpisodeUnavailable');
+  String get externalPlayerHeadersUnsupported =>
+      _t('externalPlayerHeadersUnsupported');
   String get externalPlayerUnavailable => _t('externalPlayerUnavailable');
   String get externalPlayerNotImplemented => _t('externalPlayerNotImplemented');
   String get playbackDiagnostics => _t('playbackDiagnostics');
@@ -373,6 +375,7 @@ const _localizedValues = {
     'externalPlayerPlaceholder': '外部播放器占位',
     'nextEpisodeNotImplemented': '下一集暂未实现。',
     'nextEpisodeUnavailable': '当前已经是最后一集了。',
+    'externalPlayerHeadersUnsupported': '当前播放线路依赖额外请求头，暂时无法直接交给外部播放器打开。',
     'externalPlayerUnavailable': '暂时无法交给外部播放器打开，请稍后重试。',
     'externalPlayerNotImplemented': '外部播放器暂未实现。',
     'playbackDiagnostics': '播放诊断',
@@ -573,6 +576,8 @@ const _localizedValues = {
     'nextEpisodeNotImplemented': 'Next episode is not implemented yet.',
     'nextEpisodeUnavailable':
         'You are already on the latest available episode.',
+    'externalPlayerHeadersUnsupported':
+        'This stream needs request headers, so it cannot be opened in an external player yet.',
     'externalPlayerUnavailable':
         'Could not open in an external player. Try again later.',
     'externalPlayerNotImplemented': 'External player is not implemented yet.',
@@ -780,6 +785,8 @@ const _localizedValues = {
     'externalPlayerPlaceholder': '外部プレイヤー',
     'nextEpisodeNotImplemented': '次のエピソードはまだ実装されていません。',
     'nextEpisodeUnavailable': 'すでに最新の配信済みエピソードです。',
+    'externalPlayerHeadersUnsupported':
+        'この再生ラインは追加のリクエストヘッダーが必要なため、まだ外部プレイヤーでは開けません。',
     'externalPlayerUnavailable': '外部プレイヤーで開けませんでした。しばらくしてからもう一度お試しください。',
     'externalPlayerNotImplemented': '外部プレイヤーはまだ実装されていません。',
     'playbackDiagnostics': '再生診断',
