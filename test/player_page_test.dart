@@ -5,6 +5,9 @@ import 'package:ani_destiny/features/danmaku/presentation/providers/danmaku_prov
 import 'package:ani_destiny/features/history/domain/entities/watch_history.dart';
 import 'package:ani_destiny/features/history/domain/repositories/history_repository.dart';
 import 'package:ani_destiny/features/history/presentation/providers/history_providers.dart';
+import 'package:ani_destiny/features/player/domain/adapters/player_controller_adapter.dart';
+import 'package:ani_destiny/features/player/domain/entities/player_state.dart';
+import 'package:ani_destiny/features/player/domain/repositories/player_repository.dart';
 import 'package:ani_destiny/features/player/data/repositories/player_repository_impl.dart';
 import 'package:ani_destiny/features/player/domain/entities/player_route_args.dart';
 import 'package:ani_destiny/features/player/presentation/pages/player_page.dart';
@@ -74,6 +77,46 @@ void main() {
     expect(find.text('Open player'), findsOneWidget);
     expect(find.byType(PlayerPage), findsNothing);
   });
+
+  testWidgets('playback diagnostics keep the attempted source after load fails',
+      (
+    tester,
+  ) async {
+    final container = ProviderContainer(
+      overrides: [
+        playerRepositoryProvider.overrideWithValue(
+          const _ThrowingPlayerRepository(),
+        ),
+        historyRepositoryProvider.overrideWithValue(_FakeHistoryRepository()),
+        danmakuRepositoryProvider.overrideWithValue(_FakeDanmakuRepository()),
+      ],
+    );
+    addTearDown(container.dispose);
+
+    await tester.pumpWidget(
+      UncontrolledProviderScope(
+        container: container,
+        child: _buildPlayerApp(_failingArgs),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    final diagnostics = container.read(lastPlaybackDiagnosticsProvider);
+    expect(diagnostics, isNotNull);
+    expect(diagnostics?.sourceId, 'sakura');
+    expect(diagnostics?.playSourceTitle, 'Broken Line');
+    expect(
+      diagnostics?.sanitizedUrl,
+      'https://cdn.example.test/.../broken.m3u8',
+    );
+    expect(diagnostics?.headerKeys, ['Referer']);
+    expect(
+      find.text(
+        'Playback temporarily failed. Retry later or try another playback line.',
+      ),
+      findsOneWidget,
+    );
+  });
 }
 
 Widget _buildApp() {
@@ -87,6 +130,20 @@ Widget _buildApp() {
       GlobalCupertinoLocalizations.delegate,
     ],
     home: _HostPage(),
+  );
+}
+
+Widget _buildPlayerApp(PlayerRouteArgs args) {
+  return MaterialApp(
+    locale: const Locale('en'),
+    supportedLocales: AppLocalizations.supportedLocales,
+    localizationsDelegates: const [
+      AppLocalizations.delegate,
+      GlobalMaterialLocalizations.delegate,
+      GlobalWidgetsLocalizations.delegate,
+      GlobalCupertinoLocalizations.delegate,
+    ],
+    home: PlayerPage(args: args),
   );
 }
 
@@ -158,6 +215,41 @@ class _FakeDanmakuRepository implements DanmakuRepository {
   }
 }
 
+class _ThrowingPlayerRepository implements PlayerRepository {
+  const _ThrowingPlayerRepository();
+
+  @override
+  PlayerControllerAdapter createController() => _ThrowingPlayerAdapter();
+}
+
+class _ThrowingPlayerAdapter implements PlayerControllerAdapter {
+  @override
+  Stream<PlayerState> get stateStream => const Stream.empty();
+
+  @override
+  Future<void> dispose() async {}
+
+  @override
+  Future<void> load(
+    String url, {
+    Map<String, String> headers = const {},
+  }) async {
+    throw StateError('load failed');
+  }
+
+  @override
+  Future<void> pause() async {}
+
+  @override
+  Future<void> play() async {}
+
+  @override
+  Future<void> seek(Duration position) async {}
+
+  @override
+  Future<void> setSpeed(double speed) async {}
+}
+
 const _args = PlayerRouteArgs(
   animeId: 'anime-1',
   episodeId: 'episode-1',
@@ -167,4 +259,16 @@ const _args = PlayerRouteArgs(
   sourceId: 'sakura',
   playSourceId: 'line-1',
   playSourceTitle: 'Line 1',
+);
+
+const _failingArgs = PlayerRouteArgs(
+  animeId: 'anime-1',
+  episodeId: 'episode-2',
+  animeTitle: 'Anime 1',
+  episodeTitle: 'Episode 2',
+  playUrl: 'https://cdn.example.test/path/broken.m3u8?token=secret',
+  sourceId: 'sakura',
+  playSourceId: 'line-broken',
+  playSourceTitle: 'Broken Line',
+  playHeaders: {'Referer': 'https://example.test/player?token=secret'},
 );

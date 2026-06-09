@@ -7,6 +7,7 @@
 ## [Unreleased]
 
 ### 🐛 Fixed
+- Fixed playback diagnostics keeping the previous line details after a player load failure or empty play URL; the diagnostics snapshot now refreshes as soon as each load attempt starts.
 - Fixed `PlayerRouteArgs.copyWith()` clearing resume progress while only updating other playback fields; it now preserves `initialPosition` by default and only resets it when `null` is passed explicitly.
 - Fixed system back leaving the player page immediately in fullscreen; it now exits fullscreen first and only leaves the page on the next back action.
 - Fixed next-episode switching still failing when upstream episode titles changed between formats like `第12集`, `Episode 12`, and `EP12`; the player now keeps matching by episode number in the title when needed.

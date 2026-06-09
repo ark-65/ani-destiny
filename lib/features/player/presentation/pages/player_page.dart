@@ -314,14 +314,22 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
     );
   }
 
-  PlaybackDiagnostics _recordPlaybackDiagnostics() {
+  PlaybackDiagnostics _recordPlaybackDiagnostics({
+    PlayerRouteArgs? args,
+  }) {
+    final routeArgs = args ?? _args;
     final diagnostics = const PlaybackDiagnosticsBuilder().build(
-      sourceId: _args.sourceId,
-      playSourceTitle: _args.playSourceTitle,
-      playUrl: _args.playUrl,
-      headers: _args.playHeaders,
+      sourceId: routeArgs.sourceId,
+      playSourceTitle: routeArgs.playSourceTitle,
+      playUrl: routeArgs.playUrl,
+      headers: routeArgs.playHeaders,
     );
-    ref.read(lastPlaybackDiagnosticsProvider.notifier).state = diagnostics;
+    unawaited(
+      Future<void>(() {
+        if (!mounted || _isDisposed) return;
+        ref.read(lastPlaybackDiagnosticsProvider.notifier).state = diagnostics;
+      }),
+    );
     return diagnostics;
   }
 
@@ -405,6 +413,7 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
     double? playbackSpeed,
   }) async {
     final routeArgs = args ?? _args;
+    _recordPlaybackDiagnostics(args: routeArgs);
     try {
       if (routeArgs.playUrl.trim().isEmpty) {
         setState(
@@ -428,7 +437,6 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
       if (autoplay) {
         await _controller.play();
       }
-      _recordPlaybackDiagnostics();
       unawaited(_saveHistory(force: true));
     } catch (error) {
       if (!mounted) return;
