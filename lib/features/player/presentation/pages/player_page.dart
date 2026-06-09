@@ -13,6 +13,7 @@ import '../../../danmaku/presentation/providers/danmaku_providers.dart';
 import '../../../danmaku/presentation/widgets/danmaku_overlay.dart';
 import '../../../download/presentation/providers/download_providers.dart';
 import '../../../history/domain/entities/watch_history.dart';
+import '../../../history/domain/repositories/history_repository.dart';
 import '../../../history/presentation/providers/history_providers.dart';
 import '../../domain/adapters/player_controller_adapter.dart';
 import '../../domain/entities/player_route_args.dart';
@@ -41,6 +42,7 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
   static const _historyWriteInterval = Duration(seconds: 5);
 
   late final PlayerControllerAdapter _controller;
+  late final HistoryRepository _historyRepository;
   late PlayerRouteArgs _currentArgs;
   StreamSubscription<PlayerState>? _subscription;
   DateTime? _lastHistorySavedAt;
@@ -56,13 +58,17 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
     super.initState();
     WidgetsBinding.instance.addObserver(this);
     _currentArgs = widget.args;
+    _historyRepository = ref.read(historyRepositoryProvider);
     _controller = ref.read(playerRepositoryProvider).createController();
     _subscription = _controller.stateStream.listen((state) {
       if (!mounted || _isDisposed) return;
       setState(() => _state = state);
       unawaited(_saveHistory());
     });
-    _recordPlaybackDiagnostics();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted || _isDisposed) return;
+      _recordPlaybackDiagnostics();
+    });
     unawaited(_loadPlayer());
   }
 
@@ -102,115 +108,124 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
       ),
     );
 
-    return Scaffold(
-      backgroundColor: Colors.black,
-      appBar: _isFullscreen
-          ? null
-          : AppBar(
-              title: Text(_args.episodeTitle),
-              foregroundColor: Colors.white,
-              backgroundColor: Colors.black,
-              actions: [
-                if (kDebugMode)
+    return PopScope<void>(
+      canPop: !_isFullscreen,
+      onPopInvokedWithResult: (didPop, result) {
+        if (didPop || !_isFullscreen) return;
+        unawaited(_exitFullscreen());
+      },
+      child: Scaffold(
+        backgroundColor: Colors.black,
+        appBar: _isFullscreen
+            ? null
+            : AppBar(
+                title: Text(_args.episodeTitle),
+                foregroundColor: Colors.white,
+                backgroundColor: Colors.black,
+                actions: [
+                  if (kDebugMode)
+                    IconButton(
+                      tooltip: context.l10n.playbackDiagnostics,
+                      onPressed: _showPlaybackDiagnostics,
+                      icon: const Icon(Icons.bug_report_outlined),
+                    ),
                   IconButton(
-                    tooltip: context.l10n.playbackDiagnostics,
-                    onPressed: _showPlaybackDiagnostics,
-                    icon: const Icon(Icons.bug_report_outlined),
+                    tooltip: context.l10n.nextEpisode,
+                    onPressed: _isSwitchingEpisode
+                        ? null
+                        : () => unawaited(_playNextEpisode()),
+                    icon: _isSwitchingEpisode
+                        ? const SizedBox.square(
+                            dimension: 18,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          )
+                        : const Icon(Icons.skip_next),
                   ),
-                IconButton(
-                  tooltip: context.l10n.nextEpisode,
-                  onPressed: _isSwitchingEpisode
-                      ? null
-                      : () => unawaited(_playNextEpisode()),
-                  icon: _isSwitchingEpisode
-                      ? const SizedBox.square(
-                          dimension: 18,
-                          child: CircularProgressIndicator(strokeWidth: 2),
-                        )
-                      : const Icon(Icons.skip_next),
-                ),
-                IconButton(
-                  tooltip: context.l10n.externalPlayerPlaceholder,
-                  onPressed: _showExternalPlayerPlaceholder,
-                  icon: const Icon(Icons.open_in_new),
-                ),
-              ],
-            ),
-      body: Column(
-        children: [
-          Expanded(
-            child: Stack(
-              fit: StackFit.expand,
-              children: [
-                PlayerSurface(
-                  controller: _controller,
-                  title: _args.animeTitle,
-                  playUrl: _args.playUrl,
-                ),
-                if (_state.isBuffering)
-                  const Center(child: CircularProgressIndicator()),
-                if (_state.errorMessage != null)
-                  Center(
-                    child: ConstrainedBox(
-                      constraints: const BoxConstraints(maxWidth: 420),
-                      child: Card(
-                        child: Padding(
-                          padding: const EdgeInsets.all(16),
-                          child: Text(
-                            _playbackErrorMessage(),
-                            textAlign: TextAlign.center,
+                  IconButton(
+                    tooltip: context.l10n.externalPlayerPlaceholder,
+                    onPressed: _showExternalPlayerPlaceholder,
+                    icon: const Icon(Icons.open_in_new),
+                  ),
+                ],
+              ),
+        body: Column(
+          children: [
+            Expanded(
+              child: Stack(
+                fit: StackFit.expand,
+                children: [
+                  PlayerSurface(
+                    controller: _controller,
+                    title: _args.animeTitle,
+                    playUrl: _args.playUrl,
+                  ),
+                  if (_state.isBuffering)
+                    const Center(child: CircularProgressIndicator()),
+                  if (_state.errorMessage != null)
+                    Center(
+                      child: ConstrainedBox(
+                        constraints: const BoxConstraints(maxWidth: 420),
+                        child: Card(
+                          child: Padding(
+                            padding: const EdgeInsets.all(16),
+                            child: Text(
+                              _playbackErrorMessage(),
+                              textAlign: TextAlign.center,
+                            ),
                           ),
                         ),
                       ),
                     ),
+                  danmakuItems.when(
+                    data: (items) => DanmakuOverlay(
+                      items: items,
+                      position: _state.position,
+                      settings: danmakuSettings,
+                    ),
+                    loading: () => const SizedBox.shrink(),
+                    error: (_, __) => const SizedBox.shrink(),
                   ),
-                danmakuItems.when(
-                  data: (items) => DanmakuOverlay(
-                    items: items,
-                    position: _state.position,
-                    settings: danmakuSettings,
-                  ),
-                  loading: () => const SizedBox.shrink(),
-                  error: (_, __) => const SizedBox.shrink(),
-                ),
-                if (danmakuSettings.enabled)
-                  Positioned(
-                    top: 12,
-                    left: 12,
-                    child: _DanmakuStatusBadge(value: danmakuItems),
-                  ),
-              ],
+                  if (danmakuSettings.enabled)
+                    Positioned(
+                      top: 12,
+                      left: 12,
+                      child: _DanmakuStatusBadge(value: danmakuItems),
+                    ),
+                ],
+              ),
             ),
-          ),
-          ColoredBox(
-            color: Theme.of(context).colorScheme.surface,
-            child: PlayerControls(
-              state: _state,
-              danmakuEnabled: danmakuSettings.enabled,
-              onPlayPause: () {
-                if (_state.isPlaying) {
-                  unawaited(_controller.pause());
-                  unawaited(_saveHistory(force: true));
-                } else {
-                  unawaited(_controller.play());
-                }
-              },
-              onSeek: (position) => unawaited(_controller.seek(position)),
-              onSpeed: _showSpeedSheet,
-              onNextEpisode: _isSwitchingEpisode
-                  ? null
-                  : () => unawaited(_playNextEpisode()),
-              onDownload: () => unawaited(_createDownload()),
-              onToggleFullscreen: () => unawaited(_toggleFullscreen()),
-              onToggleDanmaku: () {
-                ref.read(danmakuSettingsProvider.notifier).state =
-                    danmakuSettings.copyWith(enabled: !danmakuSettings.enabled);
-              },
-              isFullscreen: _isFullscreen,
-              isSwitchingEpisode: _isSwitchingEpisode,
+            ColoredBox(
+              color: Theme.of(context).colorScheme.surface,
+              child: PlayerControls(
+                state: _state,
+                danmakuEnabled: danmakuSettings.enabled,
+                onPlayPause: () {
+                  if (_state.isPlaying) {
+                    unawaited(_controller.pause());
+                    unawaited(_saveHistory(force: true));
+                  } else {
+                    unawaited(_controller.play());
+                  }
+                },
+                onSeek: (position) => unawaited(_controller.seek(position)),
+                onSpeed: _showSpeedSheet,
+                onNextEpisode: _isSwitchingEpisode
+                    ? null
+                    : () => unawaited(_playNextEpisode()),
+                onDownload: () => unawaited(_createDownload()),
+                onToggleFullscreen: () => unawaited(_toggleFullscreen()),
+                onToggleDanmaku: () {
+                  ref.read(danmakuSettingsProvider.notifier).state =
+                      danmakuSettings.copyWith(
+                    enabled: !danmakuSettings.enabled,
+                  );
+                },
+                isFullscreen: _isFullscreen,
+                isSwitchingEpisode: _isSwitchingEpisode,
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -335,24 +350,24 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
       return;
     }
     _lastHistorySavedAt = now;
-    await ref.read(historyRepositoryProvider).upsert(
-          WatchHistory(
-            id: '${_args.sourceId}:${_args.animeId}:${_args.episodeId}',
-            animeId: _args.animeId,
-            episodeId: _args.episodeId,
-            animeTitle: _args.animeTitle,
-            episodeTitle: _args.episodeTitle,
-            coverUrl: _args.coverUrl,
-            position: _state.position,
-            duration: _state.duration,
-            sourceId: _args.sourceId,
-            playSourceId: _args.playSourceId,
-            playSourceTitle: _args.playSourceTitle,
-            playUrl: _args.playUrl,
-            playHeaders: _args.playHeaders,
-            updatedAt: now,
-          ),
-        );
+    await _historyRepository.upsert(
+      WatchHistory(
+        id: '${_args.sourceId}:${_args.animeId}:${_args.episodeId}',
+        animeId: _args.animeId,
+        episodeId: _args.episodeId,
+        animeTitle: _args.animeTitle,
+        episodeTitle: _args.episodeTitle,
+        coverUrl: _args.coverUrl,
+        position: _state.position,
+        duration: _state.duration,
+        sourceId: _args.sourceId,
+        playSourceId: _args.playSourceId,
+        playSourceTitle: _args.playSourceTitle,
+        playUrl: _args.playUrl,
+        playHeaders: _args.playHeaders,
+        updatedAt: now,
+      ),
+    );
   }
 
   Future<void> _createDownload() async {
