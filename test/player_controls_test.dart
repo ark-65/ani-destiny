@@ -91,6 +91,10 @@ void main() {
     await tester.pump();
 
     expect(find.byType(CircularProgressIndicator), findsOneWidget);
+    final externalPlayerButton = tester.widget<IconButton>(
+      find.widgetWithIcon(IconButton, Icons.open_in_new),
+    );
+    expect(externalPlayerButton.onPressed, isNull);
   });
 
   testWidgets('fullscreen controls expose the external player action', (

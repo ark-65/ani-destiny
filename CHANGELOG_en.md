@@ -7,6 +7,7 @@
 ## [Unreleased]
 
 ### 🐛 Fixed
+- Fixed the External player action staying tappable while Next episode was still loading, so users can no longer hand the previous episode stream to another app mid-switch.
 - Fixed the player fullscreen button always using a generic `Fullscreen` tooltip, so it now tells users whether the control will enter or exit fullscreen.
 - Fixed fullscreen playback hiding the External player entry with the app bar; the fullscreen control bar now keeps the same action so users do not need to exit fullscreen first.
 - Fixed the player External player action only showing a placeholder snackbar; it now hands plain playback URLs to the system external player, explains when header-protected streams cannot be handed off yet, and reports a clear failure message when launch is unavailable.

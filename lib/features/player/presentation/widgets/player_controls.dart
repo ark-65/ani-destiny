@@ -25,7 +25,7 @@ class PlayerControls extends StatelessWidget {
   final ValueChanged<Duration> onSeek;
   final VoidCallback onSpeed;
   final VoidCallback? onNextEpisode;
-  final VoidCallback onOpenExternalPlayer;
+  final VoidCallback? onOpenExternalPlayer;
   final VoidCallback onDownload;
   final VoidCallback onToggleDanmaku;
   final VoidCallback onToggleFullscreen;
@@ -84,7 +84,7 @@ class PlayerControls extends StatelessWidget {
                 if (isFullscreen)
                   IconButton(
                     tooltip: context.l10n.externalPlayer,
-                    onPressed: onOpenExternalPlayer,
+                    onPressed: isSwitchingEpisode ? null : onOpenExternalPlayer,
                     icon: const Icon(Icons.open_in_new),
                   ),
                 IconButton(

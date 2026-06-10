@@ -1,4 +1,13 @@
+import 'dart:async';
+
 import 'package:ani_destiny/app/l10n/app_localizations.dart';
+import 'package:ani_destiny/features/anime/domain/entities/anime_detail.dart';
+import 'package:ani_destiny/features/anime/domain/entities/anime.dart';
+import 'package:ani_destiny/features/anime/domain/entities/play_source.dart';
+import 'package:ani_destiny/features/anime/domain/entities/schedule_item.dart';
+import 'package:ani_destiny/features/anime/domain/entities/search_result.dart';
+import 'package:ani_destiny/features/anime/domain/repositories/anime_repository.dart';
+import 'package:ani_destiny/features/anime/presentation/providers/anime_providers.dart';
 import 'package:ani_destiny/features/danmaku/domain/entities/danmaku_item.dart';
 import 'package:ani_destiny/features/danmaku/domain/repositories/danmaku_repository.dart';
 import 'package:ani_destiny/features/danmaku/presentation/providers/danmaku_providers.dart';
@@ -12,6 +21,7 @@ import 'package:ani_destiny/features/player/data/repositories/player_repository_
 import 'package:ani_destiny/features/player/domain/entities/player_route_args.dart';
 import 'package:ani_destiny/features/player/presentation/pages/player_page.dart';
 import 'package:ani_destiny/features/player/presentation/providers/player_providers.dart';
+import 'package:ani_destiny/features/source/domain/entities/source_fallback_result.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -246,6 +256,44 @@ void main() {
       findsOneWidget,
     );
   });
+
+  testWidgets('external player action is disabled while next episode loads', (
+    tester,
+  ) async {
+    Uri? launchedUri;
+    final pendingRepository = _PendingNextEpisodeAnimeRepository();
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          animeRepositoryProvider.overrideWithValue(pendingRepository),
+          playerRepositoryProvider
+              .overrideWithValue(const _FakePlayerRepository()),
+          historyRepositoryProvider.overrideWithValue(_FakeHistoryRepository()),
+          danmakuRepositoryProvider.overrideWithValue(_FakeDanmakuRepository()),
+          externalPlayerLauncherProvider.overrideWithValue((uri) async {
+            launchedUri = uri;
+            return true;
+          }),
+        ],
+        child: _buildPlayerApp(_args),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byTooltip('Next episode'));
+    await tester.pump();
+
+    final externalPlayerButton = tester.widget<IconButton>(
+      find.widgetWithIcon(IconButton, Icons.open_in_new),
+    );
+    expect(externalPlayerButton.onPressed, isNull);
+
+    await tester.tap(find.byTooltip('External player'));
+    await tester.pump();
+
+    expect(launchedUri, isNull);
+  });
 }
 
 Widget _buildApp() {
@@ -341,6 +389,54 @@ class _FakeDanmakuRepository implements DanmakuRepository {
     int? episodeIndex,
   }) async {
     return const [];
+  }
+}
+
+class _PendingNextEpisodeAnimeRepository implements AnimeRepository {
+  @override
+  Future<SourceFallbackResult<AnimeDetail>> getAnimeDetail(String animeId) {
+    throw UnimplementedError();
+  }
+
+  @override
+  Future<SourceFallbackResult<AnimeDetail>> getAnimeDetailFromSource({
+    required String sourceId,
+    required String animeId,
+  }) {
+    return Completer<SourceFallbackResult<AnimeDetail>>().future;
+  }
+
+  @override
+  Future<SourceFallbackResult<List<Anime>>> getHomeRecommendations() {
+    throw UnimplementedError();
+  }
+
+  @override
+  Future<SourceFallbackResult<List<PlaySource>>> getPlaySources(
+    String episodeId,
+  ) {
+    throw UnimplementedError();
+  }
+
+  @override
+  Future<SourceFallbackResult<List<PlaySource>>> getPlaySourcesFromSource({
+    required String sourceId,
+    required String episodeId,
+  }) {
+    throw UnimplementedError();
+  }
+
+  @override
+  Future<SourceFallbackResult<List<ScheduleItem>>> getSchedule() {
+    throw UnimplementedError();
+  }
+
+  @override
+  Future<SourceFallbackResult<List<SearchResult>>> search(
+    String keyword, {
+    int page = 1,
+  }) {
+    throw UnimplementedError();
   }
 }
 

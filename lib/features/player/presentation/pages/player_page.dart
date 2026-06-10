@@ -143,7 +143,9 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
                   ),
                   IconButton(
                     tooltip: context.l10n.externalPlayer,
-                    onPressed: () => unawaited(_openExternalPlayer()),
+                    onPressed: _isSwitchingEpisode
+                        ? null
+                        : () => unawaited(_openExternalPlayer()),
                     icon: const Icon(Icons.open_in_new),
                   ),
                 ],
@@ -212,7 +214,9 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
                 onNextEpisode: _isSwitchingEpisode
                     ? null
                     : () => unawaited(_playNextEpisode()),
-                onOpenExternalPlayer: () => unawaited(_openExternalPlayer()),
+                onOpenExternalPlayer: _isSwitchingEpisode
+                    ? null
+                    : () => unawaited(_openExternalPlayer()),
                 onDownload: () => unawaited(_createDownload()),
                 onToggleFullscreen: () => unawaited(_toggleFullscreen()),
                 onToggleDanmaku: () {
