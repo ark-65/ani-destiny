@@ -133,6 +133,8 @@ class AppLocalizations {
   String get playbackSpeed => _t('playbackSpeed');
   String get hideDanmaku => _t('hideDanmaku');
   String get showDanmaku => _t('showDanmaku');
+  String get enterFullscreen => _t('enterFullscreen');
+  String get exitFullscreen => _t('exitFullscreen');
   String get fullscreenPlaceholder => _t('fullscreenPlaceholder');
   String get fullscreenNotImplemented => _t('fullscreenNotImplemented');
   String get nextEpisode => _t('nextEpisode');
@@ -368,6 +370,8 @@ const _localizedValues = {
     'playbackSpeed': '播放速度',
     'hideDanmaku': '隐藏弹幕',
     'showDanmaku': '显示弹幕',
+    'enterFullscreen': '进入全屏',
+    'exitFullscreen': '退出全屏',
     'fullscreenPlaceholder': '全屏',
     'fullscreenNotImplemented': '全屏暂未实现。',
     'nextEpisode': '下一集',
@@ -568,6 +572,8 @@ const _localizedValues = {
     'playbackSpeed': 'Playback speed',
     'hideDanmaku': 'Hide danmaku',
     'showDanmaku': 'Show danmaku',
+    'enterFullscreen': 'Enter fullscreen',
+    'exitFullscreen': 'Exit fullscreen',
     'fullscreenPlaceholder': 'Fullscreen',
     'fullscreenNotImplemented': 'Fullscreen is not implemented yet.',
     'nextEpisode': 'Next episode',
@@ -778,6 +784,8 @@ const _localizedValues = {
     'playbackSpeed': '再生速度',
     'hideDanmaku': '弾幕を隠す',
     'showDanmaku': '弾幕を表示',
+    'enterFullscreen': '全画面で表示',
+    'exitFullscreen': '全画面を終了',
     'fullscreenPlaceholder': '全画面',
     'fullscreenNotImplemented': '全画面はまだ実装されていません。',
     'nextEpisode': '次のエピソード',

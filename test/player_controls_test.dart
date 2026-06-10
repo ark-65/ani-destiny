@@ -64,6 +64,7 @@ void main() {
 
     expect(find.byTooltip('Next episode'), findsNothing);
     expect(find.byTooltip('External player'), findsNothing);
+    expect(find.byTooltip('Enter fullscreen'), findsOneWidget);
   });
 
   testWidgets('fullscreen next episode action shows busy state while switching',
@@ -120,6 +121,33 @@ void main() {
 
     await tester.tap(find.byTooltip('External player'));
     expect(tapped, 1);
+  });
+
+  testWidgets('fullscreen toggle tooltip reflects the current fullscreen state',
+      (tester) async {
+    await tester.pumpWidget(
+      _buildApp(
+        PlayerControls(
+          state: _state,
+          onPlayPause: _noop,
+          onSeek: (_) {},
+          onSpeed: _noop,
+          onNextEpisode: _noop,
+          onOpenExternalPlayer: _noop,
+          onDownload: _noop,
+          onToggleDanmaku: _noop,
+          onToggleFullscreen: _noop,
+          danmakuEnabled: true,
+          isFullscreen: true,
+          isSwitchingEpisode: false,
+        ),
+      ),
+    );
+
+    await tester.pump();
+
+    expect(find.byTooltip('Exit fullscreen'), findsOneWidget);
+    expect(find.byTooltip('Enter fullscreen'), findsNothing);
   });
 }
 

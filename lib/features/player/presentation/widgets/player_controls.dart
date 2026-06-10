@@ -104,7 +104,9 @@ class PlayerControls extends StatelessWidget {
                   icon: const Icon(Icons.download_outlined),
                 ),
                 IconButton(
-                  tooltip: context.l10n.fullscreenPlaceholder,
+                  tooltip: isFullscreen
+                      ? context.l10n.exitFullscreen
+                      : context.l10n.enterFullscreen,
                   onPressed: onToggleFullscreen,
                   icon: Icon(
                     isFullscreen ? Icons.fullscreen_exit : Icons.fullscreen,
