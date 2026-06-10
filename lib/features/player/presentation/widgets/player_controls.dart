@@ -10,6 +10,7 @@ class PlayerControls extends StatelessWidget {
     required this.onSeek,
     required this.onSpeed,
     required this.onNextEpisode,
+    required this.onOpenExternalPlayer,
     required this.onDownload,
     required this.onToggleDanmaku,
     required this.onToggleFullscreen,
@@ -24,6 +25,7 @@ class PlayerControls extends StatelessWidget {
   final ValueChanged<Duration> onSeek;
   final VoidCallback onSpeed;
   final VoidCallback? onNextEpisode;
+  final VoidCallback onOpenExternalPlayer;
   final VoidCallback onDownload;
   final VoidCallback onToggleDanmaku;
   final VoidCallback onToggleFullscreen;
@@ -78,6 +80,12 @@ class PlayerControls extends StatelessWidget {
                             child: CircularProgressIndicator(strokeWidth: 2),
                           )
                         : const Icon(Icons.skip_next),
+                  ),
+                if (isFullscreen)
+                  IconButton(
+                    tooltip: context.l10n.externalPlayer,
+                    onPressed: onOpenExternalPlayer,
+                    icon: const Icon(Icons.open_in_new),
                   ),
                 IconButton(
                   tooltip: danmakuEnabled

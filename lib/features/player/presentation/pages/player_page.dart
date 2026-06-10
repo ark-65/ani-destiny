@@ -212,6 +212,7 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
                 onNextEpisode: _isSwitchingEpisode
                     ? null
                     : () => unawaited(_playNextEpisode()),
+                onOpenExternalPlayer: () => unawaited(_openExternalPlayer()),
                 onDownload: () => unawaited(_createDownload()),
                 onToggleFullscreen: () => unawaited(_toggleFullscreen()),
                 onToggleDanmaku: () {

@@ -153,6 +153,40 @@ void main() {
     expect(launchedUri?.toString(), 'https://cdn.example.test/video.m3u8');
   });
 
+  testWidgets('fullscreen controls keep the external player action available', (
+    tester,
+  ) async {
+    Uri? launchedUri;
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          playerRepositoryProvider
+              .overrideWithValue(const _FakePlayerRepository()),
+          historyRepositoryProvider.overrideWithValue(_FakeHistoryRepository()),
+          danmakuRepositoryProvider.overrideWithValue(_FakeDanmakuRepository()),
+          externalPlayerLauncherProvider.overrideWithValue((uri) async {
+            launchedUri = uri;
+            return true;
+          }),
+        ],
+        child: _buildPlayerApp(_args),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byTooltip('Fullscreen'));
+    await tester.pumpAndSettle();
+
+    expect(find.byType(AppBar), findsNothing);
+    expect(find.byTooltip('External player'), findsOneWidget);
+
+    await tester.tap(find.byTooltip('External player'));
+    await tester.pumpAndSettle();
+
+    expect(launchedUri?.toString(), 'https://cdn.example.test/video.m3u8');
+  });
+
   testWidgets('external player action shows feedback when launch fails', (
     tester,
   ) async {

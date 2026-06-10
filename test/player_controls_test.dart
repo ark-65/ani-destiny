@@ -19,6 +19,7 @@ void main() {
           onSeek: (_) {},
           onSpeed: _noop,
           onNextEpisode: () => tapped++,
+          onOpenExternalPlayer: _noop,
           onDownload: _noop,
           onToggleDanmaku: _noop,
           onToggleFullscreen: _noop,
@@ -34,6 +35,7 @@ void main() {
     expect(find.byTooltip('Next episode'), findsOneWidget);
     await tester.tap(find.byTooltip('Next episode'));
     expect(tapped, 1);
+    expect(find.byTooltip('External player'), findsOneWidget);
   });
 
   testWidgets('embedded controls keep next episode in the app bar only', (
@@ -47,6 +49,7 @@ void main() {
           onSeek: (_) {},
           onSpeed: _noop,
           onNextEpisode: _noop,
+          onOpenExternalPlayer: _noop,
           onDownload: _noop,
           onToggleDanmaku: _noop,
           onToggleFullscreen: _noop,
@@ -60,6 +63,7 @@ void main() {
     await tester.pump();
 
     expect(find.byTooltip('Next episode'), findsNothing);
+    expect(find.byTooltip('External player'), findsNothing);
   });
 
   testWidgets('fullscreen next episode action shows busy state while switching',
@@ -72,6 +76,7 @@ void main() {
           onSeek: (_) {},
           onSpeed: _noop,
           onNextEpisode: null,
+          onOpenExternalPlayer: _noop,
           onDownload: _noop,
           onToggleDanmaku: _noop,
           onToggleFullscreen: _noop,
@@ -85,6 +90,36 @@ void main() {
     await tester.pump();
 
     expect(find.byType(CircularProgressIndicator), findsOneWidget);
+  });
+
+  testWidgets('fullscreen controls expose the external player action', (
+    tester,
+  ) async {
+    var tapped = 0;
+
+    await tester.pumpWidget(
+      _buildApp(
+        PlayerControls(
+          state: _state,
+          onPlayPause: _noop,
+          onSeek: (_) {},
+          onSpeed: _noop,
+          onNextEpisode: _noop,
+          onOpenExternalPlayer: () => tapped++,
+          onDownload: _noop,
+          onToggleDanmaku: _noop,
+          onToggleFullscreen: _noop,
+          danmakuEnabled: true,
+          isFullscreen: true,
+          isSwitchingEpisode: false,
+        ),
+      ),
+    );
+
+    await tester.pump();
+
+    await tester.tap(find.byTooltip('External player'));
+    expect(tapped, 1);
   });
 }
 
