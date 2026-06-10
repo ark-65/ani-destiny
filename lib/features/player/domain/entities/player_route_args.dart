@@ -2,6 +2,8 @@ import 'package:flutter/foundation.dart';
 
 @immutable
 class PlayerRouteArgs {
+  static const _initialPositionUnset = Object();
+
   const PlayerRouteArgs({
     required this.animeId,
     required this.episodeId,
@@ -29,4 +31,36 @@ class PlayerRouteArgs {
   final Map<String, String> playHeaders;
   final int? episodeIndex;
   final Duration? initialPosition;
+
+  PlayerRouteArgs copyWith({
+    String? animeId,
+    String? episodeId,
+    String? animeTitle,
+    String? episodeTitle,
+    String? playUrl,
+    String? sourceId,
+    String? coverUrl,
+    String? playSourceId,
+    String? playSourceTitle,
+    Map<String, String>? playHeaders,
+    int? episodeIndex,
+    Object? initialPosition = _initialPositionUnset,
+  }) {
+    return PlayerRouteArgs(
+      animeId: animeId ?? this.animeId,
+      episodeId: episodeId ?? this.episodeId,
+      animeTitle: animeTitle ?? this.animeTitle,
+      episodeTitle: episodeTitle ?? this.episodeTitle,
+      playUrl: playUrl ?? this.playUrl,
+      sourceId: sourceId ?? this.sourceId,
+      coverUrl: coverUrl ?? this.coverUrl,
+      playSourceId: playSourceId ?? this.playSourceId,
+      playSourceTitle: playSourceTitle ?? this.playSourceTitle,
+      playHeaders: playHeaders ?? this.playHeaders,
+      episodeIndex: episodeIndex ?? this.episodeIndex,
+      initialPosition: identical(initialPosition, _initialPositionUnset)
+          ? this.initialPosition
+          : initialPosition as Duration?,
+    );
+  }
 }

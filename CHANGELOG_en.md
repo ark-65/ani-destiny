@@ -7,6 +7,16 @@
 ## [Unreleased]
 
 ### 🐛 Fixed
+- Fixed the player External player action only showing a placeholder snackbar; it now hands plain playback URLs to the system external player, explains when header-protected streams cannot be handed off yet, and reports a clear failure message when launch is unavailable.
+- Fixed the player playback-diagnostics sheet showing raw internal English state values; it now uses localized user-facing state labels.
+- Fixed playback diagnostics keeping the previous line details after a player load failure or empty play URL; the diagnostics snapshot now refreshes as soon as each load attempt starts.
+- Fixed `PlayerRouteArgs.copyWith()` clearing resume progress while only updating other playback fields; it now preserves `initialPosition` by default and only resets it when `null` is passed explicitly.
+- Fixed system back leaving the player page immediately in fullscreen; it now exits fullscreen first and only leaves the page on the next back action.
+- Fixed next-episode switching still failing when upstream episode titles changed between formats like `第12集`, `Episode 12`, and `EP12`; the player now keeps matching by episode number in the title when needed.
+- Fixed next-episode playback stopping after refreshed episode data changed both the current episode id and index; the player now falls back to the current title when it still matches.
+- Fixed fullscreen playback controls losing access to the Next episode action by adding the same entry point to the fullscreen control bar with the existing switching busy state.
+- Fixed next-episode switching failing to keep the current playback line when upstream line ids changed but the line titles only differed by spacing or letter case.
+- Fixed the player page Next episode action only showing a placeholder snackbar; it now switches to the next episode in place while preserving the current play line and playback speed when possible.
 - Fixed Source Settings still labeling the production default `sakura` source as `Experimental`; it now shows a clear default-source badge instead.
 - Fixed Source Settings and the settings-page source status still describing the production default `sakura` source as experimental; they now use consistent default-source and retry guidance copy.
 - Fixed the source-localization widget tests using pages without a `Material/Scaffold` host and asserting against non-rendered exact labels, avoiding false CI failures on PR validation.

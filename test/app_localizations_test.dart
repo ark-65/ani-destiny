@@ -47,4 +47,19 @@ void main() {
       expect(l10n.playerReadyHint.toLowerCase(), isNot(contains('mock')));
     }
   });
+
+  test('external player copy no longer uses placeholder text', () {
+    for (final locale in const [
+      Locale('zh'),
+      Locale('en'),
+      Locale('ja'),
+    ]) {
+      final l10n = AppLocalizations(locale);
+      expect(l10n.externalPlayer.toLowerCase(), isNot(contains('placeholder')));
+      expect(
+        l10n.externalPlayerUnavailable.toLowerCase(),
+        isNot(contains('not implemented')),
+      );
+    }
+  });
 }

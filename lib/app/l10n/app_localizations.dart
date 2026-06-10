@@ -135,9 +135,14 @@ class AppLocalizations {
   String get showDanmaku => _t('showDanmaku');
   String get fullscreenPlaceholder => _t('fullscreenPlaceholder');
   String get fullscreenNotImplemented => _t('fullscreenNotImplemented');
-  String get nextEpisodePlaceholder => _t('nextEpisodePlaceholder');
+  String get nextEpisode => _t('nextEpisode');
+  String get externalPlayer => _t('externalPlayer');
   String get externalPlayerPlaceholder => _t('externalPlayerPlaceholder');
   String get nextEpisodeNotImplemented => _t('nextEpisodeNotImplemented');
+  String get nextEpisodeUnavailable => _t('nextEpisodeUnavailable');
+  String get externalPlayerHeadersUnsupported =>
+      _t('externalPlayerHeadersUnsupported');
+  String get externalPlayerUnavailable => _t('externalPlayerUnavailable');
   String get externalPlayerNotImplemented => _t('externalPlayerNotImplemented');
   String get playbackDiagnostics => _t('playbackDiagnostics');
   String get playbackDiagnosticSource => _t('playbackDiagnosticSource');
@@ -146,6 +151,14 @@ class AppLocalizations {
   String get playbackDiagnosticUrl => _t('playbackDiagnosticUrl');
   String get playbackDiagnosticHeaders => _t('playbackDiagnosticHeaders');
   String get playbackDiagnosticState => _t('playbackDiagnosticState');
+  String get playbackDiagnosticStateLoading =>
+      _t('playbackDiagnosticStateLoading');
+  String get playbackDiagnosticStateReady => _t('playbackDiagnosticStateReady');
+  String get playbackDiagnosticStatePlaying =>
+      _t('playbackDiagnosticStatePlaying');
+  String get playbackDiagnosticStateBuffering =>
+      _t('playbackDiagnosticStateBuffering');
+  String get playbackDiagnosticStateError => _t('playbackDiagnosticStateError');
   String get open => _t('open');
   String get loadingFavorites => _t('loadingFavorites');
   String get favoriteEmpty => _t('favoriteEmpty');
@@ -357,9 +370,13 @@ const _localizedValues = {
     'showDanmaku': '显示弹幕',
     'fullscreenPlaceholder': '全屏',
     'fullscreenNotImplemented': '全屏暂未实现。',
-    'nextEpisodePlaceholder': '下一集占位',
+    'nextEpisode': '下一集',
+    'externalPlayer': '外部播放器',
     'externalPlayerPlaceholder': '外部播放器占位',
     'nextEpisodeNotImplemented': '下一集暂未实现。',
+    'nextEpisodeUnavailable': '当前已经是最后一集了。',
+    'externalPlayerHeadersUnsupported': '当前播放线路依赖额外请求头，暂时无法直接交给外部播放器打开。',
+    'externalPlayerUnavailable': '暂时无法交给外部播放器打开，请稍后重试。',
     'externalPlayerNotImplemented': '外部播放器暂未实现。',
     'playbackDiagnostics': '播放诊断',
     'playbackDiagnosticSource': '数据源',
@@ -368,6 +385,11 @@ const _localizedValues = {
     'playbackDiagnosticUrl': 'URL',
     'playbackDiagnosticHeaders': 'Headers',
     'playbackDiagnosticState': '状态',
+    'playbackDiagnosticStateLoading': '加载中',
+    'playbackDiagnosticStateReady': '就绪',
+    'playbackDiagnosticStatePlaying': '播放中',
+    'playbackDiagnosticStateBuffering': '缓冲中',
+    'playbackDiagnosticStateError': '播放失败',
     'open': '打开',
     'loadingFavorites': '正在加载收藏',
     'favoriteEmpty': '收藏的番剧会显示在这里',
@@ -548,9 +570,16 @@ const _localizedValues = {
     'showDanmaku': 'Show danmaku',
     'fullscreenPlaceholder': 'Fullscreen',
     'fullscreenNotImplemented': 'Fullscreen is not implemented yet.',
-    'nextEpisodePlaceholder': 'Next episode placeholder',
+    'nextEpisode': 'Next episode',
+    'externalPlayer': 'External player',
     'externalPlayerPlaceholder': 'External player placeholder',
     'nextEpisodeNotImplemented': 'Next episode is not implemented yet.',
+    'nextEpisodeUnavailable':
+        'You are already on the latest available episode.',
+    'externalPlayerHeadersUnsupported':
+        'This stream needs request headers, so it cannot be opened in an external player yet.',
+    'externalPlayerUnavailable':
+        'Could not open in an external player. Try again later.',
     'externalPlayerNotImplemented': 'External player is not implemented yet.',
     'playbackDiagnostics': 'Playback diagnostics',
     'playbackDiagnosticSource': 'Source',
@@ -559,6 +588,11 @@ const _localizedValues = {
     'playbackDiagnosticUrl': 'URL',
     'playbackDiagnosticHeaders': 'Headers',
     'playbackDiagnosticState': 'State',
+    'playbackDiagnosticStateLoading': 'Loading',
+    'playbackDiagnosticStateReady': 'Ready',
+    'playbackDiagnosticStatePlaying': 'Playing',
+    'playbackDiagnosticStateBuffering': 'Buffering',
+    'playbackDiagnosticStateError': 'Failed',
     'open': 'Open',
     'loadingFavorites': 'Loading favorites',
     'favoriteEmpty': 'Favorite anime will appear here',
@@ -746,9 +780,14 @@ const _localizedValues = {
     'showDanmaku': '弾幕を表示',
     'fullscreenPlaceholder': '全画面',
     'fullscreenNotImplemented': '全画面はまだ実装されていません。',
-    'nextEpisodePlaceholder': '次のエピソード',
+    'nextEpisode': '次のエピソード',
+    'externalPlayer': '外部プレイヤー',
     'externalPlayerPlaceholder': '外部プレイヤー',
     'nextEpisodeNotImplemented': '次のエピソードはまだ実装されていません。',
+    'nextEpisodeUnavailable': 'すでに最新の配信済みエピソードです。',
+    'externalPlayerHeadersUnsupported':
+        'この再生ラインは追加のリクエストヘッダーが必要なため、まだ外部プレイヤーでは開けません。',
+    'externalPlayerUnavailable': '外部プレイヤーで開けませんでした。しばらくしてからもう一度お試しください。',
     'externalPlayerNotImplemented': '外部プレイヤーはまだ実装されていません。',
     'playbackDiagnostics': '再生診断',
     'playbackDiagnosticSource': 'ソース',
@@ -757,6 +796,11 @@ const _localizedValues = {
     'playbackDiagnosticUrl': 'URL',
     'playbackDiagnosticHeaders': 'Headers',
     'playbackDiagnosticState': '状態',
+    'playbackDiagnosticStateLoading': '読み込み中',
+    'playbackDiagnosticStateReady': '準備完了',
+    'playbackDiagnosticStatePlaying': '再生中',
+    'playbackDiagnosticStateBuffering': 'バッファ中',
+    'playbackDiagnosticStateError': '再生失敗',
     'open': '開く',
     'loadingFavorites': 'お気に入りを読み込み中',
     'favoriteEmpty': 'お気に入り作品がここに表示されます',
