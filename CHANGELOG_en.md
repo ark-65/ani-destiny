@@ -48,6 +48,7 @@
 - Fixed batch cleanup still being available while an ended task action was already running, preventing overlapping cleanup flows and confusing feedback.
 
 ### 🔧 CI/CD
+- Fixed the player-page widget tests still tapping the old generic `Fullscreen` tooltip, so PR CI now follows the new `Enter fullscreen` copy after the fullscreen-label update.
 - Stabilized the schedule localization widget test across Flutter environments so `Sakura Anime` assertions no longer depend on `ExpansionTile` starting expanded.
 - Fixed Source Settings and episode-list widget tests waiting too little for localization setup, avoiding false text-assertion failures during PR validation.
 - Stabilized widget-test targeting for downloads cleanup and task actions so Flutter CI does not misread button structure differences as failures.

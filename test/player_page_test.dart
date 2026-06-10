@@ -58,7 +58,7 @@ void main() {
     expect(find.byType(AppBar), findsOneWidget);
     expect(find.text('Open player'), findsNothing);
 
-    await tester.tap(find.byTooltip('Fullscreen'));
+    await tester.tap(find.byTooltip('Enter fullscreen'));
     await tester.pumpAndSettle();
     expect(tester.takeException(), isNull);
 
@@ -175,7 +175,7 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    await tester.tap(find.byTooltip('Fullscreen'));
+    await tester.tap(find.byTooltip('Enter fullscreen'));
     await tester.pumpAndSettle();
 
     expect(find.byType(AppBar), findsNothing);
