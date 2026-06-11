@@ -21,6 +21,7 @@ void main() {
           onNextEpisode: () => tapped++,
           onOpenExternalPlayer: _noop,
           externalPlayerTooltip: 'External player',
+          downloadTooltip: 'Download',
           onDownload: _noop,
           onToggleDanmaku: _noop,
           onToggleFullscreen: _noop,
@@ -52,6 +53,7 @@ void main() {
           onNextEpisode: _noop,
           onOpenExternalPlayer: _noop,
           externalPlayerTooltip: 'External player',
+          downloadTooltip: 'Download',
           onDownload: _noop,
           onToggleDanmaku: _noop,
           onToggleFullscreen: _noop,
@@ -69,7 +71,8 @@ void main() {
     expect(find.byTooltip('Enter fullscreen'), findsOneWidget);
   });
 
-  testWidgets('fullscreen next episode action shows busy state while switching',
+  testWidgets(
+      'fullscreen switching state updates next episode and download affordances',
       (tester) async {
     await tester.pumpWidget(
       _buildApp(
@@ -81,7 +84,8 @@ void main() {
           onNextEpisode: null,
           onOpenExternalPlayer: _noop,
           externalPlayerTooltip: 'External player',
-          onDownload: _noop,
+          downloadTooltip: 'Loading next episode...',
+          onDownload: null,
           onToggleDanmaku: _noop,
           onToggleFullscreen: _noop,
           danmakuEnabled: true,
@@ -94,10 +98,15 @@ void main() {
     await tester.pump();
 
     expect(find.byType(CircularProgressIndicator), findsOneWidget);
+    expect(find.byTooltip('Loading next episode...'), findsNWidgets(2));
     final externalPlayerButton = tester.widget<IconButton>(
       find.widgetWithIcon(IconButton, Icons.open_in_new),
     );
     expect(externalPlayerButton.onPressed, isNull);
+    final downloadButton = tester.widget<IconButton>(
+      find.widgetWithIcon(IconButton, Icons.download_outlined),
+    );
+    expect(downloadButton.onPressed, isNull);
   });
 
   testWidgets('fullscreen controls expose the external player action', (
@@ -115,6 +124,7 @@ void main() {
           onNextEpisode: _noop,
           onOpenExternalPlayer: () => tapped++,
           externalPlayerTooltip: 'External player',
+          downloadTooltip: 'Download',
           onDownload: _noop,
           onToggleDanmaku: _noop,
           onToggleFullscreen: _noop,
@@ -145,6 +155,7 @@ void main() {
           onOpenExternalPlayer: null,
           externalPlayerTooltip:
               'This stream needs request headers, so it cannot be opened in an external player yet.',
+          downloadTooltip: 'Download',
           onDownload: _noop,
           onToggleDanmaku: _noop,
           onToggleFullscreen: _noop,
@@ -181,6 +192,7 @@ void main() {
           onNextEpisode: _noop,
           onOpenExternalPlayer: _noop,
           externalPlayerTooltip: 'External player',
+          downloadTooltip: 'Download',
           onDownload: _noop,
           onToggleDanmaku: _noop,
           onToggleFullscreen: _noop,

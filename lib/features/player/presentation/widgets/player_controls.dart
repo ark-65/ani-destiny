@@ -12,6 +12,7 @@ class PlayerControls extends StatelessWidget {
     required this.onNextEpisode,
     required this.onOpenExternalPlayer,
     required this.externalPlayerTooltip,
+    required this.downloadTooltip,
     required this.onDownload,
     required this.onToggleDanmaku,
     required this.onToggleFullscreen,
@@ -28,7 +29,8 @@ class PlayerControls extends StatelessWidget {
   final VoidCallback? onNextEpisode;
   final VoidCallback? onOpenExternalPlayer;
   final String externalPlayerTooltip;
-  final VoidCallback onDownload;
+  final String downloadTooltip;
+  final VoidCallback? onDownload;
   final VoidCallback onToggleDanmaku;
   final VoidCallback onToggleFullscreen;
   final bool danmakuEnabled;
@@ -74,7 +76,9 @@ class PlayerControls extends StatelessWidget {
                 ),
                 if (isFullscreen)
                   IconButton(
-                    tooltip: context.l10n.nextEpisode,
+                    tooltip: isSwitchingEpisode
+                        ? context.l10n.loadingNextEpisode
+                        : context.l10n.nextEpisode,
                     onPressed: onNextEpisode,
                     icon: isSwitchingEpisode
                         ? const SizedBox.square(
@@ -101,7 +105,7 @@ class PlayerControls extends StatelessWidget {
                   ),
                 ),
                 IconButton(
-                  tooltip: context.l10n.download,
+                  tooltip: downloadTooltip,
                   onPressed: onDownload,
                   icon: const Icon(Icons.download_outlined),
                 ),

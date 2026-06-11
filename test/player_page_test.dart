@@ -11,6 +11,11 @@ import 'package:ani_destiny/features/anime/presentation/providers/anime_provider
 import 'package:ani_destiny/features/danmaku/domain/entities/danmaku_item.dart';
 import 'package:ani_destiny/features/danmaku/domain/repositories/danmaku_repository.dart';
 import 'package:ani_destiny/features/danmaku/presentation/providers/danmaku_providers.dart';
+import 'package:ani_destiny/features/download/data/services/download_task_creator.dart';
+import 'package:ani_destiny/features/download/domain/entities/download_progress.dart';
+import 'package:ani_destiny/features/download/domain/entities/download_source.dart';
+import 'package:ani_destiny/features/download/domain/services/download_service.dart';
+import 'package:ani_destiny/features/download/presentation/providers/download_providers.dart';
 import 'package:ani_destiny/features/history/domain/entities/watch_history.dart';
 import 'package:ani_destiny/features/history/domain/repositories/history_repository.dart';
 import 'package:ani_destiny/features/history/presentation/providers/history_providers.dart';
@@ -291,10 +296,49 @@ void main() {
     );
     expect(externalPlayerButton.onPressed, isNull);
 
-    await tester.tap(find.byTooltip('External player'));
+    expect(find.byTooltip('Loading next episode...'), findsWidgets);
+    await tester.tap(find.byTooltip('Loading next episode...').first);
     await tester.pump();
 
     expect(launchedUri, isNull);
+  });
+
+  testWidgets(
+      'download action is disabled and explained while next episode loads',
+      (tester) async {
+    final pendingRepository = _PendingNextEpisodeAnimeRepository();
+    var createdDownloads = 0;
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          animeRepositoryProvider.overrideWithValue(pendingRepository),
+          playerRepositoryProvider
+              .overrideWithValue(const _FakePlayerRepository()),
+          historyRepositoryProvider.overrideWithValue(_FakeHistoryRepository()),
+          danmakuRepositoryProvider.overrideWithValue(_FakeDanmakuRepository()),
+          downloadTaskCreatorProvider.overrideWithValue(
+            _FakeDownloadTaskCreator(onCreate: () => createdDownloads++),
+          ),
+        ],
+        child: _buildPlayerApp(_args),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byTooltip('Next episode'));
+    await tester.pump();
+
+    expect(find.byTooltip('Loading next episode...'), findsWidgets);
+    final downloadButton = tester.widget<IconButton>(
+      find.widgetWithIcon(IconButton, Icons.download_outlined),
+    );
+    expect(downloadButton.onPressed, isNull);
+
+    await tester.tap(find.byTooltip('Loading next episode...').last);
+    await tester.pump();
+
+    expect(createdDownloads, 0);
   });
 }
 
@@ -440,6 +484,55 @@ class _PendingNextEpisodeAnimeRepository implements AnimeRepository {
   }) {
     throw UnimplementedError();
   }
+}
+
+class _FakeDownloadTaskCreator extends DownloadTaskCreator {
+  _FakeDownloadTaskCreator({required this.onCreate})
+      : super(_FakeDownloadService());
+
+  final void Function() onCreate;
+
+  @override
+  Future<String> create({
+    required String animeId,
+    required String episodeId,
+    required String sourceId,
+    required String url,
+    required String title,
+    required String episodeTitle,
+    Map<String, String> headers = const {},
+    String? fileName,
+    String? mimeType,
+  }) async {
+    onCreate();
+    return 'task-1';
+  }
+}
+
+class _FakeDownloadService implements DownloadService {
+  @override
+  Future<void> cancel(String taskId) async {}
+
+  @override
+  Future<String> createTask({
+    required String animeId,
+    required String episodeId,
+    required String sourceId,
+    required DownloadSource source,
+    required String title,
+    required String episodeTitle,
+  }) async {
+    return 'task-1';
+  }
+
+  @override
+  Future<void> pause(String taskId) async {}
+
+  @override
+  Future<void> start(String taskId) async {}
+
+  @override
+  Stream<DownloadProgress> watchProgress(String taskId) => const Stream.empty();
 }
 
 class _ThrowingPlayerRepository implements PlayerRepository {

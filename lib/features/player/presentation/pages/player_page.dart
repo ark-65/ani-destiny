@@ -96,7 +96,11 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
   @override
   Widget build(BuildContext context) {
     final danmakuSettings = ref.watch(danmakuSettingsProvider);
+    final nextEpisodeTooltip = _isSwitchingEpisode
+        ? context.l10n.loadingNextEpisode
+        : context.l10n.nextEpisode;
     final externalPlayerTooltip = _externalPlayerTooltip(context);
+    final downloadTooltip = _downloadTooltip(context);
     final canOpenExternalPlayer = _canOpenExternalPlayer();
     final danmakuItems = ref.watch(
       danmakuItemsProvider(
@@ -132,7 +136,7 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
                       icon: const Icon(Icons.bug_report_outlined),
                     ),
                   IconButton(
-                    tooltip: context.l10n.nextEpisode,
+                    tooltip: nextEpisodeTooltip,
                     onPressed: _isSwitchingEpisode
                         ? null
                         : () => unawaited(_playNextEpisode()),
@@ -220,7 +224,10 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
                     ? () => unawaited(_openExternalPlayer())
                     : null,
                 externalPlayerTooltip: externalPlayerTooltip,
-                onDownload: () => unawaited(_createDownload()),
+                downloadTooltip: downloadTooltip,
+                onDownload: _isSwitchingEpisode
+                    ? null
+                    : () => unawaited(_createDownload()),
                 onToggleFullscreen: () => unawaited(_toggleFullscreen()),
                 onToggleDanmaku: () {
                   ref.read(danmakuSettingsProvider.notifier).state =
@@ -252,7 +259,7 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
 
   String _externalPlayerTooltip(BuildContext context) {
     if (_isSwitchingEpisode) {
-      return context.l10n.externalPlayer;
+      return context.l10n.loadingNextEpisode;
     }
     final rawUrl = _args.playUrl.trim();
     final uri = Uri.tryParse(rawUrl);
@@ -263,6 +270,13 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
       return context.l10n.externalPlayerHeadersUnsupported;
     }
     return context.l10n.externalPlayer;
+  }
+
+  String _downloadTooltip(BuildContext context) {
+    if (_isSwitchingEpisode) {
+      return context.l10n.loadingNextEpisode;
+    }
+    return context.l10n.download;
   }
 
   Future<void> _toggleFullscreen() async {

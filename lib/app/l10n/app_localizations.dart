@@ -138,6 +138,7 @@ class AppLocalizations {
   String get fullscreenPlaceholder => _t('fullscreenPlaceholder');
   String get fullscreenNotImplemented => _t('fullscreenNotImplemented');
   String get nextEpisode => _t('nextEpisode');
+  String get loadingNextEpisode => _t('loadingNextEpisode');
   String get externalPlayer => _t('externalPlayer');
   String get externalPlayerPlaceholder => _t('externalPlayerPlaceholder');
   String get nextEpisodeNotImplemented => _t('nextEpisodeNotImplemented');
@@ -375,6 +376,7 @@ const _localizedValues = {
     'fullscreenPlaceholder': '全屏',
     'fullscreenNotImplemented': '全屏暂未实现。',
     'nextEpisode': '下一集',
+    'loadingNextEpisode': '正在切换到下一集…',
     'externalPlayer': '外部播放器',
     'externalPlayerPlaceholder': '外部播放器占位',
     'nextEpisodeNotImplemented': '下一集暂未实现。',
@@ -577,6 +579,7 @@ const _localizedValues = {
     'fullscreenPlaceholder': 'Fullscreen',
     'fullscreenNotImplemented': 'Fullscreen is not implemented yet.',
     'nextEpisode': 'Next episode',
+    'loadingNextEpisode': 'Loading next episode...',
     'externalPlayer': 'External player',
     'externalPlayerPlaceholder': 'External player placeholder',
     'nextEpisodeNotImplemented': 'Next episode is not implemented yet.',
@@ -789,6 +792,7 @@ const _localizedValues = {
     'fullscreenPlaceholder': '全画面',
     'fullscreenNotImplemented': '全画面はまだ実装されていません。',
     'nextEpisode': '次のエピソード',
+    'loadingNextEpisode': '次のエピソードに切り替え中…',
     'externalPlayer': '外部プレイヤー',
     'externalPlayerPlaceholder': '外部プレイヤー',
     'nextEpisodeNotImplemented': '次のエピソードはまだ実装されていません。',
