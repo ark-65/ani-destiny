@@ -141,6 +141,7 @@ class AppLocalizations {
   String get nextEpisode => _t('nextEpisode');
   String get loadingNextEpisode => _t('loadingNextEpisode');
   String get externalPlayer => _t('externalPlayer');
+  String get openingExternalPlayer => _t('openingExternalPlayer');
   String get externalPlayerPlaceholder => _t('externalPlayerPlaceholder');
   String get nextEpisodeNotImplemented => _t('nextEpisodeNotImplemented');
   String get nextEpisodeUnavailable => _t('nextEpisodeUnavailable');
@@ -380,6 +381,7 @@ const _localizedValues = {
     'nextEpisode': '下一集',
     'loadingNextEpisode': '正在切换到下一集…',
     'externalPlayer': '外部播放器',
+    'openingExternalPlayer': '正在打开外部播放器…',
     'externalPlayerPlaceholder': '外部播放器占位',
     'nextEpisodeNotImplemented': '下一集暂未实现。',
     'nextEpisodeUnavailable': '当前已经是最后一集了。',
@@ -584,6 +586,7 @@ const _localizedValues = {
     'nextEpisode': 'Next episode',
     'loadingNextEpisode': 'Loading next episode...',
     'externalPlayer': 'External player',
+    'openingExternalPlayer': 'Opening external player...',
     'externalPlayerPlaceholder': 'External player placeholder',
     'nextEpisodeNotImplemented': 'Next episode is not implemented yet.',
     'nextEpisodeUnavailable':
@@ -798,6 +801,7 @@ const _localizedValues = {
     'nextEpisode': '次のエピソード',
     'loadingNextEpisode': '次のエピソードに切り替え中…',
     'externalPlayer': '外部プレイヤー',
+    'openingExternalPlayer': '外部プレイヤーを起動中…',
     'externalPlayerPlaceholder': '外部プレイヤー',
     'nextEpisodeNotImplemented': '次のエピソードはまだ実装されていません。',
     'nextEpisodeUnavailable': 'すでに最新の配信済みエピソードです。',

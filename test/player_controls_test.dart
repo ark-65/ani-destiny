@@ -29,6 +29,7 @@ void main() {
           danmakuEnabled: true,
           isFullscreen: true,
           isSwitchingEpisode: false,
+          isOpeningExternalPlayer: false,
         ),
       ),
     );
@@ -62,6 +63,7 @@ void main() {
           danmakuEnabled: true,
           isFullscreen: false,
           isSwitchingEpisode: false,
+          isOpeningExternalPlayer: false,
         ),
       ),
     );
@@ -94,6 +96,7 @@ void main() {
           danmakuEnabled: true,
           isFullscreen: true,
           isSwitchingEpisode: true,
+          isOpeningExternalPlayer: false,
         ),
       ),
     );
@@ -150,6 +153,7 @@ void main() {
           danmakuEnabled: true,
           isFullscreen: true,
           isSwitchingEpisode: false,
+          isOpeningExternalPlayer: false,
         ),
       ),
     );
@@ -182,6 +186,7 @@ void main() {
           danmakuEnabled: true,
           isFullscreen: true,
           isSwitchingEpisode: false,
+          isOpeningExternalPlayer: false,
         ),
       ),
     );
@@ -198,6 +203,42 @@ void main() {
       find.widgetWithIcon(IconButton, Icons.open_in_new),
     );
     expect(externalPlayerButton.onPressed, isNull);
+  });
+
+  testWidgets('fullscreen external player action shows a busy opening state', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      _buildApp(
+        PlayerControls(
+          state: _state,
+          hasPlayableSource: true,
+          onPlayPause: _noop,
+          onSeek: (_) {},
+          onSpeed: _noop,
+          onNextEpisode: _noop,
+          onOpenExternalPlayer: null,
+          externalPlayerTooltip: 'Opening external player...',
+          downloadTooltip: 'Download',
+          onDownload: _noop,
+          onToggleDanmaku: _noop,
+          onToggleFullscreen: _noop,
+          danmakuEnabled: true,
+          isFullscreen: true,
+          isSwitchingEpisode: false,
+          isOpeningExternalPlayer: true,
+        ),
+      ),
+    );
+
+    await tester.pump();
+
+    final externalPlayerButton =
+        tester.widgetList<IconButton>(find.byType(IconButton)).singleWhere(
+              (button) => button.tooltip == 'Opening external player...',
+            );
+    expect(externalPlayerButton.onPressed, isNull);
+    expect(find.byType(CircularProgressIndicator), findsOneWidget);
   });
 
   testWidgets('fullscreen toggle tooltip reflects the current fullscreen state',
@@ -220,6 +261,7 @@ void main() {
           danmakuEnabled: true,
           isFullscreen: true,
           isSwitchingEpisode: false,
+          isOpeningExternalPlayer: false,
         ),
       ),
     );
@@ -254,6 +296,7 @@ void main() {
           danmakuEnabled: true,
           isFullscreen: false,
           isSwitchingEpisode: false,
+          isOpeningExternalPlayer: false,
         ),
       ),
     );
@@ -284,6 +327,7 @@ void main() {
           danmakuEnabled: true,
           isFullscreen: false,
           isSwitchingEpisode: false,
+          isOpeningExternalPlayer: false,
         ),
       ),
     );
@@ -331,6 +375,7 @@ void main() {
           danmakuEnabled: true,
           isFullscreen: false,
           isSwitchingEpisode: false,
+          isOpeningExternalPlayer: false,
         ),
       ),
     );
@@ -375,6 +420,7 @@ void main() {
           danmakuEnabled: true,
           isFullscreen: false,
           isSwitchingEpisode: false,
+          isOpeningExternalPlayer: false,
         ),
       ),
     );

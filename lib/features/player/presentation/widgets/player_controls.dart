@@ -20,6 +20,7 @@ class PlayerControls extends StatelessWidget {
     required this.danmakuEnabled,
     required this.isFullscreen,
     required this.isSwitchingEpisode,
+    required this.isOpeningExternalPlayer,
     super.key,
   });
 
@@ -38,6 +39,7 @@ class PlayerControls extends StatelessWidget {
   final bool danmakuEnabled;
   final bool isFullscreen;
   final bool isSwitchingEpisode;
+  final bool isOpeningExternalPlayer;
 
   @override
   Widget build(BuildContext context) {
@@ -112,8 +114,15 @@ class PlayerControls extends StatelessWidget {
                 if (isFullscreen)
                   IconButton(
                     tooltip: externalPlayerTooltip,
-                    onPressed: isSwitchingEpisode ? null : onOpenExternalPlayer,
-                    icon: const Icon(Icons.open_in_new),
+                    onPressed: isSwitchingEpisode || isOpeningExternalPlayer
+                        ? null
+                        : onOpenExternalPlayer,
+                    icon: isOpeningExternalPlayer
+                        ? const SizedBox.square(
+                            dimension: 18,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          )
+                        : const Icon(Icons.open_in_new),
                   ),
                 IconButton(
                   tooltip: danmakuEnabled

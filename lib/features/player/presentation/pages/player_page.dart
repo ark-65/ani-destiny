@@ -50,6 +50,7 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
   bool _isFullscreen = false;
   bool _isDisposed = false;
   bool _isSwitchingEpisode = false;
+  bool _isOpeningExternalPlayer = false;
 
   PlayerRouteArgs get _args => _currentArgs;
 
@@ -154,7 +155,12 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
                     onPressed: canOpenExternalPlayer
                         ? () => unawaited(_openExternalPlayer())
                         : null,
-                    icon: const Icon(Icons.open_in_new),
+                    icon: _isOpeningExternalPlayer
+                        ? const SizedBox.square(
+                            dimension: 18,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          )
+                        : const Icon(Icons.open_in_new),
                   ),
                 ],
               ),
@@ -240,6 +246,7 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
                 },
                 isFullscreen: _isFullscreen,
                 isSwitchingEpisode: _isSwitchingEpisode,
+                isOpeningExternalPlayer: _isOpeningExternalPlayer,
               ),
             ),
           ],
@@ -249,7 +256,7 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
   }
 
   bool _canOpenExternalPlayer() {
-    if (!_hasPlayableUrl() || _isSwitchingEpisode) {
+    if (!_hasPlayableUrl() || _isSwitchingEpisode || _isOpeningExternalPlayer) {
       return false;
     }
     return _args.playHeaders.isEmpty;
@@ -260,6 +267,9 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
   }
 
   String _externalPlayerTooltip(BuildContext context) {
+    if (_isOpeningExternalPlayer) {
+      return context.l10n.openingExternalPlayer;
+    }
     if (_isSwitchingEpisode) {
       return context.l10n.loadingNextEpisode;
     }
@@ -606,6 +616,7 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
   }
 
   Future<void> _openExternalPlayer() async {
+    if (_isOpeningExternalPlayer) return;
     final rawUrl = _args.playUrl.trim();
     final uri = Uri.tryParse(rawUrl);
     if (rawUrl.isEmpty || uri == null || !uri.hasScheme) {
@@ -617,6 +628,7 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
       return;
     }
 
+    setState(() => _isOpeningExternalPlayer = true);
     try {
       final launched = await ref.read(externalPlayerLauncherProvider)(uri);
       if (!mounted) return;
@@ -635,6 +647,10 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
     } catch (_) {
       if (!mounted) return;
       _showSnackBar(context.l10n.externalPlayerUnavailable);
+    } finally {
+      if (mounted) {
+        setState(() => _isOpeningExternalPlayer = false);
+      }
     }
   }
 

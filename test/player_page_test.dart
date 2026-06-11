@@ -327,6 +327,51 @@ void main() {
     );
   });
 
+  testWidgets('external player action stays busy until handoff completes', (
+    tester,
+  ) async {
+    final launchCompleter = Completer<bool>();
+    var launchCalls = 0;
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          playerRepositoryProvider
+              .overrideWithValue(const _FakePlayerRepository()),
+          historyRepositoryProvider.overrideWithValue(_FakeHistoryRepository()),
+          danmakuRepositoryProvider.overrideWithValue(_FakeDanmakuRepository()),
+          externalPlayerLauncherProvider.overrideWithValue((_) {
+            launchCalls += 1;
+            return launchCompleter.future;
+          }),
+        ],
+        child: _buildPlayerApp(_args),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byTooltip('External player'));
+    await tester.pump();
+
+    expect(launchCalls, 1);
+    expect(find.byTooltip('Opening external player...'), findsOneWidget);
+    final openingButton =
+        tester.widgetList<IconButton>(find.byType(IconButton)).singleWhere(
+              (button) => button.tooltip == 'Opening external player...',
+            );
+    expect(openingButton.onPressed, isNull);
+
+    await tester.tap(find.byTooltip('Opening external player...'));
+    await tester.pump();
+    expect(launchCalls, 1);
+
+    launchCompleter.complete(true);
+    await tester.pumpAndSettle();
+
+    expect(launchCalls, 1);
+    expect(find.byTooltip('External player'), findsOneWidget);
+  });
+
   testWidgets(
       'external player action is disabled when the stream depends on request headers',
       (tester) async {

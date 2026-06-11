@@ -7,6 +7,7 @@
 ## [Unreleased]
 
 ### 🐛 Fixed
+- Fixed the External player action still allowing repeated taps without a clear busy state during handoff; it now shows an opening state and stays disabled until the handoff finishes.
 - Fixed AniDestiny staying fullscreen or continuing local playback after a successful External player handoff; it now exits fullscreen and pauses in-app playback once another player takes over.
 - Fixed the player time display always wrapping as `MM:SS`, so videos longer than 59 minutes now show hours instead of making long-form playback look like it jumped backward.
 - Fixed the player still making play, seek, and playback-speed controls look usable before playback was ready or after load had already failed; those controls now stay disabled and explain whether playback is still preparing or has temporarily failed.
