@@ -498,6 +498,87 @@ void main() {
     expect(launchedUri, isNull);
   });
 
+  testWidgets('system back stays on the player while next episode loads', (
+    tester,
+  ) async {
+    final pendingRepository = _PendingNextEpisodeAnimeRepository();
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          animeRepositoryProvider.overrideWithValue(pendingRepository),
+          playerRepositoryProvider
+              .overrideWithValue(const _FakePlayerRepository()),
+          historyRepositoryProvider.overrideWithValue(_FakeHistoryRepository()),
+          danmakuRepositoryProvider.overrideWithValue(_FakeDanmakuRepository()),
+        ],
+        child: _buildApp(_args),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byType(ElevatedButton));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byTooltip('Next episode'));
+    await tester.pump();
+
+    await tester.pageBack();
+    await tester.pump();
+
+    expect(find.byType(PlayerPage), findsOneWidget);
+    expect(find.text('Open player'), findsNothing);
+    expect(
+      find.text(
+        'Please wait for the current playback action to finish before leaving.',
+      ),
+      findsOneWidget,
+    );
+  });
+
+  testWidgets('system back stays on the player while external handoff opens', (
+    tester,
+  ) async {
+    final launchCompleter = Completer<bool>();
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          playerRepositoryProvider
+              .overrideWithValue(const _FakePlayerRepository()),
+          historyRepositoryProvider.overrideWithValue(_FakeHistoryRepository()),
+          danmakuRepositoryProvider.overrideWithValue(_FakeDanmakuRepository()),
+          externalPlayerLauncherProvider.overrideWithValue(
+            (_) => launchCompleter.future,
+          ),
+        ],
+        child: _buildApp(_args),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byType(ElevatedButton));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byTooltip('External player'));
+    await tester.pump();
+
+    await tester.pageBack();
+    await tester.pump();
+
+    expect(find.byType(PlayerPage), findsOneWidget);
+    expect(find.text('Open player'), findsNothing);
+    expect(
+      find.text(
+        'Please wait for the current playback action to finish before leaving.',
+      ),
+      findsOneWidget,
+    );
+
+    launchCompleter.complete(true);
+    await tester.pumpAndSettle();
+  });
+
   testWidgets(
       'download action is disabled and explained while next episode loads',
       (tester) async {
@@ -631,17 +712,17 @@ void main() {
   });
 }
 
-Widget _buildApp() {
-  return const MaterialApp(
-    locale: Locale('en'),
+Widget _buildApp([PlayerRouteArgs args = _args]) {
+  return MaterialApp(
+    locale: const Locale('en'),
     supportedLocales: AppLocalizations.supportedLocales,
-    localizationsDelegates: [
+    localizationsDelegates: const [
       AppLocalizations.delegate,
       GlobalMaterialLocalizations.delegate,
       GlobalWidgetsLocalizations.delegate,
       GlobalCupertinoLocalizations.delegate,
     ],
-    home: _HostPage(),
+    home: _HostPage(args: args),
   );
 }
 
@@ -660,7 +741,9 @@ Widget _buildPlayerApp(PlayerRouteArgs args) {
 }
 
 class _HostPage extends StatelessWidget {
-  const _HostPage();
+  const _HostPage({required this.args});
+
+  final PlayerRouteArgs args;
 
   @override
   Widget build(BuildContext context) {
@@ -670,7 +753,7 @@ class _HostPage extends StatelessWidget {
           onPressed: () {
             Navigator.of(context).push(
               MaterialPageRoute<void>(
-                builder: (_) => const PlayerPage(args: _args),
+                builder: (_) => PlayerPage(args: args),
               ),
             );
           },

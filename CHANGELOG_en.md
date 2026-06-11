@@ -7,6 +7,7 @@
 ## [Unreleased]
 
 ### 🐛 Fixed
+- Fixed the player still letting back navigation leave the page while a next-episode switch or external-player handoff was still in flight; it now keeps users on the current player page and explains that the current playback action needs to finish first.
 - Fixed the player still allowing users to enter fullscreen while Next episode was loading; embedded playback now disables Enter fullscreen and explains that the switch is still in progress, while already-fullscreen playback still keeps Exit fullscreen available as the stable way back out.
 - Fixed the player still making next-episode, play, seek, playback-speed, download, and fullscreen controls look usable while an external-player handoff was already opening; those actions now share the same busy disabled state and explain that the handoff is still in progress.
 - Fixed the External player action still allowing repeated taps without a clear busy state during handoff; it now shows an opening state and stays disabled until the handoff finishes.

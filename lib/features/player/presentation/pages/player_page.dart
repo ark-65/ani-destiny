@@ -98,11 +98,12 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
   Widget build(BuildContext context) {
     final danmakuSettings = ref.watch(danmakuSettingsProvider);
     final hasPlayableSource = _hasPlayableUrl();
+    final isRouteBusy = _isSwitchingEpisode || _isOpeningExternalPlayer;
     final nextEpisodeTooltip = _isSwitchingEpisode
         ? context.l10n.loadingNextEpisode
         : _isOpeningExternalPlayer
             ? context.l10n.openingExternalPlayer
-        : context.l10n.nextEpisode;
+            : context.l10n.nextEpisode;
     final externalPlayerTooltip = _externalPlayerTooltip(context);
     final downloadTooltip = _downloadTooltip(context);
     final canCreateDownload =
@@ -121,10 +122,16 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
     );
 
     return PopScope<void>(
-      canPop: !_isFullscreen,
+      canPop: !_isFullscreen && !isRouteBusy,
       onPopInvokedWithResult: (didPop, result) {
-        if (didPop || !_isFullscreen) return;
-        unawaited(_exitFullscreen());
+        if (didPop) return;
+        if (_isFullscreen) {
+          unawaited(_exitFullscreen());
+          return;
+        }
+        if (isRouteBusy) {
+          _showSnackBar(context.l10n.playerExitBusy);
+        }
       },
       child: Scaffold(
         backgroundColor: Colors.black,
