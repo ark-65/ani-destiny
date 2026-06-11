@@ -7,6 +7,7 @@
 ## [Unreleased]
 
 ### 🐛 Fixed
+- Fixed malformed playback URLs still falling through to the generic playback-failed state; they are now treated the same as empty links so the placeholder and primary controls consistently explain that no playable source is available.
 - Fixed the player leaving play, seek, and playback-speed controls tappable while Next episode was still loading; those core playback actions now enter the same busy disabled state and explain that the next episode is still loading, instead of implying the current stream can still be controlled.
 - Fixed the player still leaving play, seek, and playback-speed controls clickable when the current item had no playable source; those primary playback controls are now disabled together and explain that no playable source is available, instead of pretending playback can still continue.
 - Fixed the player still exposing the download action when the current episode had no playable URL at all; it now disables the button and explains that no playable source is available, instead of implying the episode can still be saved offline.

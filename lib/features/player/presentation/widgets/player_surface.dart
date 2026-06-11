@@ -56,9 +56,9 @@ class PlayerSurface extends StatelessWidget {
               ),
               const SizedBox(height: 8),
               Text(
-                playUrl.isEmpty
-                    ? context.l10n.playerNoPlayUrl
-                    : context.l10n.playerReadyHint,
+                _hasPlayableUrl(playUrl)
+                    ? context.l10n.playerReadyHint
+                    : context.l10n.playerNoPlayUrl,
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
                       color: Colors.white70,
                     ),
@@ -69,4 +69,10 @@ class PlayerSurface extends StatelessWidget {
       ),
     );
   }
+}
+
+bool _hasPlayableUrl(String value) {
+  final rawUrl = value.trim();
+  final uri = Uri.tryParse(rawUrl);
+  return rawUrl.isNotEmpty && uri != null && uri.hasScheme;
 }

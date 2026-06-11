@@ -256,9 +256,7 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
   }
 
   bool _hasPlayableUrl() {
-    final rawUrl = _args.playUrl.trim();
-    final uri = Uri.tryParse(rawUrl);
-    return rawUrl.isNotEmpty && uri != null && uri.hasScheme;
+    return _isPlayableUrl(_args.playUrl);
   }
 
   String _externalPlayerTooltip(BuildContext context) {
@@ -477,7 +475,7 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
     final routeArgs = args ?? _args;
     _recordPlaybackDiagnostics(args: routeArgs);
     try {
-      if (routeArgs.playUrl.trim().isEmpty) {
+      if (!_isPlayableUrl(routeArgs.playUrl)) {
         await Future<void>.delayed(Duration.zero);
         if (!mounted) return;
         setState(
@@ -634,6 +632,12 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
       SnackBar(content: Text(message)),
     );
   }
+}
+
+bool _isPlayableUrl(String value) {
+  final rawUrl = value.trim();
+  final uri = Uri.tryParse(rawUrl);
+  return rawUrl.isNotEmpty && uri != null && uri.hasScheme;
 }
 
 class _DiagnosticRow extends StatelessWidget {

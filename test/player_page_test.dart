@@ -413,6 +413,40 @@ void main() {
     expect(createdDownloads, 0);
     expect(launchedUriCount, 0);
   });
+
+  testWidgets('invalid playback urls are treated as unavailable before load',
+      (tester) async {
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          playerRepositoryProvider.overrideWithValue(
+            const _ThrowingPlayerRepository(),
+          ),
+          historyRepositoryProvider.overrideWithValue(_FakeHistoryRepository()),
+          danmakuRepositoryProvider.overrideWithValue(_FakeDanmakuRepository()),
+        ],
+        child: _buildPlayerApp(_invalidPlayUrlArgs),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('No playable source found'), findsOneWidget);
+    expect(
+      find.text(
+        'Playback temporarily failed. Retry later or try another playback line.',
+      ),
+      findsNothing,
+    );
+
+    final playButton = tester.widget<IconButton>(
+      find.byType(IconButton).first,
+    );
+    expect(playButton.onPressed, isNull);
+    expect(
+      playButton.tooltip,
+      'No playable source found. Try another source or retry later.',
+    );
+  });
 }
 
 Widget _buildApp() {
@@ -708,4 +742,15 @@ const _missingPlayUrlArgs = PlayerRouteArgs(
   sourceId: 'sakura',
   playSourceId: 'line-missing',
   playSourceTitle: 'Missing Line',
+);
+
+const _invalidPlayUrlArgs = PlayerRouteArgs(
+  animeId: 'anime-1',
+  episodeId: 'episode-4',
+  animeTitle: 'Anime 1',
+  episodeTitle: 'Episode 4',
+  playUrl: 'not-a-playable-url',
+  sourceId: 'sakura',
+  playSourceId: 'line-invalid',
+  playSourceTitle: 'Invalid Line',
 );
