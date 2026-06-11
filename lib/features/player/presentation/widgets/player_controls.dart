@@ -43,10 +43,17 @@ class PlayerControls extends StatelessWidget {
   Widget build(BuildContext context) {
     final durationMs = state.duration.inMilliseconds;
     final positionMs = state.position.inMilliseconds.clamp(0, durationMs);
-    final playbackActionsEnabled = hasPlayableSource && !isSwitchingEpisode;
+    final playbackActionsEnabled = hasPlayableSource &&
+        !isSwitchingEpisode &&
+        state.errorMessage == null &&
+        state.isInitialized;
     final playbackActionTooltip = isSwitchingEpisode
         ? context.l10n.loadingNextEpisode
-        : context.l10n.noPlayableSourceFound;
+        : !hasPlayableSource
+            ? context.l10n.noPlayableSourceFound
+            : state.errorMessage != null
+                ? context.l10n.playbackFailedSuggestion
+                : context.l10n.playerPreparingPlayback;
 
     return SafeArea(
       top: false,

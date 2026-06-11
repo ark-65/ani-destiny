@@ -7,6 +7,7 @@
 ## [Unreleased]
 
 ### 🐛 Fixed
+- Fixed the player still making play, seek, and playback-speed controls look usable before playback was ready or after load had already failed; those controls now stay disabled and explain whether playback is still preparing or has temporarily failed.
 - Fixed malformed playback URLs still falling through to the generic playback-failed state; they are now treated the same as empty links so the placeholder and primary controls consistently explain that no playable source is available.
 - Fixed the player leaving play, seek, and playback-speed controls tappable while Next episode was still loading; those core playback actions now enter the same busy disabled state and explain that the next episode is still loading, instead of implying the current stream can still be controlled.
 - Fixed the player still leaving play, seek, and playback-speed controls clickable when the current item had no playable source; those primary playback controls are now disabled together and explain that no playable source is available, instead of pretending playback can still continue.

@@ -129,6 +129,7 @@ class AppLocalizations {
       '${_t('downloadTaskCreated')}: $taskId';
   String get playerNoPlayUrl => _t('playerNoPlayUrl');
   String get playerReadyHint => _t('playerReadyHint');
+  String get playerPreparingPlayback => _t('playerPreparingPlayback');
   String get pause => _t('pause');
   String get playbackSpeed => _t('playbackSpeed');
   String get hideDanmaku => _t('hideDanmaku');
@@ -367,6 +368,7 @@ const _localizedValues = {
     'downloadTaskCreated': '已创建下载任务',
     'playerNoPlayUrl': '未找到可播放线路',
     'playerReadyHint': '播放器预览已就绪',
+    'playerPreparingPlayback': '正在准备播放…',
     'pause': '暂停',
     'playbackSpeed': '播放速度',
     'hideDanmaku': '隐藏弹幕',
@@ -570,6 +572,7 @@ const _localizedValues = {
     'downloadTaskCreated': 'Download task created',
     'playerNoPlayUrl': 'No playable source found',
     'playerReadyHint': 'Playback preview ready',
+    'playerPreparingPlayback': 'Preparing playback...',
     'pause': 'Pause',
     'playbackSpeed': 'Playback speed',
     'hideDanmaku': 'Hide danmaku',
@@ -783,6 +786,7 @@ const _localizedValues = {
     'downloadTaskCreated': 'ダウンロードタスクを作成しました',
     'playerNoPlayUrl': '再生可能なソースが見つかりません',
     'playerReadyHint': '再生プレビューの準備完了',
+    'playerPreparingPlayback': '再生を準備中…',
     'pause': '一時停止',
     'playbackSpeed': '再生速度',
     'hideDanmaku': '弾幕を隠す',

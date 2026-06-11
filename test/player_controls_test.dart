@@ -276,6 +276,97 @@ void main() {
     final slider = tester.widget<Slider>(find.byType(Slider));
     expect(slider.onChanged, isNull);
   });
+
+  testWidgets('controls stay disabled while playback is still preparing', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      _buildApp(
+        PlayerControls(
+          state: PlayerState.initial(),
+          hasPlayableSource: true,
+          onPlayPause: _noop,
+          onSeek: (_) {},
+          onSpeed: _noop,
+          onNextEpisode: _noop,
+          onOpenExternalPlayer: _noop,
+          externalPlayerTooltip: 'External player',
+          downloadTooltip: 'Download',
+          onDownload: _noop,
+          onToggleDanmaku: _noop,
+          onToggleFullscreen: _noop,
+          danmakuEnabled: true,
+          isFullscreen: false,
+          isSwitchingEpisode: false,
+        ),
+      ),
+    );
+
+    await tester.pump();
+
+    final playButton = tester.widget<IconButton>(find.byType(IconButton).first);
+    expect(playButton.onPressed, isNull);
+    expect(playButton.tooltip, 'Preparing playback...');
+
+    final speedButton = tester.widget<IconButton>(
+      find.widgetWithIcon(IconButton, Icons.speed),
+    );
+    expect(speedButton.onPressed, isNull);
+    expect(speedButton.tooltip, 'Preparing playback...');
+
+    final slider = tester.widget<Slider>(find.byType(Slider));
+    expect(slider.onChanged, isNull);
+  });
+
+  testWidgets('controls stay disabled after playback load fails', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      _buildApp(
+        PlayerControls(
+          state: PlayerState.initial().copyWith(
+            errorMessage:
+                'Playback temporarily failed. Retry later or try another playback line.',
+          ),
+          hasPlayableSource: true,
+          onPlayPause: _noop,
+          onSeek: (_) {},
+          onSpeed: _noop,
+          onNextEpisode: _noop,
+          onOpenExternalPlayer: _noop,
+          externalPlayerTooltip: 'External player',
+          downloadTooltip: 'Download',
+          onDownload: _noop,
+          onToggleDanmaku: _noop,
+          onToggleFullscreen: _noop,
+          danmakuEnabled: true,
+          isFullscreen: false,
+          isSwitchingEpisode: false,
+        ),
+      ),
+    );
+
+    await tester.pump();
+
+    final playButton = tester.widget<IconButton>(find.byType(IconButton).first);
+    expect(playButton.onPressed, isNull);
+    expect(
+      playButton.tooltip,
+      'Playback temporarily failed. Retry later or try another playback line.',
+    );
+
+    final speedButton = tester.widget<IconButton>(
+      find.widgetWithIcon(IconButton, Icons.speed),
+    );
+    expect(speedButton.onPressed, isNull);
+    expect(
+      speedButton.tooltip,
+      'Playback temporarily failed. Retry later or try another playback line.',
+    );
+
+    final slider = tester.widget<Slider>(find.byType(Slider));
+    expect(slider.onChanged, isNull);
+  });
 }
 
 Widget _buildApp(Widget home) {

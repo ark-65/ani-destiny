@@ -93,6 +93,52 @@ void main() {
     expect(find.byType(PlayerPage), findsNothing);
   });
 
+  testWidgets('playback controls stay disabled until the player is ready', (
+    tester,
+  ) async {
+    final repository = _PendingPlayerRepository();
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          playerRepositoryProvider.overrideWithValue(repository),
+          historyRepositoryProvider.overrideWithValue(_FakeHistoryRepository()),
+          danmakuRepositoryProvider.overrideWithValue(_FakeDanmakuRepository()),
+        ],
+        child: _buildPlayerApp(_args),
+      ),
+    );
+    await tester.pump();
+
+    final playButton = tester.widget<IconButton>(find.byType(IconButton).first);
+    expect(playButton.onPressed, isNull);
+    expect(playButton.tooltip, 'Preparing playback...');
+
+    final speedButton = tester.widget<IconButton>(
+      find.widgetWithIcon(IconButton, Icons.speed),
+    );
+    expect(speedButton.onPressed, isNull);
+    expect(speedButton.tooltip, 'Preparing playback...');
+
+    final slider = tester.widget<Slider>(find.byType(Slider));
+    expect(slider.onChanged, isNull);
+
+    repository.completeLoad();
+    await tester.pumpAndSettle();
+
+    expect(
+      tester.widget<IconButton>(find.byType(IconButton).first).onPressed,
+      isNotNull,
+    );
+    expect(
+      tester
+          .widget<IconButton>(find.widgetWithIcon(IconButton, Icons.speed))
+          .onPressed,
+      isNotNull,
+    );
+    expect(tester.widget<Slider>(find.byType(Slider)).onChanged, isNotNull);
+  });
+
   testWidgets('playback diagnostics keep the attempted source after load fails',
       (
     tester,
@@ -131,6 +177,25 @@ void main() {
       ),
       findsOneWidget,
     );
+
+    final playButton = tester.widget<IconButton>(find.byType(IconButton).first);
+    expect(playButton.onPressed, isNull);
+    expect(
+      playButton.tooltip,
+      'Playback temporarily failed. Retry later or try another playback line.',
+    );
+
+    final speedButton = tester.widget<IconButton>(
+      find.widgetWithIcon(IconButton, Icons.speed),
+    );
+    expect(speedButton.onPressed, isNull);
+    expect(
+      speedButton.tooltip,
+      'Playback temporarily failed. Retry later or try another playback line.',
+    );
+
+    final slider = tester.widget<Slider>(find.byType(Slider));
+    expect(slider.onChanged, isNull);
 
     await tester.tap(find.byTooltip('Playback diagnostics'));
     await tester.pumpAndSettle();
@@ -649,6 +714,19 @@ class _ThrowingPlayerRepository implements PlayerRepository {
   PlayerControllerAdapter createController() => _ThrowingPlayerAdapter();
 }
 
+class _PendingPlayerRepository implements PlayerRepository {
+  _PendingPlayerRepository();
+
+  final _adapter = _PendingPlayerAdapter();
+
+  @override
+  PlayerControllerAdapter createController() => _adapter;
+
+  void completeLoad() {
+    _adapter.completeLoad();
+  }
+}
+
 class _FakePlayerRepository implements PlayerRepository {
   const _FakePlayerRepository();
 
@@ -708,6 +786,50 @@ class _FakePlayerControllerAdapter implements PlayerControllerAdapter {
 
   @override
   Future<void> setSpeed(double speed) async {}
+}
+
+class _PendingPlayerAdapter implements PlayerControllerAdapter {
+  final _controller = StreamController<PlayerState>.broadcast();
+  final _loadCompleter = Completer<void>();
+
+  @override
+  Stream<PlayerState> get stateStream => _controller.stream;
+
+  @override
+  Future<void> dispose() async {
+    await _controller.close();
+  }
+
+  @override
+  Future<void> load(
+    String url, {
+    Map<String, String> headers = const {},
+  }) {
+    return _loadCompleter.future;
+  }
+
+  @override
+  Future<void> pause() async {}
+
+  @override
+  Future<void> play() async {}
+
+  @override
+  Future<void> seek(Duration position) async {}
+
+  @override
+  Future<void> setSpeed(double speed) async {}
+
+  void completeLoad() {
+    if (_loadCompleter.isCompleted) return;
+    _loadCompleter.complete();
+    _controller.add(
+      PlayerState.initial().copyWith(
+        isInitialized: true,
+        duration: const Duration(minutes: 24, seconds: 12),
+      ),
+    );
+  }
 }
 
 const _args = PlayerRouteArgs(
