@@ -54,11 +54,11 @@ class PlayerControls extends StatelessWidget {
         ? context.l10n.loadingNextEpisode
         : isOpeningExternalPlayer
             ? context.l10n.openingExternalPlayer
-        : !hasPlayableSource
-            ? context.l10n.noPlayableSourceFound
-            : state.errorMessage != null
-                ? context.l10n.playbackFailedSuggestion
-                : context.l10n.playerPreparingPlayback;
+            : !hasPlayableSource
+                ? context.l10n.noPlayableSourceFound
+                : state.errorMessage != null
+                    ? context.l10n.playbackFailedSuggestion
+                    : context.l10n.playerPreparingPlayback;
     final nextEpisodeTooltip = isSwitchingEpisode
         ? context.l10n.loadingNextEpisode
         : isOpeningExternalPlayer
@@ -67,11 +67,15 @@ class PlayerControls extends StatelessWidget {
     final resolvedDownloadTooltip = isOpeningExternalPlayer
         ? context.l10n.openingExternalPlayer
         : downloadTooltip;
+    final canToggleFullscreen =
+        !isOpeningExternalPlayer && (!isSwitchingEpisode || isFullscreen);
     final fullscreenTooltip = isOpeningExternalPlayer
         ? context.l10n.openingExternalPlayer
-        : isFullscreen
-            ? context.l10n.exitFullscreen
-            : context.l10n.enterFullscreen;
+        : isSwitchingEpisode && !isFullscreen
+            ? context.l10n.loadingNextEpisode
+            : isFullscreen
+                ? context.l10n.exitFullscreen
+                : context.l10n.enterFullscreen;
 
     return SafeArea(
       top: false,
@@ -156,7 +160,7 @@ class PlayerControls extends StatelessWidget {
                 ),
                 IconButton(
                   tooltip: fullscreenTooltip,
-                  onPressed: isOpeningExternalPlayer ? null : onToggleFullscreen,
+                  onPressed: canToggleFullscreen ? onToggleFullscreen : null,
                   icon: Icon(
                     isFullscreen ? Icons.fullscreen_exit : Icons.fullscreen,
                   ),

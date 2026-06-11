@@ -485,6 +485,12 @@ void main() {
     );
     expect(externalPlayerButton.onPressed, isNull);
 
+    final fullscreenButton = tester.widget<IconButton>(
+      find.widgetWithIcon(IconButton, Icons.fullscreen),
+    );
+    expect(fullscreenButton.onPressed, isNull);
+    expect(fullscreenButton.tooltip, 'Loading next episode...');
+
     expect(find.byTooltip('Loading next episode...'), findsWidgets);
     await tester.tap(find.byTooltip('Loading next episode...').first);
     await tester.pump();
