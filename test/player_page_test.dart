@@ -267,6 +267,40 @@ void main() {
     expect(launchedUri?.toString(), 'https://cdn.example.test/video.m3u8');
   });
 
+  testWidgets(
+      'successful external handoff exits fullscreen and pauses in-app playback',
+      (tester) async {
+    Uri? launchedUri;
+    final repository = _TrackingPlayerRepository();
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          playerRepositoryProvider.overrideWithValue(repository),
+          historyRepositoryProvider.overrideWithValue(_FakeHistoryRepository()),
+          danmakuRepositoryProvider.overrideWithValue(_FakeDanmakuRepository()),
+          externalPlayerLauncherProvider.overrideWithValue((uri) async {
+            launchedUri = uri;
+            return true;
+          }),
+        ],
+        child: _buildPlayerApp(_args),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byTooltip('Enter fullscreen'));
+    await tester.pumpAndSettle();
+    expect(find.byType(AppBar), findsNothing);
+
+    await tester.tap(find.byTooltip('External player'));
+    await tester.pumpAndSettle();
+
+    expect(launchedUri?.toString(), 'https://cdn.example.test/video.m3u8');
+    expect(repository.adapter.pauseCalls, 1);
+    expect(find.byType(AppBar), findsOneWidget);
+  });
+
   testWidgets('external player action shows feedback when launch fails', (
     tester,
   ) async {
@@ -734,6 +768,15 @@ class _FakePlayerRepository implements PlayerRepository {
   PlayerControllerAdapter createController() => _FakePlayerControllerAdapter();
 }
 
+class _TrackingPlayerRepository implements PlayerRepository {
+  _TrackingPlayerRepository();
+
+  final adapter = _TrackingPlayerControllerAdapter();
+
+  @override
+  PlayerControllerAdapter createController() => adapter;
+}
+
 class _ThrowingPlayerAdapter implements PlayerControllerAdapter {
   @override
   Stream<PlayerState> get stateStream => const Stream.empty();
@@ -777,6 +820,56 @@ class _FakePlayerControllerAdapter implements PlayerControllerAdapter {
 
   @override
   Future<void> pause() async {}
+
+  @override
+  Future<void> play() async {}
+
+  @override
+  Future<void> seek(Duration position) async {}
+
+  @override
+  Future<void> setSpeed(double speed) async {}
+}
+
+class _TrackingPlayerControllerAdapter implements PlayerControllerAdapter {
+  _TrackingPlayerControllerAdapter();
+
+  final _controller = StreamController<PlayerState>.broadcast();
+  int pauseCalls = 0;
+
+  @override
+  Stream<PlayerState> get stateStream => _controller.stream;
+
+  @override
+  Future<void> dispose() async {
+    await _controller.close();
+  }
+
+  @override
+  Future<void> load(
+    String url, {
+    Map<String, String> headers = const {},
+  }) async {
+    _controller.add(
+      PlayerState.initial().copyWith(
+        isInitialized: true,
+        isPlaying: true,
+        duration: const Duration(minutes: 24, seconds: 12),
+      ),
+    );
+  }
+
+  @override
+  Future<void> pause() async {
+    pauseCalls += 1;
+    _controller.add(
+      PlayerState.initial().copyWith(
+        isInitialized: true,
+        isPlaying: false,
+        duration: const Duration(minutes: 24, seconds: 12),
+      ),
+    );
+  }
 
   @override
   Future<void> play() async {}

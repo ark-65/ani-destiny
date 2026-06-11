@@ -619,8 +619,19 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
 
     try {
       final launched = await ref.read(externalPlayerLauncherProvider)(uri);
-      if (!mounted || launched) return;
-      _showSnackBar(context.l10n.externalPlayerUnavailable);
+      if (!mounted) return;
+      if (!launched) {
+        _showSnackBar(context.l10n.externalPlayerUnavailable);
+        return;
+      }
+
+      await _saveHistory(force: true);
+      if (_state.isPlaying) {
+        await _controller.pause();
+      }
+      if (_isFullscreen) {
+        await _exitFullscreen();
+      }
     } catch (_) {
       if (!mounted) return;
       _showSnackBar(context.l10n.externalPlayerUnavailable);

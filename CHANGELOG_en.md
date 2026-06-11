@@ -7,6 +7,7 @@
 ## [Unreleased]
 
 ### 🐛 Fixed
+- Fixed AniDestiny staying fullscreen or continuing local playback after a successful External player handoff; it now exits fullscreen and pauses in-app playback once another player takes over.
 - Fixed the player time display always wrapping as `MM:SS`, so videos longer than 59 minutes now show hours instead of making long-form playback look like it jumped backward.
 - Fixed the player still making play, seek, and playback-speed controls look usable before playback was ready or after load had already failed; those controls now stay disabled and explain whether playback is still preparing or has temporarily failed.
 - Fixed malformed playback URLs still falling through to the generic playback-failed state; they are now treated the same as empty links so the placeholder and primary controls consistently explain that no playable source is available.
