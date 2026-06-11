@@ -20,6 +20,7 @@ void main() {
           onSpeed: _noop,
           onNextEpisode: () => tapped++,
           onOpenExternalPlayer: _noop,
+          externalPlayerTooltip: 'External player',
           onDownload: _noop,
           onToggleDanmaku: _noop,
           onToggleFullscreen: _noop,
@@ -50,6 +51,7 @@ void main() {
           onSpeed: _noop,
           onNextEpisode: _noop,
           onOpenExternalPlayer: _noop,
+          externalPlayerTooltip: 'External player',
           onDownload: _noop,
           onToggleDanmaku: _noop,
           onToggleFullscreen: _noop,
@@ -78,6 +80,7 @@ void main() {
           onSpeed: _noop,
           onNextEpisode: null,
           onOpenExternalPlayer: _noop,
+          externalPlayerTooltip: 'External player',
           onDownload: _noop,
           onToggleDanmaku: _noop,
           onToggleFullscreen: _noop,
@@ -111,6 +114,7 @@ void main() {
           onSpeed: _noop,
           onNextEpisode: _noop,
           onOpenExternalPlayer: () => tapped++,
+          externalPlayerTooltip: 'External player',
           onDownload: _noop,
           onToggleDanmaku: _noop,
           onToggleFullscreen: _noop,
@@ -127,6 +131,44 @@ void main() {
     expect(tapped, 1);
   });
 
+  testWidgets(
+      'fullscreen external player action can show an unavailable reason',
+      (tester) async {
+    await tester.pumpWidget(
+      _buildApp(
+        PlayerControls(
+          state: _state,
+          onPlayPause: _noop,
+          onSeek: (_) {},
+          onSpeed: _noop,
+          onNextEpisode: _noop,
+          onOpenExternalPlayer: null,
+          externalPlayerTooltip:
+              'This stream needs request headers, so it cannot be opened in an external player yet.',
+          onDownload: _noop,
+          onToggleDanmaku: _noop,
+          onToggleFullscreen: _noop,
+          danmakuEnabled: true,
+          isFullscreen: true,
+          isSwitchingEpisode: false,
+        ),
+      ),
+    );
+
+    await tester.pump();
+
+    expect(
+      find.byTooltip(
+        'This stream needs request headers, so it cannot be opened in an external player yet.',
+      ),
+      findsOneWidget,
+    );
+    final externalPlayerButton = tester.widget<IconButton>(
+      find.widgetWithIcon(IconButton, Icons.open_in_new),
+    );
+    expect(externalPlayerButton.onPressed, isNull);
+  });
+
   testWidgets('fullscreen toggle tooltip reflects the current fullscreen state',
       (tester) async {
     await tester.pumpWidget(
@@ -138,6 +180,7 @@ void main() {
           onSpeed: _noop,
           onNextEpisode: _noop,
           onOpenExternalPlayer: _noop,
+          externalPlayerTooltip: 'External player',
           onDownload: _noop,
           onToggleDanmaku: _noop,
           onToggleFullscreen: _noop,

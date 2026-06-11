@@ -224,7 +224,7 @@ void main() {
   });
 
   testWidgets(
-      'external player action explains when the stream depends on request headers',
+      'external player action is disabled when the stream depends on request headers',
       (tester) async {
     Uri? launchedUri;
 
@@ -245,16 +245,18 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    await tester.tap(find.byTooltip('External player'));
-    await tester.pumpAndSettle();
-
-    expect(launchedUri, isNull);
     expect(
-      find.text(
+      find.byTooltip(
         'This stream needs request headers, so it cannot be opened in an external player yet.',
       ),
       findsOneWidget,
     );
+    final externalPlayerButton = tester.widget<IconButton>(
+      find.widgetWithIcon(IconButton, Icons.open_in_new),
+    );
+    expect(externalPlayerButton.onPressed, isNull);
+
+    expect(launchedUri, isNull);
   });
 
   testWidgets('external player action is disabled while next episode loads', (

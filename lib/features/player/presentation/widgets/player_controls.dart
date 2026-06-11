@@ -11,6 +11,7 @@ class PlayerControls extends StatelessWidget {
     required this.onSpeed,
     required this.onNextEpisode,
     required this.onOpenExternalPlayer,
+    required this.externalPlayerTooltip,
     required this.onDownload,
     required this.onToggleDanmaku,
     required this.onToggleFullscreen,
@@ -26,6 +27,7 @@ class PlayerControls extends StatelessWidget {
   final VoidCallback onSpeed;
   final VoidCallback? onNextEpisode;
   final VoidCallback? onOpenExternalPlayer;
+  final String externalPlayerTooltip;
   final VoidCallback onDownload;
   final VoidCallback onToggleDanmaku;
   final VoidCallback onToggleFullscreen;
@@ -83,7 +85,7 @@ class PlayerControls extends StatelessWidget {
                   ),
                 if (isFullscreen)
                   IconButton(
-                    tooltip: context.l10n.externalPlayer,
+                    tooltip: externalPlayerTooltip,
                     onPressed: isSwitchingEpisode ? null : onOpenExternalPlayer,
                     icon: const Icon(Icons.open_in_new),
                   ),
