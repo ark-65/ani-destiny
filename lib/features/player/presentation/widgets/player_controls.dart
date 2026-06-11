@@ -43,6 +43,10 @@ class PlayerControls extends StatelessWidget {
   Widget build(BuildContext context) {
     final durationMs = state.duration.inMilliseconds;
     final positionMs = state.position.inMilliseconds.clamp(0, durationMs);
+    final playbackActionsEnabled = hasPlayableSource && !isSwitchingEpisode;
+    final playbackActionTooltip = isSwitchingEpisode
+        ? context.l10n.loadingNextEpisode
+        : context.l10n.noPlayableSourceFound;
 
     return SafeArea(
       top: false,
@@ -53,7 +57,7 @@ class PlayerControls extends StatelessWidget {
           children: [
             Slider(
               value: durationMs == 0 ? 0 : positionMs / durationMs,
-              onChanged: hasPlayableSource
+              onChanged: playbackActionsEnabled
                   ? (value) {
                       onSeek(
                         Duration(milliseconds: (durationMs * value).round()),
@@ -64,12 +68,12 @@ class PlayerControls extends StatelessWidget {
             Row(
               children: [
                 IconButton.filled(
-                  tooltip: hasPlayableSource
+                  tooltip: playbackActionsEnabled
                       ? (state.isPlaying
                           ? context.l10n.pause
                           : context.l10n.play)
-                      : context.l10n.noPlayableSourceFound,
-                  onPressed: hasPlayableSource ? onPlayPause : null,
+                      : playbackActionTooltip,
+                  onPressed: playbackActionsEnabled ? onPlayPause : null,
                   icon: Icon(state.isPlaying ? Icons.pause : Icons.play_arrow),
                 ),
                 const SizedBox(width: 8),
@@ -79,10 +83,10 @@ class PlayerControls extends StatelessWidget {
                 ),
                 const Spacer(),
                 IconButton(
-                  tooltip: hasPlayableSource
+                  tooltip: playbackActionsEnabled
                       ? context.l10n.playbackSpeed
-                      : context.l10n.noPlayableSourceFound,
-                  onPressed: hasPlayableSource ? onSpeed : null,
+                      : playbackActionTooltip,
+                  onPressed: playbackActionsEnabled ? onSpeed : null,
                   icon: const Icon(Icons.speed),
                 ),
                 if (isFullscreen)

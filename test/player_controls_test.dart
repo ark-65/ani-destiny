@@ -101,7 +101,22 @@ void main() {
     await tester.pump();
 
     expect(find.byType(CircularProgressIndicator), findsOneWidget);
-    expect(find.byTooltip('Loading next episode...'), findsNWidgets(2));
+    expect(find.byTooltip('Loading next episode...'), findsNWidgets(4));
+    final playButton = tester.widget<IconButton>(
+      find.byType(IconButton).first,
+    );
+    expect(playButton.onPressed, isNull);
+    expect(playButton.tooltip, 'Loading next episode...');
+
+    final speedButton = tester.widget<IconButton>(
+      find.widgetWithIcon(IconButton, Icons.speed),
+    );
+    expect(speedButton.onPressed, isNull);
+    expect(speedButton.tooltip, 'Loading next episode...');
+
+    final slider = tester.widget<Slider>(find.byType(Slider));
+    expect(slider.onChanged, isNull);
+
     final externalPlayerButton = tester.widget<IconButton>(
       find.widgetWithIcon(IconButton, Icons.open_in_new),
     );
