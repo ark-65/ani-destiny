@@ -340,6 +340,39 @@ void main() {
 
     expect(createdDownloads, 0);
   });
+
+  testWidgets('download action is disabled when no playable url is available',
+      (tester) async {
+    var createdDownloads = 0;
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          playerRepositoryProvider
+              .overrideWithValue(const _FakePlayerRepository()),
+          historyRepositoryProvider.overrideWithValue(_FakeHistoryRepository()),
+          danmakuRepositoryProvider.overrideWithValue(_FakeDanmakuRepository()),
+          downloadTaskCreatorProvider.overrideWithValue(
+            _FakeDownloadTaskCreator(onCreate: () => createdDownloads++),
+          ),
+        ],
+        child: _buildPlayerApp(_missingPlayUrlArgs),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('No playable source found'), findsOneWidget);
+    final downloadButton = tester.widget<IconButton>(
+      find.widgetWithIcon(IconButton, Icons.download_outlined),
+    );
+    expect(
+      downloadButton.tooltip,
+      'No playable source found. Try another source or retry later.',
+    );
+    expect(downloadButton.onPressed, isNull);
+
+    expect(createdDownloads, 0);
+  });
 }
 
 Widget _buildApp() {
@@ -624,4 +657,15 @@ const _failingArgs = PlayerRouteArgs(
   playSourceId: 'line-broken',
   playSourceTitle: 'Broken Line',
   playHeaders: {'Referer': 'https://example.test/player?token=secret'},
+);
+
+const _missingPlayUrlArgs = PlayerRouteArgs(
+  animeId: 'anime-1',
+  episodeId: 'episode-3',
+  animeTitle: 'Anime 1',
+  episodeTitle: 'Episode 3',
+  playUrl: '',
+  sourceId: 'sakura',
+  playSourceId: 'line-missing',
+  playSourceTitle: 'Missing Line',
 );

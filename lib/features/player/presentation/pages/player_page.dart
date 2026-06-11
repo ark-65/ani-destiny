@@ -101,6 +101,7 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
         : context.l10n.nextEpisode;
     final externalPlayerTooltip = _externalPlayerTooltip(context);
     final downloadTooltip = _downloadTooltip(context);
+    final canCreateDownload = _canCreateDownload();
     final canOpenExternalPlayer = _canOpenExternalPlayer();
     final danmakuItems = ref.watch(
       danmakuItemsProvider(
@@ -225,9 +226,9 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
                     : null,
                 externalPlayerTooltip: externalPlayerTooltip,
                 downloadTooltip: downloadTooltip,
-                onDownload: _isSwitchingEpisode
-                    ? null
-                    : () => unawaited(_createDownload()),
+                onDownload: canCreateDownload
+                    ? () => unawaited(_createDownload())
+                    : null,
                 onToggleFullscreen: () => unawaited(_toggleFullscreen()),
                 onToggleDanmaku: () {
                   ref.read(danmakuSettingsProvider.notifier).state =
@@ -246,24 +247,27 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
   }
 
   bool _canOpenExternalPlayer() {
-    if (_isSwitchingEpisode) {
-      return false;
-    }
-    final rawUrl = _args.playUrl.trim();
-    final uri = Uri.tryParse(rawUrl);
-    if (rawUrl.isEmpty || uri == null || !uri.hasScheme) {
+    if (!_hasPlayableUrl() || _isSwitchingEpisode) {
       return false;
     }
     return _args.playHeaders.isEmpty;
+  }
+
+  bool _canCreateDownload() {
+    return _hasPlayableUrl() && !_isSwitchingEpisode;
+  }
+
+  bool _hasPlayableUrl() {
+    final rawUrl = _args.playUrl.trim();
+    final uri = Uri.tryParse(rawUrl);
+    return rawUrl.isNotEmpty && uri != null && uri.hasScheme;
   }
 
   String _externalPlayerTooltip(BuildContext context) {
     if (_isSwitchingEpisode) {
       return context.l10n.loadingNextEpisode;
     }
-    final rawUrl = _args.playUrl.trim();
-    final uri = Uri.tryParse(rawUrl);
-    if (rawUrl.isEmpty || uri == null || !uri.hasScheme) {
+    if (!_hasPlayableUrl()) {
       return context.l10n.noPlayableSourceFound;
     }
     if (_args.playHeaders.isNotEmpty) {
@@ -275,6 +279,9 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
   String _downloadTooltip(BuildContext context) {
     if (_isSwitchingEpisode) {
       return context.l10n.loadingNextEpisode;
+    }
+    if (!_hasPlayableUrl()) {
+      return context.l10n.noPlayableSourceFound;
     }
     return context.l10n.download;
   }
@@ -473,6 +480,8 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
     _recordPlaybackDiagnostics(args: routeArgs);
     try {
       if (routeArgs.playUrl.trim().isEmpty) {
+        await Future<void>.delayed(Duration.zero);
+        if (!mounted) return;
         setState(
           () => _state = _state.copyWith(
             isBuffering: false,
