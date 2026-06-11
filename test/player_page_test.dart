@@ -354,15 +354,47 @@ void main() {
     await tester.pump();
 
     expect(launchCalls, 1);
-    expect(find.byTooltip('Opening external player...'), findsOneWidget);
+    expect(find.byTooltip('Opening external player...'), findsWidgets);
     final openingButton =
         tester.widgetList<IconButton>(find.byType(IconButton)).singleWhere(
-              (button) => button.tooltip == 'Opening external player...',
+              (button) =>
+                  button.tooltip == 'Opening external player...' &&
+                  button.icon is SizedBox,
             );
     expect(openingButton.onPressed, isNull);
+    expect(openingButton.tooltip, 'Opening external player...');
 
-    await tester.tap(find.byTooltip('Opening external player...'));
-    await tester.pump();
+    final nextEpisodeButton = tester.widget<IconButton>(
+      find.widgetWithIcon(IconButton, Icons.skip_next),
+    );
+    expect(nextEpisodeButton.onPressed, isNull);
+    expect(nextEpisodeButton.tooltip, 'Opening external player...');
+
+    final playButton = tester.widget<IconButton>(find.byType(IconButton).first);
+    expect(playButton.onPressed, isNull);
+    expect(playButton.tooltip, 'Opening external player...');
+
+    final speedButton = tester.widget<IconButton>(
+      find.widgetWithIcon(IconButton, Icons.speed),
+    );
+    expect(speedButton.onPressed, isNull);
+    expect(speedButton.tooltip, 'Opening external player...');
+
+    final downloadButton = tester.widget<IconButton>(
+      find.widgetWithIcon(IconButton, Icons.download_outlined),
+    );
+    expect(downloadButton.onPressed, isNull);
+    expect(downloadButton.tooltip, 'Opening external player...');
+
+    final fullscreenButton = tester.widget<IconButton>(
+      find.widgetWithIcon(IconButton, Icons.fullscreen),
+    );
+    expect(fullscreenButton.onPressed, isNull);
+    expect(fullscreenButton.tooltip, 'Opening external player...');
+
+    final slider = tester.widget<Slider>(find.byType(Slider));
+    expect(slider.onChanged, isNull);
+
     expect(launchCalls, 1);
 
     launchCompleter.complete(true);

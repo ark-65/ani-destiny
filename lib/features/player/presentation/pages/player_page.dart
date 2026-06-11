@@ -100,10 +100,13 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
     final hasPlayableSource = _hasPlayableUrl();
     final nextEpisodeTooltip = _isSwitchingEpisode
         ? context.l10n.loadingNextEpisode
+        : _isOpeningExternalPlayer
+            ? context.l10n.openingExternalPlayer
         : context.l10n.nextEpisode;
     final externalPlayerTooltip = _externalPlayerTooltip(context);
     final downloadTooltip = _downloadTooltip(context);
-    final canCreateDownload = hasPlayableSource && !_isSwitchingEpisode;
+    final canCreateDownload =
+        hasPlayableSource && !_isSwitchingEpisode && !_isOpeningExternalPlayer;
     final canOpenExternalPlayer = _canOpenExternalPlayer();
     final danmakuItems = ref.watch(
       danmakuItemsProvider(
@@ -140,7 +143,7 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
                     ),
                   IconButton(
                     tooltip: nextEpisodeTooltip,
-                    onPressed: _isSwitchingEpisode
+                    onPressed: _isSwitchingEpisode || _isOpeningExternalPlayer
                         ? null
                         : () => unawaited(_playNextEpisode()),
                     icon: _isSwitchingEpisode
@@ -237,7 +240,9 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
                 onDownload: canCreateDownload
                     ? () => unawaited(_createDownload())
                     : null,
-                onToggleFullscreen: () => unawaited(_toggleFullscreen()),
+                onToggleFullscreen: _isOpeningExternalPlayer
+                    ? null
+                    : () => unawaited(_toggleFullscreen()),
                 onToggleDanmaku: () {
                   ref.read(danmakuSettingsProvider.notifier).state =
                       danmakuSettings.copyWith(
@@ -283,6 +288,9 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
   }
 
   String _downloadTooltip(BuildContext context) {
+    if (_isOpeningExternalPlayer) {
+      return context.l10n.openingExternalPlayer;
+    }
     if (_isSwitchingEpisode) {
       return context.l10n.loadingNextEpisode;
     }
@@ -533,7 +541,7 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
   }
 
   Future<void> _playNextEpisode() async {
-    if (_isSwitchingEpisode) return;
+    if (_isSwitchingEpisode || _isOpeningExternalPlayer) return;
 
     final currentArgs = _args;
     final shouldResumePlayback = _state.isPlaying;

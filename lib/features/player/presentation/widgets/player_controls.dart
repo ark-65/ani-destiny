@@ -35,7 +35,7 @@ class PlayerControls extends StatelessWidget {
   final String downloadTooltip;
   final VoidCallback? onDownload;
   final VoidCallback onToggleDanmaku;
-  final VoidCallback onToggleFullscreen;
+  final VoidCallback? onToggleFullscreen;
   final bool danmakuEnabled;
   final bool isFullscreen;
   final bool isSwitchingEpisode;
@@ -45,17 +45,33 @@ class PlayerControls extends StatelessWidget {
   Widget build(BuildContext context) {
     final durationMs = state.duration.inMilliseconds;
     final positionMs = state.position.inMilliseconds.clamp(0, durationMs);
+    final isInteractionLocked = isSwitchingEpisode || isOpeningExternalPlayer;
     final playbackActionsEnabled = hasPlayableSource &&
-        !isSwitchingEpisode &&
+        !isInteractionLocked &&
         state.errorMessage == null &&
         state.isInitialized;
     final playbackActionTooltip = isSwitchingEpisode
         ? context.l10n.loadingNextEpisode
+        : isOpeningExternalPlayer
+            ? context.l10n.openingExternalPlayer
         : !hasPlayableSource
             ? context.l10n.noPlayableSourceFound
             : state.errorMessage != null
                 ? context.l10n.playbackFailedSuggestion
                 : context.l10n.playerPreparingPlayback;
+    final nextEpisodeTooltip = isSwitchingEpisode
+        ? context.l10n.loadingNextEpisode
+        : isOpeningExternalPlayer
+            ? context.l10n.openingExternalPlayer
+            : context.l10n.nextEpisode;
+    final resolvedDownloadTooltip = isOpeningExternalPlayer
+        ? context.l10n.openingExternalPlayer
+        : downloadTooltip;
+    final fullscreenTooltip = isOpeningExternalPlayer
+        ? context.l10n.openingExternalPlayer
+        : isFullscreen
+            ? context.l10n.exitFullscreen
+            : context.l10n.enterFullscreen;
 
     return SafeArea(
       top: false,
@@ -100,10 +116,8 @@ class PlayerControls extends StatelessWidget {
                 ),
                 if (isFullscreen)
                   IconButton(
-                    tooltip: isSwitchingEpisode
-                        ? context.l10n.loadingNextEpisode
-                        : context.l10n.nextEpisode,
-                    onPressed: onNextEpisode,
+                    tooltip: nextEpisodeTooltip,
+                    onPressed: isInteractionLocked ? null : onNextEpisode,
                     icon: isSwitchingEpisode
                         ? const SizedBox.square(
                             dimension: 18,
@@ -136,15 +150,13 @@ class PlayerControls extends StatelessWidget {
                   ),
                 ),
                 IconButton(
-                  tooltip: downloadTooltip,
-                  onPressed: onDownload,
+                  tooltip: resolvedDownloadTooltip,
+                  onPressed: isInteractionLocked ? null : onDownload,
                   icon: const Icon(Icons.download_outlined),
                 ),
                 IconButton(
-                  tooltip: isFullscreen
-                      ? context.l10n.exitFullscreen
-                      : context.l10n.enterFullscreen,
-                  onPressed: onToggleFullscreen,
+                  tooltip: fullscreenTooltip,
+                  onPressed: isOpeningExternalPlayer ? null : onToggleFullscreen,
                   icon: Icon(
                     isFullscreen ? Icons.fullscreen_exit : Icons.fullscreen,
                   ),

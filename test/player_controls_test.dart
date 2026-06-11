@@ -235,10 +235,44 @@ void main() {
 
     final externalPlayerButton =
         tester.widgetList<IconButton>(find.byType(IconButton)).singleWhere(
-              (button) => button.tooltip == 'Opening external player...',
+              (button) =>
+                  button.tooltip == 'Opening external player...' &&
+                  button.icon is SizedBox,
             );
     expect(externalPlayerButton.onPressed, isNull);
+    expect(externalPlayerButton.tooltip, 'Opening external player...');
     expect(find.byType(CircularProgressIndicator), findsOneWidget);
+
+    final playButton = tester.widget<IconButton>(find.byType(IconButton).first);
+    expect(playButton.onPressed, isNull);
+    expect(playButton.tooltip, 'Opening external player...');
+
+    final speedButton = tester.widget<IconButton>(
+      find.widgetWithIcon(IconButton, Icons.speed),
+    );
+    expect(speedButton.onPressed, isNull);
+    expect(speedButton.tooltip, 'Opening external player...');
+
+    final nextEpisodeButton = tester.widget<IconButton>(
+      find.widgetWithIcon(IconButton, Icons.skip_next),
+    );
+    expect(nextEpisodeButton.onPressed, isNull);
+    expect(nextEpisodeButton.tooltip, 'Opening external player...');
+
+    final downloadButton = tester.widget<IconButton>(
+      find.widgetWithIcon(IconButton, Icons.download_outlined),
+    );
+    expect(downloadButton.onPressed, isNull);
+    expect(downloadButton.tooltip, 'Opening external player...');
+
+    final fullscreenButton = tester.widget<IconButton>(
+      find.widgetWithIcon(IconButton, Icons.fullscreen_exit),
+    );
+    expect(fullscreenButton.onPressed, isNull);
+    expect(fullscreenButton.tooltip, 'Opening external player...');
+
+    final slider = tester.widget<Slider>(find.byType(Slider));
+    expect(slider.onChanged, isNull);
   });
 
   testWidgets('fullscreen toggle tooltip reflects the current fullscreen state',
