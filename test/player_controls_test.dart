@@ -230,6 +230,39 @@ void main() {
     expect(find.byTooltip('Enter fullscreen'), findsNothing);
   });
 
+  testWidgets('controls show hour-aware playback timestamps for long videos', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      _buildApp(
+        PlayerControls(
+          state: _state.copyWith(
+            position: const Duration(hours: 1, minutes: 5, seconds: 9),
+            duration: const Duration(hours: 2, minutes: 3, seconds: 4),
+          ),
+          hasPlayableSource: true,
+          onPlayPause: _noop,
+          onSeek: (_) {},
+          onSpeed: _noop,
+          onNextEpisode: _noop,
+          onOpenExternalPlayer: _noop,
+          externalPlayerTooltip: 'External player',
+          downloadTooltip: 'Download',
+          onDownload: _noop,
+          onToggleDanmaku: _noop,
+          onToggleFullscreen: _noop,
+          danmakuEnabled: true,
+          isFullscreen: false,
+          isSwitchingEpisode: false,
+        ),
+      ),
+    );
+
+    await tester.pump();
+
+    expect(find.text('1:05:09 / 2:03:04'), findsOneWidget);
+  });
+
   testWidgets(
       'controls disable playback actions when no playable source exists',
       (tester) async {
