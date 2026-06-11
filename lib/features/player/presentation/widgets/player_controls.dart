@@ -6,6 +6,7 @@ import '../../domain/entities/player_state.dart';
 class PlayerControls extends StatelessWidget {
   const PlayerControls({
     required this.state,
+    required this.hasPlayableSource,
     required this.onPlayPause,
     required this.onSeek,
     required this.onSpeed,
@@ -23,6 +24,7 @@ class PlayerControls extends StatelessWidget {
   });
 
   final PlayerState state;
+  final bool hasPlayableSource;
   final VoidCallback onPlayPause;
   final ValueChanged<Duration> onSeek;
   final VoidCallback onSpeed;
@@ -51,16 +53,23 @@ class PlayerControls extends StatelessWidget {
           children: [
             Slider(
               value: durationMs == 0 ? 0 : positionMs / durationMs,
-              onChanged: (value) {
-                onSeek(Duration(milliseconds: (durationMs * value).round()));
-              },
+              onChanged: hasPlayableSource
+                  ? (value) {
+                      onSeek(
+                        Duration(milliseconds: (durationMs * value).round()),
+                      );
+                    }
+                  : null,
             ),
             Row(
               children: [
                 IconButton.filled(
-                  tooltip:
-                      state.isPlaying ? context.l10n.pause : context.l10n.play,
-                  onPressed: onPlayPause,
+                  tooltip: hasPlayableSource
+                      ? (state.isPlaying
+                          ? context.l10n.pause
+                          : context.l10n.play)
+                      : context.l10n.noPlayableSourceFound,
+                  onPressed: hasPlayableSource ? onPlayPause : null,
                   icon: Icon(state.isPlaying ? Icons.pause : Icons.play_arrow),
                 ),
                 const SizedBox(width: 8),
@@ -70,8 +79,10 @@ class PlayerControls extends StatelessWidget {
                 ),
                 const Spacer(),
                 IconButton(
-                  tooltip: context.l10n.playbackSpeed,
-                  onPressed: onSpeed,
+                  tooltip: hasPlayableSource
+                      ? context.l10n.playbackSpeed
+                      : context.l10n.noPlayableSourceFound,
+                  onPressed: hasPlayableSource ? onSpeed : null,
                   icon: const Icon(Icons.speed),
                 ),
                 if (isFullscreen)

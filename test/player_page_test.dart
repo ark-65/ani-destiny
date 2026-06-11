@@ -344,6 +344,7 @@ void main() {
   testWidgets('download action is disabled when no playable url is available',
       (tester) async {
     var createdDownloads = 0;
+    var launchedUriCount = 0;
 
     await tester.pumpWidget(
       ProviderScope(
@@ -352,6 +353,10 @@ void main() {
               .overrideWithValue(const _FakePlayerRepository()),
           historyRepositoryProvider.overrideWithValue(_FakeHistoryRepository()),
           danmakuRepositoryProvider.overrideWithValue(_FakeDanmakuRepository()),
+          externalPlayerLauncherProvider.overrideWithValue((uri) async {
+            launchedUriCount++;
+            return true;
+          }),
           downloadTaskCreatorProvider.overrideWithValue(
             _FakeDownloadTaskCreator(onCreate: () => createdDownloads++),
           ),
@@ -371,7 +376,29 @@ void main() {
     );
     expect(downloadButton.onPressed, isNull);
 
+    final playButton = tester.widget<IconButton>(
+      find.byType(IconButton).first,
+    );
+    expect(playButton.onPressed, isNull);
+    expect(
+      playButton.tooltip,
+      'No playable source found. Try another source or retry later.',
+    );
+
+    final speedButton = tester.widget<IconButton>(
+      find.widgetWithIcon(IconButton, Icons.speed),
+    );
+    expect(speedButton.onPressed, isNull);
+    expect(
+      speedButton.tooltip,
+      'No playable source found. Try another source or retry later.',
+    );
+
+    final slider = tester.widget<Slider>(find.byType(Slider));
+    expect(slider.onChanged, isNull);
+
     expect(createdDownloads, 0);
+    expect(launchedUriCount, 0);
   });
 }
 

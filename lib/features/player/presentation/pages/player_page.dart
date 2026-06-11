@@ -96,12 +96,13 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
   @override
   Widget build(BuildContext context) {
     final danmakuSettings = ref.watch(danmakuSettingsProvider);
+    final hasPlayableSource = _hasPlayableUrl();
     final nextEpisodeTooltip = _isSwitchingEpisode
         ? context.l10n.loadingNextEpisode
         : context.l10n.nextEpisode;
     final externalPlayerTooltip = _externalPlayerTooltip(context);
     final downloadTooltip = _downloadTooltip(context);
-    final canCreateDownload = _canCreateDownload();
+    final canCreateDownload = hasPlayableSource && !_isSwitchingEpisode;
     final canOpenExternalPlayer = _canOpenExternalPlayer();
     final danmakuItems = ref.watch(
       danmakuItemsProvider(
@@ -207,6 +208,7 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
               color: Theme.of(context).colorScheme.surface,
               child: PlayerControls(
                 state: _state,
+                hasPlayableSource: hasPlayableSource,
                 danmakuEnabled: danmakuSettings.enabled,
                 onPlayPause: () {
                   if (_state.isPlaying) {
@@ -251,10 +253,6 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
       return false;
     }
     return _args.playHeaders.isEmpty;
-  }
-
-  bool _canCreateDownload() {
-    return _hasPlayableUrl() && !_isSwitchingEpisode;
   }
 
   bool _hasPlayableUrl() {

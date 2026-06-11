@@ -15,6 +15,7 @@ void main() {
       _buildApp(
         PlayerControls(
           state: _state,
+          hasPlayableSource: true,
           onPlayPause: _noop,
           onSeek: (_) {},
           onSpeed: _noop,
@@ -47,6 +48,7 @@ void main() {
       _buildApp(
         PlayerControls(
           state: _state,
+          hasPlayableSource: true,
           onPlayPause: _noop,
           onSeek: (_) {},
           onSpeed: _noop,
@@ -78,6 +80,7 @@ void main() {
       _buildApp(
         PlayerControls(
           state: _state,
+          hasPlayableSource: true,
           onPlayPause: _noop,
           onSeek: (_) {},
           onSpeed: _noop,
@@ -118,6 +121,7 @@ void main() {
       _buildApp(
         PlayerControls(
           state: _state,
+          hasPlayableSource: true,
           onPlayPause: _noop,
           onSeek: (_) {},
           onSpeed: _noop,
@@ -148,6 +152,7 @@ void main() {
       _buildApp(
         PlayerControls(
           state: _state,
+          hasPlayableSource: true,
           onPlayPause: _noop,
           onSeek: (_) {},
           onSpeed: _noop,
@@ -186,6 +191,7 @@ void main() {
       _buildApp(
         PlayerControls(
           state: _state,
+          hasPlayableSource: true,
           onPlayPause: _noop,
           onSeek: (_) {},
           onSpeed: _noop,
@@ -207,6 +213,53 @@ void main() {
 
     expect(find.byTooltip('Exit fullscreen'), findsOneWidget);
     expect(find.byTooltip('Enter fullscreen'), findsNothing);
+  });
+
+  testWidgets(
+      'controls disable playback actions when no playable source exists',
+      (tester) async {
+    await tester.pumpWidget(
+      _buildApp(
+        PlayerControls(
+          state: _state,
+          hasPlayableSource: false,
+          onPlayPause: _noop,
+          onSeek: (_) {},
+          onSpeed: _noop,
+          onNextEpisode: _noop,
+          onOpenExternalPlayer: _noop,
+          externalPlayerTooltip: 'External player',
+          downloadTooltip: 'Download',
+          onDownload: _noop,
+          onToggleDanmaku: _noop,
+          onToggleFullscreen: _noop,
+          danmakuEnabled: true,
+          isFullscreen: false,
+          isSwitchingEpisode: false,
+        ),
+      ),
+    );
+
+    await tester.pump();
+
+    final playButton = tester.widget<IconButton>(find.byType(IconButton).first);
+    expect(playButton.onPressed, isNull);
+    expect(
+      playButton.tooltip,
+      'No playable source found. Try another source or retry later.',
+    );
+
+    final speedButton = tester.widget<IconButton>(
+      find.widgetWithIcon(IconButton, Icons.speed),
+    );
+    expect(speedButton.onPressed, isNull);
+    expect(
+      speedButton.tooltip,
+      'No playable source found. Try another source or retry later.',
+    );
+
+    final slider = tester.widget<Slider>(find.byType(Slider));
+    expect(slider.onChanged, isNull);
   });
 }
 

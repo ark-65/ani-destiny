@@ -7,6 +7,7 @@
 ## [Unreleased]
 
 ### 🐛 Fixed
+- Fixed the player still leaving play, seek, and playback-speed controls clickable when the current item had no playable source; those primary playback controls are now disabled together and explain that no playable source is available, instead of pretending playback can still continue.
 - Fixed the player still exposing the download action when the current episode had no playable URL at all; it now disables the button and explains that no playable source is available, instead of implying the episode can still be saved offline.
 - Fixed the player still allowing downloads and only showing generic control copy while Next episode was loading; switching state now consistently says it is loading the next episode and blocks downloads until the switch finishes.
 - Fixed the player External player action still looking tappable when the current stream needed request headers or lacked a handoffable playback URL; it now disables the action up front and explains why the stream cannot be sent to another app.
