@@ -100,7 +100,8 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
     final danmakuSettings = ref.watch(danmakuSettingsProvider);
     final hasPlayableSource = _hasPlayableUrl();
     final isRetryingPlayback = _isRetryingPlayback;
-    final isRouteBusy = _isSwitchingEpisode || _isOpeningExternalPlayer;
+    final isRouteBusy =
+        _isSwitchingEpisode || _isOpeningExternalPlayer || isRetryingPlayback;
     final nextEpisodeTooltip = _isSwitchingEpisode
         ? context.l10n.loadingNextEpisode
         : _isOpeningExternalPlayer

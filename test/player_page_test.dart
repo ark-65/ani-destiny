@@ -662,6 +662,45 @@ void main() {
     await tester.pumpAndSettle();
   });
 
+  testWidgets('system back stays on the player while playback retries', (
+    tester,
+  ) async {
+    final repository = _RetryablePlayerRepository();
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          playerRepositoryProvider.overrideWithValue(repository),
+          historyRepositoryProvider.overrideWithValue(_FakeHistoryRepository()),
+          danmakuRepositoryProvider.overrideWithValue(_FakeDanmakuRepository()),
+        ],
+        child: _buildApp(_args),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byType(ElevatedButton));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Retry'));
+    await tester.pump();
+
+    await tester.pageBack();
+    await tester.pump();
+
+    expect(find.byType(PlayerPage), findsOneWidget);
+    expect(find.text('Open player'), findsNothing);
+    expect(
+      find.text(
+        'Please wait for the current playback action to finish before leaving.',
+      ),
+      findsOneWidget,
+    );
+
+    repository.completeRetry();
+    await tester.pumpAndSettle();
+  });
+
   testWidgets(
       'download action is disabled and explained while next episode loads',
       (tester) async {

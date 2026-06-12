@@ -7,6 +7,7 @@
 ## [Unreleased]
 
 ### 🐛 Fixed
+- Fixed the player already locking its controls during `Retrying playback...` while still letting system back leave the page; retry recovery now counts as a route-level busy transition so users do not exit before the current recovery path finishes.
 - Fixed the player starting a retry after a temporary playback failure while still making next-episode, external-player, download, and enter-fullscreen actions look usable; retry now puts those controls into a shared `Retrying playback...` busy state so the current recovery path stays unambiguous.
 - Fixed the player only offering diagnostics after a temporary playback failure without any in-place retry path; the error card now includes a direct Retry action, while no-playable-source states still avoid promising a retry that cannot work.
 - Fixed the player already showing the current source and line in the error card while still hiding playback diagnostics in a debug-only corner; the error state now includes a direct Playback diagnostics button so users can inspect a shareable summary right where playback failed.
