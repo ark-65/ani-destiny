@@ -21,6 +21,7 @@ class PlayerControls extends StatelessWidget {
     required this.isFullscreen,
     required this.isSwitchingEpisode,
     required this.isOpeningExternalPlayer,
+    this.isRetryingPlayback = false,
     super.key,
   });
 
@@ -40,12 +41,14 @@ class PlayerControls extends StatelessWidget {
   final bool isFullscreen;
   final bool isSwitchingEpisode;
   final bool isOpeningExternalPlayer;
+  final bool isRetryingPlayback;
 
   @override
   Widget build(BuildContext context) {
     final durationMs = state.duration.inMilliseconds;
     final positionMs = state.position.inMilliseconds.clamp(0, durationMs);
-    final isInteractionLocked = isSwitchingEpisode || isOpeningExternalPlayer;
+    final isInteractionLocked =
+        isSwitchingEpisode || isOpeningExternalPlayer || isRetryingPlayback;
     final playbackActionsEnabled = hasPlayableSource &&
         !isInteractionLocked &&
         state.errorMessage == null &&
@@ -54,28 +57,37 @@ class PlayerControls extends StatelessWidget {
         ? context.l10n.loadingNextEpisode
         : isOpeningExternalPlayer
             ? context.l10n.openingExternalPlayer
-            : !hasPlayableSource
-                ? context.l10n.noPlayableSourceFound
-                : state.errorMessage != null
-                    ? context.l10n.playbackFailedSuggestion
-                    : context.l10n.playerPreparingPlayback;
+            : isRetryingPlayback
+                ? context.l10n.retryingPlayback
+                : !hasPlayableSource
+                    ? context.l10n.noPlayableSourceFound
+                    : state.errorMessage != null
+                        ? context.l10n.playbackFailedSuggestion
+                        : context.l10n.playerPreparingPlayback;
     final nextEpisodeTooltip = isSwitchingEpisode
         ? context.l10n.loadingNextEpisode
         : isOpeningExternalPlayer
             ? context.l10n.openingExternalPlayer
-            : context.l10n.nextEpisode;
+            : isRetryingPlayback
+                ? context.l10n.retryingPlayback
+                : context.l10n.nextEpisode;
     final resolvedDownloadTooltip = isOpeningExternalPlayer
         ? context.l10n.openingExternalPlayer
-        : downloadTooltip;
-    final canToggleFullscreen =
-        !isOpeningExternalPlayer && (!isSwitchingEpisode || isFullscreen);
+        : isRetryingPlayback
+            ? context.l10n.retryingPlayback
+            : downloadTooltip;
+    final canToggleFullscreen = !isOpeningExternalPlayer &&
+        (!isSwitchingEpisode || isFullscreen) &&
+        (!isRetryingPlayback || isFullscreen);
     final fullscreenTooltip = isOpeningExternalPlayer
         ? context.l10n.openingExternalPlayer
-        : isSwitchingEpisode && !isFullscreen
-            ? context.l10n.loadingNextEpisode
-            : isFullscreen
-                ? context.l10n.exitFullscreen
-                : context.l10n.enterFullscreen;
+        : isRetryingPlayback && !isFullscreen
+            ? context.l10n.retryingPlayback
+            : isSwitchingEpisode && !isFullscreen
+                ? context.l10n.loadingNextEpisode
+                : isFullscreen
+                    ? context.l10n.exitFullscreen
+                    : context.l10n.enterFullscreen;
 
     return SafeArea(
       top: false,

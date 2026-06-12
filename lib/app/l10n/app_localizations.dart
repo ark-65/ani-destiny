@@ -142,6 +142,7 @@ class AppLocalizations {
   String get loadingNextEpisode => _t('loadingNextEpisode');
   String get externalPlayer => _t('externalPlayer');
   String get openingExternalPlayer => _t('openingExternalPlayer');
+  String get retryingPlayback => _t('retryingPlayback');
   String get playerExitBusy => _t('playerExitBusy');
   String get externalPlayerPlaceholder => _t('externalPlayerPlaceholder');
   String get nextEpisodeNotImplemented => _t('nextEpisodeNotImplemented');
@@ -383,6 +384,7 @@ const _localizedValues = {
     'loadingNextEpisode': '正在切换到下一集…',
     'externalPlayer': '外部播放器',
     'openingExternalPlayer': '正在打开外部播放器…',
+    'retryingPlayback': '正在重试播放…',
     'playerExitBusy': '当前播放操作尚未完成，请稍候后再离开。',
     'externalPlayerPlaceholder': '外部播放器占位',
     'nextEpisodeNotImplemented': '下一集暂未实现。',
@@ -589,6 +591,7 @@ const _localizedValues = {
     'loadingNextEpisode': 'Loading next episode...',
     'externalPlayer': 'External player',
     'openingExternalPlayer': 'Opening external player...',
+    'retryingPlayback': 'Retrying playback...',
     'playerExitBusy':
         'Please wait for the current playback action to finish before leaving.',
     'externalPlayerPlaceholder': 'External player placeholder',
@@ -806,6 +809,7 @@ const _localizedValues = {
     'loadingNextEpisode': '次のエピソードに切り替え中…',
     'externalPlayer': '外部プレイヤー',
     'openingExternalPlayer': '外部プレイヤーを起動中…',
+    'retryingPlayback': '再生を再試行しています…',
     'playerExitBusy': '現在の再生操作が終わるまで、しばらく待ってから戻ってください。',
     'externalPlayerPlaceholder': '外部プレイヤー',
     'nextEpisodeNotImplemented': '次のエピソードはまだ実装されていません。',

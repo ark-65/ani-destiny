@@ -51,6 +51,7 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
   bool _isDisposed = false;
   bool _isSwitchingEpisode = false;
   bool _isOpeningExternalPlayer = false;
+  bool _isRetryingPlayback = false;
 
   PlayerRouteArgs get _args => _currentArgs;
 
@@ -98,16 +99,21 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
   Widget build(BuildContext context) {
     final danmakuSettings = ref.watch(danmakuSettingsProvider);
     final hasPlayableSource = _hasPlayableUrl();
+    final isRetryingPlayback = _isRetryingPlayback;
     final isRouteBusy = _isSwitchingEpisode || _isOpeningExternalPlayer;
     final nextEpisodeTooltip = _isSwitchingEpisode
         ? context.l10n.loadingNextEpisode
         : _isOpeningExternalPlayer
             ? context.l10n.openingExternalPlayer
-            : context.l10n.nextEpisode;
+            : isRetryingPlayback
+                ? context.l10n.retryingPlayback
+                : context.l10n.nextEpisode;
     final externalPlayerTooltip = _externalPlayerTooltip(context);
     final downloadTooltip = _downloadTooltip(context);
-    final canCreateDownload =
-        hasPlayableSource && !_isSwitchingEpisode && !_isOpeningExternalPlayer;
+    final canCreateDownload = hasPlayableSource &&
+        !_isSwitchingEpisode &&
+        !_isOpeningExternalPlayer &&
+        !isRetryingPlayback;
     final canOpenExternalPlayer = _canOpenExternalPlayer();
     final danmakuItems = ref.watch(
       danmakuItemsProvider(
@@ -150,7 +156,9 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
                     ),
                   IconButton(
                     tooltip: nextEpisodeTooltip,
-                    onPressed: _isSwitchingEpisode || _isOpeningExternalPlayer
+                    onPressed: _isSwitchingEpisode ||
+                            _isOpeningExternalPlayer ||
+                            _isRetryingPlayback
                         ? null
                         : () => unawaited(_playNextEpisode()),
                     icon: _isSwitchingEpisode
@@ -272,7 +280,7 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
                 },
                 onSeek: (position) => unawaited(_controller.seek(position)),
                 onSpeed: _showSpeedSheet,
-                onNextEpisode: _isSwitchingEpisode
+                onNextEpisode: _isSwitchingEpisode || isRetryingPlayback
                     ? null
                     : () => unawaited(_playNextEpisode()),
                 onOpenExternalPlayer: canOpenExternalPlayer
@@ -295,6 +303,7 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
                 isFullscreen: _isFullscreen,
                 isSwitchingEpisode: _isSwitchingEpisode,
                 isOpeningExternalPlayer: _isOpeningExternalPlayer,
+                isRetryingPlayback: isRetryingPlayback,
               ),
             ),
           ],
@@ -304,7 +313,10 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
   }
 
   bool _canOpenExternalPlayer() {
-    if (!_hasPlayableUrl() || _isSwitchingEpisode || _isOpeningExternalPlayer) {
+    if (!_hasPlayableUrl() ||
+        _isSwitchingEpisode ||
+        _isOpeningExternalPlayer ||
+        _isRetryingPlayback) {
       return false;
     }
     return _args.playHeaders.isEmpty;
@@ -321,6 +333,9 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
     if (_isSwitchingEpisode) {
       return context.l10n.loadingNextEpisode;
     }
+    if (_isRetryingPlayback) {
+      return context.l10n.retryingPlayback;
+    }
     if (!_hasPlayableUrl()) {
       return context.l10n.noPlayableSourceFound;
     }
@@ -336,6 +351,9 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
     }
     if (_isSwitchingEpisode) {
       return context.l10n.loadingNextEpisode;
+    }
+    if (_isRetryingPlayback) {
+      return context.l10n.retryingPlayback;
     }
     if (!_hasPlayableUrl()) {
       return context.l10n.noPlayableSourceFound;
@@ -474,6 +492,7 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
         _state.errorMessage != context.l10n.playerNoPlayUrl &&
         !_isSwitchingEpisode &&
         !_isOpeningExternalPlayer &&
+        !_isRetryingPlayback &&
         _hasPlayableUrl();
   }
 
@@ -720,19 +739,26 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
   }
 
   Future<void> _retryPlayback() async {
-    if (!_canRetryPlayback()) return;
+    if (!_canRetryPlayback() || _isRetryingPlayback) return;
 
     final playbackSpeed = _state.speed;
-    setState(
-      () => _state = PlayerState.initial().copyWith(
+    setState(() {
+      _isRetryingPlayback = true;
+      _state = PlayerState.initial().copyWith(
         isBuffering: true,
-      ),
-    );
-    await _loadPlayer(
-      args: _args,
-      autoplay: true,
-      playbackSpeed: playbackSpeed,
-    );
+      );
+    });
+    try {
+      await _loadPlayer(
+        args: _args,
+        autoplay: true,
+        playbackSpeed: playbackSpeed,
+      );
+    } finally {
+      if (mounted) {
+        setState(() => _isRetryingPlayback = false);
+      }
+    }
   }
 }
 

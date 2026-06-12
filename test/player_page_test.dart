@@ -233,12 +233,52 @@ void main() {
     expect(repository.adapter.loadCalls, 2);
     expect(find.text('Retry'), findsNothing);
     expect(find.byType(CircularProgressIndicator), findsWidgets);
+    expect(find.byTooltip('Retrying playback...'), findsWidgets);
+
+    final nextEpisodeButton = tester.widget<IconButton>(
+      find.widgetWithIcon(IconButton, Icons.skip_next),
+    );
+    expect(nextEpisodeButton.onPressed, isNull);
+    expect(nextEpisodeButton.tooltip, 'Retrying playback...');
+
+    final externalPlayerButton = tester.widget<IconButton>(
+      find.widgetWithIcon(IconButton, Icons.open_in_new),
+    );
+    expect(externalPlayerButton.onPressed, isNull);
+    expect(externalPlayerButton.tooltip, 'Retrying playback...');
+
+    final playButton = tester.widget<IconButton>(find.byType(IconButton).first);
+    expect(playButton.onPressed, isNull);
+    expect(playButton.tooltip, 'Retrying playback...');
+
+    final speedButton = tester.widget<IconButton>(
+      find.widgetWithIcon(IconButton, Icons.speed),
+    );
+    expect(speedButton.onPressed, isNull);
+    expect(speedButton.tooltip, 'Retrying playback...');
+
+    final downloadButton = tester.widget<IconButton>(
+      find.widgetWithIcon(IconButton, Icons.download_outlined),
+    );
+    expect(downloadButton.onPressed, isNull);
+    expect(downloadButton.tooltip, 'Retrying playback...');
+
+    final fullscreenButton = tester.widget<IconButton>(
+      find.widgetWithIcon(IconButton, Icons.fullscreen),
+    );
+    expect(fullscreenButton.onPressed, isNull);
+    expect(fullscreenButton.tooltip, 'Retrying playback...');
+
+    final slider = tester.widget<Slider>(find.byType(Slider));
+    expect(slider.onChanged, isNull);
 
     repository.completeRetry();
     await tester.pumpAndSettle();
 
-    final playButton = tester.widget<IconButton>(find.byType(IconButton).first);
-    expect(playButton.onPressed, isNotNull);
+    final restoredPlayButton = tester.widget<IconButton>(
+      find.byType(IconButton).first,
+    );
+    expect(restoredPlayButton.onPressed, isNotNull);
     expect(find.text('Retry'), findsNothing);
     expect(
       find.text(
