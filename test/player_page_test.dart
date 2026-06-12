@@ -208,6 +208,46 @@ void main() {
     expect(find.text('error'), findsNothing);
   });
 
+  testWidgets('playback failure card can retry the current source',
+      (tester) async {
+    final repository = _RetryablePlayerRepository();
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          playerRepositoryProvider.overrideWithValue(repository),
+          historyRepositoryProvider.overrideWithValue(_FakeHistoryRepository()),
+          danmakuRepositoryProvider.overrideWithValue(_FakeDanmakuRepository()),
+        ],
+        child: _buildPlayerApp(_args),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('Retry'), findsOneWidget);
+    expect(repository.adapter.loadCalls, 1);
+
+    await tester.tap(find.text('Retry'));
+    await tester.pump();
+
+    expect(repository.adapter.loadCalls, 2);
+    expect(find.text('Retry'), findsNothing);
+    expect(find.byType(CircularProgressIndicator), findsWidgets);
+
+    repository.completeRetry();
+    await tester.pumpAndSettle();
+
+    final playButton = tester.widget<IconButton>(find.byType(IconButton).first);
+    expect(playButton.onPressed, isNotNull);
+    expect(find.text('Retry'), findsNothing);
+    expect(
+      find.text(
+        'Playback temporarily failed. Retry later or try another playback line.',
+      ),
+      findsNothing,
+    );
+  });
+
   testWidgets('external player action launches the current playback url', (
     tester,
   ) async {
@@ -681,6 +721,7 @@ void main() {
 
     expect(createdDownloads, 0);
     expect(launchedUriCount, 0);
+    expect(find.text('Retry'), findsNothing);
   });
 
   testWidgets('invalid playback urls are treated as unavailable before load',
@@ -933,6 +974,19 @@ class _PendingPlayerRepository implements PlayerRepository {
   }
 }
 
+class _RetryablePlayerRepository implements PlayerRepository {
+  _RetryablePlayerRepository();
+
+  final adapter = _RetryablePlayerAdapter();
+
+  @override
+  PlayerControllerAdapter createController() => adapter;
+
+  void completeRetry() {
+    adapter.completeRetry();
+  }
+}
+
 class _FakePlayerRepository implements PlayerRepository {
   const _FakePlayerRepository();
 
@@ -1088,6 +1142,58 @@ class _PendingPlayerAdapter implements PlayerControllerAdapter {
   void completeLoad() {
     if (_loadCompleter.isCompleted) return;
     _loadCompleter.complete();
+    _controller.add(
+      PlayerState.initial().copyWith(
+        isInitialized: true,
+        duration: const Duration(minutes: 24, seconds: 12),
+      ),
+    );
+  }
+}
+
+class _RetryablePlayerAdapter implements PlayerControllerAdapter {
+  _RetryablePlayerAdapter();
+
+  final _controller = StreamController<PlayerState>.broadcast();
+  final _retryCompleter = Completer<void>();
+  int loadCalls = 0;
+
+  @override
+  Stream<PlayerState> get stateStream => _controller.stream;
+
+  @override
+  Future<void> dispose() async {
+    await _controller.close();
+  }
+
+  @override
+  Future<void> load(
+    String url, {
+    Map<String, String> headers = const {},
+  }) async {
+    loadCalls += 1;
+    if (loadCalls == 1) {
+      await Future<void>.delayed(Duration.zero);
+      throw StateError('load failed');
+    }
+    return _retryCompleter.future;
+  }
+
+  @override
+  Future<void> pause() async {}
+
+  @override
+  Future<void> play() async {}
+
+  @override
+  Future<void> seek(Duration position) async {}
+
+  @override
+  Future<void> setSpeed(double speed) async {}
+
+  void completeRetry() {
+    if (_retryCompleter.isCompleted) return;
+    _retryCompleter.complete();
     _controller.add(
       PlayerState.initial().copyWith(
         isInitialized: true,

@@ -209,12 +209,28 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
                                   playSourceTitle: _args.playSourceTitle,
                                 ),
                                 const SizedBox(height: 12),
-                                TextButton.icon(
-                                  onPressed: _showPlaybackDiagnostics,
-                                  icon: const Icon(Icons.bug_report_outlined),
-                                  label: Text(
-                                    context.l10n.playbackDiagnostics,
-                                  ),
+                                Wrap(
+                                  alignment: WrapAlignment.center,
+                                  spacing: 8,
+                                  runSpacing: 8,
+                                  children: [
+                                    if (_canRetryPlayback())
+                                      TextButton.icon(
+                                        onPressed: () =>
+                                            unawaited(_retryPlayback()),
+                                        icon: const Icon(Icons.refresh),
+                                        label: Text(context.l10n.retry),
+                                      ),
+                                    TextButton.icon(
+                                      onPressed: _showPlaybackDiagnostics,
+                                      icon: const Icon(
+                                        Icons.bug_report_outlined,
+                                      ),
+                                      label: Text(
+                                        context.l10n.playbackDiagnostics,
+                                      ),
+                                    ),
+                                  ],
                                 ),
                               ],
                             ),
@@ -451,6 +467,14 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
       return context.l10n.noPlayableSourceFound;
     }
     return context.l10n.playbackFailedSuggestion;
+  }
+
+  bool _canRetryPlayback() {
+    return _state.errorMessage != null &&
+        _state.errorMessage != context.l10n.playerNoPlayUrl &&
+        !_isSwitchingEpisode &&
+        !_isOpeningExternalPlayer &&
+        _hasPlayableUrl();
   }
 
   Future<void> _saveHistory({bool force = false}) async {
@@ -692,6 +716,22 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
   void _showSnackBar(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text(message)),
+    );
+  }
+
+  Future<void> _retryPlayback() async {
+    if (!_canRetryPlayback()) return;
+
+    final playbackSpeed = _state.speed;
+    setState(
+      () => _state = PlayerState.initial().copyWith(
+        isBuffering: true,
+      ),
+    );
+    await _loadPlayer(
+      args: _args,
+      autoplay: true,
+      playbackSpeed: playbackSpeed,
     );
   }
 }
