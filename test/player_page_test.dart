@@ -405,6 +405,36 @@ void main() {
     expect(find.text('Retry'), findsNothing);
   });
 
+  testWidgets(
+      'playback failure card offers external player recovery for handoffable streams',
+      (tester) async {
+    final repository = _RetryablePlayerRepository();
+    Uri? launchedUri;
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          playerRepositoryProvider.overrideWithValue(repository),
+          historyRepositoryProvider.overrideWithValue(_FakeHistoryRepository()),
+          danmakuRepositoryProvider.overrideWithValue(_FakeDanmakuRepository()),
+          externalPlayerLauncherProvider.overrideWithValue((uri) async {
+            launchedUri = uri;
+            return true;
+          }),
+        ],
+        child: _buildPlayerApp(_args),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('External player'), findsOneWidget);
+
+    await tester.tap(find.text('External player'));
+    await tester.pumpAndSettle();
+
+    expect(launchedUri?.toString(), 'https://cdn.example.test/video.m3u8');
+  });
+
   testWidgets('external player action launches the current playback url', (
     tester,
   ) async {

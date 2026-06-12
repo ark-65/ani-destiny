@@ -234,6 +234,29 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
                                             icon: const Icon(Icons.refresh),
                                             label: Text(context.l10n.retry),
                                           ),
+                                        if (_supportsExternalPlayerHandoff())
+                                          TextButton.icon(
+                                            onPressed: canOpenExternalPlayer
+                                                ? () => unawaited(
+                                                      _openExternalPlayer(),
+                                                    )
+                                                : null,
+                                            icon: _isOpeningExternalPlayer
+                                                ? const SizedBox.square(
+                                                    dimension: 18,
+                                                    child:
+                                                        CircularProgressIndicator(
+                                                      strokeWidth: 2,
+                                                    ),
+                                                  )
+                                                : const Icon(Icons.open_in_new),
+                                            label: Text(
+                                              _isOpeningExternalPlayer
+                                                  ? context.l10n
+                                                      .openingExternalPlayer
+                                                  : context.l10n.externalPlayer,
+                                            ),
+                                          ),
                                         TextButton.icon(
                                           onPressed: () => unawaited(
                                             _copyPlaybackDiagnostics(),
@@ -331,13 +354,17 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
   }
 
   bool _canOpenExternalPlayer() {
-    if (!_hasPlayableUrl() ||
+    if (!_supportsExternalPlayerHandoff() ||
         _isSwitchingEpisode ||
         _isOpeningExternalPlayer ||
         _isRetryingPlayback) {
       return false;
     }
-    return _args.playHeaders.isEmpty;
+    return true;
+  }
+
+  bool _supportsExternalPlayerHandoff() {
+    return _hasPlayableUrl() && _args.playHeaders.isEmpty;
   }
 
   bool _hasPlayableUrl() {
