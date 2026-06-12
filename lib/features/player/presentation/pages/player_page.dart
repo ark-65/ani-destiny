@@ -194,9 +194,21 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
                         child: Card(
                           child: Padding(
                             padding: const EdgeInsets.all(16),
-                            child: Text(
-                              _playbackErrorMessage(),
-                              textAlign: TextAlign.center,
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Text(
+                                  _playbackErrorMessage(),
+                                  textAlign: TextAlign.center,
+                                ),
+                                const SizedBox(height: 12),
+                                _PlaybackIssueContext(
+                                  sourceLabel: context.l10n.sourceDisplayLabel(
+                                    _args.sourceId,
+                                  ),
+                                  playSourceTitle: _args.playSourceTitle,
+                                ),
+                              ],
                             ),
                           ),
                         ),
@@ -708,6 +720,46 @@ class _DiagnosticRow extends StatelessWidget {
           Expanded(child: SelectableText(value)),
         ],
       ),
+    );
+  }
+}
+
+class _PlaybackIssueContext extends StatelessWidget {
+  const _PlaybackIssueContext({
+    required this.sourceLabel,
+    required this.playSourceTitle,
+  });
+
+  final String sourceLabel;
+  final String? playSourceTitle;
+
+  @override
+  Widget build(BuildContext context) {
+    final lineTitle = playSourceTitle?.trim();
+    final sourceTextStyle = Theme.of(context).textTheme.bodySmall?.copyWith(
+          color: Theme.of(context).colorScheme.onSurfaceVariant,
+        );
+    final lineTextStyle = Theme.of(context).textTheme.bodySmall?.copyWith(
+          color: Theme.of(context).colorScheme.onSurfaceVariant,
+        );
+
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text(
+          '${context.l10n.playbackDiagnosticSource}: $sourceLabel',
+          textAlign: TextAlign.center,
+          style: sourceTextStyle,
+        ),
+        if (lineTitle != null && lineTitle.isNotEmpty) ...[
+          const SizedBox(height: 4),
+          Text(
+            '${context.l10n.playbackDiagnosticLine}: $lineTitle',
+            textAlign: TextAlign.center,
+            style: lineTextStyle,
+          ),
+        ],
+      ],
     );
   }
 }
