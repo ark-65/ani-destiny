@@ -129,14 +129,20 @@ class AppLocalizations {
       '${_t('downloadTaskCreated')}: $taskId';
   String get playerNoPlayUrl => _t('playerNoPlayUrl');
   String get playerReadyHint => _t('playerReadyHint');
+  String get playerPreparingPlayback => _t('playerPreparingPlayback');
   String get pause => _t('pause');
   String get playbackSpeed => _t('playbackSpeed');
   String get hideDanmaku => _t('hideDanmaku');
   String get showDanmaku => _t('showDanmaku');
+  String get enterFullscreen => _t('enterFullscreen');
+  String get exitFullscreen => _t('exitFullscreen');
   String get fullscreenPlaceholder => _t('fullscreenPlaceholder');
   String get fullscreenNotImplemented => _t('fullscreenNotImplemented');
   String get nextEpisode => _t('nextEpisode');
+  String get loadingNextEpisode => _t('loadingNextEpisode');
   String get externalPlayer => _t('externalPlayer');
+  String get openingExternalPlayer => _t('openingExternalPlayer');
+  String get playerExitBusy => _t('playerExitBusy');
   String get externalPlayerPlaceholder => _t('externalPlayerPlaceholder');
   String get nextEpisodeNotImplemented => _t('nextEpisodeNotImplemented');
   String get nextEpisodeUnavailable => _t('nextEpisodeUnavailable');
@@ -364,14 +370,20 @@ const _localizedValues = {
     'downloadTaskCreated': '已创建下载任务',
     'playerNoPlayUrl': '未找到可播放线路',
     'playerReadyHint': '播放器预览已就绪',
+    'playerPreparingPlayback': '正在准备播放…',
     'pause': '暂停',
     'playbackSpeed': '播放速度',
     'hideDanmaku': '隐藏弹幕',
     'showDanmaku': '显示弹幕',
+    'enterFullscreen': '进入全屏',
+    'exitFullscreen': '退出全屏',
     'fullscreenPlaceholder': '全屏',
     'fullscreenNotImplemented': '全屏暂未实现。',
     'nextEpisode': '下一集',
+    'loadingNextEpisode': '正在切换到下一集…',
     'externalPlayer': '外部播放器',
+    'openingExternalPlayer': '正在打开外部播放器…',
+    'playerExitBusy': '当前播放操作尚未完成，请稍候后再离开。',
     'externalPlayerPlaceholder': '外部播放器占位',
     'nextEpisodeNotImplemented': '下一集暂未实现。',
     'nextEpisodeUnavailable': '当前已经是最后一集了。',
@@ -564,14 +576,21 @@ const _localizedValues = {
     'downloadTaskCreated': 'Download task created',
     'playerNoPlayUrl': 'No playable source found',
     'playerReadyHint': 'Playback preview ready',
+    'playerPreparingPlayback': 'Preparing playback...',
     'pause': 'Pause',
     'playbackSpeed': 'Playback speed',
     'hideDanmaku': 'Hide danmaku',
     'showDanmaku': 'Show danmaku',
+    'enterFullscreen': 'Enter fullscreen',
+    'exitFullscreen': 'Exit fullscreen',
     'fullscreenPlaceholder': 'Fullscreen',
     'fullscreenNotImplemented': 'Fullscreen is not implemented yet.',
     'nextEpisode': 'Next episode',
+    'loadingNextEpisode': 'Loading next episode...',
     'externalPlayer': 'External player',
+    'openingExternalPlayer': 'Opening external player...',
+    'playerExitBusy':
+        'Please wait for the current playback action to finish before leaving.',
     'externalPlayerPlaceholder': 'External player placeholder',
     'nextEpisodeNotImplemented': 'Next episode is not implemented yet.',
     'nextEpisodeUnavailable':
@@ -774,14 +793,20 @@ const _localizedValues = {
     'downloadTaskCreated': 'ダウンロードタスクを作成しました',
     'playerNoPlayUrl': '再生可能なソースが見つかりません',
     'playerReadyHint': '再生プレビューの準備完了',
+    'playerPreparingPlayback': '再生を準備中…',
     'pause': '一時停止',
     'playbackSpeed': '再生速度',
     'hideDanmaku': '弾幕を隠す',
     'showDanmaku': '弾幕を表示',
+    'enterFullscreen': '全画面で表示',
+    'exitFullscreen': '全画面を終了',
     'fullscreenPlaceholder': '全画面',
     'fullscreenNotImplemented': '全画面はまだ実装されていません。',
     'nextEpisode': '次のエピソード',
+    'loadingNextEpisode': '次のエピソードに切り替え中…',
     'externalPlayer': '外部プレイヤー',
+    'openingExternalPlayer': '外部プレイヤーを起動中…',
+    'playerExitBusy': '現在の再生操作が終わるまで、しばらく待ってから戻ってください。',
     'externalPlayerPlaceholder': '外部プレイヤー',
     'nextEpisodeNotImplemented': '次のエピソードはまだ実装されていません。',
     'nextEpisodeUnavailable': 'すでに最新の配信済みエピソードです。',

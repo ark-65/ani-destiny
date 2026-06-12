@@ -7,6 +7,22 @@
 ## [Unreleased]
 
 ### 🐛 Fixed
+- Fixed the player still letting back navigation leave the page while a next-episode switch or external-player handoff was still in flight; it now keeps users on the current player page and explains that the current playback action needs to finish first.
+- Fixed the player still allowing users to enter fullscreen while Next episode was loading; embedded playback now disables Enter fullscreen and explains that the switch is still in progress, while already-fullscreen playback still keeps Exit fullscreen available as the stable way back out.
+- Fixed the player still making next-episode, play, seek, playback-speed, download, and fullscreen controls look usable while an external-player handoff was already opening; those actions now share the same busy disabled state and explain that the handoff is still in progress.
+- Fixed the External player action still allowing repeated taps without a clear busy state during handoff; it now shows an opening state and stays disabled until the handoff finishes.
+- Fixed AniDestiny staying fullscreen or continuing local playback after a successful External player handoff; it now exits fullscreen and pauses in-app playback once another player takes over.
+- Fixed the player time display always wrapping as `MM:SS`, so videos longer than 59 minutes now show hours instead of making long-form playback look like it jumped backward.
+- Fixed the player still making play, seek, and playback-speed controls look usable before playback was ready or after load had already failed; those controls now stay disabled and explain whether playback is still preparing or has temporarily failed.
+- Fixed malformed playback URLs still falling through to the generic playback-failed state; they are now treated the same as empty links so the placeholder and primary controls consistently explain that no playable source is available.
+- Fixed the player leaving play, seek, and playback-speed controls tappable while Next episode was still loading; those core playback actions now enter the same busy disabled state and explain that the next episode is still loading, instead of implying the current stream can still be controlled.
+- Fixed the player still leaving play, seek, and playback-speed controls clickable when the current item had no playable source; those primary playback controls are now disabled together and explain that no playable source is available, instead of pretending playback can still continue.
+- Fixed the player still exposing the download action when the current episode had no playable URL at all; it now disables the button and explains that no playable source is available, instead of implying the episode can still be saved offline.
+- Fixed the player still allowing downloads and only showing generic control copy while Next episode was loading; switching state now consistently says it is loading the next episode and blocks downloads until the switch finishes.
+- Fixed the player External player action still looking tappable when the current stream needed request headers or lacked a handoffable playback URL; it now disables the action up front and explains why the stream cannot be sent to another app.
+- Fixed the External player action staying tappable while Next episode was still loading, so users can no longer hand the previous episode stream to another app mid-switch.
+- Fixed the player fullscreen button always using a generic `Fullscreen` tooltip, so it now tells users whether the control will enter or exit fullscreen.
+- Fixed fullscreen playback hiding the External player entry with the app bar; the fullscreen control bar now keeps the same action so users do not need to exit fullscreen first.
 - Fixed the player External player action only showing a placeholder snackbar; it now hands plain playback URLs to the system external player, explains when header-protected streams cannot be handed off yet, and reports a clear failure message when launch is unavailable.
 - Fixed the player playback-diagnostics sheet showing raw internal English state values; it now uses localized user-facing state labels.
 - Fixed playback diagnostics keeping the previous line details after a player load failure or empty play URL; the diagnostics snapshot now refreshes as soon as each load attempt starts.
@@ -46,6 +62,7 @@
 - Fixed batch cleanup still being available while an ended task action was already running, preventing overlapping cleanup flows and confusing feedback.
 
 ### 🔧 CI/CD
+- Fixed the player-page widget tests still tapping the old generic `Fullscreen` tooltip, so PR CI now follows the new `Enter fullscreen` copy after the fullscreen-label update.
 - Stabilized the schedule localization widget test across Flutter environments so `Sakura Anime` assertions no longer depend on `ExpansionTile` starting expanded.
 - Fixed Source Settings and episode-list widget tests waiting too little for localization setup, avoiding false text-assertion failures during PR validation.
 - Stabilized widget-test targeting for downloads cleanup and task actions so Flutter CI does not misread button structure differences as failures.

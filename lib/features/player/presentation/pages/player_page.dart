@@ -50,6 +50,7 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
   bool _isFullscreen = false;
   bool _isDisposed = false;
   bool _isSwitchingEpisode = false;
+  bool _isOpeningExternalPlayer = false;
 
   PlayerRouteArgs get _args => _currentArgs;
 
@@ -96,6 +97,18 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
   @override
   Widget build(BuildContext context) {
     final danmakuSettings = ref.watch(danmakuSettingsProvider);
+    final hasPlayableSource = _hasPlayableUrl();
+    final isRouteBusy = _isSwitchingEpisode || _isOpeningExternalPlayer;
+    final nextEpisodeTooltip = _isSwitchingEpisode
+        ? context.l10n.loadingNextEpisode
+        : _isOpeningExternalPlayer
+            ? context.l10n.openingExternalPlayer
+            : context.l10n.nextEpisode;
+    final externalPlayerTooltip = _externalPlayerTooltip(context);
+    final downloadTooltip = _downloadTooltip(context);
+    final canCreateDownload =
+        hasPlayableSource && !_isSwitchingEpisode && !_isOpeningExternalPlayer;
+    final canOpenExternalPlayer = _canOpenExternalPlayer();
     final danmakuItems = ref.watch(
       danmakuItemsProvider(
         (
@@ -109,10 +122,16 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
     );
 
     return PopScope<void>(
-      canPop: !_isFullscreen,
+      canPop: !_isFullscreen && !isRouteBusy,
       onPopInvokedWithResult: (didPop, result) {
-        if (didPop || !_isFullscreen) return;
-        unawaited(_exitFullscreen());
+        if (didPop) return;
+        if (_isFullscreen) {
+          unawaited(_exitFullscreen());
+          return;
+        }
+        if (isRouteBusy) {
+          _showSnackBar(context.l10n.playerExitBusy);
+        }
       },
       child: Scaffold(
         backgroundColor: Colors.black,
@@ -130,8 +149,8 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
                       icon: const Icon(Icons.bug_report_outlined),
                     ),
                   IconButton(
-                    tooltip: context.l10n.nextEpisode,
-                    onPressed: _isSwitchingEpisode
+                    tooltip: nextEpisodeTooltip,
+                    onPressed: _isSwitchingEpisode || _isOpeningExternalPlayer
                         ? null
                         : () => unawaited(_playNextEpisode()),
                     icon: _isSwitchingEpisode
@@ -142,9 +161,16 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
                         : const Icon(Icons.skip_next),
                   ),
                   IconButton(
-                    tooltip: context.l10n.externalPlayer,
-                    onPressed: () => unawaited(_openExternalPlayer()),
-                    icon: const Icon(Icons.open_in_new),
+                    tooltip: externalPlayerTooltip,
+                    onPressed: canOpenExternalPlayer
+                        ? () => unawaited(_openExternalPlayer())
+                        : null,
+                    icon: _isOpeningExternalPlayer
+                        ? const SizedBox.square(
+                            dimension: 18,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          )
+                        : const Icon(Icons.open_in_new),
                   ),
                 ],
               ),
@@ -198,6 +224,7 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
               color: Theme.of(context).colorScheme.surface,
               child: PlayerControls(
                 state: _state,
+                hasPlayableSource: hasPlayableSource,
                 danmakuEnabled: danmakuSettings.enabled,
                 onPlayPause: () {
                   if (_state.isPlaying) {
@@ -212,8 +239,17 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
                 onNextEpisode: _isSwitchingEpisode
                     ? null
                     : () => unawaited(_playNextEpisode()),
-                onDownload: () => unawaited(_createDownload()),
-                onToggleFullscreen: () => unawaited(_toggleFullscreen()),
+                onOpenExternalPlayer: canOpenExternalPlayer
+                    ? () => unawaited(_openExternalPlayer())
+                    : null,
+                externalPlayerTooltip: externalPlayerTooltip,
+                downloadTooltip: downloadTooltip,
+                onDownload: canCreateDownload
+                    ? () => unawaited(_createDownload())
+                    : null,
+                onToggleFullscreen: _isOpeningExternalPlayer
+                    ? null
+                    : () => unawaited(_toggleFullscreen()),
                 onToggleDanmaku: () {
                   ref.read(danmakuSettingsProvider.notifier).state =
                       danmakuSettings.copyWith(
@@ -222,12 +258,53 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
                 },
                 isFullscreen: _isFullscreen,
                 isSwitchingEpisode: _isSwitchingEpisode,
+                isOpeningExternalPlayer: _isOpeningExternalPlayer,
               ),
             ),
           ],
         ),
       ),
     );
+  }
+
+  bool _canOpenExternalPlayer() {
+    if (!_hasPlayableUrl() || _isSwitchingEpisode || _isOpeningExternalPlayer) {
+      return false;
+    }
+    return _args.playHeaders.isEmpty;
+  }
+
+  bool _hasPlayableUrl() {
+    return _isPlayableUrl(_args.playUrl);
+  }
+
+  String _externalPlayerTooltip(BuildContext context) {
+    if (_isOpeningExternalPlayer) {
+      return context.l10n.openingExternalPlayer;
+    }
+    if (_isSwitchingEpisode) {
+      return context.l10n.loadingNextEpisode;
+    }
+    if (!_hasPlayableUrl()) {
+      return context.l10n.noPlayableSourceFound;
+    }
+    if (_args.playHeaders.isNotEmpty) {
+      return context.l10n.externalPlayerHeadersUnsupported;
+    }
+    return context.l10n.externalPlayer;
+  }
+
+  String _downloadTooltip(BuildContext context) {
+    if (_isOpeningExternalPlayer) {
+      return context.l10n.openingExternalPlayer;
+    }
+    if (_isSwitchingEpisode) {
+      return context.l10n.loadingNextEpisode;
+    }
+    if (!_hasPlayableUrl()) {
+      return context.l10n.noPlayableSourceFound;
+    }
+    return context.l10n.download;
   }
 
   Future<void> _toggleFullscreen() async {
@@ -423,7 +500,9 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
     final routeArgs = args ?? _args;
     _recordPlaybackDiagnostics(args: routeArgs);
     try {
-      if (routeArgs.playUrl.trim().isEmpty) {
+      if (!_isPlayableUrl(routeArgs.playUrl)) {
+        await Future<void>.delayed(Duration.zero);
+        if (!mounted) return;
         setState(
           () => _state = _state.copyWith(
             isBuffering: false,
@@ -469,7 +548,7 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
   }
 
   Future<void> _playNextEpisode() async {
-    if (_isSwitchingEpisode) return;
+    if (_isSwitchingEpisode || _isOpeningExternalPlayer) return;
 
     final currentArgs = _args;
     final shouldResumePlayback = _state.isPlaying;
@@ -552,6 +631,7 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
   }
 
   Future<void> _openExternalPlayer() async {
+    if (_isOpeningExternalPlayer) return;
     final rawUrl = _args.playUrl.trim();
     final uri = Uri.tryParse(rawUrl);
     if (rawUrl.isEmpty || uri == null || !uri.hasScheme) {
@@ -563,13 +643,29 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
       return;
     }
 
+    setState(() => _isOpeningExternalPlayer = true);
     try {
       final launched = await ref.read(externalPlayerLauncherProvider)(uri);
-      if (!mounted || launched) return;
-      _showSnackBar(context.l10n.externalPlayerUnavailable);
+      if (!mounted) return;
+      if (!launched) {
+        _showSnackBar(context.l10n.externalPlayerUnavailable);
+        return;
+      }
+
+      await _saveHistory(force: true);
+      if (_state.isPlaying) {
+        await _controller.pause();
+      }
+      if (_isFullscreen) {
+        await _exitFullscreen();
+      }
     } catch (_) {
       if (!mounted) return;
       _showSnackBar(context.l10n.externalPlayerUnavailable);
+    } finally {
+      if (mounted) {
+        setState(() => _isOpeningExternalPlayer = false);
+      }
     }
   }
 
@@ -578,6 +674,12 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
       SnackBar(content: Text(message)),
     );
   }
+}
+
+bool _isPlayableUrl(String value) {
+  final rawUrl = value.trim();
+  final uri = Uri.tryParse(rawUrl);
+  return rawUrl.isNotEmpty && uri != null && uri.hasScheme;
 }
 
 class _DiagnosticRow extends StatelessWidget {
