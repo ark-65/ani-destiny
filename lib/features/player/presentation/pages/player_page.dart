@@ -743,6 +743,9 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
     if (!_canRetryPlayback() || _isRetryingPlayback) return;
 
     final playbackSpeed = _state.speed;
+    final resumePosition =
+        _state.position > Duration.zero ? _state.position : null;
+    final retryArgs = _args.copyWith(initialPosition: resumePosition);
     setState(() {
       _isRetryingPlayback = true;
       _state = PlayerState.initial().copyWith(
@@ -751,7 +754,7 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
     });
     try {
       await _loadPlayer(
-        args: _args,
+        args: retryArgs,
         autoplay: true,
         playbackSpeed: playbackSpeed,
       );
