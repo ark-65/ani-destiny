@@ -208,6 +208,50 @@ void main() {
     expect(find.text('error'), findsNothing);
   });
 
+  testWidgets('playback failure card can copy a sanitized diagnostics summary',
+      (
+    tester,
+  ) async {
+    String? copiedText;
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMethodCallHandler(SystemChannels.platform, (call) async {
+      if (call.method == 'Clipboard.setData') {
+        copiedText =
+            (call.arguments as Map<Object?, Object?>)['text'] as String?;
+      }
+      return null;
+    });
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          playerRepositoryProvider.overrideWithValue(
+            const _ThrowingPlayerRepository(),
+          ),
+          historyRepositoryProvider.overrideWithValue(_FakeHistoryRepository()),
+          danmakuRepositoryProvider.overrideWithValue(_FakeDanmakuRepository()),
+        ],
+        child: _buildPlayerApp(_failingArgs),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Copy diagnostics'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Diagnostics copied'), findsOneWidget);
+    expect(
+      copiedText,
+      'Playback diagnostics summary\n'
+      'Source: Sakura Anime\n'
+      'Line: Broken Line\n'
+      'URL type: m3u8\n'
+      'URL: https://cdn.example.test/.../broken.m3u8\n'
+      'Headers: Referer\n'
+      'State: Failed',
+    );
+  });
+
   testWidgets('playback failure card can retry the current source',
       (tester) async {
     final repository = _RetryablePlayerRepository();

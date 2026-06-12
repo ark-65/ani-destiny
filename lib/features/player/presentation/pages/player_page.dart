@@ -231,6 +231,16 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
                                         label: Text(context.l10n.retry),
                                       ),
                                     TextButton.icon(
+                                      onPressed: () =>
+                                          unawaited(_copyPlaybackDiagnostics()),
+                                      icon: const Icon(
+                                        Icons.content_copy_outlined,
+                                      ),
+                                      label: Text(
+                                        context.l10n.copyDiagnostics,
+                                      ),
+                                    ),
+                                    TextButton.icon(
                                       onPressed: _showPlaybackDiagnostics,
                                       icon: const Icon(
                                         Icons.bug_report_outlined,
@@ -401,44 +411,60 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
       showDragHandle: true,
       builder: (context) {
         return SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  context.l10n.playbackDiagnostics,
-                  style: Theme.of(context).textTheme.titleLarge,
-                ),
-                const SizedBox(height: 12),
-                _DiagnosticRow(
-                  label: context.l10n.playbackDiagnosticSource,
-                  value: context.l10n.sourceDisplayLabel(diagnostics.sourceId),
-                ),
-                _DiagnosticRow(
-                  label: context.l10n.playbackDiagnosticLine,
-                  value: diagnostics.playSourceTitle ?? '-',
-                ),
-                _DiagnosticRow(
-                  label: context.l10n.playbackDiagnosticUrlType,
-                  value: diagnostics.urlType,
-                ),
-                _DiagnosticRow(
-                  label: context.l10n.playbackDiagnosticUrl,
-                  value: diagnostics.sanitizedUrl,
-                ),
-                _DiagnosticRow(
-                  label: context.l10n.playbackDiagnosticHeaders,
-                  value: diagnostics.headerKeys.isEmpty
-                      ? '-'
-                      : diagnostics.headerKeys.join(', '),
-                ),
-                _DiagnosticRow(
-                  label: context.l10n.playbackDiagnosticState,
-                  value: _stateLabel(),
-                ),
-              ],
+          child: SingleChildScrollView(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    context.l10n.playbackDiagnostics,
+                    style: Theme.of(context).textTheme.titleLarge,
+                  ),
+                  const SizedBox(height: 12),
+                  _DiagnosticRow(
+                    label: context.l10n.playbackDiagnosticSource,
+                    value:
+                        context.l10n.sourceDisplayLabel(diagnostics.sourceId),
+                  ),
+                  _DiagnosticRow(
+                    label: context.l10n.playbackDiagnosticLine,
+                    value: diagnostics.playSourceTitle ?? '-',
+                  ),
+                  _DiagnosticRow(
+                    label: context.l10n.playbackDiagnosticUrlType,
+                    value: diagnostics.urlType,
+                  ),
+                  _DiagnosticRow(
+                    label: context.l10n.playbackDiagnosticUrl,
+                    value: diagnostics.sanitizedUrl,
+                  ),
+                  _DiagnosticRow(
+                    label: context.l10n.playbackDiagnosticHeaders,
+                    value: diagnostics.headerKeys.isEmpty
+                        ? '-'
+                        : diagnostics.headerKeys.join(', '),
+                  ),
+                  _DiagnosticRow(
+                    label: context.l10n.playbackDiagnosticState,
+                    value: _stateLabel(),
+                  ),
+                  const SizedBox(height: 12),
+                  Text(
+                    context.l10n.diagnosticsPrivacyNote,
+                    style: Theme.of(context).textTheme.bodySmall,
+                  ),
+                  const SizedBox(height: 12),
+                  FilledButton.icon(
+                    onPressed: () => unawaited(
+                      _copyPlaybackDiagnostics(diagnostics: diagnostics),
+                    ),
+                    icon: const Icon(Icons.content_copy_outlined),
+                    label: Text(context.l10n.copyDiagnostics),
+                  ),
+                ],
+              ),
             ),
           ),
         );
@@ -737,6 +763,41 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text(message)),
     );
+  }
+
+  Future<void> _copyPlaybackDiagnostics({
+    PlaybackDiagnostics? diagnostics,
+  }) async {
+    final snapshot = diagnostics ?? _recordPlaybackDiagnostics();
+    final summary = _playbackDiagnosticsSummary(snapshot);
+
+    try {
+      await Clipboard.setData(ClipboardData(text: summary));
+      if (!mounted) return;
+      _showSnackBar(context.l10n.diagnosticsCopied);
+    } catch (_) {
+      if (!mounted) return;
+      _showSnackBar(context.l10n.diagnosticsCopyFailed);
+    }
+  }
+
+  String _playbackDiagnosticsSummary(PlaybackDiagnostics diagnostics) {
+    final lineTitle = diagnostics.playSourceTitle?.trim();
+    final headers = diagnostics.headerKeys.isEmpty
+        ? '-'
+        : diagnostics.headerKeys.join(', ');
+
+    return [
+      context.l10n.playbackDiagnosticsSummary,
+      '${context.l10n.playbackDiagnosticSource}: '
+          '${context.l10n.sourceDisplayLabel(diagnostics.sourceId)}',
+      '${context.l10n.playbackDiagnosticLine}: '
+          '${lineTitle == null || lineTitle.isEmpty ? '-' : lineTitle}',
+      '${context.l10n.playbackDiagnosticUrlType}: ${diagnostics.urlType}',
+      '${context.l10n.playbackDiagnosticUrl}: ${diagnostics.sanitizedUrl}',
+      '${context.l10n.playbackDiagnosticHeaders}: $headers',
+      '${context.l10n.playbackDiagnosticState}: ${_stateLabel()}',
+    ].join('\n');
   }
 
   Future<void> _retryPlayback() async {

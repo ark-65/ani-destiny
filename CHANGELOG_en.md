@@ -7,6 +7,7 @@
 ## [Unreleased]
 
 ### 🐛 Fixed
+- Fixed the player failure state already exposing Playback diagnostics without offering any direct way to take away a sanitized summary; the error card and diagnostics sheet now both provide Copy diagnostics so users can share the current source, line, and playback state immediately.
 - Fixed playback retries after an in-progress failure restarting from an older position or the beginning; retry now resumes from the current known playback position so temporary interruptions feel like continuing the same episode instead of starting over.
 - Fixed the player already locking its controls during `Retrying playback...` while still letting system back leave the page; retry recovery now counts as a route-level busy transition so users do not exit before the current recovery path finishes.
 - Fixed the player starting a retry after a temporary playback failure while still making next-episode, external-player, download, and enter-fullscreen actions look usable; retry now puts those controls into a shared `Retrying playback...` busy state so the current recovery path stays unambiguous.
