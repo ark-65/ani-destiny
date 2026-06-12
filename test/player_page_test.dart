@@ -252,6 +252,49 @@ void main() {
     );
   });
 
+  testWidgets('playback failure UI stays usable on narrow screens', (
+    tester,
+  ) async {
+    tester.view.devicePixelRatio = 1;
+    tester.view.physicalSize = const Size(320, 300);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    addTearDown(tester.view.resetPhysicalSize);
+
+    String? copiedText;
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMethodCallHandler(SystemChannels.platform, (call) async {
+      if (call.method == 'Clipboard.setData') {
+        copiedText =
+            (call.arguments as Map<Object?, Object?>)['text'] as String?;
+      }
+      return null;
+    });
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          playerRepositoryProvider.overrideWithValue(
+            const _ThrowingPlayerRepository(),
+          ),
+          historyRepositoryProvider.overrideWithValue(_FakeHistoryRepository()),
+          danmakuRepositoryProvider.overrideWithValue(_FakeDanmakuRepository()),
+        ],
+        child: _buildPlayerApp(_failingArgs),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(tester.takeException(), isNull);
+    final copyButton = find.byIcon(Icons.content_copy_outlined).first;
+    await tester.ensureVisible(copyButton);
+    await tester.tap(copyButton);
+    await tester.pumpAndSettle();
+
+    expect(find.text('Diagnostics copied'), findsOneWidget);
+    expect(copiedText, isNotNull);
+    expect(find.text('Playback diagnostics'), findsOneWidget);
+  });
+
   testWidgets('playback failure card can retry the current source',
       (tester) async {
     final repository = _RetryablePlayerRepository();

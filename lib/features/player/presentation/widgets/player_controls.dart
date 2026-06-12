@@ -118,11 +118,13 @@ class PlayerControls extends StatelessWidget {
                   icon: Icon(state.isPlaying ? Icons.pause : Icons.play_arrow),
                 ),
                 const SizedBox(width: 8),
-                Text(
-                  '${_formatDuration(state.position)} / ${_formatDuration(state.duration)}',
-                  style: Theme.of(context).textTheme.bodySmall,
+                Expanded(
+                  child: Text(
+                    '${_formatDuration(state.position)} / ${_formatDuration(state.duration)}',
+                    style: Theme.of(context).textTheme.bodySmall,
+                    overflow: TextOverflow.ellipsis,
+                  ),
                 ),
-                const Spacer(),
                 IconButton(
                   tooltip: playbackActionsEnabled
                       ? context.l10n.playbackSpeed
@@ -130,54 +132,66 @@ class PlayerControls extends StatelessWidget {
                   onPressed: playbackActionsEnabled ? onSpeed : null,
                   icon: const Icon(Icons.speed),
                 ),
-                if (isFullscreen)
-                  IconButton(
-                    tooltip: nextEpisodeTooltip,
-                    onPressed: isInteractionLocked ? null : onNextEpisode,
-                    icon: isSwitchingEpisode
-                        ? const SizedBox.square(
-                            dimension: 18,
-                            child: CircularProgressIndicator(strokeWidth: 2),
-                          )
-                        : const Icon(Icons.skip_next),
-                  ),
-                if (isFullscreen)
-                  IconButton(
-                    tooltip: externalPlayerTooltip,
-                    onPressed: isSwitchingEpisode || isOpeningExternalPlayer
-                        ? null
-                        : onOpenExternalPlayer,
-                    icon: isOpeningExternalPlayer
-                        ? const SizedBox.square(
-                            dimension: 18,
-                            child: CircularProgressIndicator(strokeWidth: 2),
-                          )
-                        : const Icon(Icons.open_in_new),
-                  ),
-                IconButton(
-                  tooltip: danmakuEnabled
-                      ? context.l10n.hideDanmaku
-                      : context.l10n.showDanmaku,
-                  onPressed: onToggleDanmaku,
-                  icon: Icon(
-                    danmakuEnabled
-                        ? Icons.subtitles
-                        : Icons.subtitles_off_outlined,
-                  ),
-                ),
-                IconButton(
-                  tooltip: resolvedDownloadTooltip,
-                  onPressed: isInteractionLocked ? null : onDownload,
-                  icon: const Icon(Icons.download_outlined),
-                ),
-                IconButton(
-                  tooltip: fullscreenTooltip,
-                  onPressed: canToggleFullscreen ? onToggleFullscreen : null,
-                  icon: Icon(
-                    isFullscreen ? Icons.fullscreen_exit : Icons.fullscreen,
-                  ),
-                ),
               ],
+            ),
+            const SizedBox(height: 4),
+            Align(
+              alignment: Alignment.centerRight,
+              child: Wrap(
+                spacing: 4,
+                runSpacing: 4,
+                alignment: WrapAlignment.end,
+                crossAxisAlignment: WrapCrossAlignment.center,
+                children: [
+                  if (isFullscreen)
+                    IconButton(
+                      tooltip: nextEpisodeTooltip,
+                      onPressed: isInteractionLocked ? null : onNextEpisode,
+                      icon: isSwitchingEpisode
+                          ? const SizedBox.square(
+                              dimension: 18,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            )
+                          : const Icon(Icons.skip_next),
+                    ),
+                  if (isFullscreen)
+                    IconButton(
+                      tooltip: externalPlayerTooltip,
+                      onPressed: isSwitchingEpisode || isOpeningExternalPlayer
+                          ? null
+                          : onOpenExternalPlayer,
+                      icon: isOpeningExternalPlayer
+                          ? const SizedBox.square(
+                              dimension: 18,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            )
+                          : const Icon(Icons.open_in_new),
+                    ),
+                  IconButton(
+                    tooltip: danmakuEnabled
+                        ? context.l10n.hideDanmaku
+                        : context.l10n.showDanmaku,
+                    onPressed: onToggleDanmaku,
+                    icon: Icon(
+                      danmakuEnabled
+                          ? Icons.subtitles
+                          : Icons.subtitles_off_outlined,
+                    ),
+                  ),
+                  IconButton(
+                    tooltip: resolvedDownloadTooltip,
+                    onPressed: isInteractionLocked ? null : onDownload,
+                    icon: const Icon(Icons.download_outlined),
+                  ),
+                  IconButton(
+                    tooltip: fullscreenTooltip,
+                    onPressed: canToggleFullscreen ? onToggleFullscreen : null,
+                    icon: Icon(
+                      isFullscreen ? Icons.fullscreen_exit : Icons.fullscreen,
+                    ),
+                  ),
+                ],
+              ),
             ),
           ],
         ),

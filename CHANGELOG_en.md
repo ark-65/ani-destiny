@@ -7,6 +7,7 @@
 ## [Unreleased]
 
 ### 🐛 Fixed
+- Fixed constrained player layouts on narrow or short screens from breaking both the failure card and bottom controls; the error card now scrolls and the controls wrap to the available width so recovery actions like Copy diagnostics stay reachable.
 - Fixed the player failure state already exposing Playback diagnostics without offering any direct way to take away a sanitized summary; the error card and diagnostics sheet now both provide Copy diagnostics so users can share the current source, line, and playback state immediately.
 - Fixed playback retries after an in-progress failure restarting from an older position or the beginning; retry now resumes from the current known playback position so temporary interruptions feel like continuing the same episode instead of starting over.
 - Fixed the player already locking its controls during `Retrying playback...` while still letting system back leave the page; retry recovery now counts as a route-level busy transition so users do not exit before the current recovery path finishes.

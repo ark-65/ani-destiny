@@ -36,7 +36,7 @@ class PlayerSurface extends StatelessWidget {
     return ColoredBox(
       color: Colors.black,
       child: Center(
-        child: Padding(
+        child: SingleChildScrollView(
           padding: const EdgeInsets.all(24),
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -59,6 +59,7 @@ class PlayerSurface extends StatelessWidget {
                 _hasPlayableUrl(playUrl)
                     ? context.l10n.playerReadyHint
                     : context.l10n.playerNoPlayUrl,
+                textAlign: TextAlign.center,
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
                       color: Colors.white70,
                     ),

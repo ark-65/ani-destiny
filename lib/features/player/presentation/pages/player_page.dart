@@ -197,61 +197,68 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
                   if (_state.isBuffering)
                     const Center(child: CircularProgressIndicator()),
                   if (_state.errorMessage != null)
-                    Center(
-                      child: ConstrainedBox(
-                        constraints: const BoxConstraints(maxWidth: 420),
-                        child: Card(
-                          child: Padding(
-                            padding: const EdgeInsets.all(16),
-                            child: Column(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Text(
-                                  _playbackErrorMessage(),
-                                  textAlign: TextAlign.center,
-                                ),
-                                const SizedBox(height: 12),
-                                _PlaybackIssueContext(
-                                  sourceLabel: context.l10n.sourceDisplayLabel(
-                                    _args.sourceId,
-                                  ),
-                                  playSourceTitle: _args.playSourceTitle,
-                                ),
-                                const SizedBox(height: 12),
-                                Wrap(
-                                  alignment: WrapAlignment.center,
-                                  spacing: 8,
-                                  runSpacing: 8,
+                    SafeArea(
+                      child: Center(
+                        child: SingleChildScrollView(
+                          padding: const EdgeInsets.all(16),
+                          child: ConstrainedBox(
+                            constraints: const BoxConstraints(maxWidth: 420),
+                            child: Card(
+                              child: Padding(
+                                padding: const EdgeInsets.all(16),
+                                child: Column(
+                                  mainAxisSize: MainAxisSize.min,
                                   children: [
-                                    if (_canRetryPlayback())
-                                      TextButton.icon(
-                                        onPressed: () =>
-                                            unawaited(_retryPlayback()),
-                                        icon: const Icon(Icons.refresh),
-                                        label: Text(context.l10n.retry),
-                                      ),
-                                    TextButton.icon(
-                                      onPressed: () =>
-                                          unawaited(_copyPlaybackDiagnostics()),
-                                      icon: const Icon(
-                                        Icons.content_copy_outlined,
-                                      ),
-                                      label: Text(
-                                        context.l10n.copyDiagnostics,
-                                      ),
+                                    Text(
+                                      _playbackErrorMessage(),
+                                      textAlign: TextAlign.center,
                                     ),
-                                    TextButton.icon(
-                                      onPressed: _showPlaybackDiagnostics,
-                                      icon: const Icon(
-                                        Icons.bug_report_outlined,
+                                    const SizedBox(height: 12),
+                                    _PlaybackIssueContext(
+                                      sourceLabel:
+                                          context.l10n.sourceDisplayLabel(
+                                        _args.sourceId,
                                       ),
-                                      label: Text(
-                                        context.l10n.playbackDiagnostics,
-                                      ),
+                                      playSourceTitle: _args.playSourceTitle,
+                                    ),
+                                    const SizedBox(height: 12),
+                                    Wrap(
+                                      alignment: WrapAlignment.center,
+                                      spacing: 8,
+                                      runSpacing: 8,
+                                      children: [
+                                        if (_canRetryPlayback())
+                                          TextButton.icon(
+                                            onPressed: () =>
+                                                unawaited(_retryPlayback()),
+                                            icon: const Icon(Icons.refresh),
+                                            label: Text(context.l10n.retry),
+                                          ),
+                                        TextButton.icon(
+                                          onPressed: () => unawaited(
+                                            _copyPlaybackDiagnostics(),
+                                          ),
+                                          icon: const Icon(
+                                            Icons.content_copy_outlined,
+                                          ),
+                                          label: Text(
+                                            context.l10n.copyDiagnostics,
+                                          ),
+                                        ),
+                                        TextButton.icon(
+                                          onPressed: _showPlaybackDiagnostics,
+                                          icon: const Icon(
+                                            Icons.bug_report_outlined,
+                                          ),
+                                          label: Text(
+                                            context.l10n.playbackDiagnostics,
+                                          ),
+                                        ),
+                                      ],
                                     ),
                                   ],
                                 ),
-                              ],
+                              ),
                             ),
                           ),
                         ),
