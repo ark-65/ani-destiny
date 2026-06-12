@@ -260,6 +260,31 @@ void main() {
     );
   });
 
+  testWidgets(
+      'playback failure card explains when external player handoff is blocked by headers',
+      (tester) async {
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          playerRepositoryProvider.overrideWithValue(
+            const _ThrowingPlayerRepository(),
+          ),
+          historyRepositoryProvider.overrideWithValue(_FakeHistoryRepository()),
+          danmakuRepositoryProvider.overrideWithValue(_FakeDanmakuRepository()),
+        ],
+        child: _buildPlayerApp(_failingArgs),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(
+      find.text(
+        'This stream needs request headers, so it cannot be opened in an external player yet.',
+      ),
+      findsOneWidget,
+    );
+  });
+
   testWidgets('playback failure UI stays usable on narrow screens', (
     tester,
   ) async {

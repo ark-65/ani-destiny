@@ -7,6 +7,7 @@
 ## [Unreleased]
 
 ### 🐛 Fixed
+- Fixed the player failure card hiding the External player limitation inside a disabled button state when the current stream still depended on request headers; it now explains the handoff constraint directly in the failure state so users do not have to guess why another app cannot take over yet.
 - Fixed player failure recovery and copied diagnostics still missing the anime and episode context, so the failure card, playback diagnostics, and feedback package now all carry the current title and episode for more precise user reports.
 - Fixed the player failure card already offering retry and diagnostics while still hiding the External player escape hatch in the surrounding controls; when the current stream can really be handed off, the failure state now exposes that action directly and keeps a clear busy state during handoff.
 - Fixed constrained player layouts on narrow or short screens from breaking both the failure card and bottom controls; the error card now scrolls and the controls wrap to the available width so recovery actions like Copy diagnostics stay reachable.

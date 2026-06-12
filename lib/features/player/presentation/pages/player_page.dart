@@ -281,6 +281,22 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
                                         ),
                                       ],
                                     ),
+                                    if (_hasPlayableUrl() &&
+                                        _args.playHeaders.isNotEmpty) ...[
+                                      const SizedBox(height: 8),
+                                      Text(
+                                        context.l10n
+                                            .externalPlayerHeadersUnsupported,
+                                        textAlign: TextAlign.center,
+                                        style: Theme.of(
+                                          context,
+                                        ).textTheme.bodySmall?.copyWith(
+                                              color: Theme.of(context)
+                                                  .colorScheme
+                                                  .onSurfaceVariant,
+                                            ),
+                                      ),
+                                    ],
                                   ],
                                 ),
                               ),
