@@ -277,6 +277,8 @@ void main() {
   test('PlaybackDiagnosticsBuilder hides query tokens and keeps header keys',
       () {
     final diagnostics = const PlaybackDiagnosticsBuilder().build(
+      animeTitle: 'Anime 1',
+      episodeTitle: 'Episode 1',
       sourceId: 'sakura',
       playSourceTitle: 'Line 1',
       playUrl: 'https://cdn.example.test/path/video.m3u8?token=secret&x=1',

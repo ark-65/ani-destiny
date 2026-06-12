@@ -177,6 +177,8 @@ void main() {
       ),
       findsOneWidget,
     );
+    expect(find.text('Anime: Anime 1'), findsOneWidget);
+    expect(find.text('Episode: Episode 2'), findsOneWidget);
     expect(find.text('Source: Sakura Anime'), findsOneWidget);
     expect(find.text('Line: Broken Line'), findsOneWidget);
     expect(find.text('Playback diagnostics'), findsOneWidget);
@@ -203,6 +205,10 @@ void main() {
     await tester.tap(find.byTooltip('Playback diagnostics'));
     await tester.pumpAndSettle();
 
+    expect(find.text('Anime'), findsOneWidget);
+    expect(find.text('Anime 1'), findsAtLeastNWidgets(1));
+    expect(find.text('Episode'), findsWidgets);
+    expect(find.text('Episode 2'), findsAtLeastNWidgets(1));
     expect(find.text('State'), findsOneWidget);
     expect(find.text('Failed'), findsOneWidget);
     expect(find.text('error'), findsNothing);
@@ -243,6 +249,8 @@ void main() {
     expect(
       copiedText,
       'Playback diagnostics summary\n'
+      'Anime: Anime 1\n'
+      'Episode: Episode 2\n'
       'Source: Sakura Anime\n'
       'Line: Broken Line\n'
       'URL type: m3u8\n'
@@ -912,6 +920,8 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('No playable source found'), findsOneWidget);
+    expect(find.text('Anime: Anime 1'), findsOneWidget);
+    expect(find.text('Episode: Episode 3'), findsOneWidget);
     expect(find.text('Source: Sakura Anime'), findsOneWidget);
     expect(find.text('Line: Missing Line'), findsOneWidget);
     expect(find.text('Playback diagnostics'), findsOneWidget);

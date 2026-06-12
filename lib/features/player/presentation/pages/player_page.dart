@@ -215,6 +215,8 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
                                     ),
                                     const SizedBox(height: 12),
                                     _PlaybackIssueContext(
+                                      animeTitle: _args.animeTitle,
+                                      episodeTitle: _args.episodeTitle,
                                       sourceLabel:
                                           context.l10n.sourceDisplayLabel(
                                         _args.sourceId,
@@ -458,6 +460,14 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
                   ),
                   const SizedBox(height: 12),
                   _DiagnosticRow(
+                    label: context.l10n.playbackDiagnosticAnime,
+                    value: _diagnosticContextValue(diagnostics.animeTitle),
+                  ),
+                  _DiagnosticRow(
+                    label: context.l10n.playbackDiagnosticEpisode,
+                    value: _diagnosticContextValue(diagnostics.episodeTitle),
+                  ),
+                  _DiagnosticRow(
                     label: context.l10n.playbackDiagnosticSource,
                     value:
                         context.l10n.sourceDisplayLabel(diagnostics.sourceId),
@@ -511,6 +521,8 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
   }) {
     final routeArgs = args ?? _args;
     final diagnostics = const PlaybackDiagnosticsBuilder().build(
+      animeTitle: routeArgs.animeTitle,
+      episodeTitle: routeArgs.episodeTitle,
       sourceId: routeArgs.sourceId,
       playSourceTitle: routeArgs.playSourceTitle,
       playUrl: routeArgs.playUrl,
@@ -823,6 +835,10 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
 
     return [
       context.l10n.playbackDiagnosticsSummary,
+      '${context.l10n.playbackDiagnosticAnime}: '
+          '${_diagnosticContextValue(diagnostics.animeTitle)}',
+      '${context.l10n.playbackDiagnosticEpisode}: '
+          '${_diagnosticContextValue(diagnostics.episodeTitle)}',
       '${context.l10n.playbackDiagnosticSource}: '
           '${context.l10n.sourceDisplayLabel(diagnostics.sourceId)}',
       '${context.l10n.playbackDiagnosticLine}: '
@@ -832,6 +848,14 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
       '${context.l10n.playbackDiagnosticHeaders}: $headers',
       '${context.l10n.playbackDiagnosticState}: ${_stateLabel()}',
     ].join('\n');
+  }
+
+  String _diagnosticContextValue(String? value) {
+    final trimmed = value?.trim();
+    if (trimmed == null || trimmed.isEmpty) {
+      return '-';
+    }
+    return trimmed;
   }
 
   Future<void> _retryPlayback() async {
@@ -899,26 +923,46 @@ class _DiagnosticRow extends StatelessWidget {
 
 class _PlaybackIssueContext extends StatelessWidget {
   const _PlaybackIssueContext({
+    required this.animeTitle,
+    required this.episodeTitle,
     required this.sourceLabel,
     required this.playSourceTitle,
   });
 
+  final String animeTitle;
+  final String episodeTitle;
   final String sourceLabel;
   final String? playSourceTitle;
 
   @override
   Widget build(BuildContext context) {
+    final animeTextStyle = Theme.of(context).textTheme.bodySmall?.copyWith(
+          fontWeight: FontWeight.w600,
+        );
+    final episodeTextStyle = Theme.of(context).textTheme.bodySmall?.copyWith(
+          color: Theme.of(context).colorScheme.onSurfaceVariant,
+        );
+    final sourceTextStyle = episodeTextStyle;
+    final lineTextStyle = episodeTextStyle;
     final lineTitle = playSourceTitle?.trim();
-    final sourceTextStyle = Theme.of(context).textTheme.bodySmall?.copyWith(
-          color: Theme.of(context).colorScheme.onSurfaceVariant,
-        );
-    final lineTextStyle = Theme.of(context).textTheme.bodySmall?.copyWith(
-          color: Theme.of(context).colorScheme.onSurfaceVariant,
-        );
-
+    final episodeLabel =
+        episodeTitle.trim().isEmpty ? '-' : episodeTitle.trim();
+    final animeLabel = animeTitle.trim().isEmpty ? '-' : animeTitle.trim();
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
+        Text(
+          '${context.l10n.playbackDiagnosticAnime}: $animeLabel',
+          textAlign: TextAlign.center,
+          style: animeTextStyle,
+        ),
+        const SizedBox(height: 4),
+        Text(
+          '${context.l10n.playbackDiagnosticEpisode}: $episodeLabel',
+          textAlign: TextAlign.center,
+          style: episodeTextStyle,
+        ),
+        const SizedBox(height: 8),
         Text(
           '${context.l10n.playbackDiagnosticSource}: $sourceLabel',
           textAlign: TextAlign.center,

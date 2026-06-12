@@ -45,6 +45,8 @@ void main() {
         ),
       ],
       playbackDiagnostics: const PlaybackDiagnostics(
+        animeTitle: 'Anime',
+        episodeTitle: 'Episode 1',
         sourceId: 'sakura',
         playSourceTitle: 'Line 1',
         urlType: 'm3u8',
@@ -120,6 +122,8 @@ void main() {
         ),
       ],
       playbackDiagnostics: const PlaybackDiagnostics(
+        animeTitle: 'Anime',
+        episodeTitle: 'Episode 1',
         sourceId: 'sakura',
         playSourceTitle: 'Line 1',
         urlType: 'm3u8',
@@ -139,6 +143,8 @@ void main() {
     expect(markdown, contains('- Sakura Anime: healthy, failures=0'));
     expect(markdown, contains('detail: Sakura Anime -> Mock Anime Source'));
     expect(markdown, contains('- Sakura Anime/detail: loaded'));
+    expect(markdown, contains('- Anime: Anime'));
+    expect(markdown, contains('- Episode: Episode 1'));
     expect(markdown, contains('- Source: Sakura Anime'));
     expect(markdown, isNot(contains('- Current source: sakura')));
     expect(markdown, isNot(contains('- sakura: healthy, failures=0')));

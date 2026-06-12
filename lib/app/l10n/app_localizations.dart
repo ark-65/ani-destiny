@@ -152,6 +152,8 @@ class AppLocalizations {
   String get externalPlayerUnavailable => _t('externalPlayerUnavailable');
   String get externalPlayerNotImplemented => _t('externalPlayerNotImplemented');
   String get playbackDiagnostics => _t('playbackDiagnostics');
+  String get playbackDiagnosticAnime => _t('playbackDiagnosticAnime');
+  String get playbackDiagnosticEpisode => _t('playbackDiagnosticEpisode');
   String get playbackDiagnosticSource => _t('playbackDiagnosticSource');
   String get playbackDiagnosticLine => _t('playbackDiagnosticLine');
   String get playbackDiagnosticUrlType => _t('playbackDiagnosticUrlType');
@@ -393,6 +395,8 @@ const _localizedValues = {
     'externalPlayerUnavailable': '暂时无法交给外部播放器打开，请稍后重试。',
     'externalPlayerNotImplemented': '外部播放器暂未实现。',
     'playbackDiagnostics': '播放诊断',
+    'playbackDiagnosticAnime': '番剧',
+    'playbackDiagnosticEpisode': '剧集',
     'playbackDiagnosticSource': '数据源',
     'playbackDiagnosticLine': '线路',
     'playbackDiagnosticUrlType': 'URL 类型',
@@ -604,6 +608,8 @@ const _localizedValues = {
         'Could not open in an external player. Try again later.',
     'externalPlayerNotImplemented': 'External player is not implemented yet.',
     'playbackDiagnostics': 'Playback diagnostics',
+    'playbackDiagnosticAnime': 'Anime',
+    'playbackDiagnosticEpisode': 'Episode',
     'playbackDiagnosticSource': 'Source',
     'playbackDiagnosticLine': 'Line',
     'playbackDiagnosticUrlType': 'URL type',
@@ -819,6 +825,8 @@ const _localizedValues = {
     'externalPlayerUnavailable': '外部プレイヤーで開けませんでした。しばらくしてからもう一度お試しください。',
     'externalPlayerNotImplemented': '外部プレイヤーはまだ実装されていません。',
     'playbackDiagnostics': '再生診断',
+    'playbackDiagnosticAnime': '作品',
+    'playbackDiagnosticEpisode': 'エピソード',
     'playbackDiagnosticSource': 'ソース',
     'playbackDiagnosticLine': 'ライン',
     'playbackDiagnosticUrlType': 'URL 種類',
