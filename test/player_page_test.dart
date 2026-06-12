@@ -179,6 +179,7 @@ void main() {
     );
     expect(find.text('Source: Sakura Anime'), findsOneWidget);
     expect(find.text('Line: Broken Line'), findsOneWidget);
+    expect(find.text('Playback diagnostics'), findsOneWidget);
 
     final playButton = tester.widget<IconButton>(find.byType(IconButton).first);
     expect(playButton.onPressed, isNull);
@@ -647,6 +648,7 @@ void main() {
     expect(find.text('No playable source found'), findsOneWidget);
     expect(find.text('Source: Sakura Anime'), findsOneWidget);
     expect(find.text('Line: Missing Line'), findsOneWidget);
+    expect(find.text('Playback diagnostics'), findsOneWidget);
     final downloadButton = tester.widget<IconButton>(
       find.widgetWithIcon(IconButton, Icons.download_outlined),
     );

@@ -208,6 +208,14 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
                                   ),
                                   playSourceTitle: _args.playSourceTitle,
                                 ),
+                                const SizedBox(height: 12),
+                                TextButton.icon(
+                                  onPressed: _showPlaybackDiagnostics,
+                                  icon: const Icon(Icons.bug_report_outlined),
+                                  label: Text(
+                                    context.l10n.playbackDiagnostics,
+                                  ),
+                                ),
                               ],
                             ),
                           ),
