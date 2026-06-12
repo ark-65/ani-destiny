@@ -154,6 +154,8 @@ class AppLocalizations {
   String get playbackDiagnostics => _t('playbackDiagnostics');
   String get playbackDiagnosticAnime => _t('playbackDiagnosticAnime');
   String get playbackDiagnosticEpisode => _t('playbackDiagnosticEpisode');
+  String get playbackDiagnosticRequestedSource =>
+      _t('playbackDiagnosticRequestedSource');
   String get playbackDiagnosticSource => _t('playbackDiagnosticSource');
   String get playbackDiagnosticLine => _t('playbackDiagnosticLine');
   String get playbackDiagnosticUrlType => _t('playbackDiagnosticUrlType');
@@ -241,6 +243,16 @@ class AppLocalizations {
   String get currentSourceId => _t('currentSourceId');
   String get latestSourceDiagnostics => _t('latestSourceDiagnostics');
   String get playbackDiagnosticsSummary => _t('playbackDiagnosticsSummary');
+  String sourceFallbackPlayerNotice(
+    String requestedSource,
+    String activeSource,
+  ) {
+    final template = _t('sourceFallbackPlayerNotice');
+    return template
+        .replaceFirst('{requestedSource}', requestedSource)
+        .replaceFirst('{activeSource}', activeSource);
+  }
+
   String get playbackDiagnosticsDebugHint => _t('playbackDiagnosticsDebugHint');
   String get sourceTemporarilyUnavailable => _t('sourceTemporarilyUnavailable');
   String get sourceUnavailableSuggestion => _t('sourceUnavailableSuggestion');
@@ -397,6 +409,7 @@ const _localizedValues = {
     'playbackDiagnostics': '播放诊断',
     'playbackDiagnosticAnime': '番剧',
     'playbackDiagnosticEpisode': '剧集',
+    'playbackDiagnosticRequestedSource': '原始数据源',
     'playbackDiagnosticSource': '数据源',
     'playbackDiagnosticLine': '线路',
     'playbackDiagnosticUrlType': 'URL 类型',
@@ -476,6 +489,8 @@ const _localizedValues = {
     'currentSourceId': '当前数据源 ID',
     'latestSourceDiagnostics': '最近数据源诊断',
     'playbackDiagnosticsSummary': '播放诊断摘要',
+    'sourceFallbackPlayerNotice':
+        '当前所选数据源 {requestedSource} 暂时不可用，播放器正在使用 {activeSource} 的备用播放数据。',
     'playbackDiagnosticsDebugHint':
         '播放页 Debug 按钮可查看当前播放线路、URL 类型和 header keys。',
     'sourceTemporarilyUnavailable': '数据源暂时不可用',
@@ -610,6 +625,7 @@ const _localizedValues = {
     'playbackDiagnostics': 'Playback diagnostics',
     'playbackDiagnosticAnime': 'Anime',
     'playbackDiagnosticEpisode': 'Episode',
+    'playbackDiagnosticRequestedSource': 'Requested source',
     'playbackDiagnosticSource': 'Source',
     'playbackDiagnosticLine': 'Line',
     'playbackDiagnosticUrlType': 'URL type',
@@ -695,6 +711,8 @@ const _localizedValues = {
     'currentSourceId': 'Current source ID',
     'latestSourceDiagnostics': 'Latest source diagnostics',
     'playbackDiagnosticsSummary': 'Playback diagnostics summary',
+    'sourceFallbackPlayerNotice':
+        'The selected source {requestedSource} is temporarily unavailable, so playback is using fallback data from {activeSource}.',
     'playbackDiagnosticsDebugHint':
         'Use the debug button on the player page to view the current line, URL type, and header keys.',
     'sourceTemporarilyUnavailable': 'Source temporarily unavailable',
@@ -827,6 +845,7 @@ const _localizedValues = {
     'playbackDiagnostics': '再生診断',
     'playbackDiagnosticAnime': '作品',
     'playbackDiagnosticEpisode': 'エピソード',
+    'playbackDiagnosticRequestedSource': '元のソース',
     'playbackDiagnosticSource': 'ソース',
     'playbackDiagnosticLine': 'ライン',
     'playbackDiagnosticUrlType': 'URL 種類',
@@ -907,6 +926,8 @@ const _localizedValues = {
     'currentSourceId': '現在のソース ID',
     'latestSourceDiagnostics': '最近のソース診断',
     'playbackDiagnosticsSummary': '再生診断の概要',
+    'sourceFallbackPlayerNotice':
+        '選択していたソース {requestedSource} は一時的に利用できないため、現在は {activeSource} の代替データで再生しています。',
     'playbackDiagnosticsDebugHint':
         'プレイヤー画面の Debug ボタンで現在のライン、URL 種類、header keys を確認できます。',
     'sourceTemporarilyUnavailable': 'ソースが一時的に利用できません',

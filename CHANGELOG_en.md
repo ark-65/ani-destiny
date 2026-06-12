@@ -7,6 +7,7 @@
 ## [Unreleased]
 
 ### 🐛 Fixed
+- Fixed the player only explaining source fallback in a transient pre-navigation message and then losing that context after the page opened; the player page now keeps the active fallback source visible and includes the originally requested source in playback diagnostics so users do not have to guess why playback came from a different source.
 - Fixed the player failure card hiding the External player limitation inside a disabled button state when the current stream still depended on request headers; it now explains the handoff constraint directly in the failure state so users do not have to guess why another app cannot take over yet.
 - Fixed player failure recovery and copied diagnostics still missing the anime and episode context, so the failure card, playback diagnostics, and feedback package now all carry the current title and episode for more precise user reports.
 - Fixed the player failure card already offering retry and diagnostics while still hiding the External player escape hatch in the surrounding controls; when the current stream can really be handed off, the failure state now exposes that action directly and keeps a clear busy state during handoff.

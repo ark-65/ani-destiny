@@ -154,6 +154,9 @@ class AnimeDetailPage extends ConsumerWidget {
         episodeTitle: episode.title,
         coverUrl: detail.coverUrl,
         sourceId: sourceResult.sourceId,
+        requestedSourceId: sourceResult.usedFallback
+            ? sourceResult.fromSourceId ?? detail.sourceId
+            : null,
         playSourceId: source.id,
         playSourceTitle: source.title,
         playUrl: source.url,

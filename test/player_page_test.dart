@@ -214,6 +214,87 @@ void main() {
     expect(find.text('error'), findsNothing);
   });
 
+  testWidgets('player shows requested source context when playback is on fallback data',
+      (tester) async {
+    final container = ProviderContainer(
+      overrides: [
+        playerRepositoryProvider.overrideWithValue(
+          const _ThrowingPlayerRepository(),
+        ),
+        historyRepositoryProvider.overrideWithValue(_FakeHistoryRepository()),
+        danmakuRepositoryProvider.overrideWithValue(_FakeDanmakuRepository()),
+      ],
+    );
+    addTearDown(container.dispose);
+
+    await tester.pumpWidget(
+      UncontrolledProviderScope(
+        container: container,
+        child: _buildPlayerApp(_fallbackFailingArgs),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    final diagnostics = container.read(lastPlaybackDiagnosticsProvider);
+    expect(diagnostics, isNotNull);
+    expect(diagnostics?.sourceId, 'sakura');
+    expect(diagnostics?.requestedSourceId, 'mock');
+    expect(diagnostics?.playSourceTitle, 'Broken Line');
+    expect(
+      diagnostics?.sanitizedUrl,
+      'https://cdn.example.test/.../broken.m3u8',
+    );
+    expect(diagnostics?.headerKeys, ['Referer']);
+    expect(
+      find.text(
+        'Playback temporarily failed. Retry later or try another playback line.',
+      ),
+      findsOneWidget,
+    );
+    expect(find.text('Anime: Anime 1'), findsOneWidget);
+    expect(find.text('Episode: Episode 2'), findsOneWidget);
+    expect(
+      find.text(
+        'Source: Sakura Anime (Requested source: Mock Anime Source)',
+      ),
+      findsOneWidget,
+    );
+    expect(find.text('Line: Broken Line'), findsOneWidget);
+    expect(find.text('Playback diagnostics'), findsOneWidget);
+
+    final playButton = tester.widget<IconButton>(find.byType(IconButton).first);
+    expect(playButton.onPressed, isNull);
+    expect(
+      playButton.tooltip,
+      'Playback temporarily failed. Retry later or try another playback line.',
+    );
+
+    final speedButton = tester.widget<IconButton>(
+      find.widgetWithIcon(IconButton, Icons.speed),
+    );
+    expect(speedButton.onPressed, isNull);
+    expect(
+      speedButton.tooltip,
+      'Playback temporarily failed. Retry later or try another playback line.',
+    );
+
+    final slider = tester.widget<Slider>(find.byType(Slider));
+    expect(slider.onChanged, isNull);
+
+    await tester.tap(find.byTooltip('Playback diagnostics'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Anime'), findsOneWidget);
+    expect(find.text('Anime 1'), findsAtLeastNWidgets(1));
+    expect(find.text('Episode'), findsWidgets);
+    expect(find.text('Episode 2'), findsAtLeastNWidgets(1));
+    expect(find.text('Requested source'), findsOneWidget);
+    expect(find.text('Mock Anime Source'), findsAtLeastNWidgets(1));
+    expect(find.text('State'), findsOneWidget);
+    expect(find.text('Failed'), findsOneWidget);
+    expect(find.text('error'), findsNothing);
+  });
+
   testWidgets('playback failure card can copy a sanitized diagnostics summary',
       (
     tester,
@@ -237,12 +318,14 @@ void main() {
           historyRepositoryProvider.overrideWithValue(_FakeHistoryRepository()),
           danmakuRepositoryProvider.overrideWithValue(_FakeDanmakuRepository()),
         ],
-        child: _buildPlayerApp(_failingArgs),
+        child: _buildPlayerApp(_fallbackFailingArgs),
       ),
     );
     await tester.pumpAndSettle();
 
-    await tester.tap(find.text('Copy diagnostics'));
+    final copyDiagnosticsButton = find.text('Copy diagnostics');
+    await tester.ensureVisible(copyDiagnosticsButton);
+    await tester.tap(copyDiagnosticsButton);
     await tester.pumpAndSettle();
 
     expect(find.text('Diagnostics copied'), findsOneWidget);
@@ -251,6 +334,7 @@ void main() {
       'Playback diagnostics summary\n'
       'Anime: Anime 1\n'
       'Episode: Episode 2\n'
+      'Requested source: Mock Anime Source\n'
       'Source: Sakura Anime\n'
       'Line: Broken Line\n'
       'URL type: m3u8\n'
@@ -272,7 +356,7 @@ void main() {
           historyRepositoryProvider.overrideWithValue(_FakeHistoryRepository()),
           danmakuRepositoryProvider.overrideWithValue(_FakeDanmakuRepository()),
         ],
-        child: _buildPlayerApp(_failingArgs),
+        child: _buildPlayerApp(_fallbackFailingArgs),
       ),
     );
     await tester.pumpAndSettle();
@@ -326,6 +410,30 @@ void main() {
     expect(find.text('Diagnostics copied'), findsOneWidget);
     expect(copiedText, isNotNull);
     expect(find.text('Playback diagnostics'), findsOneWidget);
+  });
+
+  testWidgets('player keeps active fallback source context visible', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          playerRepositoryProvider
+              .overrideWithValue(const _FakePlayerRepository()),
+          historyRepositoryProvider.overrideWithValue(_FakeHistoryRepository()),
+          danmakuRepositoryProvider.overrideWithValue(_FakeDanmakuRepository()),
+        ],
+        child: _buildPlayerApp(_fallbackArgs),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(
+      find.text(
+        'The selected source Mock Anime Source is temporarily unavailable, so playback is using fallback data from Sakura Anime.',
+      ),
+      findsOneWidget,
+    );
   });
 
   testWidgets('playback failure card can retry the current source',
@@ -1569,6 +1677,31 @@ const _failingArgs = PlayerRouteArgs(
   playSourceId: 'line-broken',
   playSourceTitle: 'Broken Line',
   playHeaders: {'Referer': 'https://example.test/player?token=secret'},
+);
+
+const _fallbackFailingArgs = PlayerRouteArgs(
+  animeId: 'anime-1',
+  episodeId: 'episode-2',
+  animeTitle: 'Anime 1',
+  episodeTitle: 'Episode 2',
+  playUrl: 'https://cdn.example.test/path/broken.m3u8?token=secret',
+  sourceId: 'sakura',
+  requestedSourceId: 'mock',
+  playSourceId: 'line-broken',
+  playSourceTitle: 'Broken Line',
+  playHeaders: {'Referer': 'https://example.test/player?token=secret'},
+);
+
+const _fallbackArgs = PlayerRouteArgs(
+  animeId: 'anime-1',
+  episodeId: 'episode-1',
+  animeTitle: 'Anime 1',
+  episodeTitle: 'Episode 1',
+  playUrl: 'https://cdn.example.test/video.m3u8',
+  sourceId: 'sakura',
+  requestedSourceId: 'mock',
+  playSourceId: 'line-1',
+  playSourceTitle: 'Line 1',
 );
 
 const _missingPlayUrlArgs = PlayerRouteArgs(

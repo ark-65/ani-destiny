@@ -110,6 +110,7 @@ PlayerRouteArgs playerRouteArgsFromUri(Uri uri, {Object? extra}) {
     episodeTitle: query['episodeTitle'] ?? title,
     coverUrl: query['coverUrl'],
     sourceId: query['sourceId'] ?? AppConstants.defaultSourceId,
+    requestedSourceId: query['requestedSourceId'],
     playUrl: query['playUrl'] ?? '',
     playSourceId: query['playSourceId'],
     playSourceTitle: query['playSourceTitle'],

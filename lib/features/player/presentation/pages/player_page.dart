@@ -185,6 +185,12 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
               ),
         body: Column(
           children: [
+            if (!_isFullscreen &&
+                _hasSourceFallbackContext() &&
+                _state.errorMessage == null)
+              _SourceFallbackBanner(
+                message: _sourceFallbackNotice(context),
+              ),
             Expanded(
               child: Stack(
                 fit: StackFit.expand,
@@ -198,9 +204,10 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
                     const Center(child: CircularProgressIndicator()),
                   if (_state.errorMessage != null)
                     SafeArea(
-                      child: Center(
-                        child: SingleChildScrollView(
-                          padding: const EdgeInsets.all(16),
+                      child: SingleChildScrollView(
+                        padding: const EdgeInsets.all(16),
+                        child: Align(
+                          alignment: Alignment.topCenter,
                           child: ConstrainedBox(
                             constraints: const BoxConstraints(maxWidth: 420),
                             child: Card(
@@ -217,6 +224,12 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
                                     _PlaybackIssueContext(
                                       animeTitle: _args.animeTitle,
                                       episodeTitle: _args.episodeTitle,
+                                      requestedSourceLabel:
+                                          _hasSourceFallbackContext()
+                                              ? context.l10n.sourceDisplayLabel(
+                                                  _args.requestedSourceId!,
+                                                )
+                                              : null,
                                       sourceLabel:
                                           context.l10n.sourceDisplayLabel(
                                         _args.sourceId,
@@ -483,6 +496,13 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
                     label: context.l10n.playbackDiagnosticEpisode,
                     value: _diagnosticContextValue(diagnostics.episodeTitle),
                   ),
+                  if (diagnostics.usedSourceFallback)
+                    _DiagnosticRow(
+                      label: context.l10n.playbackDiagnosticRequestedSource,
+                      value: context.l10n.sourceDisplayLabel(
+                        diagnostics.requestedSourceId!,
+                      ),
+                    ),
                   _DiagnosticRow(
                     label: context.l10n.playbackDiagnosticSource,
                     value:
@@ -540,6 +560,7 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
       animeTitle: routeArgs.animeTitle,
       episodeTitle: routeArgs.episodeTitle,
       sourceId: routeArgs.sourceId,
+      requestedSourceId: routeArgs.requestedSourceId,
       playSourceTitle: routeArgs.playSourceTitle,
       playUrl: routeArgs.playUrl,
       headers: routeArgs.playHeaders,
@@ -749,6 +770,11 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
         episodeId: nextEpisode.id,
         episodeTitle: nextEpisode.title,
         sourceId: playSourceResult.sourceId,
+        requestedSourceId: playSourceResult.usedFallback
+            ? playSourceResult.fromSourceId ?? detailResult.sourceId
+            : detailResult.usedFallback
+                ? detailResult.fromSourceId ?? currentArgs.sourceId
+                : null,
         playSourceId: selectedSource.id,
         playSourceTitle: selectedSource.title,
         playUrl: selectedSource.url,
@@ -848,13 +874,20 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
     final headers = diagnostics.headerKeys.isEmpty
         ? '-'
         : diagnostics.headerKeys.join(', ');
-
-    return [
+    final summary = <String>[
       context.l10n.playbackDiagnosticsSummary,
       '${context.l10n.playbackDiagnosticAnime}: '
           '${_diagnosticContextValue(diagnostics.animeTitle)}',
       '${context.l10n.playbackDiagnosticEpisode}: '
           '${_diagnosticContextValue(diagnostics.episodeTitle)}',
+    ];
+    if (diagnostics.usedSourceFallback) {
+      summary.add(
+        '${context.l10n.playbackDiagnosticRequestedSource}: '
+        '${context.l10n.sourceDisplayLabel(diagnostics.requestedSourceId!)}',
+      );
+    }
+    summary.addAll([
       '${context.l10n.playbackDiagnosticSource}: '
           '${context.l10n.sourceDisplayLabel(diagnostics.sourceId)}',
       '${context.l10n.playbackDiagnosticLine}: '
@@ -863,7 +896,8 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
       '${context.l10n.playbackDiagnosticUrl}: ${diagnostics.sanitizedUrl}',
       '${context.l10n.playbackDiagnosticHeaders}: $headers',
       '${context.l10n.playbackDiagnosticState}: ${_stateLabel()}',
-    ].join('\n');
+    ]);
+    return summary.join('\n');
   }
 
   String _diagnosticContextValue(String? value) {
@@ -872,6 +906,21 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
       return '-';
     }
     return trimmed;
+  }
+
+  bool _hasSourceFallbackContext() {
+    final requestedSourceId = _args.requestedSourceId?.trim();
+    return requestedSourceId != null &&
+        requestedSourceId.isNotEmpty &&
+        requestedSourceId != _args.sourceId;
+  }
+
+  String _sourceFallbackNotice(BuildContext context) {
+    final requestedSourceId = _args.requestedSourceId!;
+    return context.l10n.sourceFallbackPlayerNotice(
+      context.l10n.sourceDisplayLabel(requestedSourceId),
+      context.l10n.sourceDisplayLabel(_args.sourceId),
+    );
   }
 
   Future<void> _retryPlayback() async {
@@ -937,16 +986,59 @@ class _DiagnosticRow extends StatelessWidget {
   }
 }
 
+class _SourceFallbackBanner extends StatelessWidget {
+  const _SourceFallbackBanner({
+    required this.message,
+  });
+
+  final String message;
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    return ColoredBox(
+      color: colorScheme.surfaceContainerHighest,
+      child: SafeArea(
+        bottom: false,
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(16, 10, 16, 10),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Icon(
+                Icons.info_outline,
+                size: 18,
+                color: colorScheme.onSurfaceVariant,
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  message,
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: colorScheme.onSurfaceVariant,
+                      ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 class _PlaybackIssueContext extends StatelessWidget {
   const _PlaybackIssueContext({
     required this.animeTitle,
     required this.episodeTitle,
+    required this.requestedSourceLabel,
     required this.sourceLabel,
     required this.playSourceTitle,
   });
 
   final String animeTitle;
   final String episodeTitle;
+  final String? requestedSourceLabel;
   final String sourceLabel;
   final String? playSourceTitle;
 
@@ -964,6 +1056,12 @@ class _PlaybackIssueContext extends StatelessWidget {
     final episodeLabel =
         episodeTitle.trim().isEmpty ? '-' : episodeTitle.trim();
     final animeLabel = animeTitle.trim().isEmpty ? '-' : animeTitle.trim();
+    final requestedSource = requestedSourceLabel?.trim();
+    final sourceContextLabel = requestedSource == null ||
+            requestedSource.isEmpty
+        ? sourceLabel
+        : '$sourceLabel (${context.l10n.playbackDiagnosticRequestedSource}: '
+            '$requestedSource)';
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -980,7 +1078,7 @@ class _PlaybackIssueContext extends StatelessWidget {
         ),
         const SizedBox(height: 8),
         Text(
-          '${context.l10n.playbackDiagnosticSource}: $sourceLabel',
+          '${context.l10n.playbackDiagnosticSource}: $sourceContextLabel',
           textAlign: TextAlign.center,
           style: sourceTextStyle,
         ),
