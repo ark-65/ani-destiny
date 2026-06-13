@@ -177,6 +177,11 @@ void main() {
       ),
       findsOneWidget,
     );
+    expect(find.text('Anime: Anime 1'), findsOneWidget);
+    expect(find.text('Episode: Episode 2'), findsOneWidget);
+    expect(find.text('Source: Sakura Anime'), findsOneWidget);
+    expect(find.text('Line: Broken Line'), findsOneWidget);
+    expect(find.text('Playback diagnostics'), findsOneWidget);
 
     final playButton = tester.widget<IconButton>(find.byType(IconButton).first);
     expect(playButton.onPressed, isNull);
@@ -200,9 +205,375 @@ void main() {
     await tester.tap(find.byTooltip('Playback diagnostics'));
     await tester.pumpAndSettle();
 
+    expect(find.text('Anime'), findsOneWidget);
+    expect(find.text('Anime 1'), findsAtLeastNWidgets(1));
+    expect(find.text('Episode'), findsWidgets);
+    expect(find.text('Episode 2'), findsAtLeastNWidgets(1));
     expect(find.text('State'), findsOneWidget);
     expect(find.text('Failed'), findsOneWidget);
     expect(find.text('error'), findsNothing);
+  });
+
+  testWidgets('player shows requested source context when playback is on fallback data',
+      (tester) async {
+    final container = ProviderContainer(
+      overrides: [
+        playerRepositoryProvider.overrideWithValue(
+          const _ThrowingPlayerRepository(),
+        ),
+        historyRepositoryProvider.overrideWithValue(_FakeHistoryRepository()),
+        danmakuRepositoryProvider.overrideWithValue(_FakeDanmakuRepository()),
+      ],
+    );
+    addTearDown(container.dispose);
+
+    await tester.pumpWidget(
+      UncontrolledProviderScope(
+        container: container,
+        child: _buildPlayerApp(_fallbackFailingArgs),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    final diagnostics = container.read(lastPlaybackDiagnosticsProvider);
+    expect(diagnostics, isNotNull);
+    expect(diagnostics?.sourceId, 'sakura');
+    expect(diagnostics?.requestedSourceId, 'mock');
+    expect(diagnostics?.playSourceTitle, 'Broken Line');
+    expect(
+      diagnostics?.sanitizedUrl,
+      'https://cdn.example.test/.../broken.m3u8',
+    );
+    expect(diagnostics?.headerKeys, ['Referer']);
+    expect(
+      find.text(
+        'Playback temporarily failed. Retry later or try another playback line.',
+      ),
+      findsOneWidget,
+    );
+    expect(find.text('Anime: Anime 1'), findsOneWidget);
+    expect(find.text('Episode: Episode 2'), findsOneWidget);
+    expect(
+      find.text(
+        'Source: Sakura Anime (Requested source: Mock Anime Source)',
+      ),
+      findsOneWidget,
+    );
+    expect(find.text('Line: Broken Line'), findsOneWidget);
+    expect(find.text('Playback diagnostics'), findsOneWidget);
+
+    final playButton = tester.widget<IconButton>(find.byType(IconButton).first);
+    expect(playButton.onPressed, isNull);
+    expect(
+      playButton.tooltip,
+      'Playback temporarily failed. Retry later or try another playback line.',
+    );
+
+    final speedButton = tester.widget<IconButton>(
+      find.widgetWithIcon(IconButton, Icons.speed),
+    );
+    expect(speedButton.onPressed, isNull);
+    expect(
+      speedButton.tooltip,
+      'Playback temporarily failed. Retry later or try another playback line.',
+    );
+
+    final slider = tester.widget<Slider>(find.byType(Slider));
+    expect(slider.onChanged, isNull);
+
+    await tester.tap(find.byTooltip('Playback diagnostics'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Anime'), findsOneWidget);
+    expect(find.text('Anime 1'), findsAtLeastNWidgets(1));
+    expect(find.text('Episode'), findsWidgets);
+    expect(find.text('Episode 2'), findsAtLeastNWidgets(1));
+    expect(find.text('Requested source'), findsOneWidget);
+    expect(find.text('Mock Anime Source'), findsAtLeastNWidgets(1));
+    expect(find.text('State'), findsOneWidget);
+    expect(find.text('Failed'), findsOneWidget);
+    expect(find.text('error'), findsNothing);
+  });
+
+  testWidgets('playback failure card can copy a sanitized diagnostics summary',
+      (
+    tester,
+  ) async {
+    String? copiedText;
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMethodCallHandler(SystemChannels.platform, (call) async {
+      if (call.method == 'Clipboard.setData') {
+        copiedText =
+            (call.arguments as Map<Object?, Object?>)['text'] as String?;
+      }
+      return null;
+    });
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          playerRepositoryProvider.overrideWithValue(
+            const _ThrowingPlayerRepository(),
+          ),
+          historyRepositoryProvider.overrideWithValue(_FakeHistoryRepository()),
+          danmakuRepositoryProvider.overrideWithValue(_FakeDanmakuRepository()),
+        ],
+        child: _buildPlayerApp(_fallbackFailingArgs),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    final copyDiagnosticsButton = find.text('Copy diagnostics');
+    await tester.ensureVisible(copyDiagnosticsButton);
+    await tester.tap(copyDiagnosticsButton);
+    await tester.pumpAndSettle();
+
+    expect(find.text('Diagnostics copied'), findsOneWidget);
+    expect(
+      copiedText,
+      'Playback diagnostics summary\n'
+      'Anime: Anime 1\n'
+      'Episode: Episode 2\n'
+      'Requested source: Mock Anime Source\n'
+      'Source: Sakura Anime\n'
+      'Line: Broken Line\n'
+      'URL type: m3u8\n'
+      'URL: https://cdn.example.test/.../broken.m3u8\n'
+      'Headers: Referer\n'
+      'State: Failed',
+    );
+  });
+
+  testWidgets(
+      'playback failure card explains when external player handoff is blocked by headers',
+      (tester) async {
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          playerRepositoryProvider.overrideWithValue(
+            const _ThrowingPlayerRepository(),
+          ),
+          historyRepositoryProvider.overrideWithValue(_FakeHistoryRepository()),
+          danmakuRepositoryProvider.overrideWithValue(_FakeDanmakuRepository()),
+        ],
+        child: _buildPlayerApp(_fallbackFailingArgs),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(
+      find.text(
+        'This stream needs request headers, so it cannot be opened in an external player yet.',
+      ),
+      findsOneWidget,
+    );
+  });
+
+  testWidgets('playback failure UI stays usable on narrow screens', (
+    tester,
+  ) async {
+    tester.view.devicePixelRatio = 1;
+    tester.view.physicalSize = const Size(320, 300);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    addTearDown(tester.view.resetPhysicalSize);
+
+    String? copiedText;
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMethodCallHandler(SystemChannels.platform, (call) async {
+      if (call.method == 'Clipboard.setData') {
+        copiedText =
+            (call.arguments as Map<Object?, Object?>)['text'] as String?;
+      }
+      return null;
+    });
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          playerRepositoryProvider.overrideWithValue(
+            const _ThrowingPlayerRepository(),
+          ),
+          historyRepositoryProvider.overrideWithValue(_FakeHistoryRepository()),
+          danmakuRepositoryProvider.overrideWithValue(_FakeDanmakuRepository()),
+        ],
+        child: _buildPlayerApp(_failingArgs),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(tester.takeException(), isNull);
+    final copyButton = find.byIcon(Icons.content_copy_outlined).first;
+    await tester.ensureVisible(copyButton);
+    await tester.tap(copyButton);
+    await tester.pumpAndSettle();
+
+    expect(find.text('Diagnostics copied'), findsOneWidget);
+    expect(copiedText, isNotNull);
+    expect(find.text('Playback diagnostics'), findsOneWidget);
+  });
+
+  testWidgets('player keeps active fallback source context visible', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          playerRepositoryProvider
+              .overrideWithValue(const _FakePlayerRepository()),
+          historyRepositoryProvider.overrideWithValue(_FakeHistoryRepository()),
+          danmakuRepositoryProvider.overrideWithValue(_FakeDanmakuRepository()),
+        ],
+        child: _buildPlayerApp(_fallbackArgs),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(
+      find.text(
+        'The selected source Mock Anime Source is temporarily unavailable, so playback is using fallback data from Sakura Anime.',
+      ),
+      findsOneWidget,
+    );
+  });
+
+  testWidgets('playback failure card can retry the current source',
+      (tester) async {
+    final repository = _RetryablePlayerRepository();
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          playerRepositoryProvider.overrideWithValue(repository),
+          historyRepositoryProvider.overrideWithValue(_FakeHistoryRepository()),
+          danmakuRepositoryProvider.overrideWithValue(_FakeDanmakuRepository()),
+        ],
+        child: _buildPlayerApp(_args),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('Retry'), findsOneWidget);
+    expect(repository.adapter.loadCalls, 1);
+
+    await tester.tap(find.text('Retry'));
+    await tester.pump();
+
+    expect(repository.adapter.loadCalls, 2);
+    expect(find.text('Retry'), findsNothing);
+    expect(find.byType(CircularProgressIndicator), findsWidgets);
+    expect(find.byTooltip('Retrying playback...'), findsWidgets);
+
+    final nextEpisodeButton = tester.widget<IconButton>(
+      find.widgetWithIcon(IconButton, Icons.skip_next),
+    );
+    expect(nextEpisodeButton.onPressed, isNull);
+    expect(nextEpisodeButton.tooltip, 'Retrying playback...');
+
+    final externalPlayerButton = tester.widget<IconButton>(
+      find.widgetWithIcon(IconButton, Icons.open_in_new),
+    );
+    expect(externalPlayerButton.onPressed, isNull);
+    expect(externalPlayerButton.tooltip, 'Retrying playback...');
+
+    final playButton = tester.widget<IconButton>(find.byType(IconButton).first);
+    expect(playButton.onPressed, isNull);
+    expect(playButton.tooltip, 'Retrying playback...');
+
+    final speedButton = tester.widget<IconButton>(
+      find.widgetWithIcon(IconButton, Icons.speed),
+    );
+    expect(speedButton.onPressed, isNull);
+    expect(speedButton.tooltip, 'Retrying playback...');
+
+    final downloadButton = tester.widget<IconButton>(
+      find.widgetWithIcon(IconButton, Icons.download_outlined),
+    );
+    expect(downloadButton.onPressed, isNull);
+    expect(downloadButton.tooltip, 'Retrying playback...');
+
+    final fullscreenButton = tester.widget<IconButton>(
+      find.widgetWithIcon(IconButton, Icons.fullscreen),
+    );
+    expect(fullscreenButton.onPressed, isNull);
+    expect(fullscreenButton.tooltip, 'Retrying playback...');
+
+    final slider = tester.widget<Slider>(find.byType(Slider));
+    expect(slider.onChanged, isNull);
+
+    repository.completeRetry();
+    await tester.pumpAndSettle();
+
+    final restoredPlayButton = tester.widget<IconButton>(
+      find.byType(IconButton).first,
+    );
+    expect(restoredPlayButton.onPressed, isNotNull);
+    expect(find.text('Retry'), findsNothing);
+    expect(
+      find.text(
+        'Playback temporarily failed. Retry later or try another playback line.',
+      ),
+      findsNothing,
+    );
+  });
+
+  testWidgets('retry keeps the current playback position after an interruption',
+      (tester) async {
+    final repository = _InterruptedPlayerRepository();
+    const interruptedPosition = Duration(minutes: 7, seconds: 24);
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          playerRepositoryProvider.overrideWithValue(repository),
+          historyRepositoryProvider.overrideWithValue(_FakeHistoryRepository()),
+          danmakuRepositoryProvider.overrideWithValue(_FakeDanmakuRepository()),
+        ],
+        child: _buildPlayerApp(_args),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    repository.emitPlaybackFailure(position: interruptedPosition);
+    await tester.pumpAndSettle();
+
+    expect(find.text('Retry'), findsOneWidget);
+
+    await tester.tap(find.text('Retry'));
+    await tester.pumpAndSettle();
+
+    expect(repository.adapter.loadCalls, 2);
+    expect(repository.adapter.lastSeekPosition, interruptedPosition);
+    expect(find.text('Retry'), findsNothing);
+  });
+
+  testWidgets(
+      'playback failure card offers external player recovery for handoffable streams',
+      (tester) async {
+    final repository = _RetryablePlayerRepository();
+    Uri? launchedUri;
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          playerRepositoryProvider.overrideWithValue(repository),
+          historyRepositoryProvider.overrideWithValue(_FakeHistoryRepository()),
+          danmakuRepositoryProvider.overrideWithValue(_FakeDanmakuRepository()),
+          externalPlayerLauncherProvider.overrideWithValue((uri) async {
+            launchedUri = uri;
+            return true;
+          }),
+        ],
+        child: _buildPlayerApp(_args),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('External player'), findsOneWidget);
+
+    await tester.tap(find.text('External player'));
+    await tester.pumpAndSettle();
+
+    expect(launchedUri?.toString(), 'https://cdn.example.test/video.m3u8');
   });
 
   testWidgets('external player action launches the current playback url', (
@@ -579,6 +950,45 @@ void main() {
     await tester.pumpAndSettle();
   });
 
+  testWidgets('system back stays on the player while playback retries', (
+    tester,
+  ) async {
+    final repository = _RetryablePlayerRepository();
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          playerRepositoryProvider.overrideWithValue(repository),
+          historyRepositoryProvider.overrideWithValue(_FakeHistoryRepository()),
+          danmakuRepositoryProvider.overrideWithValue(_FakeDanmakuRepository()),
+        ],
+        child: _buildApp(_args),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byType(ElevatedButton));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Retry'));
+    await tester.pump();
+
+    await tester.pageBack();
+    await tester.pump();
+
+    expect(find.byType(PlayerPage), findsOneWidget);
+    expect(find.text('Open player'), findsNothing);
+    expect(
+      find.text(
+        'Please wait for the current playback action to finish before leaving.',
+      ),
+      findsOneWidget,
+    );
+
+    repository.completeRetry();
+    await tester.pumpAndSettle();
+  });
+
   testWidgets(
       'download action is disabled and explained while next episode loads',
       (tester) async {
@@ -643,6 +1053,11 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('No playable source found'), findsOneWidget);
+    expect(find.text('Anime: Anime 1'), findsOneWidget);
+    expect(find.text('Episode: Episode 3'), findsOneWidget);
+    expect(find.text('Source: Sakura Anime'), findsOneWidget);
+    expect(find.text('Line: Missing Line'), findsOneWidget);
+    expect(find.text('Playback diagnostics'), findsOneWidget);
     final downloadButton = tester.widget<IconButton>(
       find.widgetWithIcon(IconButton, Icons.download_outlined),
     );
@@ -675,6 +1090,7 @@ void main() {
 
     expect(createdDownloads, 0);
     expect(launchedUriCount, 0);
+    expect(find.text('Retry'), findsNothing);
   });
 
   testWidgets('invalid playback urls are treated as unavailable before load',
@@ -927,6 +1343,34 @@ class _PendingPlayerRepository implements PlayerRepository {
   }
 }
 
+class _RetryablePlayerRepository implements PlayerRepository {
+  _RetryablePlayerRepository();
+
+  final adapter = _RetryablePlayerAdapter();
+
+  @override
+  PlayerControllerAdapter createController() => adapter;
+
+  void completeRetry() {
+    adapter.completeRetry();
+  }
+}
+
+class _InterruptedPlayerRepository implements PlayerRepository {
+  _InterruptedPlayerRepository();
+
+  final adapter = _InterruptedPlayerAdapter();
+
+  @override
+  PlayerControllerAdapter createController() => adapter;
+
+  void emitPlaybackFailure({
+    required Duration position,
+  }) {
+    adapter.emitPlaybackFailure(position: position);
+  }
+}
+
 class _FakePlayerRepository implements PlayerRepository {
   const _FakePlayerRepository();
 
@@ -1091,6 +1535,127 @@ class _PendingPlayerAdapter implements PlayerControllerAdapter {
   }
 }
 
+class _RetryablePlayerAdapter implements PlayerControllerAdapter {
+  _RetryablePlayerAdapter();
+
+  final _controller = StreamController<PlayerState>.broadcast();
+  final _retryCompleter = Completer<void>();
+  int loadCalls = 0;
+
+  @override
+  Stream<PlayerState> get stateStream => _controller.stream;
+
+  @override
+  Future<void> dispose() async {
+    await _controller.close();
+  }
+
+  @override
+  Future<void> load(
+    String url, {
+    Map<String, String> headers = const {},
+  }) async {
+    loadCalls += 1;
+    if (loadCalls == 1) {
+      await Future<void>.delayed(Duration.zero);
+      throw StateError('load failed');
+    }
+    return _retryCompleter.future;
+  }
+
+  @override
+  Future<void> pause() async {}
+
+  @override
+  Future<void> play() async {}
+
+  @override
+  Future<void> seek(Duration position) async {}
+
+  @override
+  Future<void> setSpeed(double speed) async {}
+
+  void completeRetry() {
+    if (_retryCompleter.isCompleted) return;
+    _retryCompleter.complete();
+    _controller.add(
+      PlayerState.initial().copyWith(
+        isInitialized: true,
+        duration: const Duration(minutes: 24, seconds: 12),
+      ),
+    );
+  }
+}
+
+class _InterruptedPlayerAdapter implements PlayerControllerAdapter {
+  _InterruptedPlayerAdapter();
+
+  final _controller = StreamController<PlayerState>.broadcast();
+  PlayerState _state = PlayerState.initial();
+  int loadCalls = 0;
+  Duration? lastSeekPosition;
+
+  @override
+  Stream<PlayerState> get stateStream => _controller.stream;
+
+  @override
+  Future<void> dispose() async {
+    await _controller.close();
+  }
+
+  @override
+  Future<void> load(
+    String url, {
+    Map<String, String> headers = const {},
+  }) async {
+    loadCalls += 1;
+    _state = PlayerState.initial().copyWith(
+      isInitialized: true,
+      duration: const Duration(minutes: 24, seconds: 12),
+      speed: 1.25,
+      clearErrorMessage: true,
+    );
+    _controller.add(_state);
+  }
+
+  @override
+  Future<void> pause() async {
+    _state = _state.copyWith(isPlaying: false);
+    _controller.add(_state);
+  }
+
+  @override
+  Future<void> play() async {
+    _state = _state.copyWith(isPlaying: true);
+    _controller.add(_state);
+  }
+
+  @override
+  Future<void> seek(Duration position) async {
+    lastSeekPosition = position;
+    _state = _state.copyWith(position: position);
+    _controller.add(_state);
+  }
+
+  @override
+  Future<void> setSpeed(double speed) async {
+    _state = _state.copyWith(speed: speed);
+    _controller.add(_state);
+  }
+
+  void emitPlaybackFailure({
+    required Duration position,
+  }) {
+    _state = _state.copyWith(
+      isInitialized: true,
+      isPlaying: false,
+      position: position,
+      errorMessage: 'stream interrupted',
+    );
+    _controller.add(_state);
+  }
+}
+
 const _args = PlayerRouteArgs(
   animeId: 'anime-1',
   episodeId: 'episode-1',
@@ -1112,6 +1677,31 @@ const _failingArgs = PlayerRouteArgs(
   playSourceId: 'line-broken',
   playSourceTitle: 'Broken Line',
   playHeaders: {'Referer': 'https://example.test/player?token=secret'},
+);
+
+const _fallbackFailingArgs = PlayerRouteArgs(
+  animeId: 'anime-1',
+  episodeId: 'episode-2',
+  animeTitle: 'Anime 1',
+  episodeTitle: 'Episode 2',
+  playUrl: 'https://cdn.example.test/path/broken.m3u8?token=secret',
+  sourceId: 'sakura',
+  requestedSourceId: 'mock',
+  playSourceId: 'line-broken',
+  playSourceTitle: 'Broken Line',
+  playHeaders: {'Referer': 'https://example.test/player?token=secret'},
+);
+
+const _fallbackArgs = PlayerRouteArgs(
+  animeId: 'anime-1',
+  episodeId: 'episode-1',
+  animeTitle: 'Anime 1',
+  episodeTitle: 'Episode 1',
+  playUrl: 'https://cdn.example.test/video.m3u8',
+  sourceId: 'sakura',
+  requestedSourceId: 'mock',
+  playSourceId: 'line-1',
+  playSourceTitle: 'Line 1',
 );
 
 const _missingPlayUrlArgs = PlayerRouteArgs(

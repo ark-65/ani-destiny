@@ -117,6 +117,8 @@ class FeedbackPackageCollector {
     }
 
     return [
+      '- Anime: ${diagnostics.animeTitle}',
+      '- Episode: ${diagnostics.episodeTitle}',
       '- Source: ${_sourceLabel(diagnostics.sourceId)}',
       '- Line: ${diagnostics.playSourceTitle ?? 'Unavailable'}',
       '- URL type: ${diagnostics.urlType}',

@@ -51,6 +51,7 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
   bool _isDisposed = false;
   bool _isSwitchingEpisode = false;
   bool _isOpeningExternalPlayer = false;
+  bool _isRetryingPlayback = false;
 
   PlayerRouteArgs get _args => _currentArgs;
 
@@ -98,16 +99,22 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
   Widget build(BuildContext context) {
     final danmakuSettings = ref.watch(danmakuSettingsProvider);
     final hasPlayableSource = _hasPlayableUrl();
-    final isRouteBusy = _isSwitchingEpisode || _isOpeningExternalPlayer;
+    final isRetryingPlayback = _isRetryingPlayback;
+    final isRouteBusy =
+        _isSwitchingEpisode || _isOpeningExternalPlayer || isRetryingPlayback;
     final nextEpisodeTooltip = _isSwitchingEpisode
         ? context.l10n.loadingNextEpisode
         : _isOpeningExternalPlayer
             ? context.l10n.openingExternalPlayer
-            : context.l10n.nextEpisode;
+            : isRetryingPlayback
+                ? context.l10n.retryingPlayback
+                : context.l10n.nextEpisode;
     final externalPlayerTooltip = _externalPlayerTooltip(context);
     final downloadTooltip = _downloadTooltip(context);
-    final canCreateDownload =
-        hasPlayableSource && !_isSwitchingEpisode && !_isOpeningExternalPlayer;
+    final canCreateDownload = hasPlayableSource &&
+        !_isSwitchingEpisode &&
+        !_isOpeningExternalPlayer &&
+        !isRetryingPlayback;
     final canOpenExternalPlayer = _canOpenExternalPlayer();
     final danmakuItems = ref.watch(
       danmakuItemsProvider(
@@ -150,7 +157,9 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
                     ),
                   IconButton(
                     tooltip: nextEpisodeTooltip,
-                    onPressed: _isSwitchingEpisode || _isOpeningExternalPlayer
+                    onPressed: _isSwitchingEpisode ||
+                            _isOpeningExternalPlayer ||
+                            _isRetryingPlayback
                         ? null
                         : () => unawaited(_playNextEpisode()),
                     icon: _isSwitchingEpisode
@@ -176,6 +185,12 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
               ),
         body: Column(
           children: [
+            if (!_isFullscreen &&
+                _hasSourceFallbackContext() &&
+                _state.errorMessage == null)
+              _SourceFallbackBanner(
+                message: _sourceFallbackNotice(context),
+              ),
             Expanded(
               child: Stack(
                 fit: StackFit.expand,
@@ -188,15 +203,116 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
                   if (_state.isBuffering)
                     const Center(child: CircularProgressIndicator()),
                   if (_state.errorMessage != null)
-                    Center(
-                      child: ConstrainedBox(
-                        constraints: const BoxConstraints(maxWidth: 420),
-                        child: Card(
-                          child: Padding(
-                            padding: const EdgeInsets.all(16),
-                            child: Text(
-                              _playbackErrorMessage(),
-                              textAlign: TextAlign.center,
+                    SafeArea(
+                      child: SingleChildScrollView(
+                        padding: const EdgeInsets.all(16),
+                        child: Align(
+                          alignment: Alignment.topCenter,
+                          child: ConstrainedBox(
+                            constraints: const BoxConstraints(maxWidth: 420),
+                            child: Card(
+                              child: Padding(
+                                padding: const EdgeInsets.all(16),
+                                child: Column(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Text(
+                                      _playbackErrorMessage(),
+                                      textAlign: TextAlign.center,
+                                    ),
+                                    const SizedBox(height: 12),
+                                    _PlaybackIssueContext(
+                                      animeTitle: _args.animeTitle,
+                                      episodeTitle: _args.episodeTitle,
+                                      requestedSourceLabel:
+                                          _hasSourceFallbackContext()
+                                              ? context.l10n.sourceDisplayLabel(
+                                                  _args.requestedSourceId!,
+                                                )
+                                              : null,
+                                      sourceLabel:
+                                          context.l10n.sourceDisplayLabel(
+                                        _args.sourceId,
+                                      ),
+                                      playSourceTitle: _args.playSourceTitle,
+                                    ),
+                                    const SizedBox(height: 12),
+                                    Wrap(
+                                      alignment: WrapAlignment.center,
+                                      spacing: 8,
+                                      runSpacing: 8,
+                                      children: [
+                                        if (_canRetryPlayback())
+                                          TextButton.icon(
+                                            onPressed: () =>
+                                                unawaited(_retryPlayback()),
+                                            icon: const Icon(Icons.refresh),
+                                            label: Text(context.l10n.retry),
+                                          ),
+                                        if (_supportsExternalPlayerHandoff())
+                                          TextButton.icon(
+                                            onPressed: canOpenExternalPlayer
+                                                ? () => unawaited(
+                                                      _openExternalPlayer(),
+                                                    )
+                                                : null,
+                                            icon: _isOpeningExternalPlayer
+                                                ? const SizedBox.square(
+                                                    dimension: 18,
+                                                    child:
+                                                        CircularProgressIndicator(
+                                                      strokeWidth: 2,
+                                                    ),
+                                                  )
+                                                : const Icon(Icons.open_in_new),
+                                            label: Text(
+                                              _isOpeningExternalPlayer
+                                                  ? context.l10n
+                                                      .openingExternalPlayer
+                                                  : context.l10n.externalPlayer,
+                                            ),
+                                          ),
+                                        TextButton.icon(
+                                          onPressed: () => unawaited(
+                                            _copyPlaybackDiagnostics(),
+                                          ),
+                                          icon: const Icon(
+                                            Icons.content_copy_outlined,
+                                          ),
+                                          label: Text(
+                                            context.l10n.copyDiagnostics,
+                                          ),
+                                        ),
+                                        TextButton.icon(
+                                          onPressed: _showPlaybackDiagnostics,
+                                          icon: const Icon(
+                                            Icons.bug_report_outlined,
+                                          ),
+                                          label: Text(
+                                            context.l10n.playbackDiagnostics,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                    if (_hasPlayableUrl() &&
+                                        _args.playHeaders.isNotEmpty) ...[
+                                      const SizedBox(height: 8),
+                                      Text(
+                                        context.l10n
+                                            .externalPlayerHeadersUnsupported,
+                                        textAlign: TextAlign.center,
+                                        style: Theme.of(
+                                          context,
+                                        ).textTheme.bodySmall?.copyWith(
+                                              color: Theme.of(context)
+                                                  .colorScheme
+                                                  .onSurfaceVariant,
+                                            ),
+                                      ),
+                                    ],
+                                  ],
+                                ),
+                              ),
                             ),
                           ),
                         ),
@@ -236,7 +352,7 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
                 },
                 onSeek: (position) => unawaited(_controller.seek(position)),
                 onSpeed: _showSpeedSheet,
-                onNextEpisode: _isSwitchingEpisode
+                onNextEpisode: _isSwitchingEpisode || isRetryingPlayback
                     ? null
                     : () => unawaited(_playNextEpisode()),
                 onOpenExternalPlayer: canOpenExternalPlayer
@@ -259,6 +375,7 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
                 isFullscreen: _isFullscreen,
                 isSwitchingEpisode: _isSwitchingEpisode,
                 isOpeningExternalPlayer: _isOpeningExternalPlayer,
+                isRetryingPlayback: isRetryingPlayback,
               ),
             ),
           ],
@@ -268,10 +385,17 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
   }
 
   bool _canOpenExternalPlayer() {
-    if (!_hasPlayableUrl() || _isSwitchingEpisode || _isOpeningExternalPlayer) {
+    if (!_supportsExternalPlayerHandoff() ||
+        _isSwitchingEpisode ||
+        _isOpeningExternalPlayer ||
+        _isRetryingPlayback) {
       return false;
     }
-    return _args.playHeaders.isEmpty;
+    return true;
+  }
+
+  bool _supportsExternalPlayerHandoff() {
+    return _hasPlayableUrl() && _args.playHeaders.isEmpty;
   }
 
   bool _hasPlayableUrl() {
@@ -284,6 +408,9 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
     }
     if (_isSwitchingEpisode) {
       return context.l10n.loadingNextEpisode;
+    }
+    if (_isRetryingPlayback) {
+      return context.l10n.retryingPlayback;
     }
     if (!_hasPlayableUrl()) {
       return context.l10n.noPlayableSourceFound;
@@ -300,6 +427,9 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
     }
     if (_isSwitchingEpisode) {
       return context.l10n.loadingNextEpisode;
+    }
+    if (_isRetryingPlayback) {
+      return context.l10n.retryingPlayback;
     }
     if (!_hasPlayableUrl()) {
       return context.l10n.noPlayableSourceFound;
@@ -346,44 +476,75 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
       showDragHandle: true,
       builder: (context) {
         return SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  context.l10n.playbackDiagnostics,
-                  style: Theme.of(context).textTheme.titleLarge,
-                ),
-                const SizedBox(height: 12),
-                _DiagnosticRow(
-                  label: context.l10n.playbackDiagnosticSource,
-                  value: context.l10n.sourceDisplayLabel(diagnostics.sourceId),
-                ),
-                _DiagnosticRow(
-                  label: context.l10n.playbackDiagnosticLine,
-                  value: diagnostics.playSourceTitle ?? '-',
-                ),
-                _DiagnosticRow(
-                  label: context.l10n.playbackDiagnosticUrlType,
-                  value: diagnostics.urlType,
-                ),
-                _DiagnosticRow(
-                  label: context.l10n.playbackDiagnosticUrl,
-                  value: diagnostics.sanitizedUrl,
-                ),
-                _DiagnosticRow(
-                  label: context.l10n.playbackDiagnosticHeaders,
-                  value: diagnostics.headerKeys.isEmpty
-                      ? '-'
-                      : diagnostics.headerKeys.join(', '),
-                ),
-                _DiagnosticRow(
-                  label: context.l10n.playbackDiagnosticState,
-                  value: _stateLabel(),
-                ),
-              ],
+          child: SingleChildScrollView(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    context.l10n.playbackDiagnostics,
+                    style: Theme.of(context).textTheme.titleLarge,
+                  ),
+                  const SizedBox(height: 12),
+                  _DiagnosticRow(
+                    label: context.l10n.playbackDiagnosticAnime,
+                    value: _diagnosticContextValue(diagnostics.animeTitle),
+                  ),
+                  _DiagnosticRow(
+                    label: context.l10n.playbackDiagnosticEpisode,
+                    value: _diagnosticContextValue(diagnostics.episodeTitle),
+                  ),
+                  if (diagnostics.usedSourceFallback)
+                    _DiagnosticRow(
+                      label: context.l10n.playbackDiagnosticRequestedSource,
+                      value: context.l10n.sourceDisplayLabel(
+                        diagnostics.requestedSourceId!,
+                      ),
+                    ),
+                  _DiagnosticRow(
+                    label: context.l10n.playbackDiagnosticSource,
+                    value:
+                        context.l10n.sourceDisplayLabel(diagnostics.sourceId),
+                  ),
+                  _DiagnosticRow(
+                    label: context.l10n.playbackDiagnosticLine,
+                    value: diagnostics.playSourceTitle ?? '-',
+                  ),
+                  _DiagnosticRow(
+                    label: context.l10n.playbackDiagnosticUrlType,
+                    value: diagnostics.urlType,
+                  ),
+                  _DiagnosticRow(
+                    label: context.l10n.playbackDiagnosticUrl,
+                    value: diagnostics.sanitizedUrl,
+                  ),
+                  _DiagnosticRow(
+                    label: context.l10n.playbackDiagnosticHeaders,
+                    value: diagnostics.headerKeys.isEmpty
+                        ? '-'
+                        : diagnostics.headerKeys.join(', '),
+                  ),
+                  _DiagnosticRow(
+                    label: context.l10n.playbackDiagnosticState,
+                    value: _stateLabel(),
+                  ),
+                  const SizedBox(height: 12),
+                  Text(
+                    context.l10n.diagnosticsPrivacyNote,
+                    style: Theme.of(context).textTheme.bodySmall,
+                  ),
+                  const SizedBox(height: 12),
+                  FilledButton.icon(
+                    onPressed: () => unawaited(
+                      _copyPlaybackDiagnostics(diagnostics: diagnostics),
+                    ),
+                    icon: const Icon(Icons.content_copy_outlined),
+                    label: Text(context.l10n.copyDiagnostics),
+                  ),
+                ],
+              ),
             ),
           ),
         );
@@ -396,7 +557,10 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
   }) {
     final routeArgs = args ?? _args;
     final diagnostics = const PlaybackDiagnosticsBuilder().build(
+      animeTitle: routeArgs.animeTitle,
+      episodeTitle: routeArgs.episodeTitle,
       sourceId: routeArgs.sourceId,
+      requestedSourceId: routeArgs.requestedSourceId,
       playSourceTitle: routeArgs.playSourceTitle,
       playUrl: routeArgs.playUrl,
       headers: routeArgs.playHeaders,
@@ -431,6 +595,15 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
       return context.l10n.noPlayableSourceFound;
     }
     return context.l10n.playbackFailedSuggestion;
+  }
+
+  bool _canRetryPlayback() {
+    return _state.errorMessage != null &&
+        _state.errorMessage != context.l10n.playerNoPlayUrl &&
+        !_isSwitchingEpisode &&
+        !_isOpeningExternalPlayer &&
+        !_isRetryingPlayback &&
+        _hasPlayableUrl();
   }
 
   Future<void> _saveHistory({bool force = false}) async {
@@ -597,6 +770,11 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
         episodeId: nextEpisode.id,
         episodeTitle: nextEpisode.title,
         sourceId: playSourceResult.sourceId,
+        requestedSourceId: playSourceResult.usedFallback
+            ? playSourceResult.fromSourceId ?? detailResult.sourceId
+            : detailResult.usedFallback
+                ? detailResult.fromSourceId ?? currentArgs.sourceId
+                : null,
         playSourceId: selectedSource.id,
         playSourceTitle: selectedSource.title,
         playUrl: selectedSource.url,
@@ -674,6 +852,102 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
       SnackBar(content: Text(message)),
     );
   }
+
+  Future<void> _copyPlaybackDiagnostics({
+    PlaybackDiagnostics? diagnostics,
+  }) async {
+    final snapshot = diagnostics ?? _recordPlaybackDiagnostics();
+    final summary = _playbackDiagnosticsSummary(snapshot);
+
+    try {
+      await Clipboard.setData(ClipboardData(text: summary));
+      if (!mounted) return;
+      _showSnackBar(context.l10n.diagnosticsCopied);
+    } catch (_) {
+      if (!mounted) return;
+      _showSnackBar(context.l10n.diagnosticsCopyFailed);
+    }
+  }
+
+  String _playbackDiagnosticsSummary(PlaybackDiagnostics diagnostics) {
+    final lineTitle = diagnostics.playSourceTitle?.trim();
+    final headers = diagnostics.headerKeys.isEmpty
+        ? '-'
+        : diagnostics.headerKeys.join(', ');
+    final summary = <String>[
+      context.l10n.playbackDiagnosticsSummary,
+      '${context.l10n.playbackDiagnosticAnime}: '
+          '${_diagnosticContextValue(diagnostics.animeTitle)}',
+      '${context.l10n.playbackDiagnosticEpisode}: '
+          '${_diagnosticContextValue(diagnostics.episodeTitle)}',
+    ];
+    if (diagnostics.usedSourceFallback) {
+      summary.add(
+        '${context.l10n.playbackDiagnosticRequestedSource}: '
+        '${context.l10n.sourceDisplayLabel(diagnostics.requestedSourceId!)}',
+      );
+    }
+    summary.addAll([
+      '${context.l10n.playbackDiagnosticSource}: '
+          '${context.l10n.sourceDisplayLabel(diagnostics.sourceId)}',
+      '${context.l10n.playbackDiagnosticLine}: '
+          '${lineTitle == null || lineTitle.isEmpty ? '-' : lineTitle}',
+      '${context.l10n.playbackDiagnosticUrlType}: ${diagnostics.urlType}',
+      '${context.l10n.playbackDiagnosticUrl}: ${diagnostics.sanitizedUrl}',
+      '${context.l10n.playbackDiagnosticHeaders}: $headers',
+      '${context.l10n.playbackDiagnosticState}: ${_stateLabel()}',
+    ]);
+    return summary.join('\n');
+  }
+
+  String _diagnosticContextValue(String? value) {
+    final trimmed = value?.trim();
+    if (trimmed == null || trimmed.isEmpty) {
+      return '-';
+    }
+    return trimmed;
+  }
+
+  bool _hasSourceFallbackContext() {
+    final requestedSourceId = _args.requestedSourceId?.trim();
+    return requestedSourceId != null &&
+        requestedSourceId.isNotEmpty &&
+        requestedSourceId != _args.sourceId;
+  }
+
+  String _sourceFallbackNotice(BuildContext context) {
+    final requestedSourceId = _args.requestedSourceId!;
+    return context.l10n.sourceFallbackPlayerNotice(
+      context.l10n.sourceDisplayLabel(requestedSourceId),
+      context.l10n.sourceDisplayLabel(_args.sourceId),
+    );
+  }
+
+  Future<void> _retryPlayback() async {
+    if (!_canRetryPlayback() || _isRetryingPlayback) return;
+
+    final playbackSpeed = _state.speed;
+    final resumePosition =
+        _state.position > Duration.zero ? _state.position : null;
+    final retryArgs = _args.copyWith(initialPosition: resumePosition);
+    setState(() {
+      _isRetryingPlayback = true;
+      _state = PlayerState.initial().copyWith(
+        isBuffering: true,
+      );
+    });
+    try {
+      await _loadPlayer(
+        args: retryArgs,
+        autoplay: true,
+        playbackSpeed: playbackSpeed,
+      );
+    } finally {
+      if (mounted) {
+        setState(() => _isRetryingPlayback = false);
+      }
+    }
+  }
 }
 
 bool _isPlayableUrl(String value) {
@@ -708,6 +982,115 @@ class _DiagnosticRow extends StatelessWidget {
           Expanded(child: SelectableText(value)),
         ],
       ),
+    );
+  }
+}
+
+class _SourceFallbackBanner extends StatelessWidget {
+  const _SourceFallbackBanner({
+    required this.message,
+  });
+
+  final String message;
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    return ColoredBox(
+      color: colorScheme.surfaceContainerHighest,
+      child: SafeArea(
+        bottom: false,
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(16, 10, 16, 10),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Icon(
+                Icons.info_outline,
+                size: 18,
+                color: colorScheme.onSurfaceVariant,
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  message,
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: colorScheme.onSurfaceVariant,
+                      ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _PlaybackIssueContext extends StatelessWidget {
+  const _PlaybackIssueContext({
+    required this.animeTitle,
+    required this.episodeTitle,
+    required this.requestedSourceLabel,
+    required this.sourceLabel,
+    required this.playSourceTitle,
+  });
+
+  final String animeTitle;
+  final String episodeTitle;
+  final String? requestedSourceLabel;
+  final String sourceLabel;
+  final String? playSourceTitle;
+
+  @override
+  Widget build(BuildContext context) {
+    final animeTextStyle = Theme.of(context).textTheme.bodySmall?.copyWith(
+          fontWeight: FontWeight.w600,
+        );
+    final episodeTextStyle = Theme.of(context).textTheme.bodySmall?.copyWith(
+          color: Theme.of(context).colorScheme.onSurfaceVariant,
+        );
+    final sourceTextStyle = episodeTextStyle;
+    final lineTextStyle = episodeTextStyle;
+    final lineTitle = playSourceTitle?.trim();
+    final episodeLabel =
+        episodeTitle.trim().isEmpty ? '-' : episodeTitle.trim();
+    final animeLabel = animeTitle.trim().isEmpty ? '-' : animeTitle.trim();
+    final requestedSource = requestedSourceLabel?.trim();
+    final sourceContextLabel = requestedSource == null ||
+            requestedSource.isEmpty
+        ? sourceLabel
+        : '$sourceLabel (${context.l10n.playbackDiagnosticRequestedSource}: '
+            '$requestedSource)';
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text(
+          '${context.l10n.playbackDiagnosticAnime}: $animeLabel',
+          textAlign: TextAlign.center,
+          style: animeTextStyle,
+        ),
+        const SizedBox(height: 4),
+        Text(
+          '${context.l10n.playbackDiagnosticEpisode}: $episodeLabel',
+          textAlign: TextAlign.center,
+          style: episodeTextStyle,
+        ),
+        const SizedBox(height: 8),
+        Text(
+          '${context.l10n.playbackDiagnosticSource}: $sourceContextLabel',
+          textAlign: TextAlign.center,
+          style: sourceTextStyle,
+        ),
+        if (lineTitle != null && lineTitle.isNotEmpty) ...[
+          const SizedBox(height: 4),
+          Text(
+            '${context.l10n.playbackDiagnosticLine}: $lineTitle',
+            textAlign: TextAlign.center,
+            style: lineTextStyle,
+          ),
+        ],
+      ],
     );
   }
 }

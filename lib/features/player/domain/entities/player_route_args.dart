@@ -3,6 +3,7 @@ import 'package:flutter/foundation.dart';
 @immutable
 class PlayerRouteArgs {
   static const _initialPositionUnset = Object();
+  static const _requestedSourceIdUnset = Object();
 
   const PlayerRouteArgs({
     required this.animeId,
@@ -12,6 +13,7 @@ class PlayerRouteArgs {
     required this.playUrl,
     required this.sourceId,
     this.coverUrl,
+    this.requestedSourceId,
     this.playSourceId,
     this.playSourceTitle,
     this.playHeaders = const {},
@@ -26,6 +28,7 @@ class PlayerRouteArgs {
   final String playUrl;
   final String sourceId;
   final String? coverUrl;
+  final String? requestedSourceId;
   final String? playSourceId;
   final String? playSourceTitle;
   final Map<String, String> playHeaders;
@@ -40,6 +43,7 @@ class PlayerRouteArgs {
     String? playUrl,
     String? sourceId,
     String? coverUrl,
+    Object? requestedSourceId = _requestedSourceIdUnset,
     String? playSourceId,
     String? playSourceTitle,
     Map<String, String>? playHeaders,
@@ -54,6 +58,9 @@ class PlayerRouteArgs {
       playUrl: playUrl ?? this.playUrl,
       sourceId: sourceId ?? this.sourceId,
       coverUrl: coverUrl ?? this.coverUrl,
+      requestedSourceId: identical(requestedSourceId, _requestedSourceIdUnset)
+          ? this.requestedSourceId
+          : requestedSourceId as String?,
       playSourceId: playSourceId ?? this.playSourceId,
       playSourceTitle: playSourceTitle ?? this.playSourceTitle,
       playHeaders: playHeaders ?? this.playHeaders,

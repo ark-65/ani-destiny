@@ -17,6 +17,7 @@ void main() {
       episodeTitle: 'Episode 1',
       playUrl: 'https://cdn.example.test/video.m3u8?token=secret',
       sourceId: 'sakura',
+      requestedSourceId: 'mock',
       playSourceId: 'line-1',
       playSourceTitle: 'Line 1',
       playHeaders: {
@@ -27,6 +28,7 @@ void main() {
     );
 
     expect(args.sourceId, 'sakura');
+    expect(args.requestedSourceId, 'mock');
     expect(args.playSourceId, 'line-1');
     expect(args.playHeaders['Referer'], contains('example.test'));
     expect(args.episodeIndex, 1);
@@ -68,6 +70,7 @@ void main() {
       episodeTitle: 'Episode 1',
       playUrl: 'https://cdn.example.test/1.m3u8',
       sourceId: 'sakura',
+      requestedSourceId: 'mock',
       playSourceId: 'line-1',
       playSourceTitle: 'Line 1',
       playHeaders: {'Referer': 'https://example.test/1'},
@@ -79,6 +82,7 @@ void main() {
       episodeId: 'episode-2',
       episodeTitle: 'Episode 2',
       playUrl: 'https://cdn.example.test/2.m3u8',
+      requestedSourceId: null,
       playSourceId: 'line-2',
       playSourceTitle: 'Line 2',
       playHeaders: const {'Referer': 'https://example.test/2'},
@@ -89,6 +93,7 @@ void main() {
     expect(next.animeId, 'anime-1');
     expect(next.episodeId, 'episode-2');
     expect(next.episodeTitle, 'Episode 2');
+    expect(next.requestedSourceId, isNull);
     expect(next.playSourceId, 'line-2');
     expect(next.initialPosition, isNull);
   });
@@ -277,7 +282,10 @@ void main() {
   test('PlaybackDiagnosticsBuilder hides query tokens and keeps header keys',
       () {
     final diagnostics = const PlaybackDiagnosticsBuilder().build(
+      animeTitle: 'Anime 1',
+      episodeTitle: 'Episode 1',
       sourceId: 'sakura',
+      requestedSourceId: 'mock',
       playSourceTitle: 'Line 1',
       playUrl: 'https://cdn.example.test/path/video.m3u8?token=secret&x=1',
       headers: const {
@@ -293,5 +301,6 @@ void main() {
     );
     expect(diagnostics.sanitizedUrl, isNot(contains('token')));
     expect(diagnostics.headerKeys, ['Referer', 'User-Agent']);
+    expect(diagnostics.usedSourceFallback, isTrue);
   });
 }

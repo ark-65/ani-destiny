@@ -118,6 +118,9 @@ class HistoryPage extends ConsumerWidget {
       playSourceId: source.id,
       playSourceTitle: source.title,
       sourceId: sourceResult.sourceId,
+      requestedSourceId: sourceResult.usedFallback
+          ? sourceResult.fromSourceId ?? history.sourceId
+          : null,
     );
   }
 
@@ -129,6 +132,7 @@ class HistoryPage extends ConsumerWidget {
     required String? playSourceId,
     required String? playSourceTitle,
     String? sourceId,
+    String? requestedSourceId,
   }) {
     context.push(
       '/player',
@@ -139,6 +143,7 @@ class HistoryPage extends ConsumerWidget {
         episodeTitle: history.episodeTitle,
         coverUrl: history.coverUrl,
         sourceId: sourceId ?? history.sourceId,
+        requestedSourceId: requestedSourceId,
         playUrl: playUrl,
         playHeaders: playHeaders,
         playSourceId: playSourceId,
