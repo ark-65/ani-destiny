@@ -6,6 +6,8 @@
 
 ## [Unreleased]
 
+## [1.0.3] - 2026-06-13
+
 ### 🐛 Fixed
 - Fixed the player only explaining source fallback in a transient pre-navigation message and then losing that context after the page opened; the player page now keeps the active fallback source visible and includes the originally requested source in playback diagnostics so users do not have to guess why playback came from a different source.
 - Fixed the player failure card hiding the External player limitation inside a disabled button state when the current stream still depended on request headers; it now explains the handoff constraint directly in the failure state so users do not have to guess why another app cannot take over yet.
@@ -85,7 +87,6 @@
 - Added troubleshooting documentation for source, playback, danmaku, download, install, and diagnostics-copy flows.
 - Updated README and reporting docs to guide users toward templates and sanitized diagnostics.
 - Clarified release asset platform selection and changed the Android debug artifact example to use a version placeholder.
-
 ## [1.0.2] - 2026-05-29
 
 ### ✨ Added
