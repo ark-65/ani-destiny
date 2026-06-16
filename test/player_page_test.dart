@@ -339,7 +339,7 @@ void main() {
       'Line: Broken Line\n'
       'URL type: m3u8\n'
       'URL: https://cdn.example.test/.../broken.m3u8\n'
-      'Headers: Referer\n'
+      'Request headers: Referer\n'
       'State: Failed',
     );
   });

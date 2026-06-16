@@ -11,6 +11,7 @@
 - Fixed Source Settings and Runtime diagnostics still exposing raw English health states like `Healthy`, `Degraded`, and `Unavailable` to Chinese and Japanese users; those diagnostics now use localized status labels so the support flow feels less like an internal panel.
 
 ### 🔧 CI/CD
+- Tightened the player failure-card diagnostics-copy assertion around the new `Request headers` wording so PR validation keeps protecting the localized support copy instead of failing on stale expectations.
 - Removed the unused `permission_handler` dependency that was breaking `flutter build windows --release` on the newer GitHub Windows runner, so the Windows delivery path is no longer blocked by an unused platform plugin.
 
 ## [1.0.3] - 2026-06-13
