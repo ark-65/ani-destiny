@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../app/l10n/app_localizations.dart';
+import '../../../../core/diagnostics/diagnostic_sanitizer.dart';
 import '../../../../core/utils/url_sanitizer.dart';
 import '../../../../shared/widgets/adaptive_page.dart';
 import '../../../danmaku/presentation/providers/danmaku_providers.dart';
@@ -172,7 +173,7 @@ class _SourceHealthTile extends StatelessWidget {
       value: [
         context.l10n.sourceFailureCount(health.failureCount),
         if (health.lastErrorMessage != null)
-          context.l10n.sourceLastError(health.lastErrorMessage!),
+          context.l10n.sourceLastError(sanitizeError(health.lastErrorMessage!)),
       ].join('\n'),
       icon: Icons.monitor_heart_outlined,
     );
@@ -197,7 +198,7 @@ class _FallbackEventTile extends StatelessWidget {
     return _DiagnosticTile(
       label:
           '${context.l10n.sourceOperationLabel(event.operation)}: ${context.l10n.sourceTransitionLabel(event.fromSourceId, event.toSourceId)}',
-      value: event.reason,
+      value: sanitizeError(event.reason),
       icon: Icons.swap_horiz_outlined,
     );
   }
@@ -242,7 +243,7 @@ class _SourceDiagnosticTile extends StatelessWidget {
           diagnostic.fromSourceId!,
           diagnostic.toSourceId!,
         ),
-      if (diagnostic.reason != null) diagnostic.reason!,
+      if (diagnostic.reason != null) sanitizeError(diagnostic.reason!),
     ];
 
     return ListTile(
@@ -252,7 +253,7 @@ class _SourceDiagnosticTile extends StatelessWidget {
       ),
       subtitle: SelectableText(
         [
-          diagnostic.message,
+          sanitizeError(diagnostic.message),
           if (details.isNotEmpty) details.join(' · '),
         ].join('\n'),
       ),

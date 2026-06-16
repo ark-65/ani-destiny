@@ -173,6 +173,78 @@ void main() {
     expect(find.text('Diagnostics copied'), findsOneWidget);
     expect(copiedText, 'Source diagnostics summary');
   });
+
+  testWidgets('runtime diagnostics sanitizes inline support details', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      _buildApp(
+        home: const RuntimeDiagnosticsPage(),
+        overrides: [
+          ..._providerOverrides,
+          sourceHealthControllerProvider.overrideWith(
+            () => _SensitiveSourceHealthController(),
+          ),
+          sourceFallbackEventsProvider.overrideWith(
+            () => _SensitiveSourceFallbackEventsController(),
+          ),
+          sourceDiagnosticsControllerProvider.overrideWith(
+            () => _SensitiveSourceDiagnosticsController(),
+          ),
+        ],
+      ),
+    );
+
+    await tester.pumpAndSettle();
+    await tester.scrollUntilVisible(
+      find.textContaining('HTML document omitted'),
+      200,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.textContaining('[sensitive]=[hidden]'), findsWidgets);
+    expect(find.textContaining('HTML document omitted'), findsOneWidget);
+    expect(find.textContaining('token=secret'), findsNothing);
+    expect(find.textContaining('session=abc123'), findsNothing);
+  });
+
+  testWidgets('source diagnostics sheet sanitizes inline support details', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      _buildApp(
+        home: const SourceSettingsPage(),
+        overrides: [
+          ..._providerOverrides,
+          sourceHealthControllerProvider.overrideWith(
+            () => _SensitiveSourceHealthController(),
+          ),
+          sourceFallbackEventsProvider.overrideWith(
+            () => _SensitiveSourceFallbackEventsController(),
+          ),
+          sourceDiagnosticsControllerProvider.overrideWith(
+            () => _SensitiveSourceDiagnosticsController(),
+          ),
+        ],
+      ),
+    );
+
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Source diagnostics'));
+    await tester.pumpAndSettle();
+    await tester.scrollUntilVisible(
+      find.textContaining('HTML document omitted'),
+      200,
+      scrollable: find.byType(Scrollable).last,
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.textContaining('[sensitive]=[hidden]'), findsWidgets);
+    expect(find.textContaining('HTML document omitted'), findsOneWidget);
+    expect(find.textContaining('token=secret'), findsNothing);
+    expect(find.textContaining('session=abc123'), findsNothing);
+  });
 }
 
 Widget _buildApp({
@@ -282,6 +354,56 @@ class _FakeSourceDiagnosticsController extends SourceDiagnosticsController {
         toSourceId: 'mock',
         usedFallback: true,
         reason: 'Fallback triggered',
+        timestamp: DateTime(2026, 6, 7, 1, 2, 3),
+      ),
+    ];
+  }
+}
+
+class _SensitiveSourceHealthController extends SourceHealthController {
+  @override
+  List<SourceHealth> build() {
+    return const [
+      SourceHealth(
+        sourceId: 'sakura',
+        status: SourceHealthStatus.degraded,
+        failureCount: 1,
+        lastErrorMessage: 'token=secret',
+      ),
+    ];
+  }
+}
+
+class _SensitiveSourceFallbackEventsController
+    extends SourceFallbackEventsController {
+  @override
+  List<SourceFallbackEvent> build() {
+    return [
+      SourceFallbackEvent(
+        fromSourceId: 'sakura',
+        toSourceId: 'mock',
+        operation: 'detail',
+        reason: 'session=abc123',
+        timestamp: DateTime(2026, 6, 7, 1, 2, 3),
+      ),
+    ];
+  }
+}
+
+class _SensitiveSourceDiagnosticsController
+    extends SourceDiagnosticsController {
+  @override
+  List<SourceDiagnostic> build() {
+    return [
+      SourceDiagnostic(
+        sourceId: 'sakura',
+        operation: 'detail',
+        level: SourceDiagnosticLevel.warning,
+        message: '<html><body>token=secret</body></html>',
+        fromSourceId: 'sakura',
+        toSourceId: 'mock',
+        usedFallback: true,
+        reason: 'cookie=session=abc123',
         timestamp: DateTime(2026, 6, 7, 1, 2, 3),
       ),
     ];

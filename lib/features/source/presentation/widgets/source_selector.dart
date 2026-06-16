@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../../app/l10n/app_localizations.dart';
+import '../../../../core/diagnostics/diagnostic_sanitizer.dart';
 import '../../domain/entities/anime_source.dart';
 import '../../domain/entities/source_health.dart';
 
@@ -84,7 +85,9 @@ class _SourceOption extends StatelessWidget {
               ),
               if (health.lastErrorMessage != null)
                 Text(
-                  context.l10n.sourceLastError(health.lastErrorMessage!),
+                  context.l10n.sourceLastError(
+                    sanitizeError(health.lastErrorMessage!),
+                  ),
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
                         color: Theme.of(context).colorScheme.error,
                       ),

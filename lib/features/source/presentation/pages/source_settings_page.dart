@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../app/l10n/app_localizations.dart';
+import '../../../../core/diagnostics/diagnostic_sanitizer.dart';
 import '../../../../core/utils/url_sanitizer.dart';
 import '../../../../core/widgets/app_error_view.dart';
 import '../../../../core/widgets/app_loading_view.dart';
@@ -265,7 +266,8 @@ class _SourceHealthTile extends StatelessWidget {
         [
           context.l10n.sourceFailureCount(health.failureCount),
           if (health.lastErrorMessage != null)
-            context.l10n.sourceLastError(health.lastErrorMessage!),
+            context.l10n
+                .sourceLastError(sanitizeError(health.lastErrorMessage!)),
         ].join('\n'),
       ),
     );
@@ -293,7 +295,7 @@ class _FallbackEventTile extends StatelessWidget {
       title: Text(
         '${context.l10n.sourceOperationLabel(event.operation)}: ${context.l10n.sourceTransitionLabel(event.fromSourceId, event.toSourceId)}',
       ),
-      subtitle: Text(event.reason),
+      subtitle: Text(sanitizeError(event.reason)),
     );
   }
 }
@@ -322,7 +324,7 @@ class _SourceDiagnosticTile extends StatelessWidget {
           diagnostic.fromSourceId!,
           diagnostic.toSourceId!,
         ),
-      if (diagnostic.reason != null) diagnostic.reason!,
+      if (diagnostic.reason != null) sanitizeError(diagnostic.reason!),
       if (timestamp != null)
         '${timestamp.hour.toString().padLeft(2, '0')}:${timestamp.minute.toString().padLeft(2, '0')}:${timestamp.second.toString().padLeft(2, '0')}',
     ];
@@ -335,7 +337,7 @@ class _SourceDiagnosticTile extends StatelessWidget {
       ),
       subtitle: Text(
         [
-          diagnostic.message,
+          sanitizeError(diagnostic.message),
           if (details.isNotEmpty) details.join(' · '),
         ].join('\n'),
       ),
