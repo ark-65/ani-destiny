@@ -33,9 +33,10 @@ final feedbackPackageProvider =
   );
 
   return FeedbackPackageCollector(
+    l10n: l10n,
     appName: AppConstants.appName,
     appVersion: ref.watch(appVersionLabelProvider),
-    platform: defaultTargetPlatform.name,
+    platform: l10n.platformDisplayName(defaultTargetPlatform.name),
     currentSourceId: currentSourceId,
     sourceHealth: ref.watch(sourceHealthControllerProvider),
     sourceDiagnostics: ref
@@ -60,7 +61,13 @@ final feedbackPackageProvider =
 final feedbackPackageMarkdownProvider =
     FutureProvider.autoDispose<String>((ref) async {
   final package = await ref.watch(feedbackPackageProvider.future);
-  return const FeedbackPackageFormatter().format(package);
+  final l10n = AppLocalizations(
+    AppLocalizations.resolve(
+      ui.PlatformDispatcher.instance.locale,
+      AppLocalizations.supportedLocales,
+    ),
+  );
+  return FeedbackPackageFormatter(l10n: l10n).format(package);
 });
 
 Future<String?> _currentSourceId(Ref ref) async {

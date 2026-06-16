@@ -1,3 +1,4 @@
+import '../../app/l10n/app_localizations.dart';
 import '../../features/download/domain/entities/download_failure_reason.dart';
 import '../../features/download/domain/entities/download_kind.dart';
 import '../../features/download/domain/entities/download_task.dart';
@@ -10,6 +11,7 @@ import 'feedback_package.dart';
 
 class FeedbackPackageCollector {
   const FeedbackPackageCollector({
+    required this.l10n,
     required this.appName,
     required this.appVersion,
     required this.platform,
@@ -25,6 +27,7 @@ class FeedbackPackageCollector {
     String Function(String sourceId)? sourceLabelForId,
   }) : _sourceLabelForId = sourceLabelForId ?? _identitySourceLabel;
 
+  final AppLocalizations l10n;
   final String appName;
   final String appVersion;
   final String platform;
@@ -51,59 +54,74 @@ class FeedbackPackageCollector {
       playbackSummary: _playbackSummary(),
       danmakuSummary: _danmakuSummary(),
       downloadSummary: _downloadSummary(),
+      notes: l10n.feedbackPackageNotesPlaceholder,
     );
   }
 
   String _sourceSummary() {
     final lines = <String>[
-      '- Current source: ${_sourceLabelOrUnavailable(currentSourceId)}',
+      '- ${l10n.currentSource}: ${_sourceLabelOrUnavailable(currentSourceId)}',
     ];
 
     if (sourceHealth.isEmpty) {
-      lines.add('- Health: Unavailable');
+      lines.add('- ${l10n.sourceHealth}: ${l10n.feedbackPackageUnavailable}');
     } else {
-      lines.add('- Health:');
+      lines.add('- ${l10n.sourceHealth}:');
       for (final health in sourceHealth) {
         lines.add(
-          '  - ${_sourceLabel(health.sourceId)}: ${health.status.name}, '
-          'failures=${health.failureCount}',
+          '  - ${_sourceLabel(health.sourceId)} · ${_sourceHealthStatusLabel(health.status)}',
         );
+        lines.add('    ${l10n.sourceFailureCount(health.failureCount)}');
         if (health.lastErrorMessage != null) {
           lines.add(
-            '    last error: ${sanitizeError(health.lastErrorMessage!)}',
+            '    ${l10n.sourceLastError(sanitizeError(health.lastErrorMessage!))}',
           );
         }
       }
     }
 
     if (fallbackEvents.isEmpty) {
-      lines.add('- Recent fallback events: none');
+      lines.add('- ${l10n.sourceFallbackEvents}: ${l10n.feedbackPackageNone}');
     } else {
-      lines.add('- Recent fallback events:');
+      lines.add('- ${l10n.sourceFallbackEvents}:');
       for (final event in fallbackEvents.take(6)) {
         lines.add(
-          '  - ${event.operation}: ${_sourceLabel(event.fromSourceId)} -> '
-          '${_sourceLabel(event.toSourceId)}, '
-          'reason=${sanitizeError(event.reason)}',
+          '  - ${l10n.sourceOperationLabel(event.operation)}: '
+          '${l10n.sourceTransitionLabel(event.fromSourceId, event.toSourceId)}',
+        );
+        lines.add(
+          '    ${l10n.feedbackPackageReason}: ${sanitizeError(event.reason)}',
         );
       }
     }
 
     if (sourceDiagnostics.isEmpty) {
-      lines.add('- Recent source diagnostics: none');
+      lines.add(
+        '- ${l10n.latestSourceDiagnostics}: ${l10n.feedbackPackageNone}',
+      );
     } else {
-      lines.add('- Recent source diagnostics:');
+      lines.add('- ${l10n.latestSourceDiagnostics}:');
       for (final diagnostic in sourceDiagnostics.take(8)) {
         final details = [
-          diagnostic.level.name,
           if (diagnostic.statusCode != null) 'HTTP ${diagnostic.statusCode}',
           if (diagnostic.url != null) sanitizeUrl(diagnostic.url!),
           if (diagnostic.exceptionType != null) diagnostic.exceptionType!,
-        ].join(', ');
+          if (diagnostic.usedFallback &&
+              diagnostic.fromSourceId != null &&
+              diagnostic.toSourceId != null)
+            l10n.sourceTransitionLabel(
+              diagnostic.fromSourceId!,
+              diagnostic.toSourceId!,
+            ),
+        ].join(' · ');
         lines.add(
-          '  - ${_sourceLabel(diagnostic.sourceId)}/${diagnostic.operation}: '
-          '${sanitizeError(diagnostic.message)} ($details)',
+          '  - ${_sourceLabel(diagnostic.sourceId)} · '
+          '${l10n.sourceOperationLabel(diagnostic.operation)}',
         );
+        lines.add('    ${sanitizeError(diagnostic.message)}');
+        if (details.isNotEmpty) {
+          lines.add('    $details');
+        }
       }
     }
 
@@ -113,39 +131,52 @@ class FeedbackPackageCollector {
   String _playbackSummary() {
     final diagnostics = playbackDiagnostics;
     if (diagnostics == null) {
-      return 'Unavailable: no playback diagnostics captured in this session.';
+      return '${l10n.feedbackPackageUnavailable}: '
+          '${l10n.feedbackPackagePlaybackUnavailable}';
     }
 
-    return [
-      '- Anime: ${diagnostics.animeTitle}',
-      '- Episode: ${diagnostics.episodeTitle}',
-      '- Source: ${_sourceLabel(diagnostics.sourceId)}',
-      '- Line: ${diagnostics.playSourceTitle ?? 'Unavailable'}',
-      '- URL type: ${diagnostics.urlType}',
-      '- URL: ${diagnostics.sanitizedUrl}',
-      '- Header keys: ${diagnostics.headerKeys.isEmpty ? 'none' : diagnostics.headerKeys.join(', ')}',
-    ].join('\n');
+    final lines = <String>[
+      '- ${l10n.playbackDiagnosticAnime}: ${diagnostics.animeTitle}',
+      '- ${l10n.playbackDiagnosticEpisode}: ${diagnostics.episodeTitle}',
+      if (diagnostics.usedSourceFallback &&
+          diagnostics.requestedSourceId != null)
+        '- ${l10n.playbackDiagnosticRequestedSource}: '
+            '${_sourceLabel(diagnostics.requestedSourceId!)}',
+      '- ${l10n.playbackDiagnosticSource}: ${_sourceLabel(diagnostics.sourceId)}',
+      '- ${l10n.playbackDiagnosticLine}: '
+          '${diagnostics.playSourceTitle ?? l10n.feedbackPackageUnavailable}',
+      '- ${l10n.playbackDiagnosticUrlType}: ${diagnostics.urlType}',
+      '- ${l10n.playbackDiagnosticUrl}: ${diagnostics.sanitizedUrl}',
+      '- ${l10n.playbackDiagnosticHeaders}: '
+          '${diagnostics.headerKeys.isEmpty ? l10n.feedbackPackageNone : diagnostics.headerKeys.join(', ')}',
+    ];
+
+    return lines.join('\n');
   }
 
   String _danmakuSummary() {
     return [
-      '- Enabled: $danmakuEnabled',
-      '- Dandanplay app ID configured: $dandanplayAppIdConfigured',
-      '- Dandanplay secondary credential configured: '
-          '$dandanplayAppSecretConfigured',
-      '- Fallback provider: available',
+      '- ${l10n.enabled}: ${l10n.yesNo(danmakuEnabled)}',
+      '- ${l10n.feedbackPackageDandanplayAppIdConfigured}: '
+          '${l10n.yesNo(dandanplayAppIdConfigured)}',
+      '- ${l10n.feedbackPackageDandanplayAppSecretConfigured}: '
+          '${l10n.yesNo(dandanplayAppSecretConfigured)}',
+      '- ${l10n.feedbackPackageDanmakuFallbackProvider}: '
+          '${l10n.feedbackPackageAvailable}',
     ].join('\n');
   }
 
   String _sourceLabel(String sourceId) => _sourceLabelForId(sourceId);
 
   String _sourceLabelOrUnavailable(String? sourceId) {
-    if (sourceId == null) return 'Unavailable';
+    if (sourceId == null) return l10n.feedbackPackageUnavailable;
     return _sourceLabel(sourceId);
   }
 
   String _downloadSummary() {
-    if (downloadTasks.isEmpty) return '- Total tasks: 0';
+    if (downloadTasks.isEmpty) {
+      return '- ${l10n.feedbackPackageTotalTasks}: 0';
+    }
 
     final statusCounts = <DownloadStatus, int>{};
     final kindCounts = <DownloadKind, int>{};
@@ -166,28 +197,84 @@ class FeedbackPackageCollector {
       ..sort((a, b) => b.updatedAt.compareTo(a.updatedAt));
 
     final lines = <String>[
-      '- Total tasks: ${downloadTasks.length}',
-      '- Status counts:',
+      '- ${l10n.feedbackPackageTotalTasks}: ${downloadTasks.length}',
+      '- ${l10n.feedbackPackageStatusCounts}:',
       for (final status in DownloadStatus.values)
-        '  - ${status.name}: ${statusCounts[status] ?? 0}',
-      '- Kind counts:',
+        '  - ${_downloadStatusLabel(status)}: ${statusCounts[status] ?? 0}',
+      '- ${l10n.feedbackPackageKindCounts}:',
       for (final kind in DownloadKind.values)
-        '  - ${kind.name}: ${kindCounts[kind] ?? 0}',
+        '  - ${_downloadKindLabel(kind)}: ${kindCounts[kind] ?? 0}',
     ];
 
     if (latestIssue.isEmpty) {
-      lines.add('- Latest issue: none');
+      lines.add(
+        '- ${l10n.feedbackPackageLatestIssue}: ${l10n.feedbackPackageNone}',
+      );
     } else {
       final task = latestIssue.first;
       lines.add(
-        '- Latest issue: ${task.status.name}, '
-        'reason=${task.failureReason.name}',
+        '- ${l10n.feedbackPackageLatestIssue}: ${_downloadStatusLabel(task.status)}'
+        ' · ${l10n.feedbackPackageReason}: '
+        '${_downloadFailureReasonLabel(task.failureReason)}',
       );
       if (task.failureMessage != null) {
-        lines.add('  message=${sanitizeError(task.failureMessage!)}');
+        lines.add(
+          '  ${l10n.feedbackPackageMessage}: '
+          '${sanitizeError(task.failureMessage!)}',
+        );
       }
     }
 
     return lines.join('\n');
+  }
+
+  String _sourceHealthStatusLabel(SourceHealthStatus status) {
+    return switch (status) {
+      SourceHealthStatus.healthy => l10n.sourceHealthHealthy,
+      SourceHealthStatus.degraded => l10n.sourceHealthDegraded,
+      SourceHealthStatus.unavailable => l10n.sourceHealthUnavailable,
+    };
+  }
+
+  String _downloadStatusLabel(DownloadStatus status) {
+    return switch (status) {
+      DownloadStatus.pending => l10n.pending,
+      DownloadStatus.preparing => l10n.preparing,
+      DownloadStatus.downloading => l10n.downloading,
+      DownloadStatus.paused => l10n.paused,
+      DownloadStatus.completed => l10n.completed,
+      DownloadStatus.failed => l10n.failed,
+      DownloadStatus.canceled => l10n.canceled,
+      DownloadStatus.unsupported => l10n.unsupported,
+    };
+  }
+
+  String _downloadKindLabel(DownloadKind kind) {
+    return switch (kind) {
+      DownloadKind.directFile => l10n.downloadKindDirectFile,
+      DownloadKind.hls => l10n.downloadKindHls,
+      DownloadKind.bt => l10n.downloadKindBt,
+      DownloadKind.unknown => l10n.downloadKindUnknown,
+    };
+  }
+
+  String _downloadFailureReasonLabel(DownloadFailureReason reason) {
+    return switch (reason) {
+      DownloadFailureReason.none => l10n.feedbackPackageNone,
+      DownloadFailureReason.unsupportedType =>
+        l10n.downloadFailureUnsupportedType,
+      DownloadFailureReason.permissionDenied =>
+        l10n.downloadFailurePermissionDenied,
+      DownloadFailureReason.networkError => l10n.downloadFailureNetworkError,
+      DownloadFailureReason.sourceUnavailable =>
+        l10n.downloadFailureSourceUnavailable,
+      DownloadFailureReason.invalidUrl => l10n.downloadFailureInvalidUrl,
+      DownloadFailureReason.invalidManifest =>
+        l10n.downloadFailureInvalidManifest,
+      DownloadFailureReason.storageUnavailable =>
+        l10n.downloadFailureStorageUnavailable,
+      DownloadFailureReason.canceled => l10n.canceled,
+      DownloadFailureReason.unknown => l10n.downloadFailureUnknown,
+    };
   }
 }

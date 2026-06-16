@@ -253,6 +253,40 @@ class AppLocalizations {
   }
 
   String yesNo(bool value) => value ? _t('yes') : _t('no');
+  String get feedbackPackageTitle => _t('feedbackPackageTitle');
+  String get feedbackPackageSectionApp => _t('feedbackPackageSectionApp');
+  String get feedbackPackageSectionPlatform =>
+      _t('feedbackPackageSectionPlatform');
+  String get feedbackPackageSectionSource => _t('feedbackPackageSectionSource');
+  String get feedbackPackageSectionPlayback =>
+      _t('feedbackPackageSectionPlayback');
+  String get feedbackPackageSectionDanmaku =>
+      _t('feedbackPackageSectionDanmaku');
+  String get feedbackPackageSectionDownloads =>
+      _t('feedbackPackageSectionDownloads');
+  String get feedbackPackageSectionNotes => _t('feedbackPackageSectionNotes');
+  String get feedbackPackageName => _t('feedbackPackageName');
+  String get feedbackPackageVersion => _t('feedbackPackageVersion');
+  String get feedbackPackageGeneratedAt => _t('feedbackPackageGeneratedAt');
+  String get feedbackPackageUnavailable => _t('feedbackPackageUnavailable');
+  String get feedbackPackageNone => _t('feedbackPackageNone');
+  String get feedbackPackageReason => _t('feedbackPackageReason');
+  String get feedbackPackageMessage => _t('feedbackPackageMessage');
+  String get feedbackPackageTotalTasks => _t('feedbackPackageTotalTasks');
+  String get feedbackPackageStatusCounts => _t('feedbackPackageStatusCounts');
+  String get feedbackPackageKindCounts => _t('feedbackPackageKindCounts');
+  String get feedbackPackageLatestIssue => _t('feedbackPackageLatestIssue');
+  String get feedbackPackagePlaybackUnavailable =>
+      _t('feedbackPackagePlaybackUnavailable');
+  String get feedbackPackageNotesPlaceholder =>
+      _t('feedbackPackageNotesPlaceholder');
+  String get feedbackPackageDandanplayAppIdConfigured =>
+      _t('feedbackPackageDandanplayAppIdConfigured');
+  String get feedbackPackageDandanplayAppSecretConfigured =>
+      _t('feedbackPackageDandanplayAppSecretConfigured');
+  String get feedbackPackageDanmakuFallbackProvider =>
+      _t('feedbackPackageDanmakuFallbackProvider');
+  String get feedbackPackageAvailable => _t('feedbackPackageAvailable');
   String get currentSource => _t('currentSource');
   String get currentSourceId => _t('currentSourceId');
   String get latestSourceDiagnostics => _t('latestSourceDiagnostics');
@@ -522,6 +556,31 @@ const _localizedValues = {
     'platformWeb': 'Web',
     'yes': '是',
     'no': '否',
+    'feedbackPackageTitle': 'AniDestiny 反馈摘要',
+    'feedbackPackageSectionApp': '应用',
+    'feedbackPackageSectionPlatform': '平台',
+    'feedbackPackageSectionSource': '数据源',
+    'feedbackPackageSectionPlayback': '播放',
+    'feedbackPackageSectionDanmaku': '弹幕',
+    'feedbackPackageSectionDownloads': '下载',
+    'feedbackPackageSectionNotes': '补充说明',
+    'feedbackPackageName': '名称',
+    'feedbackPackageVersion': '版本',
+    'feedbackPackageGeneratedAt': '生成时间',
+    'feedbackPackageUnavailable': '暂不可用',
+    'feedbackPackageNone': '无',
+    'feedbackPackageReason': '原因',
+    'feedbackPackageMessage': '说明',
+    'feedbackPackageTotalTasks': '任务总数',
+    'feedbackPackageStatusCounts': '状态统计',
+    'feedbackPackageKindCounts': '任务类型统计',
+    'feedbackPackageLatestIssue': '最近问题',
+    'feedbackPackagePlaybackUnavailable': '当前会话里还没有采集到播放诊断信息。',
+    'feedbackPackageNotesPlaceholder': '提交前可在这里补充稳定复现步骤、预期结果和实际结果。',
+    'feedbackPackageDandanplayAppIdConfigured': 'Dandanplay App ID 已配置',
+    'feedbackPackageDandanplayAppSecretConfigured': 'Dandanplay 次级凭据已配置',
+    'feedbackPackageDanmakuFallbackProvider': '备用提供元',
+    'feedbackPackageAvailable': '可用',
     'currentSource': '当前数据源',
     'currentSourceId': '当前数据源 ID',
     'latestSourceDiagnostics': '最近数据源诊断',
@@ -759,6 +818,34 @@ const _localizedValues = {
     'platformWeb': 'Web',
     'yes': 'Yes',
     'no': 'No',
+    'feedbackPackageTitle': 'AniDestiny Feedback Summary',
+    'feedbackPackageSectionApp': 'App',
+    'feedbackPackageSectionPlatform': 'Platform',
+    'feedbackPackageSectionSource': 'Source',
+    'feedbackPackageSectionPlayback': 'Playback',
+    'feedbackPackageSectionDanmaku': 'Danmaku',
+    'feedbackPackageSectionDownloads': 'Downloads',
+    'feedbackPackageSectionNotes': 'Notes',
+    'feedbackPackageName': 'Name',
+    'feedbackPackageVersion': 'Version',
+    'feedbackPackageGeneratedAt': 'Generated at',
+    'feedbackPackageUnavailable': 'Unavailable',
+    'feedbackPackageNone': 'None',
+    'feedbackPackageReason': 'Reason',
+    'feedbackPackageMessage': 'Message',
+    'feedbackPackageTotalTasks': 'Total tasks',
+    'feedbackPackageStatusCounts': 'Status counts',
+    'feedbackPackageKindCounts': 'Kind counts',
+    'feedbackPackageLatestIssue': 'Latest issue',
+    'feedbackPackagePlaybackUnavailable':
+        'No playback diagnostics were captured in this session.',
+    'feedbackPackageNotesPlaceholder':
+        'Add stable reproduction steps, expected behavior, and actual behavior before submitting.',
+    'feedbackPackageDandanplayAppIdConfigured': 'Dandanplay App ID configured',
+    'feedbackPackageDandanplayAppSecretConfigured':
+        'Dandanplay secondary credential configured',
+    'feedbackPackageDanmakuFallbackProvider': 'Fallback provider',
+    'feedbackPackageAvailable': 'Available',
     'currentSource': 'Current source',
     'currentSourceId': 'Current source ID',
     'latestSourceDiagnostics': 'Latest source diagnostics',
@@ -991,6 +1078,31 @@ const _localizedValues = {
     'platformWeb': 'Web',
     'yes': 'はい',
     'no': 'いいえ',
+    'feedbackPackageTitle': 'AniDestiny フィードバック概要',
+    'feedbackPackageSectionApp': 'アプリ',
+    'feedbackPackageSectionPlatform': 'プラットフォーム',
+    'feedbackPackageSectionSource': 'ソース',
+    'feedbackPackageSectionPlayback': '再生',
+    'feedbackPackageSectionDanmaku': '弾幕',
+    'feedbackPackageSectionDownloads': 'ダウンロード',
+    'feedbackPackageSectionNotes': '補足メモ',
+    'feedbackPackageName': '名称',
+    'feedbackPackageVersion': 'バージョン',
+    'feedbackPackageGeneratedAt': '生成時刻',
+    'feedbackPackageUnavailable': '利用不可',
+    'feedbackPackageNone': 'なし',
+    'feedbackPackageReason': '理由',
+    'feedbackPackageMessage': 'メモ',
+    'feedbackPackageTotalTasks': 'タスク総数',
+    'feedbackPackageStatusCounts': '状態ごとの件数',
+    'feedbackPackageKindCounts': '種類ごとの件数',
+    'feedbackPackageLatestIssue': '直近の問題',
+    'feedbackPackagePlaybackUnavailable': 'このセッションでは再生診断情報をまだ取得できていません。',
+    'feedbackPackageNotesPlaceholder': '送信前に、安定した再現手順・期待結果・実際の結果をここへ補足してください。',
+    'feedbackPackageDandanplayAppIdConfigured': 'Dandanplay App ID 設定済み',
+    'feedbackPackageDandanplayAppSecretConfigured': 'Dandanplay 二次認証情報 設定済み',
+    'feedbackPackageDanmakuFallbackProvider': '代替提供元',
+    'feedbackPackageAvailable': '利用可能',
     'currentSource': '現在のソース',
     'currentSourceId': '現在のソース ID',
     'latestSourceDiagnostics': '最近のソース診断',

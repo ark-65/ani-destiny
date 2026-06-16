@@ -8,7 +8,7 @@ class FeedbackPackage {
     required this.playbackSummary,
     required this.danmakuSummary,
     required this.downloadSummary,
-    this.notes = 'Add reproduction steps below before submitting.',
+    required this.notes,
   });
 
   final DateTime generatedAt;

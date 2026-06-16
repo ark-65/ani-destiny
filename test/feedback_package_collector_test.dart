@@ -1,3 +1,4 @@
+import 'package:ani_destiny/app/l10n/app_localizations.dart';
 import 'package:ani_destiny/core/diagnostics/feedback_package_collector.dart';
 import 'package:ani_destiny/core/diagnostics/feedback_package_formatter.dart';
 import 'package:ani_destiny/features/download/domain/entities/download_failure_reason.dart';
@@ -7,15 +8,18 @@ import 'package:ani_destiny/features/player/domain/services/playback_diagnostics
 import 'package:ani_destiny/features/source/domain/entities/source_diagnostic.dart';
 import 'package:ani_destiny/features/source/domain/entities/source_fallback_event.dart';
 import 'package:ani_destiny/features/source/domain/entities/source_health.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
   test('collector summarizes diagnostics without full download URLs', () {
     final now = DateTime.utc(2026, 5, 30, 2, 3, 4);
+    const l10n = AppLocalizations(Locale('en'));
     final package = FeedbackPackageCollector(
+      l10n: l10n,
       appName: 'AniDestiny',
       appVersion: '1.0.1',
-      platform: 'android',
+      platform: 'Android',
       currentSourceId: 'sakura',
       sourceHealth: [
         const SourceHealth(
@@ -78,25 +82,27 @@ void main() {
       ],
     ).collect(generatedAt: now);
 
-    final markdown = const FeedbackPackageFormatter().format(package);
+    final markdown = const FeedbackPackageFormatter(l10n: l10n).format(package);
     final lower = markdown.toLowerCase();
 
     expect(markdown, contains('- Total tasks: 1'));
-    expect(markdown, contains('- failed: 1'));
-    expect(markdown, contains('networkError'));
+    expect(markdown, contains('- Failed: 1'));
+    expect(markdown, contains('Reason: Network error'));
     expect(markdown, contains('https://example.test/.../detail.html'));
     expect(markdown, isNot(contains('https://cdn.example.test/video.mp4')));
     expect(lower, isNot(contains('token')));
     expect(lower, isNot(contains('secret')));
   });
 
-  test('collector can localize user-facing source labels in feedback output',
+  test('collector localizes copied feedback summary for Chinese support copy',
       () {
     final now = DateTime.utc(2026, 6, 8, 1, 2, 3);
+    const l10n = AppLocalizations(Locale('zh'));
     final package = FeedbackPackageCollector(
+      l10n: l10n,
       appName: 'AniDestiny',
       appVersion: '1.0.2',
-      platform: 'android',
+      platform: 'Android',
       currentSourceId: 'sakura',
       sourceHealth: const [
         SourceHealth(
@@ -139,28 +145,30 @@ void main() {
       sourceLabelForId: _sourceLabelForId,
     ).collect(generatedAt: now);
 
-    final markdown = const FeedbackPackageFormatter().format(package);
+    final markdown = const FeedbackPackageFormatter(l10n: l10n).format(package);
 
-    expect(markdown, contains('- Current source: Sakura Anime'));
-    expect(markdown, contains('- Sakura Anime: healthy, failures=0'));
-    expect(markdown, contains('detail: Sakura Anime -> Mock Anime Source'));
-    expect(markdown, contains('- Sakura Anime/detail: loaded'));
-    expect(markdown, contains('- Anime: Anime'));
-    expect(markdown, contains('- Episode: Episode 1'));
-    expect(markdown, contains('- Source: Sakura Anime'));
-    expect(markdown, isNot(contains('- Current source: sakura')));
-    expect(markdown, isNot(contains('- sakura: healthy, failures=0')));
+    expect(markdown, contains('# AniDestiny 反馈摘要'));
+    expect(markdown, contains('- 当前数据源: Sakura Anime'));
+    expect(markdown, contains('Sakura Anime · 正常'));
+    expect(markdown, contains('失败次数: 0'));
+    expect(markdown, contains('详情: Sakura Anime -> Mock 动漫数据源'));
+    expect(markdown, contains('- 线路: Line 1'));
+    expect(markdown, contains('- 启用: 是'));
+    expect(markdown, contains('Dandanplay App ID 已配置: 否'));
+    expect(markdown, isNot(contains('- 当前数据源: sakura')));
     expect(markdown, isNot(contains('detail: sakura -> mock')));
-    expect(markdown, isNot(contains('- sakura/detail: loaded')));
-    expect(markdown, isNot(contains('- Source: sakura')));
+    expect(markdown, isNot(contains('Enabled: true')));
+    expect(markdown, isNot(contains('healthy')));
   });
 
   test('collector does not treat canceled downloads as the latest issue', () {
     final now = DateTime.utc(2026, 6, 5, 1, 2, 3);
+    const l10n = AppLocalizations(Locale('en'));
     final package = FeedbackPackageCollector(
+      l10n: l10n,
       appName: 'AniDestiny',
       appVersion: '1.0.2',
-      platform: 'android',
+      platform: 'Android',
       currentSourceId: 'sakura',
       sourceHealth: const [],
       sourceDiagnostics: const [],
@@ -190,11 +198,11 @@ void main() {
       ],
     ).collect(generatedAt: now);
 
-    final markdown = const FeedbackPackageFormatter().format(package);
+    final markdown = const FeedbackPackageFormatter(l10n: l10n).format(package);
 
-    expect(markdown, contains('- canceled: 1'));
-    expect(markdown, contains('- Latest issue: none'));
-    expect(markdown, isNot(contains('reason=canceled')));
+    expect(markdown, contains('- Canceled: 1'));
+    expect(markdown, contains('- Latest issue: None'));
+    expect(markdown, isNot(contains('Reason: Canceled')));
     expect(markdown, isNot(contains('Download canceled.')));
   });
 }
