@@ -9,6 +9,9 @@
 ### 🐛 修复
 - 修复 Source Settings 和 Runtime diagnostics 里的数据源健康状态仍向中文、日文用户直接显示 `Healthy`、`Degraded`、`Unavailable` 英文词的问题，改为统一使用本地化状态文案，减少诊断页的工程味。
 
+### 🔧 CI/CD
+- 移除未被业务代码使用、却会在新版 GitHub Windows runner 上拖挂 `flutter build windows --release` 的 `permission_handler` 依赖，避免 Windows 交付链被无效平台插件阻塞。
+
 ## [1.0.3] - 2026-06-13
 
 ### 🐛 修复
