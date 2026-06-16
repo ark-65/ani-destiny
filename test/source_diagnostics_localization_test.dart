@@ -3,6 +3,7 @@ import 'package:ani_destiny/features/danmaku/domain/entities/danmaku_settings.da
 import 'package:ani_destiny/features/danmaku/presentation/providers/danmaku_providers.dart';
 import 'package:ani_destiny/features/settings/presentation/pages/settings_page.dart';
 import 'package:ani_destiny/features/settings/presentation/pages/runtime_diagnostics_page.dart';
+import 'package:ani_destiny/features/settings/presentation/providers/settings_providers.dart';
 import 'package:ani_destiny/features/source/domain/entities/anime_source.dart';
 import 'package:ani_destiny/features/source/domain/entities/source_diagnostic.dart';
 import 'package:ani_destiny/features/source/domain/entities/source_fallback_event.dart';
@@ -11,6 +12,7 @@ import 'package:ani_destiny/features/source/presentation/pages/source_settings_p
 import 'package:ani_destiny/features/source/presentation/providers/source_providers.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -89,6 +91,48 @@ void main() {
       findsOneWidget,
     );
     expect(find.text('Copy diagnostics'), findsOneWidget);
+  });
+
+  testWidgets('runtime diagnostics page can copy diagnostics in place', (
+    tester,
+  ) async {
+    tester.view.devicePixelRatio = 1;
+    tester.view.physicalSize = const Size(800, 1400);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    addTearDown(tester.view.resetPhysicalSize);
+
+    String? copiedText;
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMethodCallHandler(SystemChannels.platform, (call) async {
+      if (call.method == 'Clipboard.setData') {
+        copiedText =
+            (call.arguments as Map<Object?, Object?>)['text'] as String?;
+      }
+      return null;
+    });
+    addTearDown(() {
+      TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+          .setMockMethodCallHandler(SystemChannels.platform, null);
+    });
+
+    await tester.pumpWidget(
+      _buildApp(
+        home: const RuntimeDiagnosticsPage(),
+        overrides: [
+          ..._providerOverrides,
+          feedbackPackageMarkdownProvider.overrideWith(
+            (ref) async => 'Runtime diagnostics summary',
+          ),
+        ],
+      ),
+    );
+
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Copy diagnostics'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Diagnostics copied'), findsOneWidget);
+    expect(copiedText, 'Runtime diagnostics summary');
   });
 }
 

@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
@@ -103,6 +104,12 @@ class RuntimeDiagnosticsPage extends ConsumerWidget {
                   leading: const Icon(Icons.play_circle_outline),
                   title: Text(context.l10n.playbackDiagnosticsSummary),
                   subtitle: Text(context.l10n.playbackDiagnosticsDebugHint),
+                ),
+                ListTile(
+                  leading: const Icon(Icons.content_copy_outlined),
+                  title: Text(context.l10n.copyDiagnostics),
+                  subtitle: Text(context.l10n.diagnosticsPrivacyNote),
+                  onTap: () => _copyDiagnostics(context, ref),
                 ),
               ],
             ),
@@ -258,5 +265,21 @@ class _SourceDiagnosticTile extends StatelessWidget {
       SourceDiagnosticLevel.warning => Icons.warning_amber_outlined,
       SourceDiagnosticLevel.error => Icons.error_outline,
     };
+  }
+}
+
+Future<void> _copyDiagnostics(BuildContext context, WidgetRef ref) async {
+  try {
+    final markdown = await ref.read(feedbackPackageMarkdownProvider.future);
+    await Clipboard.setData(ClipboardData(text: markdown));
+    if (!context.mounted) return;
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(context.l10n.diagnosticsCopied)));
+  } catch (error) {
+    if (!context.mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(context.l10n.diagnosticsCopyFailed)),
+    );
   }
 }
