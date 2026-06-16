@@ -7,6 +7,7 @@
 ## [Unreleased]
 
 ### 🐛 Fixed
+- Fixed users being able to inspect recent source failures and fallback events in `Source settings -> Source diagnostics` while still needing to back out to another page before they could copy a support summary; the sheet now lets them copy sanitized diagnostics in place so checking source health and reporting it is one continuous flow.
 - Fixed the runtime diagnostics page still making users back out to Settings before they could copy the sanitized feedback summary; it now lets them copy diagnostics in place so the inspect-and-report support flow stays intact.
 - Fixed Runtime diagnostics already being able to explain the current source, fallback history, and recent diagnostics while still being hidden behind debug-only Settings UI; regular users can now open it from Settings before copying a support summary.
 - Fixed the Settings page's copied diagnostics summary still mixing engineering-facing output like `sakura`, `detail`, `true/false`, and `healthy`; it now follows the active locale for headings, field labels, status words, and download reasons so shared support notes read like product copy instead of an internal dump.

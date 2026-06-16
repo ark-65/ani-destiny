@@ -134,6 +134,45 @@ void main() {
     expect(find.text('Diagnostics copied'), findsOneWidget);
     expect(copiedText, 'Runtime diagnostics summary');
   });
+
+  testWidgets('source diagnostics sheet can copy diagnostics in place', (
+    tester,
+  ) async {
+    String? copiedText;
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMethodCallHandler(SystemChannels.platform, (call) async {
+      if (call.method == 'Clipboard.setData') {
+        copiedText =
+            (call.arguments as Map<Object?, Object?>)['text'] as String?;
+      }
+      return null;
+    });
+    addTearDown(() {
+      TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+          .setMockMethodCallHandler(SystemChannels.platform, null);
+    });
+
+    await tester.pumpWidget(
+      _buildApp(
+        home: const SourceSettingsPage(),
+        overrides: [
+          ..._providerOverrides,
+          feedbackPackageMarkdownProvider.overrideWith(
+            (ref) async => 'Source diagnostics summary',
+          ),
+        ],
+      ),
+    );
+
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Source diagnostics'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Copy diagnostics'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Diagnostics copied'), findsOneWidget);
+    expect(copiedText, 'Source diagnostics summary');
+  });
 }
 
 Widget _buildApp({

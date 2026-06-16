@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
@@ -8,6 +9,7 @@ import '../../../../core/widgets/app_error_view.dart';
 import '../../../../core/widgets/app_loading_view.dart';
 import '../../../../shared/widgets/adaptive_page.dart';
 import '../../../home/presentation/providers/home_providers.dart';
+import '../../../settings/presentation/providers/settings_providers.dart';
 import '../../domain/entities/source_diagnostic.dart';
 import '../../domain/entities/source_fallback_event.dart';
 import '../../domain/entities/source_health.dart';
@@ -171,6 +173,14 @@ class _SourceDiagnosticsSheet extends ConsumerWidget {
               Expanded(
                 child: ListView(
                   children: [
+                    ListTile(
+                      contentPadding: EdgeInsets.zero,
+                      leading: const Icon(Icons.content_copy_outlined),
+                      title: Text(context.l10n.copyDiagnostics),
+                      subtitle: Text(context.l10n.diagnosticsPrivacyNote),
+                      onTap: () => _copyDiagnostics(context, ref),
+                    ),
+                    const Divider(),
                     _SheetSectionTitle(title: context.l10n.sourceHealth),
                     if (health.isEmpty)
                       ListTile(title: Text(context.l10n.sourceDiagnosticsEmpty))
@@ -204,6 +214,22 @@ class _SourceDiagnosticsSheet extends ConsumerWidget {
           ),
         ),
       ),
+    );
+  }
+}
+
+Future<void> _copyDiagnostics(BuildContext context, WidgetRef ref) async {
+  try {
+    final markdown = await ref.read(feedbackPackageMarkdownProvider.future);
+    await Clipboard.setData(ClipboardData(text: markdown));
+    if (!context.mounted) return;
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(context.l10n.diagnosticsCopied)));
+  } catch (error) {
+    if (!context.mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(context.l10n.diagnosticsCopyFailed)),
     );
   }
 }
