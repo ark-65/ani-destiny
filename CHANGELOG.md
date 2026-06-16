@@ -7,6 +7,7 @@
 ## [Unreleased]
 
 ### 🐛 修复
+- 修复运行诊断和数据源诊断仍直接向用户暴露 `Debug`、`fallback`、`detail`、`Headers`、`true/false` 和平台内部名等工程术语的问题，改为统一使用本地化的诊断文案、操作名称、布尔值和平台名称，让支持信息更像产品而不是内部面板。
 - 修复 Source Settings 和 Runtime diagnostics 里的数据源健康状态仍向中文、日文用户直接显示 `Healthy`、`Degraded`、`Unavailable` 英文词的问题，改为统一使用本地化状态文案，减少诊断页的工程味。
 
 ### 🔧 CI/CD

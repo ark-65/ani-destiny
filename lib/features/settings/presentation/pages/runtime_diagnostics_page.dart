@@ -67,7 +67,9 @@ class RuntimeDiagnosticsPage extends ConsumerWidget {
                 ),
                 _DiagnosticTile(
                   label: context.l10n.platform,
-                  value: defaultTargetPlatform.name,
+                  value: context.l10n.platformDisplayName(
+                    defaultTargetPlatform.name,
+                  ),
                   icon: Icons.devices_outlined,
                 ),
                 _DiagnosticTile(
@@ -84,7 +86,7 @@ class RuntimeDiagnosticsPage extends ConsumerWidget {
               children: [
                 _DiagnosticTile(
                   label: context.l10n.enabled,
-                  value: danmakuSettings.enabled.toString(),
+                  value: context.l10n.yesNo(danmakuSettings.enabled),
                   icon: Icons.subtitles_outlined,
                 ),
                 _DiagnosticTile(
@@ -187,7 +189,7 @@ class _FallbackEventTile extends StatelessWidget {
   Widget build(BuildContext context) {
     return _DiagnosticTile(
       label:
-          '${event.operation}: ${context.l10n.sourceTransitionLabel(event.fromSourceId, event.toSourceId)}',
+          '${context.l10n.sourceOperationLabel(event.operation)}: ${context.l10n.sourceTransitionLabel(event.fromSourceId, event.toSourceId)}',
       value: event.reason,
       icon: Icons.swap_horiz_outlined,
     );
@@ -239,7 +241,7 @@ class _SourceDiagnosticTile extends StatelessWidget {
     return ListTile(
       leading: Icon(_iconForLevel(diagnostic.level)),
       title: Text(
-        '${context.l10n.sourceDisplayLabel(diagnostic.sourceId)} · ${diagnostic.operation}',
+        '${context.l10n.sourceDisplayLabel(diagnostic.sourceId)} · ${context.l10n.sourceOperationLabel(diagnostic.operation)}',
       ),
       subtitle: SelectableText(
         [

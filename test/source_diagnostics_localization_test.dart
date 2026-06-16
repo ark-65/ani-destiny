@@ -36,8 +36,11 @@ void main() {
     );
     await tester.pumpAndSettle();
     expect(find.textContaining('Mock Anime Source'), findsWidgets);
+    expect(find.textContaining('Details:'), findsOneWidget);
+    expect(find.textContaining('Sakura Anime · Details'), findsOneWidget);
     expect(find.text('sakura'), findsNothing);
     expect(find.text('mock'), findsNothing);
+    expect(find.text('detail'), findsNothing);
   });
 
   testWidgets('source diagnostics sheet localizes source names',
@@ -52,11 +55,20 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.text('Source diagnostics'));
     await tester.pumpAndSettle();
+    await tester.scrollUntilVisible(
+      find.textContaining('Sakura Anime · Details'),
+      200,
+      scrollable: find.byType(Scrollable).last,
+    );
+    await tester.pumpAndSettle();
 
     expect(find.textContaining('Sakura Anime'), findsWidgets);
     expect(find.textContaining('Mock Anime Source'), findsWidgets);
+    expect(find.textContaining('Details:'), findsOneWidget);
+    expect(find.textContaining('Sakura Anime · Details'), findsOneWidget);
     expect(find.text('sakura'), findsNothing);
     expect(find.text('mock'), findsNothing);
+    expect(find.text('detail'), findsNothing);
   });
 }
 

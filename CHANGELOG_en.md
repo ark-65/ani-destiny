@@ -7,6 +7,7 @@
 ## [Unreleased]
 
 ### 🐛 Fixed
+- Fixed runtime diagnostics and source diagnostics still exposing engineering-facing terms like `Debug`, `fallback`, `detail`, `Headers`, `true/false`, and raw platform identifiers; they now use localized support copy, operation labels, boolean values, and platform names so the diagnostics flow feels like product UI instead of an internal panel.
 - Fixed Source Settings and Runtime diagnostics still exposing raw English health states like `Healthy`, `Degraded`, and `Unavailable` to Chinese and Japanese users; those diagnostics now use localized status labels so the support flow feels less like an internal panel.
 
 ### 🔧 CI/CD

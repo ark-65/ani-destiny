@@ -74,4 +74,36 @@ void main() {
     expect(ja.sourceHealthDegraded, '不安定');
     expect(ja.sourceHealthUnavailable, '利用不可');
   });
+
+  test('runtime diagnostics helpers keep support copy localized', () {
+    const zh = AppLocalizations(Locale('zh'));
+    expect(zh.runtimeDiagnosticsSubtitle, isNot(contains('Debug')));
+    expect(zh.playbackDiagnosticsDebugHint, isNot(contains('Debug')));
+    expect(zh.playbackDiagnosticsDebugHint, isNot(contains('header keys')));
+    expect(zh.sourceFallbackEvents, isNot(contains('fallback')));
+    expect(zh.sourceFallbackEventsEmpty, isNot(contains('fallback')));
+    expect(zh.playbackDiagnosticHeaders, '请求头');
+    expect(zh.yesNo(true), '是');
+    expect(zh.yesNo(false), '否');
+    expect(zh.platformDisplayName('android'), 'Android');
+    expect(zh.sourceOperationLabel('detail'), '详情');
+
+    const en = AppLocalizations(Locale('en'));
+    expect(en.playbackDiagnosticHeaders, 'Request headers');
+    expect(en.sourceOperationLabel('play_sources'), 'Playback lines');
+    expect(en.yesNo(true), 'Yes');
+    expect(en.yesNo(false), 'No');
+
+    const ja = AppLocalizations(Locale('ja'));
+    expect(ja.runtimeDiagnosticsSubtitle, isNot(contains('Debug')));
+    expect(ja.playbackDiagnosticsDebugHint, isNot(contains('Debug')));
+    expect(ja.playbackDiagnosticsDebugHint, isNot(contains('header keys')));
+    expect(ja.sourceFallbackEvents, isNot(contains('fallback')));
+    expect(ja.sourceFallbackEventsEmpty, isNot(contains('fallback')));
+    expect(ja.playbackDiagnosticHeaders, 'リクエストヘッダー');
+    expect(ja.yesNo(true), 'はい');
+    expect(ja.yesNo(false), 'いいえ');
+    expect(ja.platformDisplayName('windows'), 'Windows');
+    expect(ja.sourceOperationLabel('detail'), '詳細');
+  });
 }

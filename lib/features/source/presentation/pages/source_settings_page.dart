@@ -265,7 +265,7 @@ class _FallbackEventTile extends StatelessWidget {
       contentPadding: EdgeInsets.zero,
       leading: const Icon(Icons.swap_horiz_outlined),
       title: Text(
-        '${event.operation}: ${context.l10n.sourceTransitionLabel(event.fromSourceId, event.toSourceId)}',
+        '${context.l10n.sourceOperationLabel(event.operation)}: ${context.l10n.sourceTransitionLabel(event.fromSourceId, event.toSourceId)}',
       ),
       subtitle: Text(event.reason),
     );
@@ -305,7 +305,7 @@ class _SourceDiagnosticTile extends StatelessWidget {
       contentPadding: EdgeInsets.zero,
       leading: Icon(Icons.circle, color: color, size: 12),
       title: Text(
-        '${context.l10n.sourceDisplayLabel(diagnostic.sourceId)} · ${diagnostic.operation}',
+        '${context.l10n.sourceDisplayLabel(diagnostic.sourceId)} · ${context.l10n.sourceOperationLabel(diagnostic.operation)}',
       ),
       subtitle: Text(
         [
