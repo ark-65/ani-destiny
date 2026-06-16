@@ -44,6 +44,10 @@ void main() {
     expect(find.text('sakura'), findsNothing);
     expect(find.text('mock'), findsNothing);
     expect(find.text('detail'), findsNothing);
+    expect(
+      find.textContaining('Retry later or switch sources'),
+      findsOneWidget,
+    );
   });
 
   testWidgets('source diagnostics sheet localizes source names',

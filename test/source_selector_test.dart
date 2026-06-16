@@ -39,7 +39,12 @@ void main() {
             currentSourceId: 'sakura',
             healthBySourceId: {
               'mock': SourceHealth.initial('mock'),
-              'sakura': SourceHealth.initial('sakura'),
+              'sakura': SourceHealth(
+                sourceId: 'sakura',
+                status: SourceHealthStatus.degraded,
+                failureCount: 2,
+                lastErrorMessage: 'Connection failed',
+              ),
             },
             onSelected: _noop,
             onResetHealth: _noop,
@@ -60,6 +65,14 @@ void main() {
     );
     expect(find.text('Default source'), findsOneWidget);
     expect(find.textContaining('Experimental'), findsNothing);
+    expect(find.text('Failure count: 0'), findsNothing);
+    expect(find.text('Reset status'), findsOneWidget);
+    expect(
+      find.text(
+        'Recent requests failed. Retry later or switch sources if browsing or playback keeps failing.',
+      ),
+      findsOneWidget,
+    );
   });
 }
 

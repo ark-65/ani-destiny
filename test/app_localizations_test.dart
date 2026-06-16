@@ -68,11 +68,15 @@ void main() {
     expect(zh.sourceHealthHealthy, '正常');
     expect(zh.sourceHealthDegraded, '不稳定');
     expect(zh.sourceHealthUnavailable, '不可用');
+    expect(zh.sourceHealthDegradedHint, isNot(contains('fallback')));
+    expect(zh.sourceHealthUnavailableHint, isNot(contains('fallback')));
 
     const ja = AppLocalizations(Locale('ja'));
     expect(ja.sourceHealthHealthy, '正常');
     expect(ja.sourceHealthDegraded, '不安定');
     expect(ja.sourceHealthUnavailable, '利用不可');
+    expect(ja.sourceHealthDegradedHint, isNot(contains('fallback')));
+    expect(ja.sourceHealthUnavailableHint, isNot(contains('fallback')));
   });
 
   test('runtime diagnostics helpers keep support copy localized', () {

@@ -321,6 +321,8 @@ class AppLocalizations {
   String get sourceHealthHealthy => _t('sourceHealthHealthy');
   String get sourceHealthDegraded => _t('sourceHealthDegraded');
   String get sourceHealthUnavailable => _t('sourceHealthUnavailable');
+  String get sourceHealthDegradedHint => _t('sourceHealthDegradedHint');
+  String get sourceHealthUnavailableHint => _t('sourceHealthUnavailableHint');
   String sourceFailureCount(int count) => '${_t('sourceFailureCount')}: $count';
   String sourceLastError(String message) =>
       '${_t('sourceLastError')}: $message';
@@ -607,6 +609,8 @@ const _localizedValues = {
     'sourceHealthHealthy': '正常',
     'sourceHealthDegraded': '不稳定',
     'sourceHealthUnavailable': '不可用',
+    'sourceHealthDegradedHint': '最近有请求失败；如果浏览或播放持续异常，请稍后重试或切换数据源。',
+    'sourceHealthUnavailableHint': '最近请求持续失败；请先切换其他数据源，稍后再回来重试。',
     'sourceFailureCount': '失败次数',
     'sourceLastError': '最近问题',
     'sourceResetStatus': '重置状态',
@@ -879,6 +883,10 @@ const _localizedValues = {
     'sourceHealthHealthy': 'Healthy',
     'sourceHealthDegraded': 'Degraded',
     'sourceHealthUnavailable': 'Unavailable',
+    'sourceHealthDegradedHint':
+        'Recent requests failed. Retry later or switch sources if browsing or playback keeps failing.',
+    'sourceHealthUnavailableHint':
+        'Recent requests keep failing. Switch to another source for now and try this one again later.',
     'sourceFailureCount': 'Failure count',
     'sourceLastError': 'Last issue',
     'sourceResetStatus': 'Reset status',
@@ -1132,6 +1140,10 @@ const _localizedValues = {
     'sourceHealthHealthy': '正常',
     'sourceHealthDegraded': '不安定',
     'sourceHealthUnavailable': '利用不可',
+    'sourceHealthDegradedHint':
+        '最近のリクエストに失敗しています。閲覧や再生が不安定なら、時間をおいて再試行するかソースを切り替えてください。',
+    'sourceHealthUnavailableHint':
+        '最近のリクエストが継続して失敗しています。いったん別のソースへ切り替え、時間をおいてから再試行してください。',
     'sourceFailureCount': '失敗回数',
     'sourceLastError': '最近の問題',
     'sourceResetStatus': '状態をリセット',

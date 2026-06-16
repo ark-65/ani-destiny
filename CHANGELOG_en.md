@@ -7,6 +7,7 @@
 ## [Unreleased]
 
 ### 🐛 Fixed
+- Fixed Source settings and Runtime diagnostics already exposing source health and recent issues while still leaving users to infer the next step themselves; unstable or unavailable sources now explain whether to retry later or switch sources, and healthy rows no longer clutter the support flow with reset actions or `0`-failure noise by default.
 - Fixed Runtime diagnostics and Source diagnostics showing raw inline error snippets that could still contain tokens, session values, cookie text, or HTML fragments even though the copied support summary was already sanitized; the on-screen diagnostics now apply the same redaction path so the first support surface is no leakier than the copied one.
 - Fixed users being able to inspect recent source failures and fallback events in `Source settings -> Source diagnostics` while still needing to back out to another page before they could copy a support summary; the sheet now lets them copy sanitized diagnostics in place so checking source health and reporting it is one continuous flow.
 - Fixed the runtime diagnostics page still making users back out to Settings before they could copy the sanitized feedback summary; it now lets them copy diagnostics in place so the inspect-and-report support flow stays intact.

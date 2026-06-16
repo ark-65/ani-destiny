@@ -174,6 +174,7 @@ class _SourceHealthTile extends StatelessWidget {
         context.l10n.sourceFailureCount(health.failureCount),
         if (health.lastErrorMessage != null)
           context.l10n.sourceLastError(sanitizeError(health.lastErrorMessage!)),
+        if (_recoveryHint(context) case final recoveryHint?) recoveryHint,
       ].join('\n'),
       icon: Icons.monitor_heart_outlined,
     );
@@ -184,6 +185,15 @@ class _SourceHealthTile extends StatelessWidget {
       SourceHealthStatus.healthy => context.l10n.sourceHealthHealthy,
       SourceHealthStatus.degraded => context.l10n.sourceHealthDegraded,
       SourceHealthStatus.unavailable => context.l10n.sourceHealthUnavailable,
+    };
+  }
+
+  String? _recoveryHint(BuildContext context) {
+    return switch (health.status) {
+      SourceHealthStatus.healthy => null,
+      SourceHealthStatus.degraded => context.l10n.sourceHealthDegradedHint,
+      SourceHealthStatus.unavailable =>
+        context.l10n.sourceHealthUnavailableHint,
     };
   }
 }
