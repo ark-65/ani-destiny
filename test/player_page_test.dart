@@ -214,7 +214,8 @@ void main() {
     expect(find.text('error'), findsNothing);
   });
 
-  testWidgets('player shows requested source context when playback is on fallback data',
+  testWidgets(
+      'player shows requested source context when playback is on fallback data',
       (tester) async {
     final container = ProviderContainer(
       overrides: [
@@ -329,19 +330,20 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Diagnostics copied'), findsOneWidget);
+    expect(copiedText, startsWith('Playback diagnostics summary\n'));
+    expect(copiedText, contains('Captured at: '));
+    expect(copiedText, contains('Anime: Anime 1'));
+    expect(copiedText, contains('Episode: Episode 2'));
+    expect(copiedText, contains('Requested source: Mock Anime Source'));
+    expect(copiedText, contains('Source: Sakura Anime'));
+    expect(copiedText, contains('Line: Broken Line'));
+    expect(copiedText, contains('URL type: m3u8'));
     expect(
       copiedText,
-      'Playback diagnostics summary\n'
-      'Anime: Anime 1\n'
-      'Episode: Episode 2\n'
-      'Requested source: Mock Anime Source\n'
-      'Source: Sakura Anime\n'
-      'Line: Broken Line\n'
-      'URL type: m3u8\n'
-      'URL: https://cdn.example.test/.../broken.m3u8\n'
-      'Request headers: Referer\n'
-      'State: Failed',
+      contains('URL: https://cdn.example.test/.../broken.m3u8'),
     );
+    expect(copiedText, contains('Request headers: Referer'));
+    expect(copiedText, contains('State: Failed'));
   });
 
   testWidgets(

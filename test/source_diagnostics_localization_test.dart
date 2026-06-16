@@ -51,6 +51,12 @@ void main() {
       findsOneWidget,
     );
     expect(
+      find.text(
+        'Start playback once in this session, then come back here to confirm the latest playback snapshot before copying diagnostics.',
+      ),
+      findsOneWidget,
+    );
+    expect(
       find.text('No playback diagnostics were captured in this session.'),
       findsOneWidget,
     );
@@ -225,7 +231,8 @@ void main() {
     final container = ProviderContainer(overrides: _providerOverrides);
     addTearDown(container.dispose);
     container.read(lastPlaybackDiagnosticsProvider.notifier).state =
-        const PlaybackDiagnostics(
+        PlaybackDiagnostics(
+      capturedAt: DateTime(2026, 6, 17, 1, 2, 3),
       animeTitle: 'Anime 1',
       episodeTitle: 'Episode 2',
       sourceId: 'mock',
@@ -258,6 +265,13 @@ void main() {
     expect(find.text('Anime 1'), findsOneWidget);
     expect(find.text('Episode 2'), findsOneWidget);
     expect(find.text('Requested source'), findsOneWidget);
+    expect(
+      find.text(
+        'The latest playback snapshot captured in this session appears here so you can confirm the anime, line, URL type, and request-header names before copying diagnostics.',
+      ),
+      findsOneWidget,
+    );
+    expect(find.text('Captured at'), findsOneWidget);
     expect(find.text('Sakura Anime'), findsWidgets);
     expect(find.text('Mock Anime Source'), findsWidgets);
     expect(find.text('Line 1'), findsOneWidget);

@@ -48,7 +48,8 @@ void main() {
           timestamp: now,
         ),
       ],
-      playbackDiagnostics: const PlaybackDiagnostics(
+      playbackDiagnostics: PlaybackDiagnostics(
+        capturedAt: now,
         animeTitle: 'Anime',
         episodeTitle: 'Episode 1',
         sourceId: 'sakura',
@@ -86,6 +87,7 @@ void main() {
     final lower = markdown.toLowerCase();
 
     expect(markdown, contains('- Total tasks: 1'));
+    expect(markdown, contains('- Captured at: 2026-05-30T02:03:04.000Z'));
     expect(markdown, contains('- Failed: 1'));
     expect(markdown, contains('Reason: Network error'));
     expect(markdown, contains('https://example.test/.../detail.html'));
@@ -128,7 +130,8 @@ void main() {
           timestamp: now,
         ),
       ],
-      playbackDiagnostics: const PlaybackDiagnostics(
+      playbackDiagnostics: PlaybackDiagnostics(
+        capturedAt: now,
         animeTitle: 'Anime',
         episodeTitle: 'Episode 1',
         sourceId: 'sakura',
@@ -152,6 +155,7 @@ void main() {
     expect(markdown, contains('Sakura Anime · 正常'));
     expect(markdown, contains('失败次数: 0'));
     expect(markdown, contains('详情: Sakura Anime -> Mock 动漫数据源'));
+    expect(markdown, contains('- 采集时间: 2026-06-08T01:02:03.000Z'));
     expect(markdown, contains('- 线路: Line 1'));
     expect(markdown, contains('- 启用: 是'));
     expect(markdown, contains('Dandanplay App ID 已配置: 否'));

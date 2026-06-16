@@ -291,6 +291,9 @@ class AppLocalizations {
   String get currentSourceId => _t('currentSourceId');
   String get latestSourceDiagnostics => _t('latestSourceDiagnostics');
   String get playbackDiagnosticsSummary => _t('playbackDiagnosticsSummary');
+  String get playbackDiagnosticsSummaryHint =>
+      _t('playbackDiagnosticsSummaryHint');
+  String get playbackDiagnosticsEmptyHint => _t('playbackDiagnosticsEmptyHint');
   String sourceFallbackPlayerNotice(
     String requestedSource,
     String activeSource,
@@ -302,6 +305,7 @@ class AppLocalizations {
   }
 
   String get playbackDiagnosticsDebugHint => _t('playbackDiagnosticsDebugHint');
+  String get playbackDiagnosticCapturedAt => _t('playbackDiagnosticCapturedAt');
   String get sourceTemporarilyUnavailable => _t('sourceTemporarilyUnavailable');
   String get sourceUnavailableSuggestion => _t('sourceUnavailableSuggestion');
   String get noPlayableSourceFound => _t('noPlayableSourceFound');
@@ -587,9 +591,14 @@ const _localizedValues = {
     'currentSourceId': '当前数据源 ID',
     'latestSourceDiagnostics': '最近数据源诊断',
     'playbackDiagnosticsSummary': '播放诊断摘要',
+    'playbackDiagnosticsSummaryHint':
+        '这里会显示当前会话最近一次播放快照，方便你在复制诊断信息前先确认番剧、线路、URL 类型和请求头字段。',
+    'playbackDiagnosticsEmptyHint': '先在当前会话里播放一次，再回来这里确认最近一次播放快照并复制诊断信息。',
     'sourceFallbackPlayerNotice':
         '当前所选数据源 {requestedSource} 暂时不可用，播放器正在使用 {activeSource} 的备用播放数据。',
-    'playbackDiagnosticsDebugHint': '播放页右上角的“播放诊断”按钮可查看当前播放线路、URL 类型和请求头字段。',
+    'playbackDiagnosticsDebugHint':
+        '这里会显示当前会话最近一次播放快照，方便你在复制诊断信息前先确认番剧、线路、URL 类型和请求头字段。',
+    'playbackDiagnosticCapturedAt': '采集时间',
     'sourceTemporarilyUnavailable': '数据源暂时不可用',
     'sourceUnavailableSuggestion': '上游数据源可能已变化或暂时不可用，请稍后重试或切换数据源。',
     'noPlayableSourceFound': '未找到可播放线路，请稍后重试或切换数据源。',
@@ -854,10 +863,15 @@ const _localizedValues = {
     'currentSourceId': 'Current source ID',
     'latestSourceDiagnostics': 'Latest source diagnostics',
     'playbackDiagnosticsSummary': 'Playback diagnostics summary',
+    'playbackDiagnosticsSummaryHint':
+        'The latest playback snapshot captured in this session appears here so you can confirm the anime, line, URL type, and request-header names before copying diagnostics.',
+    'playbackDiagnosticsEmptyHint':
+        'Start playback once in this session, then come back here to confirm the latest playback snapshot before copying diagnostics.',
     'sourceFallbackPlayerNotice':
         'The selected source {requestedSource} is temporarily unavailable, so playback is using fallback data from {activeSource}.',
     'playbackDiagnosticsDebugHint':
-        'Use the Playback diagnostics button on the player page to view the current line, URL type, and request header names.',
+        'The latest playback snapshot captured in this session appears here so you can confirm the anime, line, URL type, and request-header names before copying diagnostics.',
+    'playbackDiagnosticCapturedAt': 'Captured at',
     'sourceTemporarilyUnavailable': 'Source temporarily unavailable',
     'sourceUnavailableSuggestion':
         'The upstream source changed or is temporarily unavailable. Try another source or retry later.',
@@ -1115,10 +1129,15 @@ const _localizedValues = {
     'currentSourceId': '現在のソース ID',
     'latestSourceDiagnostics': '最近のソース診断',
     'playbackDiagnosticsSummary': '再生診断の概要',
+    'playbackDiagnosticsSummaryHint':
+        'このセッションで直近に取得した再生スナップショットをここへ表示し、診断情報をコピーする前に作品・ライン・URL 種類・リクエストヘッダー項目を確認できます。',
+    'playbackDiagnosticsEmptyHint':
+        'このセッションで一度再生してから戻ると、診断情報をコピーする前に直近の再生スナップショットをここで確認できます。',
     'sourceFallbackPlayerNotice':
         '選択していたソース {requestedSource} は一時的に利用できないため、現在は {activeSource} の代替データで再生しています。',
     'playbackDiagnosticsDebugHint':
-        'プレイヤー画面右上の「再生診断」ボタンで現在の再生ライン、URL 種類、リクエストヘッダー項目を確認できます。',
+        'このセッションで直近に取得した再生スナップショットをここへ表示し、診断情報をコピーする前に作品・ライン・URL 種類・リクエストヘッダー項目を確認できます。',
+    'playbackDiagnosticCapturedAt': '取得時刻',
     'sourceTemporarilyUnavailable': 'ソースが一時的に利用できません',
     'sourceUnavailableSuggestion':
         '上流ソースが変更されたか、一時的に利用できません。別のソースを試すか、後で再試行してください。',

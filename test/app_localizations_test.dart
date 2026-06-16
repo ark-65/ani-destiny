@@ -82,8 +82,11 @@ void main() {
   test('runtime diagnostics helpers keep support copy localized', () {
     const zh = AppLocalizations(Locale('zh'));
     expect(zh.runtimeDiagnosticsSubtitle, isNot(contains('Debug')));
+    expect(zh.playbackDiagnosticsSummaryHint, isNot(contains('Debug')));
+    expect(zh.playbackDiagnosticsEmptyHint, isNot(contains('Debug')));
     expect(zh.playbackDiagnosticsDebugHint, isNot(contains('Debug')));
     expect(zh.playbackDiagnosticsDebugHint, isNot(contains('header keys')));
+    expect(zh.playbackDiagnosticCapturedAt, '采集时间');
     expect(zh.sourceFallbackEvents, isNot(contains('fallback')));
     expect(zh.sourceFallbackEventsEmpty, isNot(contains('fallback')));
     expect(zh.playbackDiagnosticHeaders, '请求头');
@@ -93,15 +96,20 @@ void main() {
     expect(zh.sourceOperationLabel('detail'), '详情');
 
     const en = AppLocalizations(Locale('en'));
+    expect(en.playbackDiagnosticsSummaryHint, isNot(contains('player page')));
     expect(en.playbackDiagnosticHeaders, 'Request headers');
+    expect(en.playbackDiagnosticCapturedAt, 'Captured at');
     expect(en.sourceOperationLabel('play_sources'), 'Playback lines');
     expect(en.yesNo(true), 'Yes');
     expect(en.yesNo(false), 'No');
 
     const ja = AppLocalizations(Locale('ja'));
     expect(ja.runtimeDiagnosticsSubtitle, isNot(contains('Debug')));
+    expect(ja.playbackDiagnosticsSummaryHint, isNot(contains('Debug')));
+    expect(ja.playbackDiagnosticsEmptyHint, isNot(contains('Debug')));
     expect(ja.playbackDiagnosticsDebugHint, isNot(contains('Debug')));
     expect(ja.playbackDiagnosticsDebugHint, isNot(contains('header keys')));
+    expect(ja.playbackDiagnosticCapturedAt, '取得時刻');
     expect(ja.sourceFallbackEvents, isNot(contains('fallback')));
     expect(ja.sourceFallbackEventsEmpty, isNot(contains('fallback')));
     expect(ja.playbackDiagnosticHeaders, 'リクエストヘッダー');

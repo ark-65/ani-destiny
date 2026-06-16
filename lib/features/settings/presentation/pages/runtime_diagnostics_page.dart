@@ -107,7 +107,11 @@ class RuntimeDiagnosticsPage extends ConsumerWidget {
                 ListTile(
                   leading: const Icon(Icons.play_circle_outline),
                   title: Text(context.l10n.playbackDiagnosticsSummary),
-                  subtitle: Text(context.l10n.playbackDiagnosticsDebugHint),
+                  subtitle: Text(
+                    playbackDiagnostics == null
+                        ? context.l10n.playbackDiagnosticsEmptyHint
+                        : context.l10n.playbackDiagnosticsSummaryHint,
+                  ),
                 ),
                 ListTile(
                   leading: const Icon(Icons.content_copy_outlined),
@@ -187,6 +191,11 @@ List<Widget> _playbackDiagnosticTiles(
 
   return [
     _DiagnosticTile(
+      label: context.l10n.playbackDiagnosticCapturedAt,
+      value: _formatCapturedAt(context, diagnostics.capturedAt),
+      icon: Icons.schedule_outlined,
+    ),
+    _DiagnosticTile(
       label: context.l10n.playbackDiagnosticAnime,
       value: _diagnosticContextValue(diagnostics.animeTitle),
       icon: Icons.movie_outlined,
@@ -236,6 +245,17 @@ String _diagnosticContextValue(String? value) {
     return '-';
   }
   return trimmed;
+}
+
+String _formatCapturedAt(BuildContext context, DateTime capturedAt) {
+  final localizations = MaterialLocalizations.of(context);
+  final localCapturedAt = capturedAt.toLocal();
+  final date = localizations.formatMediumDate(localCapturedAt);
+  final time = localizations.formatTimeOfDay(
+    TimeOfDay.fromDateTime(localCapturedAt),
+    alwaysUse24HourFormat: true,
+  );
+  return '$date $time';
 }
 
 class _SourceHealthTile extends StatelessWidget {

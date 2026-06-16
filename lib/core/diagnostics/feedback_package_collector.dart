@@ -136,6 +136,8 @@ class FeedbackPackageCollector {
     }
 
     final lines = <String>[
+      '- ${l10n.playbackDiagnosticCapturedAt}: '
+          '${diagnostics.capturedAt.toIso8601String()}',
       '- ${l10n.playbackDiagnosticAnime}: ${diagnostics.animeTitle}',
       '- ${l10n.playbackDiagnosticEpisode}: ${diagnostics.episodeTitle}',
       if (diagnostics.usedSourceFallback &&
