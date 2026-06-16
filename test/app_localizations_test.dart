@@ -62,4 +62,16 @@ void main() {
       );
     }
   });
+
+  test('source health labels stay localized in Chinese and Japanese', () {
+    const zh = AppLocalizations(Locale('zh'));
+    expect(zh.sourceHealthHealthy, '正常');
+    expect(zh.sourceHealthDegraded, '不稳定');
+    expect(zh.sourceHealthUnavailable, '不可用');
+
+    const ja = AppLocalizations(Locale('ja'));
+    expect(ja.sourceHealthHealthy, '正常');
+    expect(ja.sourceHealthDegraded, '不安定');
+    expect(ja.sourceHealthUnavailable, '利用不可');
+  });
 }

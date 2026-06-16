@@ -6,6 +6,9 @@
 
 ## [Unreleased]
 
+### 🐛 Fixed
+- Fixed Source Settings and Runtime diagnostics still exposing raw English health states like `Healthy`, `Degraded`, and `Unavailable` to Chinese and Japanese users; those diagnostics now use localized status labels so the support flow feels less like an internal panel.
+
 ## [1.0.3] - 2026-06-13
 
 ### 🐛 Fixed
