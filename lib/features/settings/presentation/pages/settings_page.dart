@@ -1,4 +1,3 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter/services.dart';
@@ -117,6 +116,13 @@ class SettingsPage extends ConsumerWidget {
                   subtitle: Text(context.l10n.danmakuAboutValue),
                 ),
                 ListTile(
+                  leading: const Icon(Icons.monitor_heart_outlined),
+                  title: Text(context.l10n.runtimeDiagnostics),
+                  subtitle: Text(context.l10n.runtimeDiagnosticsSubtitle),
+                  trailing: const Icon(Icons.chevron_right),
+                  onTap: () => context.push('/settings/diagnostics'),
+                ),
+                ListTile(
                   leading: const Icon(Icons.content_copy_outlined),
                   title: Text(context.l10n.copyDiagnostics),
                   subtitle: Text(context.l10n.diagnosticsPrivacyNote),
@@ -143,14 +149,6 @@ class SettingsPage extends ConsumerWidget {
                   trailing: const Icon(Icons.open_in_new),
                   onTap: () => _openExternalUrl(AppConstants.releaseUrl),
                 ),
-                if (kDebugMode)
-                  ListTile(
-                    leading: const Icon(Icons.monitor_heart_outlined),
-                    title: Text(context.l10n.runtimeDiagnostics),
-                    subtitle: Text(context.l10n.runtimeDiagnosticsSubtitle),
-                    trailing: const Icon(Icons.chevron_right),
-                    onTap: () => context.push('/settings/diagnostics'),
-                  ),
               ],
             ),
           ],

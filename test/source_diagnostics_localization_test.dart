@@ -1,6 +1,7 @@
 import 'package:ani_destiny/app/l10n/app_localizations.dart';
 import 'package:ani_destiny/features/danmaku/domain/entities/danmaku_settings.dart';
 import 'package:ani_destiny/features/danmaku/presentation/providers/danmaku_providers.dart';
+import 'package:ani_destiny/features/settings/presentation/pages/settings_page.dart';
 import 'package:ani_destiny/features/settings/presentation/pages/runtime_diagnostics_page.dart';
 import 'package:ani_destiny/features/source/domain/entities/anime_source.dart';
 import 'package:ani_destiny/features/source/domain/entities/source_diagnostic.dart';
@@ -69,6 +70,25 @@ void main() {
     expect(find.text('sakura'), findsNothing);
     expect(find.text('mock'), findsNothing);
     expect(find.text('detail'), findsNothing);
+  });
+
+  testWidgets('settings page keeps runtime diagnostics visible for support',
+      (tester) async {
+    await tester.pumpWidget(
+      _buildApp(
+        home: const SettingsPage(),
+        overrides: _providerOverrides,
+      ),
+    );
+
+    await tester.pumpAndSettle();
+
+    expect(find.text('Runtime diagnostics'), findsOneWidget);
+    expect(
+      find.text('Feedback summary without sensitive values.'),
+      findsOneWidget,
+    );
+    expect(find.text('Copy diagnostics'), findsOneWidget);
   });
 }
 

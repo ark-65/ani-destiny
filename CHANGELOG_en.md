@@ -7,6 +7,7 @@
 ## [Unreleased]
 
 ### 🐛 Fixed
+- Fixed Runtime diagnostics already being able to explain the current source, fallback history, and recent diagnostics while still being hidden behind debug-only Settings UI; regular users can now open it from Settings before copying a support summary.
 - Fixed the Settings page's copied diagnostics summary still mixing engineering-facing output like `sakura`, `detail`, `true/false`, and `healthy`; it now follows the active locale for headings, field labels, status words, and download reasons so shared support notes read like product copy instead of an internal dump.
 - Fixed runtime diagnostics and source diagnostics still exposing engineering-facing terms like `Debug`, `fallback`, `detail`, `Headers`, `true/false`, and raw platform identifiers; they now use localized support copy, operation labels, boolean values, and platform names so the diagnostics flow feels like product UI instead of an internal panel.
 - Fixed Source Settings and Runtime diagnostics still exposing raw English health states like `Healthy`, `Degraded`, and `Unavailable` to Chinese and Japanese users; those diagnostics now use localized status labels so the support flow feels less like an internal panel.
