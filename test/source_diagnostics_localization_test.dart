@@ -1,6 +1,8 @@
 import 'package:ani_destiny/app/l10n/app_localizations.dart';
 import 'package:ani_destiny/features/danmaku/domain/entities/danmaku_settings.dart';
 import 'package:ani_destiny/features/danmaku/presentation/providers/danmaku_providers.dart';
+import 'package:ani_destiny/features/player/domain/services/playback_diagnostics.dart';
+import 'package:ani_destiny/features/player/presentation/providers/player_providers.dart';
 import 'package:ani_destiny/features/settings/presentation/pages/settings_page.dart';
 import 'package:ani_destiny/features/settings/presentation/pages/runtime_diagnostics_page.dart';
 import 'package:ani_destiny/features/settings/presentation/providers/settings_providers.dart';
@@ -46,6 +48,10 @@ void main() {
     expect(find.text('detail'), findsNothing);
     expect(
       find.textContaining('Retry later or switch sources'),
+      findsOneWidget,
+    );
+    expect(
+      find.text('No playback diagnostics were captured in this session.'),
       findsOneWidget,
     );
   });
@@ -211,6 +217,55 @@ void main() {
     expect(find.textContaining('HTML document omitted'), findsOneWidget);
     expect(find.textContaining('token=secret'), findsNothing);
     expect(find.textContaining('session=abc123'), findsNothing);
+  });
+
+  testWidgets('runtime diagnostics shows the latest playback snapshot', (
+    tester,
+  ) async {
+    final container = ProviderContainer(overrides: _providerOverrides);
+    addTearDown(container.dispose);
+    container.read(lastPlaybackDiagnosticsProvider.notifier).state =
+        const PlaybackDiagnostics(
+      animeTitle: 'Anime 1',
+      episodeTitle: 'Episode 2',
+      sourceId: 'mock',
+      requestedSourceId: 'sakura',
+      playSourceTitle: 'Line 1',
+      urlType: 'm3u8',
+      sanitizedUrl: 'https://cdn.example.test/.../episode-2.m3u8',
+      headerKeys: ['Referer', 'User-Agent'],
+    );
+
+    await tester.pumpWidget(
+      UncontrolledProviderScope(
+        container: container,
+        child: const MaterialApp(
+          locale: Locale('en'),
+          supportedLocales: AppLocalizations.supportedLocales,
+          localizationsDelegates: [
+            AppLocalizations.delegate,
+            GlobalMaterialLocalizations.delegate,
+            GlobalWidgetsLocalizations.delegate,
+            GlobalCupertinoLocalizations.delegate,
+          ],
+          home: Scaffold(body: RuntimeDiagnosticsPage()),
+        ),
+      ),
+    );
+
+    await tester.pumpAndSettle();
+
+    expect(find.text('Anime 1'), findsOneWidget);
+    expect(find.text('Episode 2'), findsOneWidget);
+    expect(find.text('Requested source'), findsOneWidget);
+    expect(find.text('Sakura Anime'), findsWidgets);
+    expect(find.text('Mock Anime Source'), findsWidgets);
+    expect(find.text('Line 1'), findsOneWidget);
+    expect(
+      find.text('https://cdn.example.test/.../episode-2.m3u8'),
+      findsOneWidget,
+    );
+    expect(find.text('Referer, User-Agent'), findsOneWidget);
   });
 
   testWidgets('source diagnostics sheet sanitizes inline support details', (

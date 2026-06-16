@@ -7,6 +7,7 @@
 ## [Unreleased]
 
 ### 🐛 Fixed
+- Fixed the Runtime diagnostics page still making users bounce back to the player if they wanted to confirm the last playback context before reporting an issue; it now shows the most recent anime, episode, requested source, active source, line, URL type, sanitized URL, and request-header names directly in Settings so the inspect-and-report flow stays in one place.
 - Fixed Source settings and Runtime diagnostics already exposing source health and recent issues while still leaving users to infer the next step themselves; unstable or unavailable sources now explain whether to retry later or switch sources, and healthy rows no longer clutter the support flow with reset actions or `0`-failure noise by default.
 - Fixed Runtime diagnostics and Source diagnostics showing raw inline error snippets that could still contain tokens, session values, cookie text, or HTML fragments even though the copied support summary was already sanitized; the on-screen diagnostics now apply the same redaction path so the first support surface is no leakier than the copied one.
 - Fixed users being able to inspect recent source failures and fallback events in `Source settings -> Source diagnostics` while still needing to back out to another page before they could copy a support summary; the sheet now lets them copy sanitized diagnostics in place so checking source health and reporting it is one continuous flow.

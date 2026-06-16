@@ -9,6 +9,8 @@ import '../../../../core/diagnostics/diagnostic_sanitizer.dart';
 import '../../../../core/utils/url_sanitizer.dart';
 import '../../../../shared/widgets/adaptive_page.dart';
 import '../../../danmaku/presentation/providers/danmaku_providers.dart';
+import '../../../player/domain/services/playback_diagnostics.dart';
+import '../../../player/presentation/providers/player_providers.dart';
 import '../../../source/domain/entities/source_diagnostic.dart';
 import '../../../source/domain/entities/source_fallback_event.dart';
 import '../../../source/domain/entities/source_health.dart';
@@ -37,6 +39,7 @@ class RuntimeDiagnosticsPage extends ConsumerWidget {
         .take(6)
         .toList(growable: false);
     final danmakuSettings = ref.watch(danmakuSettingsProvider);
+    final playbackDiagnostics = ref.watch(lastPlaybackDiagnosticsProvider);
 
     return SafeArea(
       child: AdaptivePage(
@@ -112,6 +115,19 @@ class RuntimeDiagnosticsPage extends ConsumerWidget {
                   subtitle: Text(context.l10n.diagnosticsPrivacyNote),
                   onTap: () => _copyDiagnostics(context, ref),
                 ),
+                if (playbackDiagnostics == null)
+                  ListTile(
+                    leading: const Icon(Icons.info_outline),
+                    title: Text(context.l10n.feedbackPackageUnavailable),
+                    subtitle: Text(
+                      context.l10n.feedbackPackagePlaybackUnavailable,
+                    ),
+                  )
+                else
+                  ..._playbackDiagnosticTiles(
+                    context,
+                    playbackDiagnostics,
+                  ),
               ],
             ),
             SettingsSection(
@@ -158,6 +174,68 @@ class RuntimeDiagnosticsPage extends ConsumerWidget {
       ),
     );
   }
+}
+
+List<Widget> _playbackDiagnosticTiles(
+  BuildContext context,
+  PlaybackDiagnostics diagnostics,
+) {
+  final lineTitle = diagnostics.playSourceTitle?.trim();
+  final lineValue = lineTitle == null || lineTitle.isEmpty ? '-' : lineTitle;
+  final headers =
+      diagnostics.headerKeys.isEmpty ? '-' : diagnostics.headerKeys.join(', ');
+
+  return [
+    _DiagnosticTile(
+      label: context.l10n.playbackDiagnosticAnime,
+      value: _diagnosticContextValue(diagnostics.animeTitle),
+      icon: Icons.movie_outlined,
+    ),
+    _DiagnosticTile(
+      label: context.l10n.playbackDiagnosticEpisode,
+      value: _diagnosticContextValue(diagnostics.episodeTitle),
+      icon: Icons.live_tv_outlined,
+    ),
+    if (diagnostics.usedSourceFallback && diagnostics.requestedSourceId != null)
+      _DiagnosticTile(
+        label: context.l10n.playbackDiagnosticRequestedSource,
+        value: context.l10n.sourceDisplayLabel(diagnostics.requestedSourceId!),
+        icon: Icons.compare_arrows_outlined,
+      ),
+    _DiagnosticTile(
+      label: context.l10n.playbackDiagnosticSource,
+      value: context.l10n.sourceDisplayLabel(diagnostics.sourceId),
+      icon: Icons.source_outlined,
+    ),
+    _DiagnosticTile(
+      label: context.l10n.playbackDiagnosticLine,
+      value: lineValue,
+      icon: Icons.playlist_play_outlined,
+    ),
+    _DiagnosticTile(
+      label: context.l10n.playbackDiagnosticUrlType,
+      value: diagnostics.urlType,
+      icon: Icons.link_outlined,
+    ),
+    _DiagnosticTile(
+      label: context.l10n.playbackDiagnosticUrl,
+      value: diagnostics.sanitizedUrl,
+      icon: Icons.language_outlined,
+    ),
+    _DiagnosticTile(
+      label: context.l10n.playbackDiagnosticHeaders,
+      value: headers,
+      icon: Icons.key_outlined,
+    ),
+  ];
+}
+
+String _diagnosticContextValue(String? value) {
+  final trimmed = value?.trim();
+  if (trimmed == null || trimmed.isEmpty) {
+    return '-';
+  }
+  return trimmed;
 }
 
 class _SourceHealthTile extends StatelessWidget {
