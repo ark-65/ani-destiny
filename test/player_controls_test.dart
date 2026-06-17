@@ -119,6 +119,9 @@ void main() {
 
     final slider = tester.widget<Slider>(find.byType(Slider));
     expect(slider.onChanged, isNull);
+    expect(slider.value, 0);
+    expect(find.text('--:-- / --:--'), findsOneWidget);
+    expect(find.text('03:00 / 24:00'), findsNothing);
 
     final externalPlayerButton = tester.widget<IconButton>(
       find.widgetWithIcon(IconButton, Icons.open_in_new),
