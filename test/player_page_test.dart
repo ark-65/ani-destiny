@@ -12,6 +12,7 @@ import 'package:ani_destiny/features/anime/presentation/providers/anime_provider
 import 'package:ani_destiny/features/danmaku/domain/entities/danmaku_item.dart';
 import 'package:ani_destiny/features/danmaku/domain/repositories/danmaku_repository.dart';
 import 'package:ani_destiny/features/danmaku/presentation/providers/danmaku_providers.dart';
+import 'package:ani_destiny/features/danmaku/presentation/widgets/danmaku_overlay.dart';
 import 'package:ani_destiny/features/download/data/services/download_task_creator.dart';
 import 'package:ani_destiny/features/download/domain/entities/download_progress.dart';
 import 'package:ani_destiny/features/download/domain/entities/download_source.dart';
@@ -930,6 +931,38 @@ void main() {
     expect(find.text('Episode 2'), findsOneWidget);
   });
 
+  testWidgets('next episode transition hides stale danmaku chrome', (
+    tester,
+  ) async {
+    final animeRepository = _PendingNextEpisodeAnimeRepository();
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          animeRepositoryProvider.overrideWithValue(animeRepository),
+          playerRepositoryProvider
+              .overrideWithValue(const _FakePlayerRepository()),
+          historyRepositoryProvider.overrideWithValue(_FakeHistoryRepository()),
+          danmakuRepositoryProvider.overrideWithValue(
+            _PopulatedDanmakuRepository(),
+          ),
+        ],
+        child: _buildPlayerApp(_args),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.byType(DanmakuOverlay), findsOneWidget);
+    expect(find.text('Danmaku: Dandanplay'), findsOneWidget);
+
+    await tester.tap(find.byTooltip('Next episode'));
+    await tester.pump();
+
+    expect(find.text('Loading next episode...'), findsOneWidget);
+    expect(find.byType(DanmakuOverlay), findsNothing);
+    expect(find.text('Danmaku: Dandanplay'), findsNothing);
+  });
+
   testWidgets(
       'current playback resumes if next episode is unavailable before switching',
       (tester) async {
@@ -1389,6 +1422,28 @@ class _FakeDanmakuRepository implements DanmakuRepository {
     int? episodeIndex,
   }) async {
     return const [];
+  }
+}
+
+class _PopulatedDanmakuRepository implements DanmakuRepository {
+  @override
+  Future<List<DanmakuItem>> getDanmaku({
+    required String animeId,
+    required String episodeId,
+    required String animeTitle,
+    required String episodeTitle,
+    int? episodeIndex,
+  }) async {
+    return const [
+      DanmakuItem(
+        id: 'comment-1',
+        text: 'Visible danmaku',
+        time: Duration(seconds: 2),
+        color: 0xFFFFFFFF,
+        type: DanmakuType.scroll,
+        source: 'dandanplay',
+      ),
+    ];
   }
 }
 

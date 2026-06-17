@@ -103,6 +103,7 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
     final isRetryingPlayback = _isRetryingPlayback;
     final isRouteBusy =
         _isSwitchingEpisode || _isOpeningExternalPlayer || isRetryingPlayback;
+    final showDanmakuChrome = !_isSwitchingEpisode;
     final nextEpisodeTooltip = _isSwitchingEpisode
         ? context.l10n.loadingNextEpisode
         : _isOpeningExternalPlayer
@@ -330,16 +331,17 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
                         ),
                       ),
                     ),
-                  danmakuItems.when(
-                    data: (items) => DanmakuOverlay(
-                      items: items,
-                      position: _state.position,
-                      settings: danmakuSettings,
+                  if (showDanmakuChrome)
+                    danmakuItems.when(
+                      data: (items) => DanmakuOverlay(
+                        items: items,
+                        position: _state.position,
+                        settings: danmakuSettings,
+                      ),
+                      loading: () => const SizedBox.shrink(),
+                      error: (_, __) => const SizedBox.shrink(),
                     ),
-                    loading: () => const SizedBox.shrink(),
-                    error: (_, __) => const SizedBox.shrink(),
-                  ),
-                  if (danmakuSettings.enabled)
+                  if (showDanmakuChrome && danmakuSettings.enabled)
                     Positioned(
                       top: 12,
                       left: 12,
