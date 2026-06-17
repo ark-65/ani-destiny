@@ -188,6 +188,7 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
         body: Column(
           children: [
             if (!_isFullscreen &&
+                !_isSwitchingEpisode &&
                 _hasSourceFallbackContext() &&
                 _state.errorMessage == null)
               _SourceFallbackBanner(

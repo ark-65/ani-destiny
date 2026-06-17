@@ -7,6 +7,7 @@
 ## [Unreleased]
 
 ### 🐛 Fixed
+- Fixed the player still keeping the previous episode's fallback-source banner visible after it had already entered the `Loading next episode...` transition; the banner now hides as soon as the switch begins so the new handoff is not competing with stale source context from the episode users are leaving.
 - Fixed the player keeping the previous episode's failure card on screen even after users had already chosen to continue into `Next episode`; once the next-episode transition starts, the page now clears that stale error UI immediately and enters the shared switching state so moving forward no longer feels mixed with being stuck on the old failure.
 - Fixed the player already showing a clear next-episode transition overlay while still leaving the previous episode timeline and timestamps in the bottom controls; the switch state now clears that stale progress chrome first so users do not think the old episode is still active.
 - Fixed the player leaving the previous episode's danmaku overlay and danmaku status badge on screen while `Next episode` was still switching; the transition now clears that stale episode chrome first so the handoff feels calmer and more deliberate.

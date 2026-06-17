@@ -440,6 +440,43 @@ void main() {
     );
   });
 
+  testWidgets('next episode transition hides stale fallback context', (
+    tester,
+  ) async {
+    final animeRepository = _PendingNextEpisodeAnimeRepository();
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          animeRepositoryProvider.overrideWithValue(animeRepository),
+          playerRepositoryProvider
+              .overrideWithValue(const _FakePlayerRepository()),
+          historyRepositoryProvider.overrideWithValue(_FakeHistoryRepository()),
+          danmakuRepositoryProvider.overrideWithValue(_FakeDanmakuRepository()),
+        ],
+        child: _buildPlayerApp(_fallbackArgs),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(
+      find.text(
+        'The selected source Mock Anime Source is temporarily unavailable, so playback is using fallback data from Sakura Anime.',
+      ),
+      findsOneWidget,
+    );
+
+    await tester.tap(find.byTooltip('Next episode'));
+    await tester.pump();
+
+    expect(
+      find.text(
+        'The selected source Mock Anime Source is temporarily unavailable, so playback is using fallback data from Sakura Anime.',
+      ),
+      findsNothing,
+    );
+  });
+
   testWidgets('playback failure card can retry the current source',
       (tester) async {
     final repository = _RetryablePlayerRepository();
