@@ -729,6 +729,9 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
 
     setState(() => _isSwitchingEpisode = true);
     try {
+      if (shouldResumePlayback) {
+        await _controller.pause();
+      }
       final detailResult = await ref.read(
         animeDetailBySourceProvider(
           (sourceId: currentArgs.sourceId, animeId: currentArgs.animeId),

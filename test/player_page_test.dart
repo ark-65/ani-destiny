@@ -871,6 +871,36 @@ void main() {
     expect(launchedUri, isNull);
   });
 
+  testWidgets('next episode transition pauses the current playback first', (
+    tester,
+  ) async {
+    final pendingRepository = _PendingNextEpisodeAnimeRepository();
+    final playerRepository = _TrackingPlayerRepository();
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          animeRepositoryProvider.overrideWithValue(pendingRepository),
+          playerRepositoryProvider.overrideWithValue(playerRepository),
+          historyRepositoryProvider.overrideWithValue(_FakeHistoryRepository()),
+          danmakuRepositoryProvider.overrideWithValue(_FakeDanmakuRepository()),
+        ],
+        child: _buildPlayerApp(_args),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(playerRepository.adapter.pauseCalls, 0);
+
+    await tester.tap(find.byTooltip('Next episode'));
+    await tester.pump();
+
+    expect(playerRepository.adapter.pauseCalls, 1);
+    final playButton = tester.widget<IconButton>(find.byType(IconButton).first);
+    expect(playButton.onPressed, isNull);
+    expect(playButton.tooltip, 'Loading next episode...');
+  });
+
   testWidgets('system back stays on the player while next episode loads', (
     tester,
   ) async {
@@ -1448,6 +1478,7 @@ class _TrackingPlayerControllerAdapter implements PlayerControllerAdapter {
 
   final _controller = StreamController<PlayerState>.broadcast();
   int pauseCalls = 0;
+  PlayerState _state = PlayerState.initial();
 
   @override
   Stream<PlayerState> get stateStream => _controller.stream;
@@ -1462,25 +1493,19 @@ class _TrackingPlayerControllerAdapter implements PlayerControllerAdapter {
     String url, {
     Map<String, String> headers = const {},
   }) async {
-    _controller.add(
-      PlayerState.initial().copyWith(
-        isInitialized: true,
-        isPlaying: true,
-        duration: const Duration(minutes: 24, seconds: 12),
-      ),
+    _state = PlayerState.initial().copyWith(
+      isInitialized: true,
+      isPlaying: true,
+      duration: const Duration(minutes: 24, seconds: 12),
     );
+    _controller.add(_state);
   }
 
   @override
   Future<void> pause() async {
     pauseCalls += 1;
-    _controller.add(
-      PlayerState.initial().copyWith(
-        isInitialized: true,
-        isPlaying: false,
-        duration: const Duration(minutes: 24, seconds: 12),
-      ),
-    );
+    _state = _state.copyWith(isPlaying: false);
+    _controller.add(_state);
   }
 
   @override
