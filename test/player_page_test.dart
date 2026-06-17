@@ -931,6 +931,52 @@ void main() {
     expect(find.text('Episode 2'), findsOneWidget);
   });
 
+  testWidgets(
+      'failed playback clears stale error UI before next episode finishes loading',
+      (tester) async {
+    final animeRepository = _PendingPlayableNextEpisodeAnimeRepository();
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          animeRepositoryProvider.overrideWithValue(animeRepository),
+          playerRepositoryProvider.overrideWithValue(
+            const _ThrowingPlayerRepository(),
+          ),
+          historyRepositoryProvider.overrideWithValue(_FakeHistoryRepository()),
+          danmakuRepositoryProvider.overrideWithValue(_FakeDanmakuRepository()),
+        ],
+        child: _buildPlayerApp(
+          _failingArgs.copyWith(
+            episodeId: 'episode-1',
+            episodeTitle: 'Episode 1',
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(
+      find.text(
+        'Playback temporarily failed. Retry later or try another playback line.',
+      ),
+      findsOneWidget,
+    );
+
+    await tester.tap(find.byTooltip('Next episode'));
+    await tester.pump();
+    await tester.pump();
+
+    expect(find.text('Loading next episode...'), findsOneWidget);
+    expect(find.text('Episode 2'), findsOneWidget);
+    expect(
+      find.text(
+        'Playback temporarily failed. Retry later or try another playback line.',
+      ),
+      findsNothing,
+    );
+  });
+
   testWidgets('next episode transition hides stale danmaku chrome', (
     tester,
   ) async {

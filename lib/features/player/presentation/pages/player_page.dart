@@ -750,6 +750,9 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
     setState(() {
       _isSwitchingEpisode = true;
       _switchingEpisodeTitle = null;
+      if (_state.errorMessage != null) {
+        _state = _state.copyWith(clearErrorMessage: true);
+      }
     });
     try {
       if (shouldResumePlayback) {
