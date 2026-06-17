@@ -104,7 +104,7 @@ void main() {
     await tester.pump();
 
     expect(find.byType(CircularProgressIndicator), findsOneWidget);
-    expect(find.byTooltip('Loading next episode...'), findsNWidgets(4));
+    expect(find.byTooltip('Loading next episode...'), findsNWidgets(5));
     final playButton = tester.widget<IconButton>(
       find.byType(IconButton).first,
     );
@@ -131,12 +131,52 @@ void main() {
       find.widgetWithIcon(IconButton, Icons.download_outlined),
     );
     expect(downloadButton.onPressed, isNull);
+    final danmakuButton = tester.widget<IconButton>(
+      find.widgetWithIcon(IconButton, Icons.subtitles),
+    );
+    expect(danmakuButton.onPressed, isNull);
+    expect(danmakuButton.tooltip, 'Loading next episode...');
 
     final fullscreenButton = tester.widget<IconButton>(
       find.widgetWithIcon(IconButton, Icons.fullscreen_exit),
     );
     expect(fullscreenButton.onPressed, isNotNull);
     expect(fullscreenButton.tooltip, 'Exit fullscreen');
+  });
+
+  testWidgets('retrying playback also disables danmaku changes',
+      (tester) async {
+    await tester.pumpWidget(
+      _buildApp(
+        PlayerControls(
+          state: _state.copyWith(errorMessage: 'Playback temporarily failed.'),
+          hasPlayableSource: true,
+          onPlayPause: _noop,
+          onSeek: (_) {},
+          onSpeed: _noop,
+          onNextEpisode: _noop,
+          onOpenExternalPlayer: _noop,
+          externalPlayerTooltip: 'Retrying playback...',
+          downloadTooltip: 'Retrying playback...',
+          onDownload: null,
+          onToggleDanmaku: _noop,
+          onToggleFullscreen: _noop,
+          danmakuEnabled: true,
+          isFullscreen: false,
+          isSwitchingEpisode: false,
+          isOpeningExternalPlayer: false,
+          isRetryingPlayback: true,
+        ),
+      ),
+    );
+
+    await tester.pump();
+
+    final danmakuButton = tester.widget<IconButton>(
+      find.widgetWithIcon(IconButton, Icons.subtitles),
+    );
+    expect(danmakuButton.onPressed, isNull);
+    expect(danmakuButton.tooltip, 'Retrying playback...');
   });
 
   testWidgets('embedded switching state disables entering fullscreen', (

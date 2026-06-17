@@ -532,6 +532,12 @@ void main() {
     expect(downloadButton.onPressed, isNull);
     expect(downloadButton.tooltip, 'Retrying playback...');
 
+    final danmakuButton = tester.widget<IconButton>(
+      find.widgetWithIcon(IconButton, Icons.subtitles),
+    );
+    expect(danmakuButton.onPressed, isNull);
+    expect(danmakuButton.tooltip, 'Retrying playback...');
+
     final fullscreenButton = tester.widget<IconButton>(
       find.widgetWithIcon(IconButton, Icons.fullscreen),
     );
@@ -897,6 +903,12 @@ void main() {
       find.widgetWithIcon(IconButton, Icons.open_in_new),
     );
     expect(externalPlayerButton.onPressed, isNull);
+
+    final danmakuButton = tester.widget<IconButton>(
+      find.widgetWithIcon(IconButton, Icons.subtitles),
+    );
+    expect(danmakuButton.onPressed, isNull);
+    expect(danmakuButton.tooltip, 'Loading next episode...');
 
     final fullscreenButton = tester.widget<IconButton>(
       find.widgetWithIcon(IconButton, Icons.fullscreen),

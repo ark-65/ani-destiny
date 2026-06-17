@@ -80,6 +80,15 @@ class PlayerControls extends StatelessWidget {
         : isRetryingPlayback
             ? context.l10n.retryingPlayback
             : downloadTooltip;
+    final danmakuTooltip = isSwitchingEpisode
+        ? context.l10n.loadingNextEpisode
+        : isOpeningExternalPlayer
+            ? context.l10n.openingExternalPlayer
+            : isRetryingPlayback
+                ? context.l10n.retryingPlayback
+                : danmakuEnabled
+                    ? context.l10n.hideDanmaku
+                    : context.l10n.showDanmaku;
     final canToggleFullscreen = !isOpeningExternalPlayer &&
         (!isSwitchingEpisode || isFullscreen) &&
         (!isRetryingPlayback || isFullscreen);
@@ -174,10 +183,8 @@ class PlayerControls extends StatelessWidget {
                           : const Icon(Icons.open_in_new),
                     ),
                   IconButton(
-                    tooltip: danmakuEnabled
-                        ? context.l10n.hideDanmaku
-                        : context.l10n.showDanmaku,
-                    onPressed: onToggleDanmaku,
+                    tooltip: danmakuTooltip,
+                    onPressed: isInteractionLocked ? null : onToggleDanmaku,
                     icon: Icon(
                       danmakuEnabled
                           ? Icons.subtitles
