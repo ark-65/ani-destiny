@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:ani_destiny/app/l10n/app_localizations.dart';
 import 'package:ani_destiny/features/anime/domain/entities/anime_detail.dart';
 import 'package:ani_destiny/features/anime/domain/entities/anime.dart';
+import 'package:ani_destiny/features/anime/domain/entities/episode.dart';
 import 'package:ani_destiny/features/anime/domain/entities/play_source.dart';
 import 'package:ani_destiny/features/anime/domain/entities/schedule_item.dart';
 import 'package:ani_destiny/features/anime/domain/entities/search_result.dart';
@@ -901,6 +902,76 @@ void main() {
     expect(playButton.tooltip, 'Loading next episode...');
   });
 
+  testWidgets(
+      'current playback resumes if next episode is unavailable before switching',
+      (tester) async {
+    final animeRepository = _LastEpisodeAnimeRepository();
+    final playerRepository = _TrackingPlayerRepository();
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          animeRepositoryProvider.overrideWithValue(animeRepository),
+          playerRepositoryProvider.overrideWithValue(playerRepository),
+          historyRepositoryProvider.overrideWithValue(_FakeHistoryRepository()),
+          danmakuRepositoryProvider.overrideWithValue(_FakeDanmakuRepository()),
+        ],
+        child: _buildPlayerApp(_args),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byTooltip('Next episode'));
+    await tester.pumpAndSettle();
+
+    expect(playerRepository.adapter.pauseCalls, 1);
+    expect(playerRepository.adapter.playCalls, 1);
+    expect(
+      find.text('You are already on the latest available episode.'),
+      findsOneWidget,
+    );
+
+    final playButton = tester.widget<IconButton>(find.byType(IconButton).first);
+    expect(playButton.onPressed, isNotNull);
+    expect(playButton.tooltip, 'Pause');
+  });
+
+  testWidgets(
+      'current playback resumes if next episode has no playable sources',
+      (tester) async {
+    final animeRepository = _NoPlayableNextEpisodeAnimeRepository();
+    final playerRepository = _TrackingPlayerRepository();
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          animeRepositoryProvider.overrideWithValue(animeRepository),
+          playerRepositoryProvider.overrideWithValue(playerRepository),
+          historyRepositoryProvider.overrideWithValue(_FakeHistoryRepository()),
+          danmakuRepositoryProvider.overrideWithValue(_FakeDanmakuRepository()),
+        ],
+        child: _buildPlayerApp(_args),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byTooltip('Next episode'));
+    await tester.pumpAndSettle();
+
+    expect(playerRepository.adapter.pauseCalls, 1);
+    expect(playerRepository.adapter.playCalls, 1);
+    expect(
+      find.text(
+        'No playable source found. Try another source or retry later.',
+      ),
+      findsOneWidget,
+    );
+
+    final playButton = tester.widget<IconButton>(find.byType(IconButton).first);
+    expect(playButton.onPressed, isNotNull);
+    expect(playButton.tooltip, 'Pause');
+  });
+
   testWidgets('system back stays on the player while next episode loads', (
     tester,
   ) async {
@@ -1306,6 +1377,144 @@ class _PendingNextEpisodeAnimeRepository implements AnimeRepository {
   }
 }
 
+class _LastEpisodeAnimeRepository implements AnimeRepository {
+  @override
+  Future<SourceFallbackResult<AnimeDetail>> getAnimeDetail(String animeId) {
+    throw UnimplementedError();
+  }
+
+  @override
+  Future<SourceFallbackResult<AnimeDetail>> getAnimeDetailFromSource({
+    required String sourceId,
+    required String animeId,
+  }) async {
+    return SourceFallbackResult(
+      value: AnimeDetail(
+        id: animeId,
+        title: 'Anime 1',
+        sourceId: sourceId,
+        episodes: const [
+          Episode(
+            id: 'episode-1',
+            animeId: 'anime-1',
+            title: 'Episode 1',
+            index: 1,
+          ),
+        ],
+      ),
+      sourceId: sourceId,
+      usedFallback: false,
+    );
+  }
+
+  @override
+  Future<SourceFallbackResult<List<Anime>>> getHomeRecommendations() {
+    throw UnimplementedError();
+  }
+
+  @override
+  Future<SourceFallbackResult<List<PlaySource>>> getPlaySources(
+    String episodeId,
+  ) {
+    throw UnimplementedError();
+  }
+
+  @override
+  Future<SourceFallbackResult<List<PlaySource>>> getPlaySourcesFromSource({
+    required String sourceId,
+    required String episodeId,
+  }) {
+    throw UnimplementedError();
+  }
+
+  @override
+  Future<SourceFallbackResult<List<ScheduleItem>>> getSchedule() {
+    throw UnimplementedError();
+  }
+
+  @override
+  Future<SourceFallbackResult<List<SearchResult>>> search(
+    String keyword, {
+    int page = 1,
+  }) {
+    throw UnimplementedError();
+  }
+}
+
+class _NoPlayableNextEpisodeAnimeRepository implements AnimeRepository {
+  @override
+  Future<SourceFallbackResult<AnimeDetail>> getAnimeDetail(String animeId) {
+    throw UnimplementedError();
+  }
+
+  @override
+  Future<SourceFallbackResult<AnimeDetail>> getAnimeDetailFromSource({
+    required String sourceId,
+    required String animeId,
+  }) async {
+    return SourceFallbackResult(
+      value: AnimeDetail(
+        id: animeId,
+        title: 'Anime 1',
+        sourceId: sourceId,
+        episodes: const [
+          Episode(
+            id: 'episode-1',
+            animeId: 'anime-1',
+            title: 'Episode 1',
+            index: 1,
+          ),
+          Episode(
+            id: 'episode-2',
+            animeId: 'anime-1',
+            title: 'Episode 2',
+            index: 2,
+          ),
+        ],
+      ),
+      sourceId: sourceId,
+      usedFallback: false,
+    );
+  }
+
+  @override
+  Future<SourceFallbackResult<List<Anime>>> getHomeRecommendations() {
+    throw UnimplementedError();
+  }
+
+  @override
+  Future<SourceFallbackResult<List<PlaySource>>> getPlaySources(
+    String episodeId,
+  ) {
+    throw UnimplementedError();
+  }
+
+  @override
+  Future<SourceFallbackResult<List<PlaySource>>> getPlaySourcesFromSource({
+    required String sourceId,
+    required String episodeId,
+  }) async {
+    return SourceFallbackResult(
+      value: const [],
+      sourceId: sourceId,
+      usedFallback: false,
+    );
+  }
+
+  @override
+  Future<SourceFallbackResult<List<ScheduleItem>>> getSchedule() {
+    throw UnimplementedError();
+  }
+
+  @override
+  Future<SourceFallbackResult<List<SearchResult>>> search(
+    String keyword, {
+    int page = 1,
+  }) {
+    throw UnimplementedError();
+  }
+}
+
 class _FakeDownloadTaskCreator extends DownloadTaskCreator {
   _FakeDownloadTaskCreator({required this.onCreate})
       : super(_FakeDownloadService());
@@ -1478,6 +1687,7 @@ class _TrackingPlayerControllerAdapter implements PlayerControllerAdapter {
 
   final _controller = StreamController<PlayerState>.broadcast();
   int pauseCalls = 0;
+  int playCalls = 0;
   PlayerState _state = PlayerState.initial();
 
   @override
@@ -1509,7 +1719,11 @@ class _TrackingPlayerControllerAdapter implements PlayerControllerAdapter {
   }
 
   @override
-  Future<void> play() async {}
+  Future<void> play() async {
+    playCalls += 1;
+    _state = _state.copyWith(isPlaying: true);
+    _controller.add(_state);
+  }
 
   @override
   Future<void> seek(Duration position) async {}

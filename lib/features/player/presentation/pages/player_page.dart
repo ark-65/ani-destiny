@@ -726,11 +726,13 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
     final currentArgs = _args;
     final shouldResumePlayback = _state.isPlaying;
     final playbackSpeed = _state.speed;
+    var shouldRestoreCurrentPlayback = false;
 
     setState(() => _isSwitchingEpisode = true);
     try {
       if (shouldResumePlayback) {
         await _controller.pause();
+        shouldRestoreCurrentPlayback = true;
       }
       final detailResult = await ref.read(
         animeDetailBySourceProvider(
@@ -791,6 +793,7 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
         _state = PlayerState.initial();
         _lastHistorySavedAt = null;
       });
+      shouldRestoreCurrentPlayback = false;
 
       await _loadPlayer(
         args: nextArgs,
@@ -805,6 +808,11 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
       if (!mounted) return;
       _showSnackBar(context.l10n.sourceTemporarilyUnavailable);
     } finally {
+      if (mounted && shouldRestoreCurrentPlayback) {
+        try {
+          await _controller.play();
+        } catch (_) {}
+      }
       if (mounted) {
         setState(() => _isSwitchingEpisode = false);
       }
