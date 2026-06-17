@@ -888,6 +888,8 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
       );
     }
     summary.addAll([
+      '${context.l10n.playbackDiagnosticCapturedAt}: '
+          '${diagnostics.capturedAt.toIso8601String()}',
       '${context.l10n.playbackDiagnosticSource}: '
           '${context.l10n.sourceDisplayLabel(diagnostics.sourceId)}',
       '${context.l10n.playbackDiagnosticLine}: '

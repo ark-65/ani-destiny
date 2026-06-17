@@ -62,4 +62,60 @@ void main() {
       );
     }
   });
+
+  test('source health labels stay localized in Chinese and Japanese', () {
+    const zh = AppLocalizations(Locale('zh'));
+    expect(zh.sourceHealthHealthy, '正常');
+    expect(zh.sourceHealthDegraded, '不稳定');
+    expect(zh.sourceHealthUnavailable, '不可用');
+    expect(zh.sourceHealthDegradedHint, isNot(contains('fallback')));
+    expect(zh.sourceHealthUnavailableHint, isNot(contains('fallback')));
+
+    const ja = AppLocalizations(Locale('ja'));
+    expect(ja.sourceHealthHealthy, '正常');
+    expect(ja.sourceHealthDegraded, '不安定');
+    expect(ja.sourceHealthUnavailable, '利用不可');
+    expect(ja.sourceHealthDegradedHint, isNot(contains('fallback')));
+    expect(ja.sourceHealthUnavailableHint, isNot(contains('fallback')));
+  });
+
+  test('runtime diagnostics helpers keep support copy localized', () {
+    const zh = AppLocalizations(Locale('zh'));
+    expect(zh.runtimeDiagnosticsSubtitle, isNot(contains('Debug')));
+    expect(zh.playbackDiagnosticsSummaryHint, isNot(contains('Debug')));
+    expect(zh.playbackDiagnosticsEmptyHint, isNot(contains('Debug')));
+    expect(zh.playbackDiagnosticsDebugHint, isNot(contains('Debug')));
+    expect(zh.playbackDiagnosticsDebugHint, isNot(contains('header keys')));
+    expect(zh.playbackDiagnosticCapturedAt, '采集时间');
+    expect(zh.sourceFallbackEvents, isNot(contains('fallback')));
+    expect(zh.sourceFallbackEventsEmpty, isNot(contains('fallback')));
+    expect(zh.playbackDiagnosticHeaders, '请求头');
+    expect(zh.yesNo(true), '是');
+    expect(zh.yesNo(false), '否');
+    expect(zh.platformDisplayName('android'), 'Android');
+    expect(zh.sourceOperationLabel('detail'), '详情');
+
+    const en = AppLocalizations(Locale('en'));
+    expect(en.playbackDiagnosticsSummaryHint, isNot(contains('player page')));
+    expect(en.playbackDiagnosticHeaders, 'Request headers');
+    expect(en.playbackDiagnosticCapturedAt, 'Captured at');
+    expect(en.sourceOperationLabel('play_sources'), 'Playback lines');
+    expect(en.yesNo(true), 'Yes');
+    expect(en.yesNo(false), 'No');
+
+    const ja = AppLocalizations(Locale('ja'));
+    expect(ja.runtimeDiagnosticsSubtitle, isNot(contains('Debug')));
+    expect(ja.playbackDiagnosticsSummaryHint, isNot(contains('Debug')));
+    expect(ja.playbackDiagnosticsEmptyHint, isNot(contains('Debug')));
+    expect(ja.playbackDiagnosticsDebugHint, isNot(contains('Debug')));
+    expect(ja.playbackDiagnosticsDebugHint, isNot(contains('header keys')));
+    expect(ja.playbackDiagnosticCapturedAt, '取得時刻');
+    expect(ja.sourceFallbackEvents, isNot(contains('fallback')));
+    expect(ja.sourceFallbackEventsEmpty, isNot(contains('fallback')));
+    expect(ja.playbackDiagnosticHeaders, 'リクエストヘッダー');
+    expect(ja.yesNo(true), 'はい');
+    expect(ja.yesNo(false), 'いいえ');
+    expect(ja.platformDisplayName('windows'), 'Windows');
+    expect(ja.sourceOperationLabel('detail'), '詳細');
+  });
 }

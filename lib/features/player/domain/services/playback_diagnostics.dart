@@ -2,6 +2,7 @@ import '../../../../core/utils/url_sanitizer.dart';
 
 class PlaybackDiagnostics {
   const PlaybackDiagnostics({
+    required this.capturedAt,
     required this.animeTitle,
     required this.episodeTitle,
     required this.sourceId,
@@ -12,6 +13,7 @@ class PlaybackDiagnostics {
     required this.headerKeys,
   });
 
+  final DateTime capturedAt;
   final String animeTitle;
   final String episodeTitle;
   final String sourceId;
@@ -31,6 +33,7 @@ class PlaybackDiagnosticsBuilder {
   const PlaybackDiagnosticsBuilder();
 
   PlaybackDiagnostics build({
+    DateTime? capturedAt,
     required String animeTitle,
     required String episodeTitle,
     required String sourceId,
@@ -40,6 +43,7 @@ class PlaybackDiagnosticsBuilder {
     required Map<String, String> headers,
   }) {
     return PlaybackDiagnostics(
+      capturedAt: capturedAt ?? DateTime.now(),
       animeTitle: animeTitle,
       episodeTitle: episodeTitle,
       sourceId: sourceId,

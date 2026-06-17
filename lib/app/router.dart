@@ -1,6 +1,5 @@
 import 'dart:convert';
 
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
@@ -75,11 +74,10 @@ final appRouter = GoRouter(
           path: '/settings/sources',
           builder: (context, state) => const SourceSettingsPage(),
         ),
-        if (kDebugMode)
-          GoRoute(
-            path: '/settings/diagnostics',
-            builder: (context, state) => const RuntimeDiagnosticsPage(),
-          ),
+        GoRoute(
+          path: '/settings/diagnostics',
+          builder: (context, state) => const RuntimeDiagnosticsPage(),
+        ),
       ],
     ),
     GoRoute(

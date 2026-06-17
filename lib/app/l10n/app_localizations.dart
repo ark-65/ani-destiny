@@ -239,10 +239,61 @@ class AppLocalizations {
   String get runtimeDiagnostics => _t('runtimeDiagnostics');
   String get runtimeDiagnosticsSubtitle => _t('runtimeDiagnosticsSubtitle');
   String get platform => _t('platform');
+  String platformDisplayName(String platform) {
+    return switch (platform) {
+      'android' => _t('platformAndroid'),
+      'iOS' => _t('platformIOS'),
+      'linux' => _t('platformLinux'),
+      'macOS' => _t('platformMacOS'),
+      'windows' => _t('platformWindows'),
+      'fuchsia' => _t('platformFuchsia'),
+      'web' => _t('platformWeb'),
+      _ => platform,
+    };
+  }
+
+  String yesNo(bool value) => value ? _t('yes') : _t('no');
+  String get feedbackPackageTitle => _t('feedbackPackageTitle');
+  String get feedbackPackageSectionApp => _t('feedbackPackageSectionApp');
+  String get feedbackPackageSectionPlatform =>
+      _t('feedbackPackageSectionPlatform');
+  String get feedbackPackageSectionSource => _t('feedbackPackageSectionSource');
+  String get feedbackPackageSectionPlayback =>
+      _t('feedbackPackageSectionPlayback');
+  String get feedbackPackageSectionDanmaku =>
+      _t('feedbackPackageSectionDanmaku');
+  String get feedbackPackageSectionDownloads =>
+      _t('feedbackPackageSectionDownloads');
+  String get feedbackPackageSectionNotes => _t('feedbackPackageSectionNotes');
+  String get feedbackPackageName => _t('feedbackPackageName');
+  String get feedbackPackageVersion => _t('feedbackPackageVersion');
+  String get feedbackPackageGeneratedAt => _t('feedbackPackageGeneratedAt');
+  String get feedbackPackageUnavailable => _t('feedbackPackageUnavailable');
+  String get feedbackPackageNone => _t('feedbackPackageNone');
+  String get feedbackPackageReason => _t('feedbackPackageReason');
+  String get feedbackPackageMessage => _t('feedbackPackageMessage');
+  String get feedbackPackageTotalTasks => _t('feedbackPackageTotalTasks');
+  String get feedbackPackageStatusCounts => _t('feedbackPackageStatusCounts');
+  String get feedbackPackageKindCounts => _t('feedbackPackageKindCounts');
+  String get feedbackPackageLatestIssue => _t('feedbackPackageLatestIssue');
+  String get feedbackPackagePlaybackUnavailable =>
+      _t('feedbackPackagePlaybackUnavailable');
+  String get feedbackPackageNotesPlaceholder =>
+      _t('feedbackPackageNotesPlaceholder');
+  String get feedbackPackageDandanplayAppIdConfigured =>
+      _t('feedbackPackageDandanplayAppIdConfigured');
+  String get feedbackPackageDandanplayAppSecretConfigured =>
+      _t('feedbackPackageDandanplayAppSecretConfigured');
+  String get feedbackPackageDanmakuFallbackProvider =>
+      _t('feedbackPackageDanmakuFallbackProvider');
+  String get feedbackPackageAvailable => _t('feedbackPackageAvailable');
   String get currentSource => _t('currentSource');
   String get currentSourceId => _t('currentSourceId');
   String get latestSourceDiagnostics => _t('latestSourceDiagnostics');
   String get playbackDiagnosticsSummary => _t('playbackDiagnosticsSummary');
+  String get playbackDiagnosticsSummaryHint =>
+      _t('playbackDiagnosticsSummaryHint');
+  String get playbackDiagnosticsEmptyHint => _t('playbackDiagnosticsEmptyHint');
   String sourceFallbackPlayerNotice(
     String requestedSource,
     String activeSource,
@@ -254,6 +305,7 @@ class AppLocalizations {
   }
 
   String get playbackDiagnosticsDebugHint => _t('playbackDiagnosticsDebugHint');
+  String get playbackDiagnosticCapturedAt => _t('playbackDiagnosticCapturedAt');
   String get sourceTemporarilyUnavailable => _t('sourceTemporarilyUnavailable');
   String get sourceUnavailableSuggestion => _t('sourceUnavailableSuggestion');
   String get noPlayableSourceFound => _t('noPlayableSourceFound');
@@ -273,6 +325,8 @@ class AppLocalizations {
   String get sourceHealthHealthy => _t('sourceHealthHealthy');
   String get sourceHealthDegraded => _t('sourceHealthDegraded');
   String get sourceHealthUnavailable => _t('sourceHealthUnavailable');
+  String get sourceHealthDegradedHint => _t('sourceHealthDegradedHint');
+  String get sourceHealthUnavailableHint => _t('sourceHealthUnavailableHint');
   String sourceFailureCount(int count) => '${_t('sourceFailureCount')}: $count';
   String sourceLastError(String message) =>
       '${_t('sourceLastError')}: $message';
@@ -282,6 +336,20 @@ class AppLocalizations {
   String get sourceFallbackEventsEmpty => _t('sourceFallbackEventsEmpty');
   String sourceTransitionLabel(String fromSourceId, String toSourceId) =>
       '${sourceDisplayLabel(fromSourceId)} -> ${sourceDisplayLabel(toSourceId)}';
+  String sourceOperationLabel(String operation) {
+    return switch (operation) {
+      'home' => _t('sourceOperationHome'),
+      'search' => _t('sourceOperationSearch'),
+      'detail' => _t('sourceOperationDetail'),
+      'play' => _t('sourceOperationPlay'),
+      'play_sources' => _t('sourceOperationPlaySources'),
+      'schedule' => _t('sourceOperationSchedule'),
+      'match' => _t('sourceOperationMatch'),
+      'comments' => _t('sourceOperationComments'),
+      _ => operation,
+    };
+  }
+
   String get danmaku => _t('danmaku');
   String get danmakuStatusLoading => _t('danmakuStatusLoading');
   String get danmakuStatusDandanplay => _t('danmakuStatusDandanplay');
@@ -414,7 +482,7 @@ const _localizedValues = {
     'playbackDiagnosticLine': '线路',
     'playbackDiagnosticUrlType': 'URL 类型',
     'playbackDiagnosticUrl': 'URL',
-    'playbackDiagnosticHeaders': 'Headers',
+    'playbackDiagnosticHeaders': '请求头',
     'playbackDiagnosticState': '状态',
     'playbackDiagnosticStateLoading': '加载中',
     'playbackDiagnosticStateReady': '就绪',
@@ -473,7 +541,7 @@ const _localizedValues = {
     'sourceStatus': '数据源状态',
     'sourceStatusValue': 'Sakura 数据源依赖上游站点可用性；解析波动时可稍后重试或切换其他数据源。',
     'danmakuAbout': '弹幕',
-    'danmakuAboutValue': '弹弹play 为可选集成；不可用时使用 fallback。',
+    'danmakuAboutValue': '弹弹play 为可选集成；不可用时会改用备用来源。',
     'copyDiagnostics': '复制诊断信息',
     'diagnosticsCopied': '诊断信息已复制',
     'diagnosticsCopyFailed': '复制诊断信息失败',
@@ -483,16 +551,54 @@ const _localizedValues = {
     'openSource': '开源地址',
     'releasePage': '发布地址',
     'runtimeDiagnostics': '运行诊断',
-    'runtimeDiagnosticsSubtitle': 'Debug 模式下查看反馈用摘要，不展示敏感值。',
+    'runtimeDiagnosticsSubtitle': '用于反馈问题的运行摘要，不展示敏感值。',
     'platform': '平台',
+    'platformAndroid': 'Android',
+    'platformIOS': 'iOS',
+    'platformLinux': 'Linux',
+    'platformMacOS': 'macOS',
+    'platformWindows': 'Windows',
+    'platformFuchsia': 'Fuchsia',
+    'platformWeb': 'Web',
+    'yes': '是',
+    'no': '否',
+    'feedbackPackageTitle': 'AniDestiny 反馈摘要',
+    'feedbackPackageSectionApp': '应用',
+    'feedbackPackageSectionPlatform': '平台',
+    'feedbackPackageSectionSource': '数据源',
+    'feedbackPackageSectionPlayback': '播放',
+    'feedbackPackageSectionDanmaku': '弹幕',
+    'feedbackPackageSectionDownloads': '下载',
+    'feedbackPackageSectionNotes': '补充说明',
+    'feedbackPackageName': '名称',
+    'feedbackPackageVersion': '版本',
+    'feedbackPackageGeneratedAt': '生成时间',
+    'feedbackPackageUnavailable': '暂不可用',
+    'feedbackPackageNone': '无',
+    'feedbackPackageReason': '原因',
+    'feedbackPackageMessage': '说明',
+    'feedbackPackageTotalTasks': '任务总数',
+    'feedbackPackageStatusCounts': '状态统计',
+    'feedbackPackageKindCounts': '任务类型统计',
+    'feedbackPackageLatestIssue': '最近问题',
+    'feedbackPackagePlaybackUnavailable': '当前会话里还没有采集到播放诊断信息。',
+    'feedbackPackageNotesPlaceholder': '提交前可在这里补充稳定复现步骤、预期结果和实际结果。',
+    'feedbackPackageDandanplayAppIdConfigured': 'Dandanplay App ID 已配置',
+    'feedbackPackageDandanplayAppSecretConfigured': 'Dandanplay 次级凭据已配置',
+    'feedbackPackageDanmakuFallbackProvider': '备用提供元',
+    'feedbackPackageAvailable': '可用',
     'currentSource': '当前数据源',
     'currentSourceId': '当前数据源 ID',
     'latestSourceDiagnostics': '最近数据源诊断',
     'playbackDiagnosticsSummary': '播放诊断摘要',
+    'playbackDiagnosticsSummaryHint':
+        '这里会显示当前会话最近一次播放快照，方便你在复制诊断信息前先确认番剧、线路、URL 类型和请求头字段。',
+    'playbackDiagnosticsEmptyHint': '先在当前会话里播放一次，再回来这里确认最近一次播放快照并复制诊断信息。',
     'sourceFallbackPlayerNotice':
         '当前所选数据源 {requestedSource} 暂时不可用，播放器正在使用 {activeSource} 的备用播放数据。',
     'playbackDiagnosticsDebugHint':
-        '播放页 Debug 按钮可查看当前播放线路、URL 类型和 header keys。',
+        '这里会显示当前会话最近一次播放快照，方便你在复制诊断信息前先确认番剧、线路、URL 类型和请求头字段。',
+    'playbackDiagnosticCapturedAt': '采集时间',
     'sourceTemporarilyUnavailable': '数据源暂时不可用',
     'sourceUnavailableSuggestion': '上游数据源可能已变化或暂时不可用，请稍后重试或切换数据源。',
     'noPlayableSourceFound': '未找到可播放线路，请稍后重试或切换数据源。',
@@ -509,19 +615,29 @@ const _localizedValues = {
     'sourceDiagnosticsClear': '清空',
     'sourceFallbackNotice': '当前数据源暂时不可用，正在显示备用数据。',
     'sourceHealth': '数据源健康状态',
-    'sourceHealthHealthy': 'Healthy',
-    'sourceHealthDegraded': 'Degraded',
-    'sourceHealthUnavailable': 'Unavailable',
+    'sourceHealthHealthy': '正常',
+    'sourceHealthDegraded': '不稳定',
+    'sourceHealthUnavailable': '不可用',
+    'sourceHealthDegradedHint': '最近有请求失败；如果浏览或播放持续异常，请稍后重试或切换数据源。',
+    'sourceHealthUnavailableHint': '最近请求持续失败；请先切换其他数据源，稍后再回来重试。',
     'sourceFailureCount': '失败次数',
     'sourceLastError': '最近问题',
     'sourceResetStatus': '重置状态',
     'sourceStatusReset': '数据源状态已重置',
-    'sourceFallbackEvents': '最近 fallback 事件',
-    'sourceFallbackEventsEmpty': '暂无 fallback 事件',
+    'sourceFallbackEvents': '最近备用切换记录',
+    'sourceFallbackEventsEmpty': '暂无备用切换记录',
+    'sourceOperationHome': '首页',
+    'sourceOperationSearch': '搜索',
+    'sourceOperationDetail': '详情',
+    'sourceOperationPlay': '播放',
+    'sourceOperationPlaySources': '播放线路',
+    'sourceOperationSchedule': '时间表',
+    'sourceOperationMatch': '匹配',
+    'sourceOperationComments': '弹幕',
     'danmaku': '弹幕',
     'danmakuStatusLoading': '弹幕：加载中',
     'danmakuStatusDandanplay': '弹幕：弹弹play',
-    'danmakuStatusFallback': '弹幕：fallback',
+    'danmakuStatusFallback': '弹幕：备用来源',
     'danmakuStatusEmpty': '弹幕：空',
     'danmakuStatusUnavailable': '弹幕不可用',
     'danmakuStatusAvailable': '弹幕：可用',
@@ -630,7 +746,7 @@ const _localizedValues = {
     'playbackDiagnosticLine': 'Line',
     'playbackDiagnosticUrlType': 'URL type',
     'playbackDiagnosticUrl': 'URL',
-    'playbackDiagnosticHeaders': 'Headers',
+    'playbackDiagnosticHeaders': 'Request headers',
     'playbackDiagnosticState': 'State',
     'playbackDiagnosticStateLoading': 'Loading',
     'playbackDiagnosticStateReady': 'Ready',
@@ -693,7 +809,7 @@ const _localizedValues = {
         'Sakura source depends on upstream availability. Retry later or switch sources if parsing changes.',
     'danmakuAbout': 'Danmaku',
     'danmakuAboutValue':
-        'Dandanplay is optional; fallback is used when unavailable.',
+        'Dandanplay is optional; a backup provider is used when unavailable.',
     'copyDiagnostics': 'Copy diagnostics',
     'diagnosticsCopied': 'Diagnostics copied',
     'diagnosticsCopyFailed': 'Failed to copy diagnostics',
@@ -704,17 +820,58 @@ const _localizedValues = {
     'openSource': 'Open source',
     'releasePage': 'Releases',
     'runtimeDiagnostics': 'Runtime diagnostics',
-    'runtimeDiagnosticsSubtitle':
-        'Debug-only feedback summary without sensitive values.',
+    'runtimeDiagnosticsSubtitle': 'Feedback summary without sensitive values.',
     'platform': 'Platform',
+    'platformAndroid': 'Android',
+    'platformIOS': 'iOS',
+    'platformLinux': 'Linux',
+    'platformMacOS': 'macOS',
+    'platformWindows': 'Windows',
+    'platformFuchsia': 'Fuchsia',
+    'platformWeb': 'Web',
+    'yes': 'Yes',
+    'no': 'No',
+    'feedbackPackageTitle': 'AniDestiny Feedback Summary',
+    'feedbackPackageSectionApp': 'App',
+    'feedbackPackageSectionPlatform': 'Platform',
+    'feedbackPackageSectionSource': 'Source',
+    'feedbackPackageSectionPlayback': 'Playback',
+    'feedbackPackageSectionDanmaku': 'Danmaku',
+    'feedbackPackageSectionDownloads': 'Downloads',
+    'feedbackPackageSectionNotes': 'Notes',
+    'feedbackPackageName': 'Name',
+    'feedbackPackageVersion': 'Version',
+    'feedbackPackageGeneratedAt': 'Generated at',
+    'feedbackPackageUnavailable': 'Unavailable',
+    'feedbackPackageNone': 'None',
+    'feedbackPackageReason': 'Reason',
+    'feedbackPackageMessage': 'Message',
+    'feedbackPackageTotalTasks': 'Total tasks',
+    'feedbackPackageStatusCounts': 'Status counts',
+    'feedbackPackageKindCounts': 'Kind counts',
+    'feedbackPackageLatestIssue': 'Latest issue',
+    'feedbackPackagePlaybackUnavailable':
+        'No playback diagnostics were captured in this session.',
+    'feedbackPackageNotesPlaceholder':
+        'Add stable reproduction steps, expected behavior, and actual behavior before submitting.',
+    'feedbackPackageDandanplayAppIdConfigured': 'Dandanplay App ID configured',
+    'feedbackPackageDandanplayAppSecretConfigured':
+        'Dandanplay secondary credential configured',
+    'feedbackPackageDanmakuFallbackProvider': 'Fallback provider',
+    'feedbackPackageAvailable': 'Available',
     'currentSource': 'Current source',
     'currentSourceId': 'Current source ID',
     'latestSourceDiagnostics': 'Latest source diagnostics',
     'playbackDiagnosticsSummary': 'Playback diagnostics summary',
+    'playbackDiagnosticsSummaryHint':
+        'The latest playback snapshot captured in this session appears here so you can confirm the anime, line, URL type, and request-header names before copying diagnostics.',
+    'playbackDiagnosticsEmptyHint':
+        'Start playback once in this session, then come back here to confirm the latest playback snapshot before copying diagnostics.',
     'sourceFallbackPlayerNotice':
         'The selected source {requestedSource} is temporarily unavailable, so playback is using fallback data from {activeSource}.',
     'playbackDiagnosticsDebugHint':
-        'Use the debug button on the player page to view the current line, URL type, and header keys.',
+        'The latest playback snapshot captured in this session appears here so you can confirm the anime, line, URL type, and request-header names before copying diagnostics.',
+    'playbackDiagnosticCapturedAt': 'Captured at',
     'sourceTemporarilyUnavailable': 'Source temporarily unavailable',
     'sourceUnavailableSuggestion':
         'The upstream source changed or is temporarily unavailable. Try another source or retry later.',
@@ -740,16 +897,28 @@ const _localizedValues = {
     'sourceHealthHealthy': 'Healthy',
     'sourceHealthDegraded': 'Degraded',
     'sourceHealthUnavailable': 'Unavailable',
+    'sourceHealthDegradedHint':
+        'Recent requests failed. Retry later or switch sources if browsing or playback keeps failing.',
+    'sourceHealthUnavailableHint':
+        'Recent requests keep failing. Switch to another source for now and try this one again later.',
     'sourceFailureCount': 'Failure count',
     'sourceLastError': 'Last issue',
     'sourceResetStatus': 'Reset status',
     'sourceStatusReset': 'Source status reset',
-    'sourceFallbackEvents': 'Latest fallback events',
-    'sourceFallbackEventsEmpty': 'No fallback events yet',
+    'sourceFallbackEvents': 'Latest backup switches',
+    'sourceFallbackEventsEmpty': 'No backup switch recorded yet',
+    'sourceOperationHome': 'Home',
+    'sourceOperationSearch': 'Search',
+    'sourceOperationDetail': 'Details',
+    'sourceOperationPlay': 'Playback',
+    'sourceOperationPlaySources': 'Playback lines',
+    'sourceOperationSchedule': 'Schedule',
+    'sourceOperationMatch': 'Matching',
+    'sourceOperationComments': 'Danmaku',
     'danmaku': 'Danmaku',
     'danmakuStatusLoading': 'Danmaku: loading',
     'danmakuStatusDandanplay': 'Danmaku: Dandanplay',
-    'danmakuStatusFallback': 'Danmaku: fallback',
+    'danmakuStatusFallback': 'Danmaku: backup provider',
     'danmakuStatusEmpty': 'Danmaku: empty',
     'danmakuStatusUnavailable': 'Danmaku unavailable',
     'danmakuStatusAvailable': 'Danmaku: available',
@@ -850,7 +1019,7 @@ const _localizedValues = {
     'playbackDiagnosticLine': 'ライン',
     'playbackDiagnosticUrlType': 'URL 種類',
     'playbackDiagnosticUrl': 'URL',
-    'playbackDiagnosticHeaders': 'Headers',
+    'playbackDiagnosticHeaders': 'リクエストヘッダー',
     'playbackDiagnosticState': '状態',
     'playbackDiagnosticStateLoading': '読み込み中',
     'playbackDiagnosticStateReady': '準備完了',
@@ -910,7 +1079,7 @@ const _localizedValues = {
     'sourceStatusValue':
         'Sakura ソースは上流サイトの可用性に依存します。解析結果が不安定な場合は、後で再試行するか別のソースに切り替えてください。',
     'danmakuAbout': '弾幕',
-    'danmakuAboutValue': '弹弹play は任意連携です。利用できない場合は fallback を使用します。',
+    'danmakuAboutValue': '弹弹play は任意連携です。利用できない場合は代替提供元を使います。',
     'copyDiagnostics': '診断情報をコピー',
     'diagnosticsCopied': '診断情報をコピーしました',
     'diagnosticsCopyFailed': '診断情報のコピーに失敗しました',
@@ -920,16 +1089,55 @@ const _localizedValues = {
     'openSource': 'オープンソース',
     'releasePage': 'リリース',
     'runtimeDiagnostics': '実行診断',
-    'runtimeDiagnosticsSubtitle': 'Debug モード限定のフィードバック用概要です。機密値は表示しません。',
+    'runtimeDiagnosticsSubtitle': '不具合報告向けの実行概要です。機密値は表示しません。',
     'platform': 'プラットフォーム',
+    'platformAndroid': 'Android',
+    'platformIOS': 'iOS',
+    'platformLinux': 'Linux',
+    'platformMacOS': 'macOS',
+    'platformWindows': 'Windows',
+    'platformFuchsia': 'Fuchsia',
+    'platformWeb': 'Web',
+    'yes': 'はい',
+    'no': 'いいえ',
+    'feedbackPackageTitle': 'AniDestiny フィードバック概要',
+    'feedbackPackageSectionApp': 'アプリ',
+    'feedbackPackageSectionPlatform': 'プラットフォーム',
+    'feedbackPackageSectionSource': 'ソース',
+    'feedbackPackageSectionPlayback': '再生',
+    'feedbackPackageSectionDanmaku': '弾幕',
+    'feedbackPackageSectionDownloads': 'ダウンロード',
+    'feedbackPackageSectionNotes': '補足メモ',
+    'feedbackPackageName': '名称',
+    'feedbackPackageVersion': 'バージョン',
+    'feedbackPackageGeneratedAt': '生成時刻',
+    'feedbackPackageUnavailable': '利用不可',
+    'feedbackPackageNone': 'なし',
+    'feedbackPackageReason': '理由',
+    'feedbackPackageMessage': 'メモ',
+    'feedbackPackageTotalTasks': 'タスク総数',
+    'feedbackPackageStatusCounts': '状態ごとの件数',
+    'feedbackPackageKindCounts': '種類ごとの件数',
+    'feedbackPackageLatestIssue': '直近の問題',
+    'feedbackPackagePlaybackUnavailable': 'このセッションでは再生診断情報をまだ取得できていません。',
+    'feedbackPackageNotesPlaceholder': '送信前に、安定した再現手順・期待結果・実際の結果をここへ補足してください。',
+    'feedbackPackageDandanplayAppIdConfigured': 'Dandanplay App ID 設定済み',
+    'feedbackPackageDandanplayAppSecretConfigured': 'Dandanplay 二次認証情報 設定済み',
+    'feedbackPackageDanmakuFallbackProvider': '代替提供元',
+    'feedbackPackageAvailable': '利用可能',
     'currentSource': '現在のソース',
     'currentSourceId': '現在のソース ID',
     'latestSourceDiagnostics': '最近のソース診断',
     'playbackDiagnosticsSummary': '再生診断の概要',
+    'playbackDiagnosticsSummaryHint':
+        'このセッションで直近に取得した再生スナップショットをここへ表示し、診断情報をコピーする前に作品・ライン・URL 種類・リクエストヘッダー項目を確認できます。',
+    'playbackDiagnosticsEmptyHint':
+        'このセッションで一度再生してから戻ると、診断情報をコピーする前に直近の再生スナップショットをここで確認できます。',
     'sourceFallbackPlayerNotice':
         '選択していたソース {requestedSource} は一時的に利用できないため、現在は {activeSource} の代替データで再生しています。',
     'playbackDiagnosticsDebugHint':
-        'プレイヤー画面の Debug ボタンで現在のライン、URL 種類、header keys を確認できます。',
+        'このセッションで直近に取得した再生スナップショットをここへ表示し、診断情報をコピーする前に作品・ライン・URL 種類・リクエストヘッダー項目を確認できます。',
+    'playbackDiagnosticCapturedAt': '取得時刻',
     'sourceTemporarilyUnavailable': 'ソースが一時的に利用できません',
     'sourceUnavailableSuggestion':
         '上流ソースが変更されたか、一時的に利用できません。別のソースを試すか、後で再試行してください。',
@@ -948,19 +1156,31 @@ const _localizedValues = {
     'sourceDiagnosticsClear': 'クリア',
     'sourceFallbackNotice': '現在のソースは一時的に利用できません。代替データを表示しています。',
     'sourceHealth': 'ソース健康状態',
-    'sourceHealthHealthy': 'Healthy',
-    'sourceHealthDegraded': 'Degraded',
-    'sourceHealthUnavailable': 'Unavailable',
+    'sourceHealthHealthy': '正常',
+    'sourceHealthDegraded': '不安定',
+    'sourceHealthUnavailable': '利用不可',
+    'sourceHealthDegradedHint':
+        '最近のリクエストに失敗しています。閲覧や再生が不安定なら、時間をおいて再試行するかソースを切り替えてください。',
+    'sourceHealthUnavailableHint':
+        '最近のリクエストが継続して失敗しています。いったん別のソースへ切り替え、時間をおいてから再試行してください。',
     'sourceFailureCount': '失敗回数',
     'sourceLastError': '最近の問題',
     'sourceResetStatus': '状態をリセット',
     'sourceStatusReset': 'ソース状態をリセットしました',
-    'sourceFallbackEvents': '最近の fallback イベント',
-    'sourceFallbackEventsEmpty': 'fallback イベントはありません',
+    'sourceFallbackEvents': '最近の代替切り替え',
+    'sourceFallbackEventsEmpty': '代替切り替え履歴はありません',
+    'sourceOperationHome': 'ホーム',
+    'sourceOperationSearch': '検索',
+    'sourceOperationDetail': '詳細',
+    'sourceOperationPlay': '再生',
+    'sourceOperationPlaySources': '再生ライン',
+    'sourceOperationSchedule': '放送予定',
+    'sourceOperationMatch': 'マッチ',
+    'sourceOperationComments': '弾幕',
     'danmaku': '弾幕',
     'danmakuStatusLoading': '弾幕: 読み込み中',
     'danmakuStatusDandanplay': '弾幕: 弹弹play',
-    'danmakuStatusFallback': '弾幕: fallback',
+    'danmakuStatusFallback': '弾幕: 代替提供元',
     'danmakuStatusEmpty': '弾幕: 空',
     'danmakuStatusUnavailable': '弾幕は利用できません',
     'danmakuStatusAvailable': '弾幕: 利用可能',

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../../app/l10n/app_localizations.dart';
+import '../../../../core/diagnostics/diagnostic_sanitizer.dart';
 import '../../domain/entities/anime_source.dart';
 import '../../domain/entities/source_health.dart';
 
@@ -59,6 +60,10 @@ class _SourceOption extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final recoveryHint = _recoveryHint(context);
+    final hasRecentIssue =
+        health.failureCount > 0 || health.lastErrorMessage != null;
+
     return RadioListTile<String>(
       value: source.id,
       title: Text(context.l10n.sourceDisplayName(source.id, source.name)),
@@ -78,25 +83,37 @@ class _SourceOption extends StatelessWidget {
             crossAxisAlignment: WrapCrossAlignment.center,
             children: [
               _HealthChip(health: health),
-              Text(
-                context.l10n.sourceFailureCount(health.failureCount),
-                style: Theme.of(context).textTheme.bodySmall,
-              ),
+              if (health.failureCount > 0)
+                Text(
+                  context.l10n.sourceFailureCount(health.failureCount),
+                  style: Theme.of(context).textTheme.bodySmall,
+                ),
               if (health.lastErrorMessage != null)
                 Text(
-                  context.l10n.sourceLastError(health.lastErrorMessage!),
+                  context.l10n.sourceLastError(
+                    sanitizeError(health.lastErrorMessage!),
+                  ),
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
                         color: Theme.of(context).colorScheme.error,
                       ),
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                 ),
-              TextButton(
-                onPressed: () => onResetHealth(source.id),
-                child: Text(context.l10n.sourceResetStatus),
-              ),
+              if (hasRecentIssue)
+                TextButton(
+                  onPressed: () => onResetHealth(source.id),
+                  child: Text(context.l10n.sourceResetStatus),
+                ),
             ],
           ),
+          if (recoveryHint != null)
+            Padding(
+              padding: const EdgeInsets.only(top: 6),
+              child: Text(
+                recoveryHint,
+                style: Theme.of(context).textTheme.bodySmall,
+              ),
+            ),
           if (source.id == currentSourceId) Text(context.l10n.sourceCurrent),
           if (source.id == 'sakura')
             Padding(
@@ -133,6 +150,15 @@ class _SourceOption extends StatelessWidget {
         },
       ),
     );
+  }
+
+  String? _recoveryHint(BuildContext context) {
+    return switch (health.status) {
+      SourceHealthStatus.healthy => null,
+      SourceHealthStatus.degraded => context.l10n.sourceHealthDegradedHint,
+      SourceHealthStatus.unavailable =>
+        context.l10n.sourceHealthUnavailableHint,
+    };
   }
 }
 

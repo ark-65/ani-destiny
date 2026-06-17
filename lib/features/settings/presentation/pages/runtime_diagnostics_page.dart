@@ -1,12 +1,16 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../app/l10n/app_localizations.dart';
+import '../../../../core/diagnostics/diagnostic_sanitizer.dart';
 import '../../../../core/utils/url_sanitizer.dart';
 import '../../../../shared/widgets/adaptive_page.dart';
 import '../../../danmaku/presentation/providers/danmaku_providers.dart';
+import '../../../player/domain/services/playback_diagnostics.dart';
+import '../../../player/presentation/providers/player_providers.dart';
 import '../../../source/domain/entities/source_diagnostic.dart';
 import '../../../source/domain/entities/source_fallback_event.dart';
 import '../../../source/domain/entities/source_health.dart';
@@ -35,6 +39,7 @@ class RuntimeDiagnosticsPage extends ConsumerWidget {
         .take(6)
         .toList(growable: false);
     final danmakuSettings = ref.watch(danmakuSettingsProvider);
+    final playbackDiagnostics = ref.watch(lastPlaybackDiagnosticsProvider);
 
     return SafeArea(
       child: AdaptivePage(
@@ -67,7 +72,9 @@ class RuntimeDiagnosticsPage extends ConsumerWidget {
                 ),
                 _DiagnosticTile(
                   label: context.l10n.platform,
-                  value: defaultTargetPlatform.name,
+                  value: context.l10n.platformDisplayName(
+                    defaultTargetPlatform.name,
+                  ),
                   icon: Icons.devices_outlined,
                 ),
                 _DiagnosticTile(
@@ -84,7 +91,7 @@ class RuntimeDiagnosticsPage extends ConsumerWidget {
               children: [
                 _DiagnosticTile(
                   label: context.l10n.enabled,
-                  value: danmakuSettings.enabled.toString(),
+                  value: context.l10n.yesNo(danmakuSettings.enabled),
                   icon: Icons.subtitles_outlined,
                 ),
                 _DiagnosticTile(
@@ -100,8 +107,31 @@ class RuntimeDiagnosticsPage extends ConsumerWidget {
                 ListTile(
                   leading: const Icon(Icons.play_circle_outline),
                   title: Text(context.l10n.playbackDiagnosticsSummary),
-                  subtitle: Text(context.l10n.playbackDiagnosticsDebugHint),
+                  subtitle: Text(
+                    playbackDiagnostics == null
+                        ? context.l10n.playbackDiagnosticsEmptyHint
+                        : context.l10n.playbackDiagnosticsSummaryHint,
+                  ),
                 ),
+                ListTile(
+                  leading: const Icon(Icons.content_copy_outlined),
+                  title: Text(context.l10n.copyDiagnostics),
+                  subtitle: Text(context.l10n.diagnosticsPrivacyNote),
+                  onTap: () => _copyDiagnostics(context, ref),
+                ),
+                if (playbackDiagnostics == null)
+                  ListTile(
+                    leading: const Icon(Icons.info_outline),
+                    title: Text(context.l10n.feedbackPackageUnavailable),
+                    subtitle: Text(
+                      context.l10n.feedbackPackagePlaybackUnavailable,
+                    ),
+                  )
+                else
+                  ..._playbackDiagnosticTiles(
+                    context,
+                    playbackDiagnostics,
+                  ),
               ],
             ),
             SettingsSection(
@@ -150,6 +180,84 @@ class RuntimeDiagnosticsPage extends ConsumerWidget {
   }
 }
 
+List<Widget> _playbackDiagnosticTiles(
+  BuildContext context,
+  PlaybackDiagnostics diagnostics,
+) {
+  final lineTitle = diagnostics.playSourceTitle?.trim();
+  final lineValue = lineTitle == null || lineTitle.isEmpty ? '-' : lineTitle;
+  final headers =
+      diagnostics.headerKeys.isEmpty ? '-' : diagnostics.headerKeys.join(', ');
+
+  return [
+    _DiagnosticTile(
+      label: context.l10n.playbackDiagnosticCapturedAt,
+      value: _formatCapturedAt(context, diagnostics.capturedAt),
+      icon: Icons.schedule_outlined,
+    ),
+    _DiagnosticTile(
+      label: context.l10n.playbackDiagnosticAnime,
+      value: _diagnosticContextValue(diagnostics.animeTitle),
+      icon: Icons.movie_outlined,
+    ),
+    _DiagnosticTile(
+      label: context.l10n.playbackDiagnosticEpisode,
+      value: _diagnosticContextValue(diagnostics.episodeTitle),
+      icon: Icons.live_tv_outlined,
+    ),
+    if (diagnostics.usedSourceFallback && diagnostics.requestedSourceId != null)
+      _DiagnosticTile(
+        label: context.l10n.playbackDiagnosticRequestedSource,
+        value: context.l10n.sourceDisplayLabel(diagnostics.requestedSourceId!),
+        icon: Icons.compare_arrows_outlined,
+      ),
+    _DiagnosticTile(
+      label: context.l10n.playbackDiagnosticSource,
+      value: context.l10n.sourceDisplayLabel(diagnostics.sourceId),
+      icon: Icons.source_outlined,
+    ),
+    _DiagnosticTile(
+      label: context.l10n.playbackDiagnosticLine,
+      value: lineValue,
+      icon: Icons.playlist_play_outlined,
+    ),
+    _DiagnosticTile(
+      label: context.l10n.playbackDiagnosticUrlType,
+      value: diagnostics.urlType,
+      icon: Icons.link_outlined,
+    ),
+    _DiagnosticTile(
+      label: context.l10n.playbackDiagnosticUrl,
+      value: diagnostics.sanitizedUrl,
+      icon: Icons.language_outlined,
+    ),
+    _DiagnosticTile(
+      label: context.l10n.playbackDiagnosticHeaders,
+      value: headers,
+      icon: Icons.key_outlined,
+    ),
+  ];
+}
+
+String _diagnosticContextValue(String? value) {
+  final trimmed = value?.trim();
+  if (trimmed == null || trimmed.isEmpty) {
+    return '-';
+  }
+  return trimmed;
+}
+
+String _formatCapturedAt(BuildContext context, DateTime capturedAt) {
+  final localizations = MaterialLocalizations.of(context);
+  final localCapturedAt = capturedAt.toLocal();
+  final date = localizations.formatMediumDate(localCapturedAt);
+  final time = localizations.formatTimeOfDay(
+    TimeOfDay.fromDateTime(localCapturedAt),
+    alwaysUse24HourFormat: true,
+  );
+  return '$date $time';
+}
+
 class _SourceHealthTile extends StatelessWidget {
   const _SourceHealthTile({required this.health});
 
@@ -163,7 +271,8 @@ class _SourceHealthTile extends StatelessWidget {
       value: [
         context.l10n.sourceFailureCount(health.failureCount),
         if (health.lastErrorMessage != null)
-          context.l10n.sourceLastError(health.lastErrorMessage!),
+          context.l10n.sourceLastError(sanitizeError(health.lastErrorMessage!)),
+        if (_recoveryHint(context) case final recoveryHint?) recoveryHint,
       ].join('\n'),
       icon: Icons.monitor_heart_outlined,
     );
@@ -174,6 +283,15 @@ class _SourceHealthTile extends StatelessWidget {
       SourceHealthStatus.healthy => context.l10n.sourceHealthHealthy,
       SourceHealthStatus.degraded => context.l10n.sourceHealthDegraded,
       SourceHealthStatus.unavailable => context.l10n.sourceHealthUnavailable,
+    };
+  }
+
+  String? _recoveryHint(BuildContext context) {
+    return switch (health.status) {
+      SourceHealthStatus.healthy => null,
+      SourceHealthStatus.degraded => context.l10n.sourceHealthDegradedHint,
+      SourceHealthStatus.unavailable =>
+        context.l10n.sourceHealthUnavailableHint,
     };
   }
 }
@@ -187,8 +305,8 @@ class _FallbackEventTile extends StatelessWidget {
   Widget build(BuildContext context) {
     return _DiagnosticTile(
       label:
-          '${event.operation}: ${context.l10n.sourceTransitionLabel(event.fromSourceId, event.toSourceId)}',
-      value: event.reason,
+          '${context.l10n.sourceOperationLabel(event.operation)}: ${context.l10n.sourceTransitionLabel(event.fromSourceId, event.toSourceId)}',
+      value: sanitizeError(event.reason),
       icon: Icons.swap_horiz_outlined,
     );
   }
@@ -233,17 +351,17 @@ class _SourceDiagnosticTile extends StatelessWidget {
           diagnostic.fromSourceId!,
           diagnostic.toSourceId!,
         ),
-      if (diagnostic.reason != null) diagnostic.reason!,
+      if (diagnostic.reason != null) sanitizeError(diagnostic.reason!),
     ];
 
     return ListTile(
       leading: Icon(_iconForLevel(diagnostic.level)),
       title: Text(
-        '${context.l10n.sourceDisplayLabel(diagnostic.sourceId)} · ${diagnostic.operation}',
+        '${context.l10n.sourceDisplayLabel(diagnostic.sourceId)} · ${context.l10n.sourceOperationLabel(diagnostic.operation)}',
       ),
       subtitle: SelectableText(
         [
-          diagnostic.message,
+          sanitizeError(diagnostic.message),
           if (details.isNotEmpty) details.join(' · '),
         ].join('\n'),
       ),
@@ -256,5 +374,21 @@ class _SourceDiagnosticTile extends StatelessWidget {
       SourceDiagnosticLevel.warning => Icons.warning_amber_outlined,
       SourceDiagnosticLevel.error => Icons.error_outline,
     };
+  }
+}
+
+Future<void> _copyDiagnostics(BuildContext context, WidgetRef ref) async {
+  try {
+    final markdown = await ref.read(feedbackPackageMarkdownProvider.future);
+    await Clipboard.setData(ClipboardData(text: markdown));
+    if (!context.mounted) return;
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(context.l10n.diagnosticsCopied)));
+  } catch (error) {
+    if (!context.mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(context.l10n.diagnosticsCopyFailed)),
+    );
   }
 }

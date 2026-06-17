@@ -6,6 +6,22 @@
 
 ## [Unreleased]
 
+### 🐛 Fixed
+- Fixed Runtime diagnostics already surfacing the latest playback snapshot while still leaving users unsure whether it matched the playback they had just seen; the snapshot now shows when it was captured, the section copy explains that this page already holds the latest playback context, and copied support summaries carry the same time anchor so confirm-then-report feels trustworthy.
+- Fixed the Runtime diagnostics page still making users bounce back to the player if they wanted to confirm the last playback context before reporting an issue; it now shows the most recent anime, episode, requested source, active source, line, URL type, sanitized URL, and request-header names directly in Settings so the inspect-and-report flow stays in one place.
+- Fixed Source settings and Runtime diagnostics already exposing source health and recent issues while still leaving users to infer the next step themselves; unstable or unavailable sources now explain whether to retry later or switch sources, and healthy rows no longer clutter the support flow with reset actions or `0`-failure noise by default.
+- Fixed Runtime diagnostics and Source diagnostics showing raw inline error snippets that could still contain tokens, session values, cookie text, or HTML fragments even though the copied support summary was already sanitized; the on-screen diagnostics now apply the same redaction path so the first support surface is no leakier than the copied one.
+- Fixed users being able to inspect recent source failures and fallback events in `Source settings -> Source diagnostics` while still needing to back out to another page before they could copy a support summary; the sheet now lets them copy sanitized diagnostics in place so checking source health and reporting it is one continuous flow.
+- Fixed the runtime diagnostics page still making users back out to Settings before they could copy the sanitized feedback summary; it now lets them copy diagnostics in place so the inspect-and-report support flow stays intact.
+- Fixed Runtime diagnostics already being able to explain the current source, fallback history, and recent diagnostics while still being hidden behind debug-only Settings UI; regular users can now open it from Settings before copying a support summary.
+- Fixed the Settings page's copied diagnostics summary still mixing engineering-facing output like `sakura`, `detail`, `true/false`, and `healthy`; it now follows the active locale for headings, field labels, status words, and download reasons so shared support notes read like product copy instead of an internal dump.
+- Fixed runtime diagnostics and source diagnostics still exposing engineering-facing terms like `Debug`, `fallback`, `detail`, `Headers`, `true/false`, and raw platform identifiers; they now use localized support copy, operation labels, boolean values, and platform names so the diagnostics flow feels like product UI instead of an internal panel.
+- Fixed Source Settings and Runtime diagnostics still exposing raw English health states like `Healthy`, `Degraded`, and `Unavailable` to Chinese and Japanese users; those diagnostics now use localized status labels so the support flow feels less like an internal panel.
+
+### 🔧 CI/CD
+- Tightened the player failure-card diagnostics-copy assertion around the new `Request headers` wording so PR validation keeps protecting the localized support copy instead of failing on stale expectations.
+- Removed the unused `permission_handler` dependency that was breaking `flutter build windows --release` on the newer GitHub Windows runner, so the Windows delivery path is no longer blocked by an unused platform plugin.
+
 ## [1.0.3] - 2026-06-13
 
 ### 🐛 Fixed

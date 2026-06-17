@@ -1,13 +1,16 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../app/l10n/app_localizations.dart';
+import '../../../../core/diagnostics/diagnostic_sanitizer.dart';
 import '../../../../core/utils/url_sanitizer.dart';
 import '../../../../core/widgets/app_error_view.dart';
 import '../../../../core/widgets/app_loading_view.dart';
 import '../../../../shared/widgets/adaptive_page.dart';
 import '../../../home/presentation/providers/home_providers.dart';
+import '../../../settings/presentation/providers/settings_providers.dart';
 import '../../domain/entities/source_diagnostic.dart';
 import '../../domain/entities/source_fallback_event.dart';
 import '../../domain/entities/source_health.dart';
@@ -171,6 +174,14 @@ class _SourceDiagnosticsSheet extends ConsumerWidget {
               Expanded(
                 child: ListView(
                   children: [
+                    ListTile(
+                      contentPadding: EdgeInsets.zero,
+                      leading: const Icon(Icons.content_copy_outlined),
+                      title: Text(context.l10n.copyDiagnostics),
+                      subtitle: Text(context.l10n.diagnosticsPrivacyNote),
+                      onTap: () => _copyDiagnostics(context, ref),
+                    ),
+                    const Divider(),
                     _SheetSectionTitle(title: context.l10n.sourceHealth),
                     if (health.isEmpty)
                       ListTile(title: Text(context.l10n.sourceDiagnosticsEmpty))
@@ -208,6 +219,22 @@ class _SourceDiagnosticsSheet extends ConsumerWidget {
   }
 }
 
+Future<void> _copyDiagnostics(BuildContext context, WidgetRef ref) async {
+  try {
+    final markdown = await ref.read(feedbackPackageMarkdownProvider.future);
+    await Clipboard.setData(ClipboardData(text: markdown));
+    if (!context.mounted) return;
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(context.l10n.diagnosticsCopied)));
+  } catch (error) {
+    if (!context.mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(context.l10n.diagnosticsCopyFailed)),
+    );
+  }
+}
+
 class _SheetSectionTitle extends StatelessWidget {
   const _SheetSectionTitle({required this.title});
 
@@ -239,7 +266,8 @@ class _SourceHealthTile extends StatelessWidget {
         [
           context.l10n.sourceFailureCount(health.failureCount),
           if (health.lastErrorMessage != null)
-            context.l10n.sourceLastError(health.lastErrorMessage!),
+            context.l10n
+                .sourceLastError(sanitizeError(health.lastErrorMessage!)),
         ].join('\n'),
       ),
     );
@@ -265,9 +293,9 @@ class _FallbackEventTile extends StatelessWidget {
       contentPadding: EdgeInsets.zero,
       leading: const Icon(Icons.swap_horiz_outlined),
       title: Text(
-        '${event.operation}: ${context.l10n.sourceTransitionLabel(event.fromSourceId, event.toSourceId)}',
+        '${context.l10n.sourceOperationLabel(event.operation)}: ${context.l10n.sourceTransitionLabel(event.fromSourceId, event.toSourceId)}',
       ),
-      subtitle: Text(event.reason),
+      subtitle: Text(sanitizeError(event.reason)),
     );
   }
 }
@@ -296,7 +324,7 @@ class _SourceDiagnosticTile extends StatelessWidget {
           diagnostic.fromSourceId!,
           diagnostic.toSourceId!,
         ),
-      if (diagnostic.reason != null) diagnostic.reason!,
+      if (diagnostic.reason != null) sanitizeError(diagnostic.reason!),
       if (timestamp != null)
         '${timestamp.hour.toString().padLeft(2, '0')}:${timestamp.minute.toString().padLeft(2, '0')}:${timestamp.second.toString().padLeft(2, '0')}',
     ];
@@ -305,11 +333,11 @@ class _SourceDiagnosticTile extends StatelessWidget {
       contentPadding: EdgeInsets.zero,
       leading: Icon(Icons.circle, color: color, size: 12),
       title: Text(
-        '${context.l10n.sourceDisplayLabel(diagnostic.sourceId)} · ${diagnostic.operation}',
+        '${context.l10n.sourceDisplayLabel(diagnostic.sourceId)} · ${context.l10n.sourceOperationLabel(diagnostic.operation)}',
       ),
       subtitle: Text(
         [
-          diagnostic.message,
+          sanitizeError(diagnostic.message),
           if (details.isNotEmpty) details.join(' · '),
         ].join('\n'),
       ),
