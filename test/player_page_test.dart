@@ -1149,6 +1149,104 @@ void main() {
   });
 
   testWidgets(
+      'failed playback restores the current error card if no next episode exists',
+      (tester) async {
+    final animeRepository = _LastEpisodeAnimeRepository();
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          animeRepositoryProvider.overrideWithValue(animeRepository),
+          playerRepositoryProvider.overrideWithValue(
+            const _ThrowingPlayerRepository(),
+          ),
+          historyRepositoryProvider.overrideWithValue(_FakeHistoryRepository()),
+          danmakuRepositoryProvider.overrideWithValue(_FakeDanmakuRepository()),
+        ],
+        child: _buildPlayerApp(
+          _failingArgs.copyWith(
+            episodeId: 'episode-1',
+            episodeTitle: 'Episode 1',
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(
+      find.text(
+        'Playback temporarily failed. Retry later or try another playback line.',
+      ),
+      findsOneWidget,
+    );
+
+    await tester.tap(find.byTooltip('Next episode'));
+    await tester.pumpAndSettle();
+
+    expect(
+      find.text('You are already on the latest available episode.'),
+      findsOneWidget,
+    );
+    expect(
+      find.text(
+        'Playback temporarily failed. Retry later or try another playback line.',
+      ),
+      findsOneWidget,
+    );
+    expect(find.text('Retry'), findsOneWidget);
+  });
+
+  testWidgets(
+      'failed playback restores the current error card if the next episode has no playable source',
+      (tester) async {
+    final animeRepository = _NoPlayableNextEpisodeAnimeRepository();
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          animeRepositoryProvider.overrideWithValue(animeRepository),
+          playerRepositoryProvider.overrideWithValue(
+            const _ThrowingPlayerRepository(),
+          ),
+          historyRepositoryProvider.overrideWithValue(_FakeHistoryRepository()),
+          danmakuRepositoryProvider.overrideWithValue(_FakeDanmakuRepository()),
+        ],
+        child: _buildPlayerApp(
+          _failingArgs.copyWith(
+            episodeId: 'episode-1',
+            episodeTitle: 'Episode 1',
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(
+      find.text(
+        'Playback temporarily failed. Retry later or try another playback line.',
+      ),
+      findsOneWidget,
+    );
+
+    await tester.tap(find.byTooltip('Next episode'));
+    await tester.pumpAndSettle();
+
+    expect(
+      find.text(
+        'No playable source found. Try another source or retry later.',
+      ),
+      findsOneWidget,
+    );
+    expect(
+      find.text(
+        'Playback temporarily failed. Retry later or try another playback line.',
+      ),
+      findsOneWidget,
+    );
+    expect(find.text('Retry'), findsOneWidget);
+  });
+
+  testWidgets(
       'current playback resumes if next episode has no playable sources',
       (tester) async {
     final animeRepository = _NoPlayableNextEpisodeAnimeRepository();

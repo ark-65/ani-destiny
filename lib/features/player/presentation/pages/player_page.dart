@@ -749,12 +749,14 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
     if (_isSwitchingEpisode || _isOpeningExternalPlayer) return;
 
     final currentArgs = _args;
+    final previousState = _state;
     final shouldResumePlayback = _state.isPlaying;
     final playbackSpeed = _state.speed;
     final restorePosition =
         _state.position > Duration.zero ? _state.position : null;
     final restoreArgs = currentArgs.copyWith(initialPosition: restorePosition);
     var shouldRestoreCurrentPlayback = false;
+    var shouldRestorePreviousFailureState = false;
 
     setState(() {
       _isSwitchingEpisode = true;
@@ -781,6 +783,7 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
         currentEpisodeTitle: currentArgs.episodeTitle,
       );
       if (nextEpisode == null) {
+        shouldRestorePreviousFailureState = previousState.errorMessage != null;
         _showSnackBar(context.l10n.nextEpisodeUnavailable);
         return;
       }
@@ -794,6 +797,7 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
       if (!mounted) return;
       final sources = playSourceResult.value;
       if (sources.isEmpty) {
+        shouldRestorePreviousFailureState = previousState.errorMessage != null;
         _showSnackBar(context.l10n.noPlayableSourceFound);
         return;
       }
@@ -857,6 +861,7 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
       }
     } catch (error) {
       if (!mounted) return;
+      shouldRestorePreviousFailureState = previousState.errorMessage != null;
       _showSnackBar(context.l10n.sourceTemporarilyUnavailable);
     } finally {
       if (mounted && shouldRestoreCurrentPlayback) {
@@ -868,6 +873,9 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
         setState(() {
           _isSwitchingEpisode = false;
           _switchingEpisodeTitle = null;
+          if (shouldRestorePreviousFailureState) {
+            _state = previousState;
+          }
         });
       }
     }
