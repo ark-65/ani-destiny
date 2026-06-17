@@ -55,9 +55,10 @@ jobs:
             export ALLOW_RELEASED_CHANGELOG_CORRECTION=false
           fi
 
-          git fetch --no-tags --depth=1 origin "$BASE_REF:refs/remotes/origin/$BASE_REF"
+          git fetch --no-tags origin "$BASE_REF:refs/remotes/origin/$BASE_REF"
 
-          changed_files="$(git diff --name-only "origin/$BASE_REF"...HEAD)"
+          merge_base="$(git merge-base "origin/$BASE_REF" HEAD)"
+          changed_files="$(git diff --name-only "$merge_base"..HEAD)"
           echo "Changed files:"
           echo "$changed_files"
 
