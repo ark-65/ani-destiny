@@ -879,7 +879,7 @@ void main() {
     await tester.tap(find.byTooltip('Next episode'));
     await tester.pump();
 
-    expect(find.text('Loading next episode...'), findsOneWidget);
+    expect(find.text('Loading next episode...'), findsNWidgets(2));
     final playButton = tester.widget<IconButton>(find.byType(IconButton).first);
     expect(playButton.onPressed, isNull);
     expect(playButton.tooltip, 'Loading next episode...');
@@ -965,7 +965,62 @@ void main() {
     await tester.pump();
 
     expect(find.text('Loading next episode...'), findsOneWidget);
-    expect(find.text('Episode 2'), findsOneWidget);
+    expect(find.text('Episode 2'), findsNWidgets(2));
+  });
+
+  testWidgets(
+      'app bar title shows loading state while the next episode is still unresolved',
+      (tester) async {
+    final animeRepository = _PendingNextEpisodeAnimeRepository();
+    final playerRepository = _TrackingPlayerRepository();
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          animeRepositoryProvider.overrideWithValue(animeRepository),
+          playerRepositoryProvider.overrideWithValue(playerRepository),
+          historyRepositoryProvider.overrideWithValue(_FakeHistoryRepository()),
+          danmakuRepositoryProvider.overrideWithValue(_FakeDanmakuRepository()),
+        ],
+        child: _buildPlayerApp(_args),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    final initialAppBar = tester.widget<AppBar>(find.byType(AppBar));
+    expect((initialAppBar.title as Text).data, 'Episode 1');
+
+    await tester.tap(find.byTooltip('Next episode'));
+    await tester.pump();
+
+    final loadingAppBar = tester.widget<AppBar>(find.byType(AppBar));
+    expect((loadingAppBar.title as Text).data, 'Loading next episode...');
+  });
+
+  testWidgets('app bar title switches to the upcoming episode once it is known',
+      (tester) async {
+    final animeRepository = _PendingPlayableNextEpisodeAnimeRepository();
+    final playerRepository = _TrackingPlayerRepository();
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          animeRepositoryProvider.overrideWithValue(animeRepository),
+          playerRepositoryProvider.overrideWithValue(playerRepository),
+          historyRepositoryProvider.overrideWithValue(_FakeHistoryRepository()),
+          danmakuRepositoryProvider.overrideWithValue(_FakeDanmakuRepository()),
+        ],
+        child: _buildPlayerApp(_args),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byTooltip('Next episode'));
+    await tester.pump();
+    await tester.pump();
+
+    final resolvedAppBar = tester.widget<AppBar>(find.byType(AppBar));
+    expect((resolvedAppBar.title as Text).data, 'Episode 2');
   });
 
   testWidgets(
@@ -1005,7 +1060,7 @@ void main() {
     await tester.pump();
 
     expect(find.text('Loading next episode...'), findsOneWidget);
-    expect(find.text('Episode 2'), findsOneWidget);
+    expect(find.text('Episode 2'), findsNWidgets(2));
     expect(
       find.text(
         'Playback temporarily failed. Retry later or try another playback line.',
@@ -1041,7 +1096,7 @@ void main() {
     await tester.tap(find.byTooltip('Next episode'));
     await tester.pump();
 
-    expect(find.text('Loading next episode...'), findsOneWidget);
+    expect(find.text('Loading next episode...'), findsNWidgets(2));
     expect(find.byType(DanmakuOverlay), findsNothing);
     expect(find.text('Danmaku: Dandanplay'), findsNothing);
   });
