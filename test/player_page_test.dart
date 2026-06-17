@@ -972,6 +972,41 @@ void main() {
     expect(playButton.tooltip, 'Pause');
   });
 
+  testWidgets('current playback is restored if the next episode fails to start',
+      (tester) async {
+    final animeRepository = _PlayableNextEpisodeAnimeRepository();
+    final playerRepository = _NextEpisodeLoadFailurePlayerRepository();
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          animeRepositoryProvider.overrideWithValue(animeRepository),
+          playerRepositoryProvider.overrideWithValue(playerRepository),
+          historyRepositoryProvider.overrideWithValue(_FakeHistoryRepository()),
+          danmakuRepositoryProvider.overrideWithValue(_FakeDanmakuRepository()),
+        ],
+        child: _buildPlayerApp(_args),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byTooltip('Next episode'));
+    await tester.pumpAndSettle();
+
+    expect(playerRepository.adapter.pauseCalls, 1);
+    expect(playerRepository.adapter.playCalls, 1);
+    expect(playerRepository.adapter.loadCalls, 3);
+    expect(find.text('Episode 1'), findsOneWidget);
+    expect(
+      find.text('Source temporarily unavailable'),
+      findsOneWidget,
+    );
+
+    final playButton = tester.widget<IconButton>(find.byType(IconButton).first);
+    expect(playButton.onPressed, isNotNull);
+    expect(playButton.tooltip, 'Pause');
+  });
+
   testWidgets('system back stays on the player while next episode loads', (
     tester,
   ) async {
@@ -1515,6 +1550,87 @@ class _NoPlayableNextEpisodeAnimeRepository implements AnimeRepository {
   }
 }
 
+class _PlayableNextEpisodeAnimeRepository implements AnimeRepository {
+  @override
+  Future<SourceFallbackResult<AnimeDetail>> getAnimeDetail(String animeId) {
+    throw UnimplementedError();
+  }
+
+  @override
+  Future<SourceFallbackResult<AnimeDetail>> getAnimeDetailFromSource({
+    required String sourceId,
+    required String animeId,
+  }) async {
+    return SourceFallbackResult(
+      value: AnimeDetail(
+        id: animeId,
+        title: 'Anime 1',
+        sourceId: sourceId,
+        episodes: const [
+          Episode(
+            id: 'episode-1',
+            animeId: 'anime-1',
+            title: 'Episode 1',
+            index: 1,
+          ),
+          Episode(
+            id: 'episode-2',
+            animeId: 'anime-1',
+            title: 'Episode 2',
+            index: 2,
+          ),
+        ],
+      ),
+      sourceId: sourceId,
+      usedFallback: false,
+    );
+  }
+
+  @override
+  Future<SourceFallbackResult<List<Anime>>> getHomeRecommendations() {
+    throw UnimplementedError();
+  }
+
+  @override
+  Future<SourceFallbackResult<List<PlaySource>>> getPlaySources(
+    String episodeId,
+  ) {
+    throw UnimplementedError();
+  }
+
+  @override
+  Future<SourceFallbackResult<List<PlaySource>>> getPlaySourcesFromSource({
+    required String sourceId,
+    required String episodeId,
+  }) async {
+    return SourceFallbackResult(
+      value: const [
+        PlaySource(
+          id: 'line-1',
+          episodeId: 'episode-2',
+          title: 'Line 1',
+          url: 'https://cdn.example.test/episode-2.m3u8',
+        ),
+      ],
+      sourceId: sourceId,
+      usedFallback: false,
+    );
+  }
+
+  @override
+  Future<SourceFallbackResult<List<ScheduleItem>>> getSchedule() {
+    throw UnimplementedError();
+  }
+
+  @override
+  Future<SourceFallbackResult<List<SearchResult>>> search(
+    String keyword, {
+    int page = 1,
+  }) {
+    throw UnimplementedError();
+  }
+}
+
 class _FakeDownloadTaskCreator extends DownloadTaskCreator {
   _FakeDownloadTaskCreator({required this.onCreate})
       : super(_FakeDownloadService());
@@ -1628,6 +1744,15 @@ class _TrackingPlayerRepository implements PlayerRepository {
   PlayerControllerAdapter createController() => adapter;
 }
 
+class _NextEpisodeLoadFailurePlayerRepository implements PlayerRepository {
+  _NextEpisodeLoadFailurePlayerRepository();
+
+  final adapter = _NextEpisodeLoadFailurePlayerAdapter();
+
+  @override
+  PlayerControllerAdapter createController() => adapter;
+}
+
 class _ThrowingPlayerAdapter implements PlayerControllerAdapter {
   @override
   Stream<PlayerState> get stateStream => const Stream.empty();
@@ -1706,6 +1831,61 @@ class _TrackingPlayerControllerAdapter implements PlayerControllerAdapter {
     _state = PlayerState.initial().copyWith(
       isInitialized: true,
       isPlaying: true,
+      duration: const Duration(minutes: 24, seconds: 12),
+    );
+    _controller.add(_state);
+  }
+
+  @override
+  Future<void> pause() async {
+    pauseCalls += 1;
+    _state = _state.copyWith(isPlaying: false);
+    _controller.add(_state);
+  }
+
+  @override
+  Future<void> play() async {
+    playCalls += 1;
+    _state = _state.copyWith(isPlaying: true);
+    _controller.add(_state);
+  }
+
+  @override
+  Future<void> seek(Duration position) async {}
+
+  @override
+  Future<void> setSpeed(double speed) async {}
+}
+
+class _NextEpisodeLoadFailurePlayerAdapter implements PlayerControllerAdapter {
+  _NextEpisodeLoadFailurePlayerAdapter();
+
+  final _controller = StreamController<PlayerState>.broadcast();
+  PlayerState _state = PlayerState.initial();
+  int loadCalls = 0;
+  int pauseCalls = 0;
+  int playCalls = 0;
+
+  @override
+  Stream<PlayerState> get stateStream => _controller.stream;
+
+  @override
+  Future<void> dispose() async {
+    await _controller.close();
+  }
+
+  @override
+  Future<void> load(
+    String url, {
+    Map<String, String> headers = const {},
+  }) async {
+    loadCalls += 1;
+    if (loadCalls == 2) {
+      throw StateError('next episode failed');
+    }
+    _state = PlayerState.initial().copyWith(
+      isInitialized: true,
+      isPlaying: loadCalls == 1,
       duration: const Duration(minutes: 24, seconds: 12),
     );
     _controller.add(_state);

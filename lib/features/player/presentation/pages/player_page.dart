@@ -665,7 +665,7 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
     }
   }
 
-  Future<void> _loadPlayer({
+  Future<bool> _loadPlayer({
     PlayerRouteArgs? args,
     bool autoplay = false,
     double? playbackSpeed,
@@ -675,14 +675,14 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
     try {
       if (!_isPlayableUrl(routeArgs.playUrl)) {
         await Future<void>.delayed(Duration.zero);
-        if (!mounted) return;
+        if (!mounted) return false;
         setState(
           () => _state = _state.copyWith(
             isBuffering: false,
             errorMessage: context.l10n.playerNoPlayUrl,
           ),
         );
-        return;
+        return false;
       }
       await _controller.load(routeArgs.playUrl, headers: routeArgs.playHeaders);
       final initialPosition = routeArgs.initialPosition;
@@ -698,14 +698,16 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
         await _controller.play();
       }
       unawaited(_saveHistory(force: true));
+      return true;
     } catch (error) {
-      if (!mounted) return;
+      if (!mounted) return false;
       setState(
         () => _state = _state.copyWith(
           isBuffering: false,
           errorMessage: context.l10n.playbackFailedSuggestion,
         ),
       );
+      return false;
     }
   }
 
@@ -726,6 +728,9 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
     final currentArgs = _args;
     final shouldResumePlayback = _state.isPlaying;
     final playbackSpeed = _state.speed;
+    final restorePosition =
+        _state.position > Duration.zero ? _state.position : null;
+    final restoreArgs = currentArgs.copyWith(initialPosition: restorePosition);
     var shouldRestoreCurrentPlayback = false;
 
     setState(() => _isSwitchingEpisode = true);
@@ -795,12 +800,27 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
       });
       shouldRestoreCurrentPlayback = false;
 
-      await _loadPlayer(
+      final switched = await _loadPlayer(
         args: nextArgs,
         autoplay: shouldResumePlayback,
         playbackSpeed: playbackSpeed,
       );
       if (!mounted) return;
+      if (!switched) {
+        setState(() {
+          _currentArgs = currentArgs;
+          _state = PlayerState.initial();
+          _lastHistorySavedAt = null;
+        });
+        await _loadPlayer(
+          args: restoreArgs,
+          autoplay: shouldResumePlayback,
+          playbackSpeed: playbackSpeed,
+        );
+        if (!mounted) return;
+        _showSnackBar(context.l10n.sourceTemporarilyUnavailable);
+        return;
+      }
       if (detailResult.usedFallback || playSourceResult.usedFallback) {
         _showSnackBar(context.l10n.sourceFallbackNotice);
       }
