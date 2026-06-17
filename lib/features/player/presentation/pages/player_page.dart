@@ -206,13 +206,18 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
                     title: _args.animeTitle,
                     playUrl: _args.playUrl,
                   ),
-                  if (_isSwitchingEpisode && _state.errorMessage == null)
+                  if ((_isSwitchingEpisode || _isRetryingPlayback) &&
+                      _state.errorMessage == null)
                     Positioned.fill(
                       child: IgnorePointer(
                         child: Center(
                           child: _PlaybackTransitionOverlay(
-                            message: context.l10n.loadingNextEpisode,
-                            detail: _switchingEpisodeTitle,
+                            message: _isSwitchingEpisode
+                                ? context.l10n.loadingNextEpisode
+                                : context.l10n.retryingPlayback,
+                            detail: _isSwitchingEpisode
+                                ? _switchingEpisodeTitle
+                                : _args.episodeTitle,
                           ),
                         ),
                       ),

@@ -7,6 +7,7 @@
 ## [Unreleased]
 
 ### 🐛 Fixed
+- Fixed retry recovery mostly reducing the player to a spinner and disabled buttons, which left touch users without any explicit on-screen confirmation that playback recovery had actually started; the page now shows a centered `Retrying playback...` transition overlay so failure recovery feels like an active handoff instead of a silent freeze.
 - Fixed the player still leaving the danmaku toggle feeling immediately usable while a route-level transition like Next episode, Retry playback, or External player handoff was already in progress; those busy states now lock the toggle together with the rest of the critical controls and reuse the active transition copy so users are not changing stale playback chrome mid-handoff.
 - Fixed the player app bar still showing the previous episode title after AniDestiny had already entered the next-episode transition; the title now switches to `Loading next episode...` first and then updates to the upcoming episode once it is known, so the page no longer presents two competing episode contexts at the same time.
 - Fixed the player still keeping the previous episode's fallback-source banner visible after it had already entered the `Loading next episode...` transition; the banner now hides as soon as the switch begins so the new handoff is not competing with stale source context from the episode users are leaving.
