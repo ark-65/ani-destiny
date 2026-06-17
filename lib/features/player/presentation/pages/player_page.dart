@@ -50,6 +50,7 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
   bool _isFullscreen = false;
   bool _isDisposed = false;
   bool _isSwitchingEpisode = false;
+  String? _switchingEpisodeTitle;
   bool _isOpeningExternalPlayer = false;
   bool _isRetryingPlayback = false;
 
@@ -200,6 +201,17 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
                     title: _args.animeTitle,
                     playUrl: _args.playUrl,
                   ),
+                  if (_isSwitchingEpisode && _state.errorMessage == null)
+                    Positioned.fill(
+                      child: IgnorePointer(
+                        child: Center(
+                          child: _PlaybackTransitionOverlay(
+                            message: context.l10n.loadingNextEpisode,
+                            detail: _switchingEpisodeTitle,
+                          ),
+                        ),
+                      ),
+                    ),
                   if (_state.isBuffering)
                     const Center(child: CircularProgressIndicator()),
                   if (_state.errorMessage != null)
@@ -733,7 +745,10 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
     final restoreArgs = currentArgs.copyWith(initialPosition: restorePosition);
     var shouldRestoreCurrentPlayback = false;
 
-    setState(() => _isSwitchingEpisode = true);
+    setState(() {
+      _isSwitchingEpisode = true;
+      _switchingEpisodeTitle = null;
+    });
     try {
       if (shouldResumePlayback) {
         await _controller.pause();
@@ -755,6 +770,7 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
         _showSnackBar(context.l10n.nextEpisodeUnavailable);
         return;
       }
+      setState(() => _switchingEpisodeTitle = nextEpisode.title);
 
       final playSourceResult = await ref.read(
         playSourcesBySourceProvider(
@@ -811,6 +827,7 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
           _currentArgs = currentArgs;
           _state = PlayerState.initial();
           _lastHistorySavedAt = null;
+          _switchingEpisodeTitle = null;
         });
         await _loadPlayer(
           args: restoreArgs,
@@ -834,7 +851,10 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
         } catch (_) {}
       }
       if (mounted) {
-        setState(() => _isSwitchingEpisode = false);
+        setState(() {
+          _isSwitchingEpisode = false;
+          _switchingEpisodeTitle = null;
+        });
       }
     }
   }
@@ -1052,6 +1072,64 @@ class _SourceFallbackBanner extends StatelessWidget {
                       ),
                 ),
               ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _PlaybackTransitionOverlay extends StatelessWidget {
+  const _PlaybackTransitionOverlay({
+    required this.message,
+    this.detail,
+  });
+
+  final String message;
+  final String? detail;
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final detailText = detail?.trim();
+
+    return ConstrainedBox(
+      constraints: const BoxConstraints(maxWidth: 280),
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          color: Colors.black.withValues(alpha: 0.72),
+          borderRadius: BorderRadius.circular(16),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const SizedBox.square(
+                dimension: 28,
+                child: CircularProgressIndicator(strokeWidth: 3),
+              ),
+              const SizedBox(height: 12),
+              Text(
+                message,
+                textAlign: TextAlign.center,
+                style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                      color: colorScheme.onInverseSurface,
+                    ),
+              ),
+              if (detailText != null && detailText.isNotEmpty) ...[
+                const SizedBox(height: 6),
+                Text(
+                  detailText,
+                  textAlign: TextAlign.center,
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: colorScheme.onInverseSurface.withValues(
+                          alpha: 0.84,
+                        ),
+                      ),
+                ),
+              ],
             ],
           ),
         ),

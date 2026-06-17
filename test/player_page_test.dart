@@ -841,6 +841,7 @@ void main() {
     await tester.tap(find.byTooltip('Next episode'));
     await tester.pump();
 
+    expect(find.text('Loading next episode...'), findsOneWidget);
     final playButton = tester.widget<IconButton>(find.byType(IconButton).first);
     expect(playButton.onPressed, isNull);
     expect(playButton.tooltip, 'Loading next episode...');
@@ -900,6 +901,33 @@ void main() {
     final playButton = tester.widget<IconButton>(find.byType(IconButton).first);
     expect(playButton.onPressed, isNull);
     expect(playButton.tooltip, 'Loading next episode...');
+  });
+
+  testWidgets('next episode loading overlay names the upcoming episode', (
+    tester,
+  ) async {
+    final animeRepository = _PendingPlayableNextEpisodeAnimeRepository();
+    final playerRepository = _TrackingPlayerRepository();
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          animeRepositoryProvider.overrideWithValue(animeRepository),
+          playerRepositoryProvider.overrideWithValue(playerRepository),
+          historyRepositoryProvider.overrideWithValue(_FakeHistoryRepository()),
+          danmakuRepositoryProvider.overrideWithValue(_FakeDanmakuRepository()),
+        ],
+        child: _buildPlayerApp(_args),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byTooltip('Next episode'));
+    await tester.pump();
+    await tester.pump();
+
+    expect(find.text('Loading next episode...'), findsOneWidget);
+    expect(find.text('Episode 2'), findsOneWidget);
   });
 
   testWidgets(
@@ -1628,6 +1656,17 @@ class _PlayableNextEpisodeAnimeRepository implements AnimeRepository {
     int page = 1,
   }) {
     throw UnimplementedError();
+  }
+}
+
+class _PendingPlayableNextEpisodeAnimeRepository
+    extends _PlayableNextEpisodeAnimeRepository {
+  @override
+  Future<SourceFallbackResult<List<PlaySource>>> getPlaySourcesFromSource({
+    required String sourceId,
+    required String episodeId,
+  }) {
+    return Completer<SourceFallbackResult<List<PlaySource>>>().future;
   }
 }
 

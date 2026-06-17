@@ -7,6 +7,7 @@
 ## [Unreleased]
 
 ### 🐛 Fixed
+- Fixed next-episode switching hiding most of its critical waiting state inside disabled buttons; the player now shows a centered `Loading next episode...` transition overlay and, once the target is known, names the upcoming episode so the handoff feels intentional instead of frozen.
 - Fixed next-episode switching leaving users on a broken new episode page when the target episode had already been selected but failed before playback could really start; the player now restores the current episode and resumes the original playback so a failed switch behaves like a safe cancellation instead of a confusing half-transition.
 - Fixed Next episode pausing the current stream and then leaving users stuck on a stopped player when AniDestiny discovered there was no real next episode or no playable source before the switch completed; the current episode now resumes automatically whenever the transition aborts before playback actually leaves it.
 - Fixed the player still letting the current episode continue for a short moment after users tapped Next episode but before the new episode actually took over; it now pauses the current playback first, then enters the loading-next-episode state so the transition feels clearly committed instead of making users wonder whether the tap registered.
