@@ -504,8 +504,20 @@ void main() {
     expect(find.byType(CircularProgressIndicator), findsOneWidget);
     expect(find.text('Retrying playback...'), findsNWidgets(2));
     expect(find.byTooltip('Retrying playback...'), findsWidgets);
-    final retryingAppBar = tester.widget<AppBar>(find.byType(AppBar));
-    expect((retryingAppBar.title as Text).data, 'Retrying playback...');
+    expect(
+      find.descendant(
+        of: find.byType(AppBar),
+        matching: find.text('Episode 1'),
+      ),
+      findsOneWidget,
+    );
+    expect(
+      find.descendant(
+        of: find.byType(AppBar),
+        matching: find.text('Retrying playback...'),
+      ),
+      findsOneWidget,
+    );
 
     final nextEpisodeButton = tester.widget<IconButton>(
       find.widgetWithIcon(IconButton, Icons.skip_next),
@@ -1009,14 +1021,31 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    final initialAppBar = tester.widget<AppBar>(find.byType(AppBar));
-    expect((initialAppBar.title as Text).data, 'Episode 1');
+    expect(
+      find.descendant(
+        of: find.byType(AppBar),
+        matching: find.text('Episode 1'),
+      ),
+      findsOneWidget,
+    );
 
     await tester.tap(find.byTooltip('External player'));
     await tester.pump();
 
-    final busyAppBar = tester.widget<AppBar>(find.byType(AppBar));
-    expect((busyAppBar.title as Text).data, 'Opening external player...');
+    expect(
+      find.descendant(
+        of: find.byType(AppBar),
+        matching: find.text('Episode 1'),
+      ),
+      findsOneWidget,
+    );
+    expect(
+      find.descendant(
+        of: find.byType(AppBar),
+        matching: find.text('Opening external player...'),
+      ),
+      findsOneWidget,
+    );
 
     launchCompleter.complete(true);
     await tester.pumpAndSettle();
@@ -1262,14 +1291,31 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    final initialAppBar = tester.widget<AppBar>(find.byType(AppBar));
-    expect((initialAppBar.title as Text).data, 'Episode 1');
+    expect(
+      find.descendant(
+        of: find.byType(AppBar),
+        matching: find.text('Episode 1'),
+      ),
+      findsOneWidget,
+    );
 
     await tester.tap(find.byTooltip('Next episode'));
     await tester.pump();
 
-    final loadingAppBar = tester.widget<AppBar>(find.byType(AppBar));
-    expect((loadingAppBar.title as Text).data, 'Loading next episode...');
+    expect(
+      find.descendant(
+        of: find.byType(AppBar),
+        matching: find.text('Episode 1'),
+      ),
+      findsOneWidget,
+    );
+    expect(
+      find.descendant(
+        of: find.byType(AppBar),
+        matching: find.text('Loading next episode...'),
+      ),
+      findsOneWidget,
+    );
   });
 
   testWidgets('app bar title switches to the upcoming episode once it is known',
@@ -1294,8 +1340,20 @@ void main() {
     await tester.pump();
     await tester.pump();
 
-    final resolvedAppBar = tester.widget<AppBar>(find.byType(AppBar));
-    expect((resolvedAppBar.title as Text).data, 'Episode 2');
+    expect(
+      find.descendant(
+        of: find.byType(AppBar),
+        matching: find.text('Episode 2'),
+      ),
+      findsOneWidget,
+    );
+    expect(
+      find.descendant(
+        of: find.byType(AppBar),
+        matching: find.text('Loading next episode...'),
+      ),
+      findsNothing,
+    );
   });
 
   testWidgets(

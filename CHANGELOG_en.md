@@ -7,6 +7,7 @@
 ## [Unreleased]
 
 ### 🐛 Fixed
+- Fixed the embedded player app bar either dropping episode context or competing with the centered transition copy during route-level handoffs like `Next episode`, `Retrying playback...`, and `Opening external player...`; non-fullscreen playback now keeps the current or upcoming episode title visible and only adds a short busy line when it is still needed, so transitions feel calmer without hiding what is happening.
 - Fixed the embedded player app bar keeping the stale episode title while AniDestiny had already entered `Retrying playback...` or `Opening external player...`; non-fullscreen playback now switches that title to the active route-level action so the page explains what it is doing as clearly as the next-episode transition already does.
 - Fixed the player still leaving the previous episode's danmaku overlay and danmaku status badge on screen after AniDestiny had already entered `Retrying playback...` or `Opening external player...`; those route-level handoff states now clear the stale danmaku chrome first so the transition only communicates the one action currently in progress.
 - Fixed AniDestiny often leaving the next episode paused after users escaped a temporary playback failure by tapping `Next episode`; once the switch succeeds, that explicit keep-watching action now starts the new episode immediately instead of making users press Play again.

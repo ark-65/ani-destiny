@@ -118,12 +118,13 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
         : null;
     final showDanmakuChrome = !isRouteBusy;
     final appBarEpisodeTitle = _isSwitchingEpisode
-        ? (_switchingEpisodeTitle ?? context.l10n.loadingNextEpisode)
-        : _isOpeningExternalPlayer
-            ? context.l10n.openingExternalPlayer
-            : isRetryingPlayback
-                ? context.l10n.retryingPlayback
-                : _args.episodeTitle;
+        ? (_switchingEpisodeTitle ?? _args.episodeTitle)
+        : _args.episodeTitle;
+    final appBarStatusLabel = _isOpeningExternalPlayer ||
+            isRetryingPlayback ||
+            (_isSwitchingEpisode && _switchingEpisodeTitle == null)
+        ? routeTransitionMessage
+        : null;
     final nextEpisodeTooltip = _isSwitchingEpisode
         ? context.l10n.loadingNextEpisode
         : _isOpeningExternalPlayer
@@ -180,7 +181,10 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
                         icon: const BackButtonIcon(),
                       )
                     : null,
-                title: Text(appBarEpisodeTitle),
+                title: _PlayerAppBarTitle(
+                  title: appBarEpisodeTitle,
+                  statusLabel: appBarStatusLabel,
+                ),
                 foregroundColor: Colors.white,
                 backgroundColor: Colors.black,
                 actions: [
@@ -1152,6 +1156,51 @@ class _SourceFallbackBanner extends StatelessWidget {
           ),
         ),
       ),
+    );
+  }
+}
+
+class _PlayerAppBarTitle extends StatelessWidget {
+  const _PlayerAppBarTitle({
+    required this.title,
+    this.statusLabel,
+  });
+
+  final String title;
+  final String? statusLabel;
+
+  @override
+  Widget build(BuildContext context) {
+    final titleText = title.trim().isEmpty ? '-' : title.trim();
+    final detailText = statusLabel?.trim();
+    final textTheme = Theme.of(context).textTheme;
+
+    if (detailText == null || detailText.isEmpty) {
+      return Text(
+        titleText,
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+      );
+    }
+
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          titleText,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+        ),
+        Text(
+          detailText,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: textTheme.bodySmall?.copyWith(
+            color: Colors.white70,
+          ),
+        ),
+      ],
     );
   }
 }
