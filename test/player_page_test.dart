@@ -1381,6 +1381,74 @@ void main() {
     expect(find.text('Danmaku: Dandanplay'), findsNothing);
   });
 
+  testWidgets('retry playback hides stale danmaku chrome', (tester) async {
+    final repository = _RetryablePlayerRepository();
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          playerRepositoryProvider.overrideWithValue(repository),
+          historyRepositoryProvider.overrideWithValue(_FakeHistoryRepository()),
+          danmakuRepositoryProvider.overrideWithValue(
+            _PopulatedDanmakuRepository(),
+          ),
+        ],
+        child: _buildPlayerApp(_args),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.byType(DanmakuOverlay), findsOneWidget);
+    expect(find.text('Danmaku: Dandanplay'), findsOneWidget);
+
+    await tester.tap(find.text('Retry'));
+    await tester.pump();
+
+    expect(find.text('Retrying playback...'), findsOneWidget);
+    expect(find.byType(DanmakuOverlay), findsNothing);
+    expect(find.text('Danmaku: Dandanplay'), findsNothing);
+
+    repository.completeRetry();
+    await tester.pumpAndSettle();
+  });
+
+  testWidgets('external handoff hides stale danmaku chrome while opening', (
+    tester,
+  ) async {
+    final launchCompleter = Completer<bool>();
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          playerRepositoryProvider
+              .overrideWithValue(const _FakePlayerRepository()),
+          historyRepositoryProvider.overrideWithValue(_FakeHistoryRepository()),
+          danmakuRepositoryProvider.overrideWithValue(
+            _PopulatedDanmakuRepository(),
+          ),
+          externalPlayerLauncherProvider.overrideWithValue(
+            (_) => launchCompleter.future,
+          ),
+        ],
+        child: _buildPlayerApp(_args),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.byType(DanmakuOverlay), findsOneWidget);
+    expect(find.text('Danmaku: Dandanplay'), findsOneWidget);
+
+    await tester.tap(find.byTooltip('External player'));
+    await tester.pump();
+
+    expect(find.text('Opening external player...'), findsOneWidget);
+    expect(find.byType(DanmakuOverlay), findsNothing);
+    expect(find.text('Danmaku: Dandanplay'), findsNothing);
+
+    launchCompleter.complete(true);
+    await tester.pumpAndSettle();
+  });
+
   testWidgets(
       'current playback resumes if next episode is unavailable before switching',
       (tester) async {
