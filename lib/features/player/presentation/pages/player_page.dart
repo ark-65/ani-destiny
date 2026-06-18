@@ -103,9 +103,18 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
     final isRetryingPlayback = _isRetryingPlayback;
     final isRouteBusy =
         _isSwitchingEpisode || _isOpeningExternalPlayer || isRetryingPlayback;
-    final showRouteTransitionOverlay =
-        (_isSwitchingEpisode || isRetryingPlayback) &&
-            _state.errorMessage == null;
+    final showRouteTransitionOverlay = (_isSwitchingEpisode ||
+            _isOpeningExternalPlayer ||
+            isRetryingPlayback) &&
+        _state.errorMessage == null;
+    final routeTransitionMessage = _isSwitchingEpisode
+        ? context.l10n.loadingNextEpisode
+        : _isOpeningExternalPlayer
+            ? context.l10n.openingExternalPlayer
+            : context.l10n.retryingPlayback;
+    final routeTransitionDetail = _isFullscreen
+        ? (_isSwitchingEpisode ? _switchingEpisodeTitle : _args.episodeTitle)
+        : null;
     final showDanmakuChrome = !_isSwitchingEpisode;
     final appBarEpisodeTitle = _isSwitchingEpisode
         ? (_switchingEpisodeTitle ?? context.l10n.loadingNextEpisode)
@@ -214,14 +223,8 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
                       child: IgnorePointer(
                         child: Center(
                           child: _PlaybackTransitionOverlay(
-                            message: _isSwitchingEpisode
-                                ? context.l10n.loadingNextEpisode
-                                : context.l10n.retryingPlayback,
-                            detail: _isFullscreen
-                                ? (_isSwitchingEpisode
-                                    ? _switchingEpisodeTitle
-                                    : _args.episodeTitle)
-                                : null,
+                            message: routeTransitionMessage,
+                            detail: routeTransitionDetail,
                           ),
                         ),
                       ),

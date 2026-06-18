@@ -773,6 +773,7 @@ void main() {
     await tester.pump();
 
     expect(launchCalls, 1);
+    expect(find.text('Opening external player...'), findsOneWidget);
     expect(find.byTooltip('Opening external player...'), findsWidgets);
     final openingButton =
         tester.widgetList<IconButton>(find.byType(IconButton)).singleWhere(
@@ -821,6 +822,40 @@ void main() {
 
     expect(launchCalls, 1);
     expect(find.byTooltip('External player'), findsOneWidget);
+  });
+
+  testWidgets('fullscreen external handoff keeps the current episode visible',
+      (tester) async {
+    final launchCompleter = Completer<bool>();
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          playerRepositoryProvider
+              .overrideWithValue(const _FakePlayerRepository()),
+          historyRepositoryProvider.overrideWithValue(_FakeHistoryRepository()),
+          danmakuRepositoryProvider.overrideWithValue(_FakeDanmakuRepository()),
+          externalPlayerLauncherProvider.overrideWithValue(
+            (_) => launchCompleter.future,
+          ),
+        ],
+        child: _buildPlayerApp(_args),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byTooltip('Enter fullscreen'));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byTooltip('External player'));
+    await tester.pump();
+
+    expect(find.byType(AppBar), findsNothing);
+    expect(find.text('Opening external player...'), findsOneWidget);
+    expect(find.text('Episode 1'), findsOneWidget);
+
+    launchCompleter.complete(true);
+    await tester.pumpAndSettle();
   });
 
   testWidgets(
