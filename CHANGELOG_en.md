@@ -7,6 +7,7 @@
 ## [Unreleased]
 
 ### 🐛 Fixed
+- Fixed the embedded player still leaving its app-bar Back arrow looking immediately usable after AniDestiny had already entered a route-level busy state like `Next episode`, `Retrying playback...`, or `Opening external player...`; that exit affordance now joins the same busy lock so the page no longer claims "please wait" while still glowing with a seemingly available way out.
 - Fixed external-player handoff mostly hiding its busy feedback inside a spinning button, which made it hard to tell at a glance whether AniDestiny was still opening another app; the player now shows a centered `Opening external player...` transition overlay as well, and fullscreen handoff keeps the current episode title visible so the takeover feels like one explicit in-progress action.
 - Fixed the player repeating the same episode title in both the app bar and the centered transition card while `Next episode` or `Retrying playback...` was already in progress on the embedded page; embedded playback now keeps one primary title while fullscreen still shows the takeover title in the overlay, so the handoff reads like one deliberate action instead of layered UI noise.
 - Fixed the player stacking a second generic loading spinner on top of the explicit transition overlay while `Loading next episode...` or `Retrying playback...` was already in progress; those handoff states now keep one consistent busy indicator so the waiting screen feels calmer instead of looking like two competing loads.

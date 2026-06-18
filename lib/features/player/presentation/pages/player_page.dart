@@ -99,6 +99,7 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
   @override
   Widget build(BuildContext context) {
     final danmakuSettings = ref.watch(danmakuSettingsProvider);
+    final canLeavePlayer = Navigator.of(context).canPop();
     final hasPlayableSource = _hasPlayableUrl();
     final isRetryingPlayback = _isRetryingPlayback;
     final isRouteBusy =
@@ -162,6 +163,18 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
         appBar: _isFullscreen
             ? null
             : AppBar(
+                automaticallyImplyLeading: false,
+                leading: canLeavePlayer
+                    ? IconButton(
+                        tooltip: isRouteBusy
+                            ? context.l10n.playerExitBusy
+                            : context.l10n.back,
+                        onPressed: isRouteBusy
+                            ? null
+                            : () => Navigator.of(context).maybePop(),
+                        icon: const BackButtonIcon(),
+                      )
+                    : null,
                 title: Text(appBarEpisodeTitle),
                 foregroundColor: Colors.white,
                 backgroundColor: Colors.black,

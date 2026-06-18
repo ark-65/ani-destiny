@@ -88,7 +88,7 @@ void main() {
     expect(find.byType(AppBar), findsOneWidget);
     expect(find.text('Open player'), findsNothing);
 
-    await tester.pageBack();
+    await tester.binding.handlePopRoute();
     await tester.pumpAndSettle();
 
     expect(find.text('Open player'), findsOneWidget);
@@ -1383,6 +1383,57 @@ void main() {
     expect(playButton.tooltip, 'Pause');
   });
 
+  testWidgets('app bar back action is disabled while next episode loads', (
+    tester,
+  ) async {
+    final pendingRepository = _PendingNextEpisodeAnimeRepository();
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          animeRepositoryProvider.overrideWithValue(pendingRepository),
+          playerRepositoryProvider
+              .overrideWithValue(const _FakePlayerRepository()),
+          historyRepositoryProvider.overrideWithValue(_FakeHistoryRepository()),
+          danmakuRepositoryProvider.overrideWithValue(_FakeDanmakuRepository()),
+        ],
+        child: _buildApp(_args),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byType(ElevatedButton));
+    await tester.pumpAndSettle();
+
+    final initialBackButton = tester.widget<IconButton>(
+      find
+          .descendant(
+            of: find.byType(AppBar),
+            matching: find.byType(IconButton),
+          )
+          .first,
+    );
+    expect(initialBackButton.onPressed, isNotNull);
+    expect(initialBackButton.tooltip, 'Back');
+
+    await tester.tap(find.byTooltip('Next episode'));
+    await tester.pump();
+
+    final busyBackButton = tester.widget<IconButton>(
+      find
+          .descendant(
+            of: find.byType(AppBar),
+            matching: find.byType(IconButton),
+          )
+          .first,
+    );
+    expect(busyBackButton.onPressed, isNull);
+    expect(
+      busyBackButton.tooltip,
+      'Please wait for the current playback action to finish before leaving.',
+    );
+  });
+
   testWidgets('system back stays on the player while next episode loads', (
     tester,
   ) async {
@@ -1408,7 +1459,7 @@ void main() {
     await tester.tap(find.byTooltip('Next episode'));
     await tester.pump();
 
-    await tester.pageBack();
+    await tester.binding.handlePopRoute();
     await tester.pump();
 
     expect(find.byType(PlayerPage), findsOneWidget);
@@ -1448,7 +1499,7 @@ void main() {
     await tester.tap(find.byTooltip('External player'));
     await tester.pump();
 
-    await tester.pageBack();
+    await tester.binding.handlePopRoute();
     await tester.pump();
 
     expect(find.byType(PlayerPage), findsOneWidget);
@@ -1487,7 +1538,7 @@ void main() {
     await tester.tap(find.text('Retry'));
     await tester.pump();
 
-    await tester.pageBack();
+    await tester.binding.handlePopRoute();
     await tester.pump();
 
     expect(find.byType(PlayerPage), findsOneWidget);
