@@ -119,7 +119,11 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
     final showDanmakuChrome = !isRouteBusy;
     final appBarEpisodeTitle = _isSwitchingEpisode
         ? (_switchingEpisodeTitle ?? context.l10n.loadingNextEpisode)
-        : _args.episodeTitle;
+        : _isOpeningExternalPlayer
+            ? context.l10n.openingExternalPlayer
+            : isRetryingPlayback
+                ? context.l10n.retryingPlayback
+                : _args.episodeTitle;
     final nextEpisodeTooltip = _isSwitchingEpisode
         ? context.l10n.loadingNextEpisode
         : _isOpeningExternalPlayer
