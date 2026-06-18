@@ -720,14 +720,49 @@ void main() {
     expect(find.byType(AppBar), findsOneWidget);
   });
 
-  testWidgets('external player action shows feedback when launch fails', (
+  testWidgets('external handoff pauses playback before launch completes', (
     tester,
   ) async {
+    final launchCompleter = Completer<bool>();
+    final repository = _TrackingPlayerRepository();
+
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
-          playerRepositoryProvider
-              .overrideWithValue(const _FakePlayerRepository()),
+          playerRepositoryProvider.overrideWithValue(repository),
+          historyRepositoryProvider.overrideWithValue(_FakeHistoryRepository()),
+          danmakuRepositoryProvider.overrideWithValue(_FakeDanmakuRepository()),
+          externalPlayerLauncherProvider.overrideWithValue(
+            (_) => launchCompleter.future,
+          ),
+        ],
+        child: _buildPlayerApp(_args),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byTooltip('External player'));
+    await tester.pump();
+
+    expect(repository.adapter.pauseCalls, 1);
+    expect(repository.adapter.playCalls, 0);
+    expect(find.text('Opening external player...'), findsOneWidget);
+
+    launchCompleter.complete(true);
+    await tester.pumpAndSettle();
+
+    expect(repository.adapter.playCalls, 0);
+  });
+
+  testWidgets('external player action shows feedback when launch fails', (
+    tester,
+  ) async {
+    final repository = _TrackingPlayerRepository();
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          playerRepositoryProvider.overrideWithValue(repository),
           historyRepositoryProvider.overrideWithValue(_FakeHistoryRepository()),
           danmakuRepositoryProvider.overrideWithValue(_FakeDanmakuRepository()),
           externalPlayerLauncherProvider.overrideWithValue((_) async => false),
@@ -744,6 +779,12 @@ void main() {
       find.text('Could not open in an external player. Try again later.'),
       findsOneWidget,
     );
+    expect(repository.adapter.pauseCalls, 1);
+    expect(repository.adapter.playCalls, 1);
+
+    final playButton = tester.widget<IconButton>(find.byType(IconButton).first);
+    expect(playButton.onPressed, isNotNull);
+    expect(playButton.tooltip, 'Pause');
   });
 
   testWidgets('external player action stays busy until handoff completes', (

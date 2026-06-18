@@ -902,7 +902,11 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
   }
 
   Future<void> _openExternalPlayer() async {
-    if (_isOpeningExternalPlayer) return;
+    if (_isOpeningExternalPlayer ||
+        _isSwitchingEpisode ||
+        _isRetryingPlayback) {
+      return;
+    }
     final rawUrl = _args.playUrl.trim();
     final uri = Uri.tryParse(rawUrl);
     if (rawUrl.isEmpty || uri == null || !uri.hasScheme) {
@@ -914,8 +918,15 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
       return;
     }
 
+    final shouldPauseCurrentPlayback = _state.isPlaying;
+    var shouldResumeCurrentPlayback = false;
+
     setState(() => _isOpeningExternalPlayer = true);
     try {
+      if (shouldPauseCurrentPlayback) {
+        await _controller.pause();
+        shouldResumeCurrentPlayback = true;
+      }
       final launched = await ref.read(externalPlayerLauncherProvider)(uri);
       if (!mounted) return;
       if (!launched) {
@@ -923,10 +934,8 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
         return;
       }
 
+      shouldResumeCurrentPlayback = false;
       await _saveHistory(force: true);
-      if (_state.isPlaying) {
-        await _controller.pause();
-      }
       if (_isFullscreen) {
         await _exitFullscreen();
       }
@@ -934,6 +943,11 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
       if (!mounted) return;
       _showSnackBar(context.l10n.externalPlayerUnavailable);
     } finally {
+      if (mounted && shouldResumeCurrentPlayback) {
+        try {
+          await _controller.play();
+        } catch (_) {}
+      }
       if (mounted) {
         setState(() => _isOpeningExternalPlayer = false);
       }
