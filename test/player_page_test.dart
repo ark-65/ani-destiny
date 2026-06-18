@@ -1047,6 +1047,38 @@ void main() {
     expect(find.text('Episode 2'), findsOneWidget);
   });
 
+  testWidgets('fullscreen exit stays locked while next episode loads', (
+    tester,
+  ) async {
+    final animeRepository = _PendingPlayableNextEpisodeAnimeRepository();
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          animeRepositoryProvider.overrideWithValue(animeRepository),
+          playerRepositoryProvider
+              .overrideWithValue(const _FakePlayerRepository()),
+          historyRepositoryProvider.overrideWithValue(_FakeHistoryRepository()),
+          danmakuRepositoryProvider.overrideWithValue(_FakeDanmakuRepository()),
+        ],
+        child: _buildPlayerApp(_args),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byTooltip('Enter fullscreen'));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byTooltip('Next episode'));
+    await tester.pump();
+
+    final fullscreenButton = tester.widget<IconButton>(
+      find.widgetWithIcon(IconButton, Icons.fullscreen_exit),
+    );
+    expect(fullscreenButton.onPressed, isNull);
+    expect(fullscreenButton.tooltip, 'Loading next episode...');
+  });
+
   testWidgets(
       'app bar title shows loading state while the next episode is still unresolved',
       (tester) async {
@@ -1463,6 +1495,48 @@ void main() {
     await tester.pump();
 
     expect(find.byType(PlayerPage), findsOneWidget);
+    expect(find.text('Open player'), findsNothing);
+    expect(
+      find.text(
+        'Please wait for the current playback action to finish before leaving.',
+      ),
+      findsOneWidget,
+    );
+  });
+
+  testWidgets('system back stays fullscreen while next episode loads', (
+    tester,
+  ) async {
+    final pendingRepository = _PendingNextEpisodeAnimeRepository();
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          animeRepositoryProvider.overrideWithValue(pendingRepository),
+          playerRepositoryProvider
+              .overrideWithValue(const _FakePlayerRepository()),
+          historyRepositoryProvider.overrideWithValue(_FakeHistoryRepository()),
+          danmakuRepositoryProvider.overrideWithValue(_FakeDanmakuRepository()),
+        ],
+        child: _buildApp(_args),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byType(ElevatedButton));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byTooltip('Enter fullscreen'));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byTooltip('Next episode'));
+    await tester.pump();
+
+    await tester.binding.handlePopRoute();
+    await tester.pump();
+
+    expect(find.byType(PlayerPage), findsOneWidget);
+    expect(find.byType(AppBar), findsNothing);
     expect(find.text('Open player'), findsNothing);
     expect(
       find.text(

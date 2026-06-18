@@ -89,15 +89,13 @@ class PlayerControls extends StatelessWidget {
                 : danmakuEnabled
                     ? context.l10n.hideDanmaku
                     : context.l10n.showDanmaku;
-    final canToggleFullscreen = !isOpeningExternalPlayer &&
-        (!isSwitchingEpisode || isFullscreen) &&
-        (!isRetryingPlayback || isFullscreen);
-    final fullscreenTooltip = isOpeningExternalPlayer
-        ? context.l10n.openingExternalPlayer
-        : isRetryingPlayback && !isFullscreen
-            ? context.l10n.retryingPlayback
-            : isSwitchingEpisode && !isFullscreen
-                ? context.l10n.loadingNextEpisode
+    final canToggleFullscreen = !isInteractionLocked;
+    final fullscreenTooltip = isSwitchingEpisode
+        ? context.l10n.loadingNextEpisode
+        : isOpeningExternalPlayer
+            ? context.l10n.openingExternalPlayer
+            : isRetryingPlayback
+                ? context.l10n.retryingPlayback
                 : isFullscreen
                     ? context.l10n.exitFullscreen
                     : context.l10n.enterFullscreen;

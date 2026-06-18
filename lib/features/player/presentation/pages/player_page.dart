@@ -150,12 +150,13 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
       canPop: !_isFullscreen && !isRouteBusy,
       onPopInvokedWithResult: (didPop, result) {
         if (didPop) return;
+        if (isRouteBusy) {
+          _showSnackBar(context.l10n.playerExitBusy);
+          return;
+        }
         if (_isFullscreen) {
           unawaited(_exitFullscreen());
           return;
-        }
-        if (isRouteBusy) {
-          _showSnackBar(context.l10n.playerExitBusy);
         }
       },
       child: Scaffold(
@@ -406,9 +407,8 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
                 onDownload: canCreateDownload
                     ? () => unawaited(_createDownload())
                     : null,
-                onToggleFullscreen: _isOpeningExternalPlayer
-                    ? null
-                    : () => unawaited(_toggleFullscreen()),
+                onToggleFullscreen:
+                    isRouteBusy ? null : () => unawaited(_toggleFullscreen()),
                 onToggleDanmaku: () {
                   ref.read(danmakuSettingsProvider.notifier).state =
                       danmakuSettings.copyWith(
