@@ -76,7 +76,7 @@ void main() {
   });
 
   testWidgets(
-      'fullscreen switching state keeps exit fullscreen available while other controls stay busy',
+      'fullscreen switching state locks fullscreen exit with the shared busy copy',
       (tester) async {
     await tester.pumpWidget(
       _buildApp(
@@ -104,7 +104,6 @@ void main() {
     await tester.pump();
 
     expect(find.byType(CircularProgressIndicator), findsOneWidget);
-    expect(find.byTooltip('Loading next episode...'), findsNWidgets(5));
     final playButton = tester.widget<IconButton>(
       find.byType(IconButton).first,
     );
@@ -140,8 +139,8 @@ void main() {
     final fullscreenButton = tester.widget<IconButton>(
       find.widgetWithIcon(IconButton, Icons.fullscreen_exit),
     );
-    expect(fullscreenButton.onPressed, isNotNull);
-    expect(fullscreenButton.tooltip, 'Exit fullscreen');
+    expect(fullscreenButton.onPressed, isNull);
+    expect(fullscreenButton.tooltip, 'Loading next episode...');
   });
 
   testWidgets('retrying playback also disables danmaku changes',

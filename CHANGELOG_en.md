@@ -36,6 +36,7 @@
 - Fixed Source Settings and Runtime diagnostics still exposing raw English health states like `Healthy`, `Degraded`, and `Unavailable` to Chinese and Japanese users; those diagnostics now use localized status labels so the support flow feels less like an internal panel.
 
 ### 🔧 CI/CD
+- Fixed `player_controls_test` still asserting that fullscreen `Loading next episode...` kept `Exit fullscreen` immediately available; the widget test now matches the real player behavior and verifies that fullscreen exit shares the same busy copy and lock while the handoff is in progress, so this playback-trust change no longer gets stuck behind stale expectations.
 - Fixed the changelog gate shallow-fetching the base branch and then diffing with `...`, which could falsely fail with `no merge base` after certain PR syncs; it now keeps the base history intact and computes the merge base explicitly so the Chinese/English changelog check stays stable on normal PR histories.
 - Tightened the player failure-card diagnostics-copy assertion around the new `Request headers` wording so PR validation keeps protecting the localized support copy instead of failing on stale expectations.
 - Removed the unused `permission_handler` dependency that was breaking `flutter build windows --release` on the newer GitHub Windows runner, so the Windows delivery path is no longer blocked by an unused platform plugin.
