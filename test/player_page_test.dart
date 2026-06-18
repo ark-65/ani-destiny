@@ -1308,6 +1308,47 @@ void main() {
     );
   });
 
+  testWidgets(
+      'failed playback starts the next episode immediately after a successful switch',
+      (tester) async {
+    final animeRepository = _PlayableNextEpisodeAnimeRepository();
+    final playerRepository = _FailingThenPlayablePlayerRepository();
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          animeRepositoryProvider.overrideWithValue(animeRepository),
+          playerRepositoryProvider.overrideWithValue(playerRepository),
+          historyRepositoryProvider.overrideWithValue(_FakeHistoryRepository()),
+          danmakuRepositoryProvider.overrideWithValue(_FakeDanmakuRepository()),
+        ],
+        child: _buildPlayerApp(
+          _failingArgs.copyWith(
+            episodeId: 'episode-1',
+            episodeTitle: 'Episode 1',
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(
+      find.text(
+        'Playback temporarily failed. Retry later or try another playback line.',
+      ),
+      findsOneWidget,
+    );
+
+    await tester.tap(find.byTooltip('Next episode'));
+    await tester.pumpAndSettle();
+
+    expect(playerRepository.adapter.playCalls, 1);
+    final playButton = tester.widget<IconButton>(find.byType(IconButton).first);
+    expect(playButton.tooltip, 'Pause');
+    expect(find.text('Episode 2'), findsOneWidget);
+    expect(find.text('Retry'), findsNothing);
+  });
+
   testWidgets('next episode transition hides stale danmaku chrome', (
     tester,
   ) async {
@@ -2406,6 +2447,15 @@ class _TrackingPlayerRepository implements PlayerRepository {
   PlayerControllerAdapter createController() => adapter;
 }
 
+class _FailingThenPlayablePlayerRepository implements PlayerRepository {
+  _FailingThenPlayablePlayerRepository();
+
+  final adapter = _FailingThenPlayablePlayerAdapter();
+
+  @override
+  PlayerControllerAdapter createController() => adapter;
+}
+
 class _NextEpisodeLoadFailurePlayerRepository implements PlayerRepository {
   _NextEpisodeLoadFailurePlayerRepository();
 
@@ -2504,6 +2554,57 @@ class _TrackingPlayerControllerAdapter implements PlayerControllerAdapter {
     _state = _state.copyWith(isPlaying: false);
     _controller.add(_state);
   }
+
+  @override
+  Future<void> play() async {
+    playCalls += 1;
+    _state = _state.copyWith(isPlaying: true);
+    _controller.add(_state);
+  }
+
+  @override
+  Future<void> seek(Duration position) async {}
+
+  @override
+  Future<void> setSpeed(double speed) async {}
+}
+
+class _FailingThenPlayablePlayerAdapter implements PlayerControllerAdapter {
+  _FailingThenPlayablePlayerAdapter();
+
+  final _controller = StreamController<PlayerState>.broadcast();
+  int loadCalls = 0;
+  int playCalls = 0;
+  PlayerState _state = PlayerState.initial();
+
+  @override
+  Stream<PlayerState> get stateStream => _controller.stream;
+
+  @override
+  Future<void> dispose() async {
+    await _controller.close();
+  }
+
+  @override
+  Future<void> load(
+    String url, {
+    Map<String, String> headers = const {},
+  }) async {
+    loadCalls += 1;
+    if (loadCalls == 1) {
+      await Future<void>.delayed(Duration.zero);
+      throw StateError('initial load failed');
+    }
+    _state = PlayerState.initial().copyWith(
+      isInitialized: true,
+      isPlaying: false,
+      duration: const Duration(minutes: 24, seconds: 12),
+    );
+    _controller.add(_state);
+  }
+
+  @override
+  Future<void> pause() async {}
 
   @override
   Future<void> play() async {

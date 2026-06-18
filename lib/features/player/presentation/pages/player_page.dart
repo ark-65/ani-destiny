@@ -771,6 +771,8 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
     final currentArgs = _args;
     final previousState = _state;
     final shouldResumePlayback = _state.isPlaying;
+    final shouldAutoplayNextEpisode =
+        shouldResumePlayback || previousState.errorMessage != null;
     final playbackSpeed = _state.speed;
     final restorePosition =
         _state.position > Duration.zero ? _state.position : null;
@@ -856,7 +858,7 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
 
       final switched = await _loadPlayer(
         args: nextArgs,
-        autoplay: shouldResumePlayback,
+        autoplay: shouldAutoplayNextEpisode,
         playbackSpeed: playbackSpeed,
       );
       if (!mounted) return;
