@@ -217,9 +217,11 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
                             message: _isSwitchingEpisode
                                 ? context.l10n.loadingNextEpisode
                                 : context.l10n.retryingPlayback,
-                            detail: _isSwitchingEpisode
-                                ? _switchingEpisodeTitle
-                                : _args.episodeTitle,
+                            detail: _isFullscreen
+                                ? (_isSwitchingEpisode
+                                    ? _switchingEpisodeTitle
+                                    : _args.episodeTitle)
+                                : null,
                           ),
                         ),
                       ),

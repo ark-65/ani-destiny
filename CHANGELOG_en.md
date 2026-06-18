@@ -7,6 +7,7 @@
 ## [Unreleased]
 
 ### 🐛 Fixed
+- Fixed the player repeating the same episode title in both the app bar and the centered transition card while `Next episode` or `Retrying playback...` was already in progress on the embedded page; embedded playback now keeps one primary title while fullscreen still shows the takeover title in the overlay, so the handoff reads like one deliberate action instead of layered UI noise.
 - Fixed the player stacking a second generic loading spinner on top of the explicit transition overlay while `Loading next episode...` or `Retrying playback...` was already in progress; those handoff states now keep one consistent busy indicator so the waiting screen feels calmer instead of looking like two competing loads.
 - Fixed the player clearing away the current episode's failure card when users tried `Next episode` from an already failed playback state but AniDestiny then discovered there was no real next episode or no playable source after all; if the handoff aborts before the page truly leaves the current episode, the original failure UI now returns so "the switch did not happen" does not look like "the error disappeared."
 - Fixed retry recovery mostly reducing the player to a spinner and disabled buttons, which left touch users without any explicit on-screen confirmation that playback recovery had actually started; the page now shows a centered `Retrying playback...` transition overlay so failure recovery feels like an active handoff instead of a silent freeze.

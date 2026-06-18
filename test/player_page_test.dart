@@ -954,9 +954,9 @@ void main() {
     expect(playButton.tooltip, 'Loading next episode...');
   });
 
-  testWidgets('next episode loading overlay names the upcoming episode', (
-    tester,
-  ) async {
+  testWidgets(
+      'embedded next episode transition keeps the upcoming title in one place',
+      (tester) async {
     final animeRepository = _PendingPlayableNextEpisodeAnimeRepository();
     final playerRepository = _TrackingPlayerRepository();
 
@@ -978,7 +978,38 @@ void main() {
     await tester.pump();
 
     expect(find.text('Loading next episode...'), findsOneWidget);
-    expect(find.text('Episode 2'), findsNWidgets(2));
+    expect(find.text('Episode 2'), findsOneWidget);
+  });
+
+  testWidgets('fullscreen next episode transition names the upcoming episode', (
+    tester,
+  ) async {
+    final animeRepository = _PendingPlayableNextEpisodeAnimeRepository();
+    final playerRepository = _TrackingPlayerRepository();
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          animeRepositoryProvider.overrideWithValue(animeRepository),
+          playerRepositoryProvider.overrideWithValue(playerRepository),
+          historyRepositoryProvider.overrideWithValue(_FakeHistoryRepository()),
+          danmakuRepositoryProvider.overrideWithValue(_FakeDanmakuRepository()),
+        ],
+        child: _buildPlayerApp(_args),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byTooltip('Enter fullscreen'));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byTooltip('Next episode'));
+    await tester.pump();
+    await tester.pump();
+
+    expect(find.byType(AppBar), findsNothing);
+    expect(find.text('Loading next episode...'), findsOneWidget);
+    expect(find.text('Episode 2'), findsOneWidget);
   });
 
   testWidgets(
@@ -1073,7 +1104,7 @@ void main() {
     await tester.pump();
 
     expect(find.text('Loading next episode...'), findsOneWidget);
-    expect(find.text('Episode 2'), findsNWidgets(2));
+    expect(find.text('Episode 2'), findsOneWidget);
     expect(
       find.text(
         'Playback temporarily failed. Retry later or try another playback line.',
