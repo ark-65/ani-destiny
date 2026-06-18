@@ -501,7 +501,7 @@ void main() {
 
     expect(repository.adapter.loadCalls, 2);
     expect(find.text('Retry'), findsNothing);
-    expect(find.byType(CircularProgressIndicator), findsWidgets);
+    expect(find.byType(CircularProgressIndicator), findsOneWidget);
     expect(find.text('Retrying playback...'), findsOneWidget);
     expect(find.byTooltip('Retrying playback...'), findsWidgets);
 

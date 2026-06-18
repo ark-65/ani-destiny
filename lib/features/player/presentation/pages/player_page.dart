@@ -103,6 +103,9 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
     final isRetryingPlayback = _isRetryingPlayback;
     final isRouteBusy =
         _isSwitchingEpisode || _isOpeningExternalPlayer || isRetryingPlayback;
+    final showRouteTransitionOverlay =
+        (_isSwitchingEpisode || isRetryingPlayback) &&
+            _state.errorMessage == null;
     final showDanmakuChrome = !_isSwitchingEpisode;
     final appBarEpisodeTitle = _isSwitchingEpisode
         ? (_switchingEpisodeTitle ?? context.l10n.loadingNextEpisode)
@@ -206,8 +209,7 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
                     title: _args.animeTitle,
                     playUrl: _args.playUrl,
                   ),
-                  if ((_isSwitchingEpisode || _isRetryingPlayback) &&
-                      _state.errorMessage == null)
+                  if (showRouteTransitionOverlay)
                     Positioned.fill(
                       child: IgnorePointer(
                         child: Center(
@@ -222,7 +224,7 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
                         ),
                       ),
                     ),
-                  if (_state.isBuffering)
+                  if (_state.isBuffering && !showRouteTransitionOverlay)
                     const Center(child: CircularProgressIndicator()),
                   if (_state.errorMessage != null)
                     SafeArea(
