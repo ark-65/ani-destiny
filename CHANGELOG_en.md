@@ -7,6 +7,7 @@
 ## [Unreleased]
 
 ### 🐛 Fixed
+- Fixed the player staying stuck on the old playback-failure card after users chose `External player` from that failure state, which made the stale error UI compete with the new handoff action; the page now switches into the same explicit `Opening external player...` transition first and restores the original failure state only if the system handoff cannot be launched.
 - Fixed the player showing `Opening external player...` immediately while still letting the current video keep playing until the system app launch actually succeeded; AniDestiny now pauses playback as soon as the handoff starts and automatically resumes it if the handoff fails, so the transition no longer sends mixed signals about whether playback has really left the app.
 - Fixed fullscreen playback still making system back and `Exit fullscreen` feel immediately available after AniDestiny had already entered a route-level busy state like next-episode switching, retry recovery, or external-player handoff; those fullscreen exit paths now reuse the active busy copy and stay locked until the current takeover finishes, so the player no longer flips back to embedded mode mid-transition.
 - Fixed the embedded player still leaving its app-bar Back arrow looking immediately usable after AniDestiny had already entered a route-level busy state like `Next episode`, `Retrying playback...`, or `Opening external player...`; that exit affordance now joins the same busy lock so the page no longer claims "please wait" while still glowing with a seemingly available way out.

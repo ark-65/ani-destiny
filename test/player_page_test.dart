@@ -624,6 +624,93 @@ void main() {
     expect(launchedUri?.toString(), 'https://cdn.example.test/video.m3u8');
   });
 
+  testWidgets(
+      'playback failure card clears stale error UI while external handoff is opening',
+      (tester) async {
+    final repository = _RetryablePlayerRepository();
+    final launchCompleter = Completer<bool>();
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          playerRepositoryProvider.overrideWithValue(repository),
+          historyRepositoryProvider.overrideWithValue(_FakeHistoryRepository()),
+          danmakuRepositoryProvider.overrideWithValue(_FakeDanmakuRepository()),
+          externalPlayerLauncherProvider.overrideWithValue(
+            (_) => launchCompleter.future,
+          ),
+        ],
+        child: _buildPlayerApp(_args),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(
+      find.text(
+        'Playback temporarily failed. Retry later or try another playback line.',
+      ),
+      findsOneWidget,
+    );
+
+    await tester.tap(find.text('External player'));
+    await tester.pump();
+
+    expect(find.text('Opening external player...'), findsOneWidget);
+    expect(
+      find.text(
+        'Playback temporarily failed. Retry later or try another playback line.',
+      ),
+      findsNothing,
+    );
+    expect(find.text('Retry'), findsNothing);
+    expect(find.text('Copy diagnostics'), findsNothing);
+
+    launchCompleter.complete(true);
+    await tester.pumpAndSettle();
+  });
+
+  testWidgets(
+      'playback failure card is restored if external handoff launch fails',
+      (tester) async {
+    final repository = _RetryablePlayerRepository();
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          playerRepositoryProvider.overrideWithValue(repository),
+          historyRepositoryProvider.overrideWithValue(_FakeHistoryRepository()),
+          danmakuRepositoryProvider.overrideWithValue(_FakeDanmakuRepository()),
+          externalPlayerLauncherProvider.overrideWithValue((_) async => false),
+        ],
+        child: _buildPlayerApp(_args),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(
+      find.text(
+        'Playback temporarily failed. Retry later or try another playback line.',
+      ),
+      findsOneWidget,
+    );
+
+    await tester.tap(find.text('External player'));
+    await tester.pumpAndSettle();
+
+    expect(
+      find.text('Could not open in an external player. Try again later.'),
+      findsOneWidget,
+    );
+    expect(
+      find.text(
+        'Playback temporarily failed. Retry later or try another playback line.',
+      ),
+      findsOneWidget,
+    );
+    expect(find.text('Retry'), findsOneWidget);
+    expect(find.text('Copy diagnostics'), findsOneWidget);
+  });
+
   testWidgets('external player action launches the current playback url', (
     tester,
   ) async {

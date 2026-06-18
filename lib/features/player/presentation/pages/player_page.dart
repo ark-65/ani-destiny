@@ -918,10 +918,17 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
       return;
     }
 
+    final previousState = _state;
     final shouldPauseCurrentPlayback = _state.isPlaying;
     var shouldResumeCurrentPlayback = false;
+    var shouldRestorePreviousFailureState = false;
 
-    setState(() => _isOpeningExternalPlayer = true);
+    setState(() {
+      _isOpeningExternalPlayer = true;
+      if (_state.errorMessage != null) {
+        _state = _state.copyWith(clearErrorMessage: true);
+      }
+    });
     try {
       if (shouldPauseCurrentPlayback) {
         await _controller.pause();
@@ -930,6 +937,7 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
       final launched = await ref.read(externalPlayerLauncherProvider)(uri);
       if (!mounted) return;
       if (!launched) {
+        shouldRestorePreviousFailureState = previousState.errorMessage != null;
         _showSnackBar(context.l10n.externalPlayerUnavailable);
         return;
       }
@@ -941,6 +949,7 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
       }
     } catch (_) {
       if (!mounted) return;
+      shouldRestorePreviousFailureState = previousState.errorMessage != null;
       _showSnackBar(context.l10n.externalPlayerUnavailable);
     } finally {
       if (mounted && shouldResumeCurrentPlayback) {
@@ -949,7 +958,12 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
         } catch (_) {}
       }
       if (mounted) {
-        setState(() => _isOpeningExternalPlayer = false);
+        setState(() {
+          _isOpeningExternalPlayer = false;
+          if (shouldRestorePreviousFailureState) {
+            _state = previousState;
+          }
+        });
       }
     }
   }
