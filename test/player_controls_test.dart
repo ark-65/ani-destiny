@@ -184,6 +184,42 @@ void main() {
     expect(find.text('03:00 / 24:00'), findsNothing);
   });
 
+  testWidgets('fullscreen retrying playback disables external player action', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      _buildApp(
+        PlayerControls(
+          state: _state.copyWith(errorMessage: 'Playback temporarily failed.'),
+          hasPlayableSource: true,
+          onPlayPause: _noop,
+          onSeek: (_) {},
+          onSpeed: _noop,
+          onNextEpisode: _noop,
+          onOpenExternalPlayer: _noop,
+          externalPlayerTooltip: 'Retrying playback...',
+          downloadTooltip: 'Retrying playback...',
+          onDownload: null,
+          onToggleDanmaku: _noop,
+          onToggleFullscreen: _noop,
+          danmakuEnabled: true,
+          isFullscreen: true,
+          isSwitchingEpisode: false,
+          isOpeningExternalPlayer: false,
+          isRetryingPlayback: true,
+        ),
+      ),
+    );
+
+    await tester.pump();
+
+    final externalPlayerButton = tester.widget<IconButton>(
+      find.widgetWithIcon(IconButton, Icons.open_in_new),
+    );
+    expect(externalPlayerButton.onPressed, isNull);
+    expect(externalPlayerButton.tooltip, 'Retrying playback...');
+  });
+
   testWidgets('embedded switching state disables entering fullscreen', (
     tester,
   ) async {

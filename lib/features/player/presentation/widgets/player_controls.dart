@@ -182,9 +182,8 @@ class PlayerControls extends StatelessWidget {
                   if (isFullscreen)
                     IconButton(
                       tooltip: externalPlayerTooltip,
-                      onPressed: isSwitchingEpisode || isOpeningExternalPlayer
-                          ? null
-                          : onOpenExternalPlayer,
+                      onPressed:
+                          isInteractionLocked ? null : onOpenExternalPlayer,
                       icon: isOpeningExternalPlayer
                           ? const SizedBox.square(
                               dimension: 18,
