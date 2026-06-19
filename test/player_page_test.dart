@@ -1699,8 +1699,7 @@ void main() {
     await tester.pumpAndSettle();
   });
 
-  testWidgets(
-      'next episode action is disabled when already on the latest episode',
+  testWidgets('next episode action explains when already on the latest episode',
       (tester) async {
     final animeRepository = _LastEpisodeAnimeRepository();
     final playerRepository = _TrackingPlayerRepository();
@@ -1734,10 +1733,18 @@ void main() {
     final nextEpisodeButton = tester.widget<IconButton>(
       find.widgetWithIcon(IconButton, Icons.skip_next),
     );
-    expect(nextEpisodeButton.onPressed, isNull);
+    expect(nextEpisodeButton.onPressed, isNotNull);
     expect(
       nextEpisodeButton.tooltip,
       'You are already on the latest available episode.',
+    );
+    await tester.tap(
+      find.byTooltip('You are already on the latest available episode.'),
+    );
+    await tester.pumpAndSettle();
+    expect(
+      find.text('You are already on the latest available episode.'),
+      findsOneWidget,
     );
     expect(playerRepository.adapter.pauseCalls, 0);
     expect(playerRepository.adapter.playCalls, 0);
@@ -1747,7 +1754,7 @@ void main() {
     expect(playButton.tooltip, 'Pause');
   });
 
-  testWidgets('latest-episode playback failure keeps next episode disabled',
+  testWidgets('latest-episode playback failure keeps next episode explanatory',
       (tester) async {
     final animeRepository = _LastEpisodeAnimeRepository();
     final container = ProviderContainer(
@@ -1793,16 +1800,24 @@ void main() {
     final nextEpisodeButton = tester.widget<IconButton>(
       find.widgetWithIcon(IconButton, Icons.skip_next),
     );
-    expect(nextEpisodeButton.onPressed, isNull);
+    expect(nextEpisodeButton.onPressed, isNotNull);
     expect(
       nextEpisodeButton.tooltip,
       'You are already on the latest available episode.',
+    );
+    await tester.tap(
+      find.byTooltip('You are already on the latest available episode.'),
+    );
+    await tester.pumpAndSettle();
+    expect(
+      find.text('You are already on the latest available episode.'),
+      findsOneWidget,
     );
     expect(find.text('Retry'), findsOneWidget);
   });
 
   testWidgets(
-      'fullscreen next episode action stays disabled on the latest episode',
+      'fullscreen next episode action explains the latest-episode boundary',
       (tester) async {
     final animeRepository = _LastEpisodeAnimeRepository();
     final playerRepository = _TrackingPlayerRepository();
@@ -1839,10 +1854,18 @@ void main() {
     final nextEpisodeButton = tester.widget<IconButton>(
       find.widgetWithIcon(IconButton, Icons.skip_next),
     );
-    expect(nextEpisodeButton.onPressed, isNull);
+    expect(nextEpisodeButton.onPressed, isNotNull);
     expect(
       nextEpisodeButton.tooltip,
       'You are already on the latest available episode.',
+    );
+    await tester.tap(
+      find.byTooltip('You are already on the latest available episode.'),
+    );
+    await tester.pumpAndSettle();
+    expect(
+      find.text('You are already on the latest available episode.'),
+      findsOneWidget,
     );
     expect(playerRepository.adapter.pauseCalls, 0);
   });

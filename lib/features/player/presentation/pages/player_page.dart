@@ -149,6 +149,15 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
         !_isOpeningExternalPlayer &&
         !_isRetryingPlayback &&
         !knowsNoNextEpisode;
+    final canExplainUnavailableNextEpisode = !_isSwitchingEpisode &&
+        !_isOpeningExternalPlayer &&
+        !_isRetryingPlayback &&
+        knowsNoNextEpisode;
+    final nextEpisodeAction = canStartNextEpisodeTransition
+        ? () => unawaited(_playNextEpisode())
+        : canExplainUnavailableNextEpisode
+            ? () => _showSnackBar(context.l10n.nextEpisodeUnavailable)
+            : null;
     final externalPlayerTooltip = _externalPlayerTooltip(context);
     final downloadTooltip = _downloadTooltip(context);
     final canCreateDownload = hasPlayableSource &&
@@ -211,10 +220,13 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
                       icon: const Icon(Icons.bug_report_outlined),
                     ),
                   IconButton(
-                    tooltip: nextEpisodeTooltip,
-                    onPressed: canStartNextEpisodeTransition
-                        ? () => unawaited(_playNextEpisode())
+                    style: canExplainUnavailableNextEpisode
+                        ? IconButton.styleFrom(
+                            foregroundColor: Colors.white54,
+                          )
                         : null,
+                    tooltip: nextEpisodeTooltip,
+                    onPressed: nextEpisodeAction,
                     icon: _isSwitchingEpisode
                         ? const SizedBox.square(
                             dimension: 18,
@@ -421,9 +433,8 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
                 onSpeed: _showSpeedSheet,
                 onNextEpisode: _isSwitchingEpisode || isRetryingPlayback
                     ? null
-                    : canStartNextEpisodeTransition
-                        ? () => unawaited(_playNextEpisode())
-                        : null,
+                    : nextEpisodeAction,
+                isNextEpisodeUnavailable: canExplainUnavailableNextEpisode,
                 nextEpisodeTooltip: nextEpisodeTooltip,
                 onOpenExternalPlayer: canUseExternalPlayerAction
                     ? () => unawaited(_openExternalPlayer())

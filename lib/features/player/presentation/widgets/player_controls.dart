@@ -12,6 +12,7 @@ class PlayerControls extends StatelessWidget {
     required this.onSpeed,
     required this.onNextEpisode,
     required this.onOpenExternalPlayer,
+    this.isNextEpisodeUnavailable = false,
     this.nextEpisodeTooltip,
     required this.externalPlayerTooltip,
     required this.downloadTooltip,
@@ -33,6 +34,7 @@ class PlayerControls extends StatelessWidget {
   final VoidCallback onSpeed;
   final VoidCallback? onNextEpisode;
   final VoidCallback? onOpenExternalPlayer;
+  final bool isNextEpisodeUnavailable;
   final String? nextEpisodeTooltip;
   final String externalPlayerTooltip;
   final String downloadTooltip;
@@ -77,6 +79,8 @@ class PlayerControls extends StatelessWidget {
             : isRetryingPlayback
                 ? context.l10n.retryingPlayback
                 : this.nextEpisodeTooltip ?? context.l10n.nextEpisode;
+    final unavailableActionColor =
+        Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.38);
     final resolvedDownloadTooltip = isOpeningExternalPlayer
         ? context.l10n.openingExternalPlayer
         : isRetryingPlayback
@@ -170,6 +174,11 @@ class PlayerControls extends StatelessWidget {
                 children: [
                   if (isFullscreen)
                     IconButton(
+                      style: isNextEpisodeUnavailable
+                          ? IconButton.styleFrom(
+                              foregroundColor: unavailableActionColor,
+                            )
+                          : null,
                       tooltip: nextEpisodeTooltip,
                       onPressed: isInteractionLocked ? null : onNextEpisode,
                       icon: isSwitchingEpisode
