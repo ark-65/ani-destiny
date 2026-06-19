@@ -138,7 +138,7 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
         !_isSwitchingEpisode &&
         !_isOpeningExternalPlayer &&
         !isRetryingPlayback;
-    final canOpenExternalPlayer = _canOpenExternalPlayer();
+    final canUseExternalPlayerAction = _canUseExternalPlayerAction();
     final danmakuItems = ref.watch(
       danmakuItemsProvider(
         (
@@ -210,7 +210,7 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
                   ),
                   IconButton(
                     tooltip: externalPlayerTooltip,
-                    onPressed: canOpenExternalPlayer
+                    onPressed: canUseExternalPlayerAction
                         ? () => unawaited(_openExternalPlayer())
                         : null,
                     icon: _isOpeningExternalPlayer
@@ -302,11 +302,12 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
                                           ),
                                         if (_supportsExternalPlayerHandoff())
                                           TextButton.icon(
-                                            onPressed: canOpenExternalPlayer
-                                                ? () => unawaited(
-                                                      _openExternalPlayer(),
-                                                    )
-                                                : null,
+                                            onPressed:
+                                                canUseExternalPlayerAction
+                                                    ? () => unawaited(
+                                                          _openExternalPlayer(),
+                                                        )
+                                                    : null,
                                             icon: _isOpeningExternalPlayer
                                                 ? const SizedBox.square(
                                                     dimension: 18,
@@ -407,7 +408,7 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
                 onNextEpisode: _isSwitchingEpisode || isRetryingPlayback
                     ? null
                     : () => unawaited(_playNextEpisode()),
-                onOpenExternalPlayer: canOpenExternalPlayer
+                onOpenExternalPlayer: canUseExternalPlayerAction
                     ? () => unawaited(_openExternalPlayer())
                     : null,
                 externalPlayerTooltip: externalPlayerTooltip,
@@ -435,8 +436,8 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
     );
   }
 
-  bool _canOpenExternalPlayer() {
-    if (!_supportsExternalPlayerHandoff() ||
+  bool _canUseExternalPlayerAction() {
+    if (!_hasPlayableUrl() ||
         _isSwitchingEpisode ||
         _isOpeningExternalPlayer ||
         _isRetryingPlayback) {

@@ -367,7 +367,7 @@ void main() {
 
     expect(
       find.text(
-        'This stream needs request headers, so it cannot be opened in an external player yet.',
+        'This playback line can only stay in AniDestiny for now, so it cannot be opened in another player yet.',
       ),
       findsOneWidget,
     );
@@ -1052,7 +1052,7 @@ void main() {
   });
 
   testWidgets(
-      'external player action is disabled when the stream depends on request headers',
+      'external player action explains why a protected stream stays in AniDestiny',
       (tester) async {
     Uri? launchedUri;
 
@@ -1075,14 +1075,28 @@ void main() {
 
     expect(
       find.byTooltip(
-        'This stream needs request headers, so it cannot be opened in an external player yet.',
+        'This playback line can only stay in AniDestiny for now, so it cannot be opened in another player yet.',
       ),
       findsOneWidget,
     );
     final externalPlayerButton = tester.widget<IconButton>(
       find.widgetWithIcon(IconButton, Icons.open_in_new),
     );
-    expect(externalPlayerButton.onPressed, isNull);
+    expect(externalPlayerButton.onPressed, isNotNull);
+
+    await tester.tap(
+      find.byTooltip(
+        'This playback line can only stay in AniDestiny for now, so it cannot be opened in another player yet.',
+      ),
+    );
+    await tester.pump();
+
+    expect(
+      find.text(
+        'This playback line can only stay in AniDestiny for now, so it cannot be opened in another player yet.',
+      ),
+      findsOneWidget,
+    );
 
     expect(launchedUri, isNull);
   });

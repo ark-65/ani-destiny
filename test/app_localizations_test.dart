@@ -60,6 +60,18 @@ void main() {
         l10n.externalPlayerUnavailable.toLowerCase(),
         isNot(contains('not implemented')),
       );
+      expect(
+        l10n.externalPlayerHeadersUnsupported.toLowerCase(),
+        isNot(contains('request headers')),
+      );
+      expect(
+        l10n.externalPlayerHeadersUnsupported,
+        isNot(contains('请求头')),
+      );
+      expect(
+        l10n.externalPlayerHeadersUnsupported,
+        isNot(contains('ヘッダー')),
+      );
     }
   });
 
