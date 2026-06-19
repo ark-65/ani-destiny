@@ -125,6 +125,12 @@ void main() {
     final slider = tester.widget<Slider>(find.byType(Slider));
     expect(slider.onChanged, isNull);
 
+    final fullscreenButton = tester.widget<IconButton>(
+      find.widgetWithIcon(IconButton, Icons.fullscreen),
+    );
+    expect(fullscreenButton.onPressed, isNull);
+    expect(fullscreenButton.tooltip, 'Preparing playback...');
+
     repository.completeLoad();
     await tester.pumpAndSettle();
 
@@ -203,6 +209,15 @@ void main() {
 
     final slider = tester.widget<Slider>(find.byType(Slider));
     expect(slider.onChanged, isNull);
+
+    final fullscreenButton = tester.widget<IconButton>(
+      find.widgetWithIcon(IconButton, Icons.fullscreen),
+    );
+    expect(fullscreenButton.onPressed, isNull);
+    expect(
+      fullscreenButton.tooltip,
+      'Playback temporarily failed. Retry later or try another playback line.',
+    );
 
     await tester.tap(find.byTooltip('Playback diagnostics'));
     await tester.pumpAndSettle();
@@ -853,12 +868,12 @@ void main() {
     tester,
   ) async {
     Uri? launchedUri;
+    final repository = _TrackingPlayerRepository();
 
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
-          playerRepositoryProvider
-              .overrideWithValue(const _FakePlayerRepository()),
+          playerRepositoryProvider.overrideWithValue(repository),
           historyRepositoryProvider.overrideWithValue(_FakeHistoryRepository()),
           danmakuRepositoryProvider.overrideWithValue(_FakeDanmakuRepository()),
           externalPlayerLauncherProvider.overrideWithValue((uri) async {
@@ -1065,12 +1080,12 @@ void main() {
   testWidgets('fullscreen external handoff keeps the current episode visible',
       (tester) async {
     final launchCompleter = Completer<bool>();
+    final repository = _TrackingPlayerRepository();
 
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
-          playerRepositoryProvider
-              .overrideWithValue(const _FakePlayerRepository()),
+          playerRepositoryProvider.overrideWithValue(repository),
           historyRepositoryProvider.overrideWithValue(_FakeHistoryRepository()),
           danmakuRepositoryProvider.overrideWithValue(_FakeDanmakuRepository()),
           externalPlayerLauncherProvider.overrideWithValue(
@@ -1340,13 +1355,13 @@ void main() {
     tester,
   ) async {
     final animeRepository = _PendingPlayableNextEpisodeAnimeRepository();
+    final playerRepository = _TrackingPlayerRepository();
 
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
           animeRepositoryProvider.overrideWithValue(animeRepository),
-          playerRepositoryProvider
-              .overrideWithValue(const _FakePlayerRepository()),
+          playerRepositoryProvider.overrideWithValue(playerRepository),
           historyRepositoryProvider.overrideWithValue(_FakeHistoryRepository()),
           danmakuRepositoryProvider.overrideWithValue(_FakeDanmakuRepository()),
         ],
@@ -1936,13 +1951,13 @@ void main() {
     tester,
   ) async {
     final pendingRepository = _PendingNextEpisodeAnimeRepository();
+    final playerRepository = _TrackingPlayerRepository();
 
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
           animeRepositoryProvider.overrideWithValue(pendingRepository),
-          playerRepositoryProvider
-              .overrideWithValue(const _FakePlayerRepository()),
+          playerRepositoryProvider.overrideWithValue(playerRepository),
           historyRepositoryProvider.overrideWithValue(_FakeHistoryRepository()),
           danmakuRepositoryProvider.overrideWithValue(_FakeDanmakuRepository()),
         ],

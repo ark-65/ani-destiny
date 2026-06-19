@@ -511,6 +511,12 @@ void main() {
 
     final slider = tester.widget<Slider>(find.byType(Slider));
     expect(slider.onChanged, isNull);
+
+    final fullscreenButton = tester.widget<IconButton>(
+      find.widgetWithIcon(IconButton, Icons.fullscreen),
+    );
+    expect(fullscreenButton.onPressed, isNull);
+    expect(fullscreenButton.tooltip, 'Preparing playback...');
   });
 
   testWidgets('controls stay disabled after playback load fails', (
@@ -562,6 +568,53 @@ void main() {
 
     final slider = tester.widget<Slider>(find.byType(Slider));
     expect(slider.onChanged, isNull);
+
+    final fullscreenButton = tester.widget<IconButton>(
+      find.widgetWithIcon(IconButton, Icons.fullscreen),
+    );
+    expect(fullscreenButton.onPressed, isNull);
+    expect(
+      fullscreenButton.tooltip,
+      'Playback temporarily failed. Retry later or try another playback line.',
+    );
+  });
+
+  testWidgets(
+      'fullscreen exit stays available after playback fails outside busy handoffs',
+      (tester) async {
+    await tester.pumpWidget(
+      _buildApp(
+        PlayerControls(
+          state: PlayerState.initial().copyWith(
+            errorMessage:
+                'Playback temporarily failed. Retry later or try another playback line.',
+          ),
+          hasPlayableSource: true,
+          onPlayPause: _noop,
+          onSeek: (_) {},
+          onSpeed: _noop,
+          onNextEpisode: _noop,
+          onOpenExternalPlayer: _noop,
+          externalPlayerTooltip: 'External player',
+          downloadTooltip: 'Download',
+          onDownload: _noop,
+          onToggleDanmaku: _noop,
+          onToggleFullscreen: _noop,
+          danmakuEnabled: true,
+          isFullscreen: true,
+          isSwitchingEpisode: false,
+          isOpeningExternalPlayer: false,
+        ),
+      ),
+    );
+
+    await tester.pump();
+
+    final fullscreenButton = tester.widget<IconButton>(
+      find.widgetWithIcon(IconButton, Icons.fullscreen_exit),
+    );
+    expect(fullscreenButton.onPressed, isNotNull);
+    expect(fullscreenButton.tooltip, 'Exit fullscreen');
   });
 }
 
