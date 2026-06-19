@@ -519,7 +519,7 @@ void main() {
     await tester.tap(find.text('Retry'));
     await tester.pump();
 
-    expect(find.text('Retrying playback...'), findsNWidgets(2));
+    expect(find.text('Retrying playback...'), findsOneWidget);
     expect(
       find.text(
         'The selected source Mock Anime Source is temporarily unavailable, so playback is using fallback data from Sakura Anime.',
@@ -563,7 +563,7 @@ void main() {
     expect(repository.adapter.loadCalls, 2);
     expect(find.text('Retry'), findsNothing);
     expect(find.byType(CircularProgressIndicator), findsOneWidget);
-    expect(find.text('Retrying playback...'), findsNWidgets(2));
+    expect(find.text('Retrying playback...'), findsOneWidget);
     expect(find.byTooltip('Retrying playback...'), findsWidgets);
     expect(
       find.descendant(
@@ -577,7 +577,7 @@ void main() {
         of: find.byType(AppBar),
         matching: find.text('Retrying playback...'),
       ),
-      findsOneWidget,
+      findsNothing,
     );
 
     final nextEpisodeButton = tester.widget<IconButton>(
@@ -730,7 +730,7 @@ void main() {
     await tester.tap(find.text('External player'));
     await tester.pump();
 
-    expect(find.text('Opening external player...'), findsNWidgets(2));
+    expect(find.text('Opening external player...'), findsOneWidget);
     expect(
       find.text(
         'Playback temporarily failed. Retry later or try another playback line.',
@@ -845,7 +845,7 @@ void main() {
     await tester.tap(find.byTooltip('External player'));
     await tester.pump();
 
-    expect(find.text('Opening external player...'), findsNWidgets(2));
+    expect(find.text('Opening external player...'), findsOneWidget);
     expect(
       find.text(
         'The selected source Mock Anime Source is temporarily unavailable, so playback is using fallback data from Sakura Anime.',
@@ -958,7 +958,7 @@ void main() {
 
     expect(repository.adapter.pauseCalls, 1);
     expect(repository.adapter.playCalls, 0);
-    expect(find.text('Opening external player...'), findsNWidgets(2));
+    expect(find.text('Opening external player...'), findsOneWidget);
 
     launchCompleter.complete(true);
     await tester.pumpAndSettle();
@@ -1026,7 +1026,7 @@ void main() {
     await tester.pump();
 
     expect(launchCalls, 1);
-    expect(find.text('Opening external player...'), findsNWidgets(2));
+    expect(find.text('Opening external player...'), findsOneWidget);
     expect(find.byTooltip('Opening external player...'), findsWidgets);
     final openingButton =
         tester.widgetList<IconButton>(find.byType(IconButton)).singleWhere(
@@ -1112,7 +1112,7 @@ void main() {
   });
 
   testWidgets(
-      'embedded external handoff shows the busy state in the app bar title',
+      'embedded external handoff keeps the current episode visible in the app bar',
       (tester) async {
     final launchCompleter = Completer<bool>();
 
@@ -1155,7 +1155,7 @@ void main() {
         of: find.byType(AppBar),
         matching: find.text('Opening external player...'),
       ),
-      findsOneWidget,
+      findsNothing,
     );
 
     launchCompleter.complete(true);
@@ -1225,7 +1225,7 @@ void main() {
     await tester.tap(find.byTooltip('Next episode'));
     await tester.pump();
 
-    expect(find.text('Loading next episode...'), findsNWidgets(2));
+    expect(find.text('Loading next episode...'), findsOneWidget);
     final playButton = tester.widget<IconButton>(find.byType(IconButton).first);
     expect(playButton.onPressed, isNull);
     expect(playButton.tooltip, 'Loading next episode...');
@@ -1316,7 +1316,7 @@ void main() {
     await tester.pump();
     await tester.pump();
 
-    expect(find.text('Loading next episode...'), findsNWidgets(2));
+    expect(find.text('Loading next episode...'), findsOneWidget);
     expect(find.text('Episode 2'), findsOneWidget);
   });
 
@@ -1384,7 +1384,7 @@ void main() {
   });
 
   testWidgets(
-      'app bar title shows loading state while the next episode is still unresolved',
+      'app bar title keeps the current episode while the next episode is unresolved',
       (tester) async {
     final animeRepository = _PendingNextEpisodeAnimeRepository();
     final playerRepository = _TrackingPlayerRepository();
@@ -1425,12 +1425,11 @@ void main() {
         of: find.byType(AppBar),
         matching: find.text('Loading next episode...'),
       ),
-      findsOneWidget,
+      findsNothing,
     );
   });
 
-  testWidgets(
-      'app bar keeps the loading status visible after the upcoming episode is known',
+  testWidgets('app bar switches to the upcoming episode after it is known',
       (tester) async {
     final animeRepository = _PendingPlayableNextEpisodeAnimeRepository();
     final playerRepository = _TrackingPlayerRepository();
@@ -1464,7 +1463,7 @@ void main() {
         of: find.byType(AppBar),
         matching: find.text('Loading next episode...'),
       ),
-      findsOneWidget,
+      findsNothing,
     );
   });
 
@@ -1504,7 +1503,7 @@ void main() {
     await tester.pump();
     await tester.pump();
 
-    expect(find.text('Loading next episode...'), findsNWidgets(2));
+    expect(find.text('Loading next episode...'), findsOneWidget);
     expect(find.text('Episode 2'), findsOneWidget);
     expect(
       find.text(
@@ -1582,7 +1581,7 @@ void main() {
     await tester.tap(find.byTooltip('Next episode'));
     await tester.pump();
 
-    expect(find.text('Loading next episode...'), findsNWidgets(2));
+    expect(find.text('Loading next episode...'), findsOneWidget);
     expect(find.byType(DanmakuOverlay), findsNothing);
     expect(find.text('Danmaku: Dandanplay'), findsNothing);
   });
@@ -1610,7 +1609,7 @@ void main() {
     await tester.tap(find.text('Retry'));
     await tester.pump();
 
-    expect(find.text('Retrying playback...'), findsNWidgets(2));
+    expect(find.text('Retrying playback...'), findsOneWidget);
     expect(find.byType(DanmakuOverlay), findsNothing);
     expect(find.text('Danmaku: Dandanplay'), findsNothing);
 
@@ -1647,7 +1646,7 @@ void main() {
     await tester.tap(find.byTooltip('External player'));
     await tester.pump();
 
-    expect(find.text('Opening external player...'), findsNWidgets(2));
+    expect(find.text('Opening external player...'), findsOneWidget);
     expect(find.byType(DanmakuOverlay), findsNothing);
     expect(find.text('Danmaku: Dandanplay'), findsNothing);
 

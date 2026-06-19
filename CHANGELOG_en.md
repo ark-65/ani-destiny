@@ -7,6 +7,7 @@
 ## [Unreleased]
 
 ### 🐛 Fixed
+- Fixed embedded player transitions repeating the same busy message in both the app-bar status line and the centered handoff overlay during `Next episode`, `Retrying playback...`, and `Opening external player...`; embedded mode now keeps only the current or upcoming episode title in the app bar and leaves the action message to the overlay so the handoff feels calmer.
 - Fixed the player still reporting a generic source failure after a `Next episode` handoff had already been rolled back to the current episode; it now explicitly says the next episode could not be opened and that AniDestiny stayed on the current one, so the recovery outcome is as clear as the rollback behavior itself.
 - Fixed the player still making `Enter fullscreen` look available before playback was actually ready or after the current playback had already failed; it now only allows entering fullscreen once the current stream is truly playable, while users who are already fullscreen can still exit reliably so the control behaves like a viewing action instead of an empty promise.
 - Fixed the player still making `External player` look tappable on header-protected streams that AniDestiny cannot safely hand off, only to repeat the same limitation after users tapped it; the action now stays disabled up front so the affordance matches the explanation before users try it.
