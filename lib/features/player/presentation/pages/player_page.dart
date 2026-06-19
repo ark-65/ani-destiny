@@ -983,6 +983,7 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
       }
 
       shouldResumeCurrentPlayback = false;
+      shouldRestorePreviousFailureState = previousState.errorMessage != null;
       await _saveHistory(force: true);
       if (_isFullscreen) {
         await _exitFullscreen();

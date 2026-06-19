@@ -789,6 +789,45 @@ void main() {
     expect(find.text('Copy diagnostics'), findsOneWidget);
   });
 
+  testWidgets(
+      'playback failure card returns after a successful external handoff',
+      (tester) async {
+    final repository = _RetryablePlayerRepository();
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          playerRepositoryProvider.overrideWithValue(repository),
+          historyRepositoryProvider.overrideWithValue(_FakeHistoryRepository()),
+          danmakuRepositoryProvider.overrideWithValue(_FakeDanmakuRepository()),
+          externalPlayerLauncherProvider.overrideWithValue((_) async => true),
+        ],
+        child: _buildPlayerApp(_args),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(
+      find.text(
+        'Playback temporarily failed. Retry later or try another playback line.',
+      ),
+      findsOneWidget,
+    );
+
+    await tester.tap(find.text('External player'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Opening external player...'), findsNothing);
+    expect(
+      find.text(
+        'Playback temporarily failed. Retry later or try another playback line.',
+      ),
+      findsOneWidget,
+    );
+    expect(find.text('Retry'), findsOneWidget);
+    expect(find.text('Copy diagnostics'), findsOneWidget);
+  });
+
   testWidgets('external player action launches the current playback url', (
     tester,
   ) async {
