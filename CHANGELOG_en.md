@@ -7,6 +7,7 @@
 ## [Unreleased]
 
 ### 🐛 Fixed
+- Fixed the player still making `External player` look tappable on header-protected streams that AniDestiny cannot safely hand off, only to repeat the same limitation after users tapped it; the action now stays disabled up front so the affordance matches the explanation before users try it.
 - Fixed the embedded player app bar dropping its short `Loading next episode...` status as soon as AniDestiny learned the upcoming episode title, which made the page look finished before the takeover had actually completed; the app bar now keeps that loading line until the switch truly settles so the title and busy state stay honest together.
 - Fixed the embedded player keeping its fallback-source banner visible while route-level handoffs like `Retrying playback...` or `Opening external player...` were already taking over the page; those busy states now hide the secondary fallback notice first so the screen explains one in-progress action at a time.
 - Fixed the player quietly disabling `External player` while still explaining the limit with implementation-heavy copy like `request headers`; users can now still tap into a clear reason, and the message now explains the product boundary in calmer product language instead of network internals.

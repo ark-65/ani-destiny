@@ -1178,21 +1178,7 @@ void main() {
     final externalPlayerButton = tester.widget<IconButton>(
       find.widgetWithIcon(IconButton, Icons.open_in_new),
     );
-    expect(externalPlayerButton.onPressed, isNotNull);
-
-    await tester.tap(
-      find.byTooltip(
-        'This playback line can only stay in AniDestiny for now, so it cannot be opened in another player yet.',
-      ),
-    );
-    await tester.pump();
-
-    expect(
-      find.text(
-        'This playback line can only stay in AniDestiny for now, so it cannot be opened in another player yet.',
-      ),
-      findsOneWidget,
-    );
+    expect(externalPlayerButton.onPressed, isNull);
 
     expect(launchedUri, isNull);
   });

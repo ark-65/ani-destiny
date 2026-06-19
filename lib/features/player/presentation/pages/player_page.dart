@@ -436,7 +436,7 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
   }
 
   bool _canUseExternalPlayerAction() {
-    if (!_hasPlayableUrl() ||
+    if (!_supportsExternalPlayerHandoff() ||
         _isSwitchingEpisode ||
         _isOpeningExternalPlayer ||
         _isRetryingPlayback) {
