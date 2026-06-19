@@ -622,6 +622,9 @@ void main() {
 
     final slider = tester.widget<Slider>(find.byType(Slider));
     expect(slider.onChanged, isNull);
+    expect(slider.value, 0);
+    expect(find.text('--:-- / --:--'), findsOneWidget);
+    expect(find.text('00:00 / 24:12'), findsNothing);
 
     repository.completeRetry();
     await tester.pumpAndSettle();
@@ -1067,6 +1070,9 @@ void main() {
 
     final slider = tester.widget<Slider>(find.byType(Slider));
     expect(slider.onChanged, isNull);
+    expect(slider.value, 0);
+    expect(find.text('--:-- / --:--'), findsOneWidget);
+    expect(find.text('00:00 / 24:12'), findsNothing);
 
     expect(launchCalls, 1);
 

@@ -48,9 +48,9 @@ class PlayerControls extends StatelessWidget {
     final isInteractionLocked =
         isSwitchingEpisode || isOpeningExternalPlayer || isRetryingPlayback;
     final displayedDuration =
-        isSwitchingEpisode ? Duration.zero : state.duration;
+        isInteractionLocked ? Duration.zero : state.duration;
     final displayedPosition =
-        isSwitchingEpisode ? Duration.zero : state.position;
+        isInteractionLocked ? Duration.zero : state.position;
     final durationMs = displayedDuration.inMilliseconds;
     final positionMs = displayedPosition.inMilliseconds.clamp(0, durationMs);
     final playbackActionsEnabled = hasPlayableSource &&
@@ -141,7 +141,7 @@ class PlayerControls extends StatelessWidget {
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
-                    isSwitchingEpisode
+                    isInteractionLocked
                         ? '--:-- / --:--'
                         : '${_formatDuration(state.position)} / ${_formatDuration(state.duration)}',
                     style: Theme.of(context).textTheme.bodySmall,

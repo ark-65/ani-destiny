@@ -176,6 +176,12 @@ void main() {
     );
     expect(danmakuButton.onPressed, isNull);
     expect(danmakuButton.tooltip, 'Retrying playback...');
+
+    final slider = tester.widget<Slider>(find.byType(Slider));
+    expect(slider.onChanged, isNull);
+    expect(slider.value, 0);
+    expect(find.text('--:-- / --:--'), findsOneWidget);
+    expect(find.text('03:00 / 24:00'), findsNothing);
   });
 
   testWidgets('embedded switching state disables entering fullscreen', (
@@ -356,6 +362,9 @@ void main() {
 
     final slider = tester.widget<Slider>(find.byType(Slider));
     expect(slider.onChanged, isNull);
+    expect(slider.value, 0);
+    expect(find.text('--:-- / --:--'), findsOneWidget);
+    expect(find.text('03:00 / 24:00'), findsNothing);
   });
 
   testWidgets('fullscreen toggle tooltip reflects the current fullscreen state',
