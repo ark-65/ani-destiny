@@ -477,6 +477,52 @@ void main() {
     );
   });
 
+  testWidgets('retry playback hides fallback context while recovery is busy', (
+    tester,
+  ) async {
+    final repository = _RetryablePlayerRepository();
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          playerRepositoryProvider.overrideWithValue(repository),
+          historyRepositoryProvider.overrideWithValue(_FakeHistoryRepository()),
+          danmakuRepositoryProvider.overrideWithValue(_FakeDanmakuRepository()),
+        ],
+        child: _buildPlayerApp(_fallbackArgs),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(
+      find.text(
+        'The selected source Mock Anime Source is temporarily unavailable, so playback is using fallback data from Sakura Anime.',
+      ),
+      findsNothing,
+    );
+
+    await tester.tap(find.text('Retry'));
+    await tester.pump();
+
+    expect(find.text('Retrying playback...'), findsNWidgets(2));
+    expect(
+      find.text(
+        'The selected source Mock Anime Source is temporarily unavailable, so playback is using fallback data from Sakura Anime.',
+      ),
+      findsNothing,
+    );
+
+    repository.completeRetry();
+    await tester.pumpAndSettle();
+
+    expect(
+      find.text(
+        'The selected source Mock Anime Source is temporarily unavailable, so playback is using fallback data from Sakura Anime.',
+      ),
+      findsOneWidget,
+    );
+  });
+
   testWidgets('playback failure card can retry the current source',
       (tester) async {
     final repository = _RetryablePlayerRepository();
@@ -751,6 +797,56 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(launchedUri?.toString(), 'https://cdn.example.test/video.m3u8');
+  });
+
+  testWidgets(
+      'external player handoff hides fallback context while the page is busy',
+      (tester) async {
+    final launchCompleter = Completer<bool>();
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          playerRepositoryProvider
+              .overrideWithValue(const _FakePlayerRepository()),
+          historyRepositoryProvider.overrideWithValue(_FakeHistoryRepository()),
+          danmakuRepositoryProvider.overrideWithValue(_FakeDanmakuRepository()),
+          externalPlayerLauncherProvider.overrideWithValue(
+            (_) => launchCompleter.future,
+          ),
+        ],
+        child: _buildPlayerApp(_fallbackArgs),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(
+      find.text(
+        'The selected source Mock Anime Source is temporarily unavailable, so playback is using fallback data from Sakura Anime.',
+      ),
+      findsOneWidget,
+    );
+
+    await tester.tap(find.byTooltip('External player'));
+    await tester.pump();
+
+    expect(find.text('Opening external player...'), findsNWidgets(2));
+    expect(
+      find.text(
+        'The selected source Mock Anime Source is temporarily unavailable, so playback is using fallback data from Sakura Anime.',
+      ),
+      findsNothing,
+    );
+
+    launchCompleter.complete(true);
+    await tester.pumpAndSettle();
+
+    expect(
+      find.text(
+        'The selected source Mock Anime Source is temporarily unavailable, so playback is using fallback data from Sakura Anime.',
+      ),
+      findsOneWidget,
+    );
   });
 
   testWidgets('fullscreen controls keep the external player action available', (

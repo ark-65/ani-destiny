@@ -7,6 +7,7 @@
 ## [Unreleased]
 
 ### 🐛 Fixed
+- Fixed the embedded player keeping its fallback-source banner visible while route-level handoffs like `Retrying playback...` or `Opening external player...` were already taking over the page; those busy states now hide the secondary fallback notice first so the screen explains one in-progress action at a time.
 - Fixed the player quietly disabling `External player` while still explaining the limit with implementation-heavy copy like `request headers`; users can now still tap into a clear reason, and the message now explains the product boundary in calmer product language instead of network internals.
 - Fixed the embedded player app bar either dropping episode context or competing with the centered transition copy during route-level handoffs like `Next episode`, `Retrying playback...`, and `Opening external player...`; non-fullscreen playback now keeps the current or upcoming episode title visible and only adds a short busy line when it is still needed, so transitions feel calmer without hiding what is happening.
 - Fixed the embedded player app bar keeping the stale episode title while AniDestiny had already entered `Retrying playback...` or `Opening external player...`; non-fullscreen playback now switches that title to the active route-level action so the page explains what it is doing as clearly as the next-episode transition already does.
