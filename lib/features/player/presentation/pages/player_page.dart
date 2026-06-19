@@ -120,11 +120,10 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
     final appBarEpisodeTitle = _isSwitchingEpisode
         ? (_switchingEpisodeTitle ?? _args.episodeTitle)
         : _args.episodeTitle;
-    final appBarStatusLabel = _isOpeningExternalPlayer ||
-            isRetryingPlayback ||
-            (_isSwitchingEpisode && _switchingEpisodeTitle == null)
-        ? routeTransitionMessage
-        : null;
+    final appBarStatusLabel =
+        _isOpeningExternalPlayer || isRetryingPlayback || _isSwitchingEpisode
+            ? routeTransitionMessage
+            : null;
     final nextEpisodeTooltip = _isSwitchingEpisode
         ? context.l10n.loadingNextEpisode
         : _isOpeningExternalPlayer

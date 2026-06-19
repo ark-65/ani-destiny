@@ -1315,7 +1315,7 @@ void main() {
     await tester.pump();
     await tester.pump();
 
-    expect(find.text('Loading next episode...'), findsOneWidget);
+    expect(find.text('Loading next episode...'), findsNWidgets(2));
     expect(find.text('Episode 2'), findsOneWidget);
   });
 
@@ -1428,7 +1428,8 @@ void main() {
     );
   });
 
-  testWidgets('app bar title switches to the upcoming episode once it is known',
+  testWidgets(
+      'app bar keeps the loading status visible after the upcoming episode is known',
       (tester) async {
     final animeRepository = _PendingPlayableNextEpisodeAnimeRepository();
     final playerRepository = _TrackingPlayerRepository();
@@ -1462,7 +1463,7 @@ void main() {
         of: find.byType(AppBar),
         matching: find.text('Loading next episode...'),
       ),
-      findsNothing,
+      findsOneWidget,
     );
   });
 
@@ -1502,7 +1503,7 @@ void main() {
     await tester.pump();
     await tester.pump();
 
-    expect(find.text('Loading next episode...'), findsOneWidget);
+    expect(find.text('Loading next episode...'), findsNWidgets(2));
     expect(find.text('Episode 2'), findsOneWidget);
     expect(
       find.text(
