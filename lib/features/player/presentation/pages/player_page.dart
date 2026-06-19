@@ -101,6 +101,22 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
     final danmakuSettings = ref.watch(danmakuSettingsProvider);
     final canLeavePlayer = Navigator.of(context).canPop();
     final hasPlayableSource = _hasPlayableUrl();
+    final animeDetailProvider = animeDetailBySourceProvider(
+      (sourceId: _args.sourceId, animeId: _args.animeId),
+    );
+    final cachedAnimeDetail = ref.exists(animeDetailProvider)
+        ? ref.watch(animeDetailProvider).valueOrNull
+        : null;
+    final knownNextEpisode = cachedAnimeDetail == null
+        ? null
+        : resolveNextEpisode(
+            episodes: cachedAnimeDetail.value.episodes,
+            currentEpisodeId: _args.episodeId,
+            currentEpisodeIndex: _args.episodeIndex,
+            currentEpisodeTitle: _args.episodeTitle,
+          );
+    final knowsNoNextEpisode =
+        cachedAnimeDetail != null && knownNextEpisode == null;
     final isRetryingPlayback = _isRetryingPlayback;
     final isRouteBusy =
         _isSwitchingEpisode || _isOpeningExternalPlayer || isRetryingPlayback;
@@ -126,7 +142,13 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
             ? context.l10n.openingExternalPlayer
             : isRetryingPlayback
                 ? context.l10n.retryingPlayback
-                : context.l10n.nextEpisode;
+                : knowsNoNextEpisode
+                    ? context.l10n.nextEpisodeUnavailable
+                    : context.l10n.nextEpisode;
+    final canStartNextEpisodeTransition = !_isSwitchingEpisode &&
+        !_isOpeningExternalPlayer &&
+        !_isRetryingPlayback &&
+        !knowsNoNextEpisode;
     final externalPlayerTooltip = _externalPlayerTooltip(context);
     final downloadTooltip = _downloadTooltip(context);
     final canCreateDownload = hasPlayableSource &&
@@ -190,11 +212,9 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
                     ),
                   IconButton(
                     tooltip: nextEpisodeTooltip,
-                    onPressed: _isSwitchingEpisode ||
-                            _isOpeningExternalPlayer ||
-                            _isRetryingPlayback
-                        ? null
-                        : () => unawaited(_playNextEpisode()),
+                    onPressed: canStartNextEpisodeTransition
+                        ? () => unawaited(_playNextEpisode())
+                        : null,
                     icon: _isSwitchingEpisode
                         ? const SizedBox.square(
                             dimension: 18,
@@ -401,7 +421,10 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
                 onSpeed: _showSpeedSheet,
                 onNextEpisode: _isSwitchingEpisode || isRetryingPlayback
                     ? null
-                    : () => unawaited(_playNextEpisode()),
+                    : canStartNextEpisodeTransition
+                        ? () => unawaited(_playNextEpisode())
+                        : null,
+                nextEpisodeTooltip: nextEpisodeTooltip,
                 onOpenExternalPlayer: canUseExternalPlayerAction
                     ? () => unawaited(_openExternalPlayer())
                     : null,

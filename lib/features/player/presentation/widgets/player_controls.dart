@@ -12,6 +12,7 @@ class PlayerControls extends StatelessWidget {
     required this.onSpeed,
     required this.onNextEpisode,
     required this.onOpenExternalPlayer,
+    this.nextEpisodeTooltip,
     required this.externalPlayerTooltip,
     required this.downloadTooltip,
     required this.onDownload,
@@ -32,6 +33,7 @@ class PlayerControls extends StatelessWidget {
   final VoidCallback onSpeed;
   final VoidCallback? onNextEpisode;
   final VoidCallback? onOpenExternalPlayer;
+  final String? nextEpisodeTooltip;
   final String externalPlayerTooltip;
   final String downloadTooltip;
   final VoidCallback? onDownload;
@@ -74,7 +76,7 @@ class PlayerControls extends StatelessWidget {
             ? context.l10n.openingExternalPlayer
             : isRetryingPlayback
                 ? context.l10n.retryingPlayback
-                : context.l10n.nextEpisode;
+                : this.nextEpisodeTooltip ?? context.l10n.nextEpisode;
     final resolvedDownloadTooltip = isOpeningExternalPlayer
         ? context.l10n.openingExternalPlayer
         : isRetryingPlayback

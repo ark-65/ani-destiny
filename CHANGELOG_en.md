@@ -7,6 +7,7 @@
 ## [Unreleased]
 
 ### 🐛 Fixed
+- Fixed the player still making `Next episode` look worth trying even when AniDestiny already had the current episode list in memory and could tell the user was on the last available episode; embedded and fullscreen playback now disable that action up front and explain that there is no later episode yet, so users are not invited into a dead end before the player tells them the truth.
 - Fixed the player still leaving the previous playback timeline and progress bar visible after AniDestiny had already entered a route-level handoff like `Next episode`, `Retrying playback...`, or `Opening external player...`; those busy states now switch the bottom transport row into a neutral time display so the page only communicates the in-progress takeover instead of implying the old stream is still active.
 - Fixed embedded player transitions repeating the same busy message in both the app-bar status line and the centered handoff overlay during `Next episode`, `Retrying playback...`, and `Opening external player...`; embedded mode now keeps only the current or upcoming episode title in the app bar and leaves the action message to the overlay so the handoff feels calmer.
 - Fixed the player still reporting a generic source failure after a `Next episode` handoff had already been rolled back to the current episode; it now explicitly says the next episode could not be opened and that AniDestiny stayed on the current one, so the recovery outcome is as clear as the rollback behavior itself.

@@ -1661,54 +1661,80 @@ void main() {
   });
 
   testWidgets(
-      'current playback resumes if next episode is unavailable before switching',
+      'next episode action is disabled when already on the latest episode',
       (tester) async {
     final animeRepository = _LastEpisodeAnimeRepository();
     final playerRepository = _TrackingPlayerRepository();
+    final container = ProviderContainer(
+      overrides: [
+        animeRepositoryProvider.overrideWithValue(animeRepository),
+        playerRepositoryProvider.overrideWithValue(playerRepository),
+        historyRepositoryProvider.overrideWithValue(_FakeHistoryRepository()),
+        danmakuRepositoryProvider.overrideWithValue(_FakeDanmakuRepository()),
+      ],
+    );
+    addTearDown(container.dispose);
+    final animeDetailProvider = animeDetailBySourceProvider(
+      (sourceId: _args.sourceId, animeId: _args.animeId),
+    );
+    final animeDetailSubscription = container.listen(
+      animeDetailProvider,
+      (_, __) {},
+    );
+    addTearDown(animeDetailSubscription.close);
+    await container.read(animeDetailProvider.future);
 
     await tester.pumpWidget(
-      ProviderScope(
-        overrides: [
-          animeRepositoryProvider.overrideWithValue(animeRepository),
-          playerRepositoryProvider.overrideWithValue(playerRepository),
-          historyRepositoryProvider.overrideWithValue(_FakeHistoryRepository()),
-          danmakuRepositoryProvider.overrideWithValue(_FakeDanmakuRepository()),
-        ],
+      UncontrolledProviderScope(
+        container: container,
         child: _buildPlayerApp(_args),
       ),
     );
     await tester.pumpAndSettle();
 
-    await tester.tap(find.byTooltip('Next episode'));
-    await tester.pumpAndSettle();
-
-    expect(playerRepository.adapter.pauseCalls, 1);
-    expect(playerRepository.adapter.playCalls, 1);
-    expect(
-      find.text('You are already on the latest available episode.'),
-      findsOneWidget,
+    final nextEpisodeButton = tester.widget<IconButton>(
+      find.widgetWithIcon(IconButton, Icons.skip_next),
     );
+    expect(nextEpisodeButton.onPressed, isNull);
+    expect(
+      nextEpisodeButton.tooltip,
+      'You are already on the latest available episode.',
+    );
+    expect(playerRepository.adapter.pauseCalls, 0);
+    expect(playerRepository.adapter.playCalls, 0);
 
     final playButton = tester.widget<IconButton>(find.byType(IconButton).first);
     expect(playButton.onPressed, isNotNull);
     expect(playButton.tooltip, 'Pause');
   });
 
-  testWidgets(
-      'failed playback restores the current error card if no next episode exists',
+  testWidgets('latest-episode playback failure keeps next episode disabled',
       (tester) async {
     final animeRepository = _LastEpisodeAnimeRepository();
+    final container = ProviderContainer(
+      overrides: [
+        animeRepositoryProvider.overrideWithValue(animeRepository),
+        playerRepositoryProvider.overrideWithValue(
+          const _ThrowingPlayerRepository(),
+        ),
+        historyRepositoryProvider.overrideWithValue(_FakeHistoryRepository()),
+        danmakuRepositoryProvider.overrideWithValue(_FakeDanmakuRepository()),
+      ],
+    );
+    addTearDown(container.dispose);
+    final animeDetailProvider = animeDetailBySourceProvider(
+      (sourceId: _failingArgs.sourceId, animeId: _failingArgs.animeId),
+    );
+    final animeDetailSubscription = container.listen(
+      animeDetailProvider,
+      (_, __) {},
+    );
+    addTearDown(animeDetailSubscription.close);
+    await container.read(animeDetailProvider.future);
 
     await tester.pumpWidget(
-      ProviderScope(
-        overrides: [
-          animeRepositoryProvider.overrideWithValue(animeRepository),
-          playerRepositoryProvider.overrideWithValue(
-            const _ThrowingPlayerRepository(),
-          ),
-          historyRepositoryProvider.overrideWithValue(_FakeHistoryRepository()),
-          danmakuRepositoryProvider.overrideWithValue(_FakeDanmakuRepository()),
-        ],
+      UncontrolledProviderScope(
+        container: container,
         child: _buildPlayerApp(
           _failingArgs.copyWith(
             episodeId: 'episode-1',
@@ -1725,21 +1751,61 @@ void main() {
       ),
       findsOneWidget,
     );
-
-    await tester.tap(find.byTooltip('Next episode'));
-    await tester.pumpAndSettle();
-
-    expect(
-      find.text('You are already on the latest available episode.'),
-      findsOneWidget,
+    final nextEpisodeButton = tester.widget<IconButton>(
+      find.widgetWithIcon(IconButton, Icons.skip_next),
     );
+    expect(nextEpisodeButton.onPressed, isNull);
     expect(
-      find.text(
-        'Playback temporarily failed. Retry later or try another playback line.',
-      ),
-      findsOneWidget,
+      nextEpisodeButton.tooltip,
+      'You are already on the latest available episode.',
     );
     expect(find.text('Retry'), findsOneWidget);
+  });
+
+  testWidgets(
+      'fullscreen next episode action stays disabled on the latest episode',
+      (tester) async {
+    final animeRepository = _LastEpisodeAnimeRepository();
+    final playerRepository = _TrackingPlayerRepository();
+    final container = ProviderContainer(
+      overrides: [
+        animeRepositoryProvider.overrideWithValue(animeRepository),
+        playerRepositoryProvider.overrideWithValue(playerRepository),
+        historyRepositoryProvider.overrideWithValue(_FakeHistoryRepository()),
+        danmakuRepositoryProvider.overrideWithValue(_FakeDanmakuRepository()),
+      ],
+    );
+    addTearDown(container.dispose);
+    final animeDetailProvider = animeDetailBySourceProvider(
+      (sourceId: _args.sourceId, animeId: _args.animeId),
+    );
+    final animeDetailSubscription = container.listen(
+      animeDetailProvider,
+      (_, __) {},
+    );
+    addTearDown(animeDetailSubscription.close);
+    await container.read(animeDetailProvider.future);
+
+    await tester.pumpWidget(
+      UncontrolledProviderScope(
+        container: container,
+        child: _buildPlayerApp(_args),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byTooltip('Enter fullscreen'));
+    await tester.pumpAndSettle();
+
+    final nextEpisodeButton = tester.widget<IconButton>(
+      find.widgetWithIcon(IconButton, Icons.skip_next),
+    );
+    expect(nextEpisodeButton.onPressed, isNull);
+    expect(
+      nextEpisodeButton.tooltip,
+      'You are already on the latest available episode.',
+    );
+    expect(playerRepository.adapter.pauseCalls, 0);
   });
 
   testWidgets(
