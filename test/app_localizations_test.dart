@@ -75,6 +75,24 @@ void main() {
     }
   });
 
+  test('next episode recovery copy explains staying on the current episode',
+      () {
+    const zh = AppLocalizations(Locale('zh'));
+    expect(zh.nextEpisodeStayedOnCurrent, contains('当前这一集'));
+    expect(zh.nextEpisodeStayedOnCurrent, isNot(contains('数据源')));
+
+    const en = AppLocalizations(Locale('en'));
+    expect(en.nextEpisodeStayedOnCurrent, contains('current one'));
+    expect(
+      en.nextEpisodeStayedOnCurrent.toLowerCase(),
+      isNot(contains('source')),
+    );
+
+    const ja = AppLocalizations(Locale('ja'));
+    expect(ja.nextEpisodeStayedOnCurrent, contains('現在のエピソード'));
+    expect(ja.nextEpisodeStayedOnCurrent, isNot(contains('ソース')));
+  });
+
   test('source health labels stay localized in Chinese and Japanese', () {
     const zh = AppLocalizations(Locale('zh'));
     expect(zh.sourceHealthHealthy, '正常');

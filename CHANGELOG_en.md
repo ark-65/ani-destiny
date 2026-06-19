@@ -7,6 +7,7 @@
 ## [Unreleased]
 
 ### 🐛 Fixed
+- Fixed the player still reporting a generic source failure after a `Next episode` handoff had already been rolled back to the current episode; it now explicitly says the next episode could not be opened and that AniDestiny stayed on the current one, so the recovery outcome is as clear as the rollback behavior itself.
 - Fixed the player still making `Enter fullscreen` look available before playback was actually ready or after the current playback had already failed; it now only allows entering fullscreen once the current stream is truly playable, while users who are already fullscreen can still exit reliably so the control behaves like a viewing action instead of an empty promise.
 - Fixed the player still making `External player` look tappable on header-protected streams that AniDestiny cannot safely hand off, only to repeat the same limitation after users tapped it; the action now stays disabled up front so the affordance matches the explanation before users try it.
 - Fixed the embedded player app bar dropping its short `Loading next episode...` status as soon as AniDestiny learned the upcoming episode title, which made the page look finished before the takeover had actually completed; the app bar now keeps that loading line until the switch truly settles so the title and busy state stay honest together.

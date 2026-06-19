@@ -1812,9 +1812,7 @@ void main() {
     expect(playerRepository.adapter.pauseCalls, 1);
     expect(playerRepository.adapter.playCalls, 1);
     expect(
-      find.text(
-        'No playable source found. Try another source or retry later.',
-      ),
+      find.text("Couldn't open the next episode. Staying on the current one."),
       findsOneWidget,
     );
 
@@ -1849,7 +1847,7 @@ void main() {
     expect(playerRepository.adapter.loadCalls, 3);
     expect(find.text('Episode 1'), findsOneWidget);
     expect(
-      find.text('Source temporarily unavailable'),
+      find.text("Couldn't open the next episode. Staying on the current one."),
       findsOneWidget,
     );
 
