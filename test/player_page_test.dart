@@ -1906,9 +1906,55 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(
+      find.text("Couldn't open the next episode. Staying on the current one."),
+      findsOneWidget,
+    );
+    expect(
       find.text(
-        'No playable source found. Try another source or retry later.',
+        'Playback temporarily failed. Retry later or try another playback line.',
       ),
+      findsOneWidget,
+    );
+    expect(find.text('Retry'), findsOneWidget);
+  });
+
+  testWidgets(
+      'failed playback keeps the current episode explicit if the next episode fails to start',
+      (tester) async {
+    final animeRepository = _PlayableNextEpisodeAnimeRepository();
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          animeRepositoryProvider.overrideWithValue(animeRepository),
+          playerRepositoryProvider.overrideWithValue(
+            const _ThrowingPlayerRepository(),
+          ),
+          historyRepositoryProvider.overrideWithValue(_FakeHistoryRepository()),
+          danmakuRepositoryProvider.overrideWithValue(_FakeDanmakuRepository()),
+        ],
+        child: _buildPlayerApp(
+          _failingArgs.copyWith(
+            episodeId: 'episode-1',
+            episodeTitle: 'Episode 1',
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(
+      find.text(
+        'Playback temporarily failed. Retry later or try another playback line.',
+      ),
+      findsOneWidget,
+    );
+
+    await tester.tap(find.byTooltip('Next episode'));
+    await tester.pumpAndSettle();
+
+    expect(
+      find.text("Couldn't open the next episode. Staying on the current one."),
       findsOneWidget,
     );
     expect(

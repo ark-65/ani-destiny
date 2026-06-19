@@ -857,11 +857,7 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
       final sources = playSourceResult.value;
       if (sources.isEmpty) {
         shouldRestorePreviousFailureState = previousState.errorMessage != null;
-        _showSnackBar(
-          previousState.errorMessage == null
-              ? context.l10n.nextEpisodeStayedOnCurrent
-              : context.l10n.noPlayableSourceFound,
-        );
+        _showSnackBar(context.l10n.nextEpisodeStayedOnCurrent);
         return;
       }
 
@@ -916,11 +912,7 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
           playbackSpeed: playbackSpeed,
         );
         if (!mounted) return;
-        _showSnackBar(
-          previousState.errorMessage == null
-              ? context.l10n.nextEpisodeStayedOnCurrent
-              : context.l10n.sourceTemporarilyUnavailable,
-        );
+        _showSnackBar(context.l10n.nextEpisodeStayedOnCurrent);
         return;
       }
       if (detailResult.usedFallback || playSourceResult.usedFallback) {
@@ -929,11 +921,7 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
     } catch (error) {
       if (!mounted) return;
       shouldRestorePreviousFailureState = previousState.errorMessage != null;
-      _showSnackBar(
-        previousState.errorMessage == null
-            ? context.l10n.nextEpisodeStayedOnCurrent
-            : context.l10n.sourceTemporarilyUnavailable,
-      );
+      _showSnackBar(context.l10n.nextEpisodeStayedOnCurrent);
     } finally {
       if (mounted && shouldRestoreCurrentPlayback) {
         try {

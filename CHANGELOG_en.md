@@ -62,6 +62,7 @@
 ## [1.0.3] - 2026-06-13
 
 ### 🐛 Fixed
+- Fixed AniDestiny still falling back to vague `No playable source found` or `Source temporarily unavailable` copy when users were already in a failed playback state, tapped `Next episode`, and the handoff never truly left the current episode; any aborted next-episode attempt that keeps the current page now explicitly says it stayed on the current episode so the recovery result itself stays honest.
 - Fixed the player only explaining source fallback in a transient pre-navigation message and then losing that context after the page opened; the player page now keeps the active fallback source visible and includes the originally requested source in playback diagnostics so users do not have to guess why playback came from a different source.
 - Fixed the player failure card hiding the External player limitation inside a disabled button state when the current stream still depended on request headers; it now explains the handoff constraint directly in the failure state so users do not have to guess why another app cannot take over yet.
 - Fixed player failure recovery and copied diagnostics still missing the anime and episode context, so the failure card, playback diagnostics, and feedback package now all carry the current title and episode for more precise user reports.
