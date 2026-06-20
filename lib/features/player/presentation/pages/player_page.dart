@@ -963,6 +963,7 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
     final shouldPauseCurrentPlayback = _state.isPlaying;
     var shouldResumeCurrentPlayback = false;
     var shouldRestorePreviousFailureState = false;
+    var didOpenExternalPlayer = false;
 
     setState(() {
       _isOpeningExternalPlayer = true;
@@ -983,6 +984,7 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
         return;
       }
 
+      didOpenExternalPlayer = true;
       shouldResumeCurrentPlayback = false;
       shouldRestorePreviousFailureState = previousState.errorMessage != null;
       await _saveHistory(force: true);
@@ -1007,6 +1009,9 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
           }
         });
       }
+    }
+    if (mounted && didOpenExternalPlayer) {
+      _showSnackBar(context.l10n.externalPlayerOpened);
     }
   }
 

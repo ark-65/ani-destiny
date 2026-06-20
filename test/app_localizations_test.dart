@@ -72,6 +72,14 @@ void main() {
         l10n.externalPlayerHeadersUnsupported,
         isNot(contains('ヘッダー')),
       );
+      expect(
+        l10n.externalPlayerOpened.toLowerCase(),
+        isNot(contains('success')),
+      );
+      expect(
+        l10n.externalPlayerOpened.toLowerCase(),
+        isNot(contains('placeholder')),
+      );
     }
   });
 

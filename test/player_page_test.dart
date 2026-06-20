@@ -847,6 +847,10 @@ void main() {
 
     expect(find.text('Opening external player...'), findsNothing);
     expect(
+      find.text('Opened the current playback in your external player.'),
+      findsOneWidget,
+    );
+    expect(
       find.text(
         'Playback temporarily failed. Retry later or try another playback line.',
       ),
@@ -882,6 +886,10 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(launchedUri?.toString(), 'https://cdn.example.test/video.m3u8');
+    expect(
+      find.text('Opened the current playback in your external player.'),
+      findsOneWidget,
+    );
   });
 
   testWidgets(
@@ -1000,6 +1008,10 @@ void main() {
     expect(launchedUri?.toString(), 'https://cdn.example.test/video.m3u8');
     expect(repository.adapter.pauseCalls, 1);
     expect(find.byType(AppBar), findsOneWidget);
+    expect(
+      find.text('Opened the current playback in your external player.'),
+      findsOneWidget,
+    );
   });
 
   testWidgets('external handoff pauses playback before launch completes', (

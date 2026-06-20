@@ -7,6 +7,7 @@
 ## [Unreleased]
 
 ### 🐛 Fixed
+- Fixed successful `External player` handoffs providing almost no explicit confirmation inside AniDestiny itself, which made the transition feel like "maybe that tap worked" unless the system app-switch was obvious; the player now shows one short in-app confirmation once the current playback has been opened externally.
 - Fixed the playback-failure screen still leaving the previous episode's danmaku overlay and danmaku status badge visible behind the error card; once playback has failed, AniDestiny now clears that stale viewing chrome first so the page only communicates the failure and the available recovery actions.
 - Fixed embedded playback keeping only the episode title in the app bar while `Next episode`, `Retrying playback...`, or `Opening external player...` was already taking over the page; the non-fullscreen app bar now keeps the current or upcoming episode title and adds one short status line so waiting states stay calm without hiding the active handoff.
 - Fixed AniDestiny still falling back to vague `No playable source found` or `Source temporarily unavailable` copy when users were already in a failed playback state, tapped `Next episode`, and the handoff never truly left the current episode; any aborted next-episode attempt that keeps the current page now explicitly says it stayed on the current episode so the recovery result itself stays honest.
