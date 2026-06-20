@@ -477,7 +477,7 @@ void main() {
 
     expect(
       find.text(
-        'The selected source Mock Anime Source is temporarily unavailable, so playback is using fallback data from Sakura Anime.',
+        'Mock Anime Source is temporarily unavailable. AniDestiny is playing from Sakura Anime instead.',
       ),
       findsOneWidget,
     );
@@ -504,7 +504,7 @@ void main() {
 
     expect(
       find.text(
-        'The selected source Mock Anime Source is temporarily unavailable, so playback is using fallback data from Sakura Anime.',
+        'Mock Anime Source is temporarily unavailable. AniDestiny is playing from Sakura Anime instead.',
       ),
       findsOneWidget,
     );
@@ -514,7 +514,7 @@ void main() {
 
     expect(
       find.text(
-        'The selected source Mock Anime Source is temporarily unavailable, so playback is using fallback data from Sakura Anime.',
+        'Mock Anime Source is temporarily unavailable. AniDestiny is playing from Sakura Anime instead.',
       ),
       findsNothing,
     );
@@ -539,7 +539,7 @@ void main() {
 
     expect(
       find.text(
-        'The selected source Mock Anime Source is temporarily unavailable, so playback is using fallback data from Sakura Anime.',
+        'Mock Anime Source is temporarily unavailable. AniDestiny is playing from Sakura Anime instead.',
       ),
       findsNothing,
     );
@@ -550,7 +550,7 @@ void main() {
     expect(find.text('Retrying playback...'), findsNWidgets(2));
     expect(
       find.text(
-        'The selected source Mock Anime Source is temporarily unavailable, so playback is using fallback data from Sakura Anime.',
+        'Mock Anime Source is temporarily unavailable. AniDestiny is playing from Sakura Anime instead.',
       ),
       findsNothing,
     );
@@ -560,7 +560,7 @@ void main() {
 
     expect(
       find.text(
-        'The selected source Mock Anime Source is temporarily unavailable, so playback is using fallback data from Sakura Anime.',
+        'Mock Anime Source is temporarily unavailable. AniDestiny is playing from Sakura Anime instead.',
       ),
       findsOneWidget,
     );
@@ -917,7 +917,7 @@ void main() {
 
     expect(
       find.text(
-        'The selected source Mock Anime Source is temporarily unavailable, so playback is using fallback data from Sakura Anime.',
+        'Mock Anime Source is temporarily unavailable. AniDestiny is playing from Sakura Anime instead.',
       ),
       findsOneWidget,
     );
@@ -928,7 +928,7 @@ void main() {
     expect(find.text('Opening external player...'), findsNWidgets(2));
     expect(
       find.text(
-        'The selected source Mock Anime Source is temporarily unavailable, so playback is using fallback data from Sakura Anime.',
+        'Mock Anime Source is temporarily unavailable. AniDestiny is playing from Sakura Anime instead.',
       ),
       findsNothing,
     );
@@ -938,7 +938,7 @@ void main() {
 
     expect(
       find.text(
-        'The selected source Mock Anime Source is temporarily unavailable, so playback is using fallback data from Sakura Anime.',
+        'Mock Anime Source is temporarily unavailable. AniDestiny is playing from Sakura Anime instead.',
       ),
       findsOneWidget,
     );

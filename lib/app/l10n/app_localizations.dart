@@ -607,7 +607,7 @@ const _localizedValues = {
         '这里会显示当前会话最近一次播放快照，方便你在复制诊断信息前先确认番剧、线路、URL 类型和请求头字段。',
     'playbackDiagnosticsEmptyHint': '先在当前会话里播放一次，再回来这里确认最近一次播放快照并复制诊断信息。',
     'sourceFallbackPlayerNotice':
-        '当前所选数据源 {requestedSource} 暂时不可用，播放器正在使用 {activeSource} 的备用播放数据。',
+        '当前所选数据源 {requestedSource} 暂时不可用，已改用 {activeSource} 继续播放。',
     'playbackDiagnosticsDebugHint':
         '这里会显示当前会话最近一次播放快照，方便你在复制诊断信息前先确认番剧、线路、URL 类型和请求头字段。',
     'playbackDiagnosticCapturedAt': '采集时间',
@@ -890,7 +890,7 @@ const _localizedValues = {
     'playbackDiagnosticsEmptyHint':
         'Start playback once in this session, then come back here to confirm the latest playback snapshot before copying diagnostics.',
     'sourceFallbackPlayerNotice':
-        'The selected source {requestedSource} is temporarily unavailable, so playback is using fallback data from {activeSource}.',
+        '{requestedSource} is temporarily unavailable. AniDestiny is playing from {activeSource} instead.',
     'playbackDiagnosticsDebugHint':
         'The latest playback snapshot captured in this session appears here so you can confirm the anime, line, URL type, and request-header names before copying diagnostics.',
     'playbackDiagnosticCapturedAt': 'Captured at',
@@ -1161,7 +1161,7 @@ const _localizedValues = {
     'playbackDiagnosticsEmptyHint':
         'このセッションで一度再生してから戻ると、診断情報をコピーする前に直近の再生スナップショットをここで確認できます。',
     'sourceFallbackPlayerNotice':
-        '選択していたソース {requestedSource} は一時的に利用できないため、現在は {activeSource} の代替データで再生しています。',
+        '選択していたソース {requestedSource} は一時的に利用できないため、現在は {activeSource} に切り替えて再生しています。',
     'playbackDiagnosticsDebugHint':
         'このセッションで直近に取得した再生スナップショットをここへ表示し、診断情報をコピーする前に作品・ライン・URL 種類・リクエストヘッダー項目を確認できます。',
     'playbackDiagnosticCapturedAt': '取得時刻',
