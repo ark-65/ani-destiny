@@ -152,8 +152,11 @@ class AppLocalizations {
   String get nextEpisodeNotImplemented => _t('nextEpisodeNotImplemented');
   String get nextEpisodeUnavailable => _t('nextEpisodeUnavailable');
   String get nextEpisodeStayedOnCurrent => _t('nextEpisodeStayedOnCurrent');
-  String get externalPlayerHeadersUnsupported =>
-      _t('externalPlayerHeadersUnsupported');
+  String externalPlayerHeadersUnsupported(String activeSource) =>
+      _t('externalPlayerHeadersUnsupported').replaceFirst(
+        '{activeSource}',
+        activeSource,
+      );
   String externalPlayerOpened(String activeSource) =>
       _t('externalPlayerOpened').replaceFirst('{activeSource}', activeSource);
   String externalPlayerUnavailable(String activeSource) =>
@@ -487,7 +490,7 @@ const _localizedValues = {
     'nextEpisodeUnavailable': '当前已经是最后一集了。',
     'nextEpisodeStayedOnCurrent': '下一集暂时无法打开，已保留当前这一集。',
     'externalPlayerHeadersUnsupported':
-        '当前这条播放线路暂时只能留在 AniDestiny 内播放，还不能直接交给外部播放器。',
+        '当前这条 {activeSource} 播放暂时只能留在 AniDestiny 内播放，还不能直接交给外部播放器。',
     'externalPlayerOpened': '已在外部播放器中打开 {activeSource} 的播放。',
     'externalPlayerUnavailable':
         '暂时无法把 {activeSource} 的播放交给外部播放器，当前播放会继续留在 AniDestiny。',
@@ -760,7 +763,7 @@ const _localizedValues = {
     'nextEpisodeStayedOnCurrent':
         "Couldn't open the next episode. Staying on the current one.",
     'externalPlayerHeadersUnsupported':
-        'This playback line can only stay in AniDestiny for now, so it cannot be opened in another player yet.',
+        'This {activeSource} playback needs to stay in AniDestiny for now, so it cannot be opened in another player yet.',
     'externalPlayerOpened':
         'Opened {activeSource} playback in your external player.',
     'externalPlayerUnavailable':
@@ -1040,7 +1043,7 @@ const _localizedValues = {
     'nextEpisodeUnavailable': 'すでに最新の配信済みエピソードです。',
     'nextEpisodeStayedOnCurrent': '次のエピソードを開けなかったため、現在のエピソードに留まります。',
     'externalPlayerHeadersUnsupported':
-        'この再生ラインは、いまは AniDestiny 内でのみ再生できます。まだ外部プレイヤーには渡せません。',
+        'この {activeSource} の再生は、いまは AniDestiny 内に留める必要があります。まだ外部プレイヤーには渡せません。',
     'externalPlayerOpened': '外部プレイヤーで {activeSource} の再生を開きました。',
     'externalPlayerUnavailable':
         '{activeSource} の再生を外部プレイヤーで開けませんでした。現在の再生は AniDestiny に残ります。',

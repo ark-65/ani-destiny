@@ -346,7 +346,7 @@ void main() {
           onNextEpisode: _noop,
           onOpenExternalPlayer: null,
           externalPlayerTooltip:
-              'This playback line can only stay in AniDestiny for now, so it cannot be opened in another player yet.',
+              'This Sakura Anime playback needs to stay in AniDestiny for now, so it cannot be opened in another player yet.',
           downloadTooltip: 'Download',
           onDownload: _noop,
           onToggleDanmaku: _noop,
@@ -363,7 +363,7 @@ void main() {
 
     expect(
       find.byTooltip(
-        'This playback line can only stay in AniDestiny for now, so it cannot be opened in another player yet.',
+        'This Sakura Anime playback needs to stay in AniDestiny for now, so it cannot be opened in another player yet.',
       ),
       findsOneWidget,
     );

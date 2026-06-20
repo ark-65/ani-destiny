@@ -7,6 +7,7 @@
 ## [Unreleased]
 
 ### 🐛 Fixed
+- Fixed header-protected external handoff limits still describing the blocked stream as a vague "playback" instead of naming the active source AniDestiny was keeping in-app; the disabled tooltip, failure card, and immediate feedback now call out the actual source that stays in AniDestiny so this boundary feels as specific as the newer handoff success and failure copy.
 - Fixed successful and failed `External player` handoffs still talking only about "current playback" without naming which source AniDestiny was actually handing off; the confirmation and failure copy now call out the active source directly so fallback-backed handoffs stay specific and trustworthy.
 - Fixed fallback-backed playback failures still leading with only diagnostic source/line context after AniDestiny had already switched away from the requested source; the failure card now first says plainly which source AniDestiny continued from, then keeps the detailed diagnostics underneath so users understand the outcome before the internals.
 - Fixed successful next-episode handoffs that quietly fell back to another source still ending with a generic source-unavailable toast; the player now uses the same explicit source-switch wording as the in-page fallback banner, so users can immediately see which source AniDestiny kept playing from.

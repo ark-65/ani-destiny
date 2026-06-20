@@ -394,7 +394,9 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
                                       const SizedBox(height: 8),
                                       Text(
                                         context.l10n
-                                            .externalPlayerHeadersUnsupported,
+                                            .externalPlayerHeadersUnsupported(
+                                          _activeSourceLabel(context),
+                                        ),
                                         textAlign: TextAlign.center,
                                         style: Theme.of(
                                           context,
@@ -516,7 +518,9 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
       return context.l10n.noPlayableSourceFound;
     }
     if (_args.playHeaders.isNotEmpty) {
-      return context.l10n.externalPlayerHeadersUnsupported;
+      return context.l10n.externalPlayerHeadersUnsupported(
+        _activeSourceLabel(context),
+      );
     }
     return context.l10n.externalPlayer;
   }
@@ -986,7 +990,11 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
       return;
     }
     if (_args.playHeaders.isNotEmpty) {
-      _showSnackBar(context.l10n.externalPlayerHeadersUnsupported);
+      _showSnackBar(
+        context.l10n.externalPlayerHeadersUnsupported(
+          _activeSourceLabel(context),
+        ),
+      );
       return;
     }
 

@@ -61,16 +61,20 @@ void main() {
         isNot(contains('not implemented')),
       );
       expect(
-        l10n.externalPlayerHeadersUnsupported.toLowerCase(),
+        l10n.externalPlayerHeadersUnsupported('Sakura Anime').toLowerCase(),
         isNot(contains('request headers')),
       );
       expect(
-        l10n.externalPlayerHeadersUnsupported,
+        l10n.externalPlayerHeadersUnsupported('Sakura Anime'),
         isNot(contains('请求头')),
       );
       expect(
-        l10n.externalPlayerHeadersUnsupported,
+        l10n.externalPlayerHeadersUnsupported('Sakura Anime'),
         isNot(contains('ヘッダー')),
+      );
+      expect(
+        l10n.externalPlayerHeadersUnsupported('Sakura Anime'),
+        contains('Sakura Anime'),
       );
       expect(
         l10n.externalPlayerOpened('Sakura Anime').toLowerCase(),
