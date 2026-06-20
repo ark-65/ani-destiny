@@ -2129,12 +2129,12 @@ void main() {
     expect(busyBackButton.onPressed, isNotNull);
     expect(
       busyBackButton.tooltip,
-      'Please wait for the current playback action to finish before leaving.',
+      'Please wait until the next episode finishes loading before leaving.',
     );
 
     await tester.tap(
       find.byTooltip(
-        'Please wait for the current playback action to finish before leaving.',
+        'Please wait until the next episode finishes loading before leaving.',
       ),
     );
     await tester.pump();
@@ -2143,7 +2143,7 @@ void main() {
     expect(find.text('Open player'), findsNothing);
     expect(
       find.text(
-        'Please wait for the current playback action to finish before leaving.',
+        'Please wait until the next episode finishes loading before leaving.',
       ),
       findsOneWidget,
     );
@@ -2181,7 +2181,7 @@ void main() {
     expect(find.text('Open player'), findsNothing);
     expect(
       find.text(
-        'Please wait for the current playback action to finish before leaving.',
+        'Please wait until the next episode finishes loading before leaving.',
       ),
       findsOneWidget,
     );
@@ -2223,7 +2223,7 @@ void main() {
     expect(find.text('Open player'), findsNothing);
     expect(
       find.text(
-        'Please wait for the current playback action to finish before leaving.',
+        'Please wait until the next episode finishes loading before leaving.',
       ),
       findsOneWidget,
     );
@@ -2263,7 +2263,7 @@ void main() {
     expect(find.text('Open player'), findsNothing);
     expect(
       find.text(
-        'Please wait for the current playback action to finish before leaving.',
+        'Please wait until the external player finishes opening before leaving.',
       ),
       findsOneWidget,
     );
@@ -2302,7 +2302,7 @@ void main() {
     expect(find.text('Open player'), findsNothing);
     expect(
       find.text(
-        'Please wait for the current playback action to finish before leaving.',
+        'Please wait until playback finishes retrying before leaving.',
       ),
       findsOneWidget,
     );

@@ -144,6 +144,10 @@ class AppLocalizations {
   String get openingExternalPlayer => _t('openingExternalPlayer');
   String get retryingPlayback => _t('retryingPlayback');
   String get playerExitBusy => _t('playerExitBusy');
+  String get playerExitBusyNextEpisode => _t('playerExitBusyNextEpisode');
+  String get playerExitBusyExternalPlayer => _t('playerExitBusyExternalPlayer');
+  String get playerExitBusyRetryingPlayback =>
+      _t('playerExitBusyRetryingPlayback');
   String get externalPlayerPlaceholder => _t('externalPlayerPlaceholder');
   String get nextEpisodeNotImplemented => _t('nextEpisodeNotImplemented');
   String get nextEpisodeUnavailable => _t('nextEpisodeUnavailable');
@@ -470,6 +474,9 @@ const _localizedValues = {
     'openingExternalPlayer': '正在打开外部播放器…',
     'retryingPlayback': '正在重试播放…',
     'playerExitBusy': '当前播放操作尚未完成，请稍候后再离开。',
+    'playerExitBusyNextEpisode': '请先等下一集加载完成，再离开当前播放页。',
+    'playerExitBusyExternalPlayer': '请先等外部播放器打开完成，再离开当前播放页。',
+    'playerExitBusyRetryingPlayback': '请先等这次重试播放完成，再离开当前播放页。',
     'externalPlayerPlaceholder': '外部播放器占位',
     'nextEpisodeNotImplemented': '下一集暂未实现。',
     'nextEpisodeUnavailable': '当前已经是最后一集了。',
@@ -734,6 +741,12 @@ const _localizedValues = {
     'retryingPlayback': 'Retrying playback...',
     'playerExitBusy':
         'Please wait for the current playback action to finish before leaving.',
+    'playerExitBusyNextEpisode':
+        'Please wait until the next episode finishes loading before leaving.',
+    'playerExitBusyExternalPlayer':
+        'Please wait until the external player finishes opening before leaving.',
+    'playerExitBusyRetryingPlayback':
+        'Please wait until playback finishes retrying before leaving.',
     'externalPlayerPlaceholder': 'External player placeholder',
     'nextEpisodeNotImplemented': 'Next episode is not implemented yet.',
     'nextEpisodeUnavailable':
@@ -1013,6 +1026,9 @@ const _localizedValues = {
     'openingExternalPlayer': '外部プレイヤーを起動中…',
     'retryingPlayback': '再生を再試行しています…',
     'playerExitBusy': '現在の再生操作が終わるまで、しばらく待ってから戻ってください。',
+    'playerExitBusyNextEpisode': '次のエピソードの読み込みが終わってから戻ってください。',
+    'playerExitBusyExternalPlayer': '外部プレイヤーが開き終わってから戻ってください。',
+    'playerExitBusyRetryingPlayback': '再生の再試行が終わってから戻ってください。',
     'externalPlayerPlaceholder': '外部プレイヤー',
     'nextEpisodeNotImplemented': '次のエピソードはまだ実装されていません。',
     'nextEpisodeUnavailable': 'すでに最新の配信済みエピソードです。',

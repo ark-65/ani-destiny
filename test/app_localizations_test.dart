@@ -101,6 +101,36 @@ void main() {
     expect(ja.nextEpisodeStayedOnCurrent, isNot(contains('ソース')));
   });
 
+  test('busy player exit copy matches the active handoff', () {
+    const zh = AppLocalizations(Locale('zh'));
+    expect(zh.playerExitBusyNextEpisode, contains('下一集'));
+    expect(zh.playerExitBusyExternalPlayer, contains('外部播放器'));
+    expect(zh.playerExitBusyRetryingPlayback, contains('重试播放'));
+
+    const en = AppLocalizations(Locale('en'));
+    expect(
+      en.playerExitBusyNextEpisode.toLowerCase(),
+      contains('next episode'),
+    );
+    expect(
+      en.playerExitBusyExternalPlayer.toLowerCase(),
+      contains('external player'),
+    );
+    expect(
+      en.playerExitBusyRetryingPlayback.toLowerCase(),
+      contains('retry'),
+    );
+    expect(
+      en.playerExitBusyNextEpisode.toLowerCase(),
+      isNot(contains('current playback action')),
+    );
+
+    const ja = AppLocalizations(Locale('ja'));
+    expect(ja.playerExitBusyNextEpisode, contains('次のエピソード'));
+    expect(ja.playerExitBusyExternalPlayer, contains('外部プレイヤー'));
+    expect(ja.playerExitBusyRetryingPlayback, contains('再試行'));
+  });
+
   test('source health labels stay localized in Chinese and Japanese', () {
     const zh = AppLocalizations(Locale('zh'));
     expect(zh.sourceHealthHealthy, '正常');

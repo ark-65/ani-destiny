@@ -132,6 +132,7 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
     final routeTransitionDetail = _isFullscreen
         ? (_isSwitchingEpisode ? _switchingEpisodeTitle : _args.episodeTitle)
         : null;
+    final playerExitBusyMessage = _routeBusyExitMessage(context);
     final showDanmakuChrome = !isRouteBusy && _state.errorMessage == null;
     final appBarEpisodeTitle = _isSwitchingEpisode
         ? (_switchingEpisodeTitle ?? _args.episodeTitle)
@@ -183,7 +184,7 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
       onPopInvokedWithResult: (didPop, result) {
         if (didPop) return;
         if (isRouteBusy) {
-          _showSnackBar(context.l10n.playerExitBusy);
+          _showSnackBar(playerExitBusyMessage);
           return;
         }
         if (_isFullscreen) {
@@ -200,10 +201,10 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
                 leading: canLeavePlayer
                     ? IconButton(
                         tooltip: isRouteBusy
-                            ? context.l10n.playerExitBusy
+                            ? playerExitBusyMessage
                             : context.l10n.back,
                         onPressed: isRouteBusy
-                            ? () => _showSnackBar(context.l10n.playerExitBusy)
+                            ? () => _showSnackBar(playerExitBusyMessage)
                             : () => Navigator.of(context).maybePop(),
                         icon: const BackButtonIcon(),
                       )
@@ -517,6 +518,19 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
       return context.l10n.noPlayableSourceFound;
     }
     return context.l10n.download;
+  }
+
+  String _routeBusyExitMessage(BuildContext context) {
+    if (_isSwitchingEpisode) {
+      return context.l10n.playerExitBusyNextEpisode;
+    }
+    if (_isOpeningExternalPlayer) {
+      return context.l10n.playerExitBusyExternalPlayer;
+    }
+    if (_isRetryingPlayback) {
+      return context.l10n.playerExitBusyRetryingPlayback;
+    }
+    return context.l10n.playerExitBusy;
   }
 
   Future<void> _toggleFullscreen() async {

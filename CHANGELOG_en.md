@@ -7,6 +7,7 @@
 ## [Unreleased]
 
 ### 🐛 Fixed
+- Fixed player exit attempts during route-level handoffs like `Next episode`, `Opening external player...`, and `Retrying playback...` still collapsing to one generic "current playback action" warning without saying what AniDestiny was actually waiting on; app-bar Back and system back now explain the active handoff directly, so leaving the player uses the same honest language as the visible busy state.
 - Fixed the embedded player app-bar Back arrow becoming a dead tap target during route-level handoffs like `Next episode`, `Retrying playback...`, and `Opening external player...` while system back still explained that AniDestiny needed a moment; that leading exit affordance now surfaces the same busy explanation instead of silently doing nothing, so every way of leaving the player stays consistent.
 - Fixed successful `External player` handoffs providing almost no explicit confirmation inside AniDestiny itself, which made the transition feel like "maybe that tap worked" unless the system app-switch was obvious; the player now shows one short in-app confirmation once the current playback has been opened externally.
 - Fixed the playback-failure screen still leaving the previous episode's danmaku overlay and danmaku status badge visible behind the error card; once playback has failed, AniDestiny now clears that stale viewing chrome first so the page only communicates the failure and the available recovery actions.
