@@ -420,6 +420,7 @@ void main() {
       ),
       findsOneWidget,
     );
+    expect(find.text('External player'), findsOneWidget);
   });
 
   testWidgets('playback failure UI stays usable on narrow screens', (

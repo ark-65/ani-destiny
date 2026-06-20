@@ -343,7 +343,7 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
                                             icon: const Icon(Icons.refresh),
                                             label: Text(context.l10n.retry),
                                           ),
-                                        if (_supportsExternalPlayerHandoff())
+                                        if (_hasPlayableUrl())
                                           TextButton.icon(
                                             onPressed:
                                                 canUseExternalPlayerAction
