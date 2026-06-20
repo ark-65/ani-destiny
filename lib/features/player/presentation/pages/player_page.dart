@@ -136,6 +136,7 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
     final appBarEpisodeTitle = _isSwitchingEpisode
         ? (_switchingEpisodeTitle ?? _args.episodeTitle)
         : _args.episodeTitle;
+    final appBarStatus = isRouteBusy ? routeTransitionMessage : null;
     final nextEpisodeTooltip = _isSwitchingEpisode
         ? context.l10n.loadingNextEpisode
         : _isOpeningExternalPlayer
@@ -209,6 +210,7 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
                     : null,
                 title: _PlayerAppBarTitle(
                   title: appBarEpisodeTitle,
+                  status: appBarStatus,
                 ),
                 foregroundColor: Colors.white,
                 backgroundColor: Colors.black,
@@ -1193,17 +1195,37 @@ class _SourceFallbackBanner extends StatelessWidget {
 class _PlayerAppBarTitle extends StatelessWidget {
   const _PlayerAppBarTitle({
     required this.title,
+    this.status,
   });
 
   final String title;
+  final String? status;
 
   @override
   Widget build(BuildContext context) {
     final titleText = title.trim().isEmpty ? '-' : title.trim();
-    return Text(
-      titleText,
-      maxLines: 1,
-      overflow: TextOverflow.ellipsis,
+    final statusText = status?.trim();
+    final textTheme = Theme.of(context).textTheme;
+
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          titleText,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+        ),
+        if (statusText != null && statusText.isNotEmpty)
+          Text(
+            statusText,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: textTheme.labelSmall?.copyWith(
+              color: Colors.white70,
+            ),
+          ),
+      ],
     );
   }
 }
