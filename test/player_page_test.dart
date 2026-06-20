@@ -2082,7 +2082,7 @@ void main() {
     expect(playButton.tooltip, 'Pause');
   });
 
-  testWidgets('app bar back action is disabled while next episode loads', (
+  testWidgets('app bar back action explains why it cannot leave mid-handoff', (
     tester,
   ) async {
     final pendingRepository = _PendingNextEpisodeAnimeRepository();
@@ -2126,10 +2126,26 @@ void main() {
           )
           .first,
     );
-    expect(busyBackButton.onPressed, isNull);
+    expect(busyBackButton.onPressed, isNotNull);
     expect(
       busyBackButton.tooltip,
       'Please wait for the current playback action to finish before leaving.',
+    );
+
+    await tester.tap(
+      find.byTooltip(
+        'Please wait for the current playback action to finish before leaving.',
+      ),
+    );
+    await tester.pump();
+
+    expect(find.byType(PlayerPage), findsOneWidget);
+    expect(find.text('Open player'), findsNothing);
+    expect(
+      find.text(
+        'Please wait for the current playback action to finish before leaving.',
+      ),
+      findsOneWidget,
     );
   });
 

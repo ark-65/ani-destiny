@@ -203,7 +203,7 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
                             ? context.l10n.playerExitBusy
                             : context.l10n.back,
                         onPressed: isRouteBusy
-                            ? null
+                            ? () => _showSnackBar(context.l10n.playerExitBusy)
                             : () => Navigator.of(context).maybePop(),
                         icon: const BackButtonIcon(),
                       )
