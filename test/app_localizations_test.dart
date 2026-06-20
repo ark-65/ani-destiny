@@ -83,6 +83,23 @@ void main() {
     }
   });
 
+  test('external player failure copy explains staying in AniDestiny', () {
+    const zh = AppLocalizations(Locale('zh'));
+    expect(zh.externalPlayerUnavailable, contains('AniDestiny'));
+    expect(zh.externalPlayerUnavailable, contains('留在'));
+
+    const en = AppLocalizations(Locale('en'));
+    expect(en.externalPlayerUnavailable, contains('Staying in AniDestiny'));
+    expect(
+      en.externalPlayerUnavailable.toLowerCase(),
+      isNot(contains('later')),
+    );
+
+    const ja = AppLocalizations(Locale('ja'));
+    expect(ja.externalPlayerUnavailable, contains('AniDestiny'));
+    expect(ja.externalPlayerUnavailable, contains('残ります'));
+  });
+
   test('next episode recovery copy explains staying on the current episode',
       () {
     const zh = AppLocalizations(Locale('zh'));

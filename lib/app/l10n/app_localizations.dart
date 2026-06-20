@@ -484,7 +484,7 @@ const _localizedValues = {
     'externalPlayerHeadersUnsupported':
         '当前这条播放线路暂时只能留在 AniDestiny 内播放，还不能直接交给外部播放器。',
     'externalPlayerOpened': '已在外部播放器中打开当前播放。',
-    'externalPlayerUnavailable': '暂时无法交给外部播放器打开，请稍后重试。',
+    'externalPlayerUnavailable': '暂时无法交给外部播放器，当前播放会继续留在 AniDestiny。',
     'externalPlayerNotImplemented': '外部播放器暂未实现。',
     'playbackDiagnostics': '播放诊断',
     'playbackDiagnosticAnime': '番剧',
@@ -758,7 +758,7 @@ const _localizedValues = {
     'externalPlayerOpened':
         'Opened the current playback in your external player.',
     'externalPlayerUnavailable':
-        'Could not open in an external player. Try again later.',
+        'Could not open this in your external player. Staying in AniDestiny.',
     'externalPlayerNotImplemented': 'External player is not implemented yet.',
     'playbackDiagnostics': 'Playback diagnostics',
     'playbackDiagnosticAnime': 'Anime',
@@ -1036,7 +1036,7 @@ const _localizedValues = {
     'externalPlayerHeadersUnsupported':
         'この再生ラインは、いまは AniDestiny 内でのみ再生できます。まだ外部プレイヤーには渡せません。',
     'externalPlayerOpened': '現在の再生を外部プレイヤーで開きました。',
-    'externalPlayerUnavailable': '外部プレイヤーで開けませんでした。しばらくしてからもう一度お試しください。',
+    'externalPlayerUnavailable': '外部プレイヤーで開けませんでした。現在の再生は AniDestiny に残ります。',
     'externalPlayerNotImplemented': '外部プレイヤーはまだ実装されていません。',
     'playbackDiagnostics': '再生診断',
     'playbackDiagnosticAnime': '作品',

@@ -804,7 +804,9 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(
-      find.text('Could not open in an external player. Try again later.'),
+      find.text(
+        'Could not open this in your external player. Staying in AniDestiny.',
+      ),
       findsOneWidget,
     );
     expect(
@@ -1070,7 +1072,9 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(
-      find.text('Could not open in an external player. Try again later.'),
+      find.text(
+        'Could not open this in your external player. Staying in AniDestiny.',
+      ),
       findsOneWidget,
     );
     expect(repository.adapter.pauseCalls, 1);
