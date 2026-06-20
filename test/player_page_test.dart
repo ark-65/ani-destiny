@@ -297,6 +297,12 @@ void main() {
       ),
       findsOneWidget,
     );
+    expect(
+      find.text(
+        'Mock Anime Source is temporarily unavailable. AniDestiny is playing from Sakura Anime instead.',
+      ),
+      findsOneWidget,
+    );
     expect(find.text('Anime: Anime 1'), findsOneWidget);
     expect(find.text('Episode: Episode 2'), findsOneWidget);
     expect(
@@ -585,7 +591,7 @@ void main() {
       find.text(
         'Mock Anime Source is temporarily unavailable. AniDestiny is playing from Sakura Anime instead.',
       ),
-      findsNothing,
+      findsOneWidget,
     );
 
     await tester.tap(find.text('Retry'));

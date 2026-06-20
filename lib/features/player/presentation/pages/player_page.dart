@@ -300,6 +300,20 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
                                       _playbackErrorMessage(),
                                       textAlign: TextAlign.center,
                                     ),
+                                    if (_hasSourceFallbackContext()) ...[
+                                      const SizedBox(height: 12),
+                                      Text(
+                                        _sourceFallbackNotice(context),
+                                        textAlign: TextAlign.center,
+                                        style: Theme.of(
+                                          context,
+                                        ).textTheme.bodySmall?.copyWith(
+                                              color: Theme.of(context)
+                                                  .colorScheme
+                                                  .onSurfaceVariant,
+                                            ),
+                                      ),
+                                    ],
                                     const SizedBox(height: 12),
                                     _PlaybackIssueContext(
                                       animeTitle: _args.animeTitle,
