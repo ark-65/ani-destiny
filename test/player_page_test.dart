@@ -1447,7 +1447,7 @@ void main() {
     expect(find.text('Episode 2'), findsOneWidget);
   });
 
-  testWidgets('fullscreen exit stays locked while next episode loads', (
+  testWidgets('fullscreen exit explains why it stays locked mid-handoff', (
     tester,
   ) async {
     final animeRepository = _PendingPlayableNextEpisodeAnimeRepository();
@@ -1475,8 +1475,19 @@ void main() {
     final fullscreenButton = tester.widget<IconButton>(
       find.widgetWithIcon(IconButton, Icons.fullscreen_exit),
     );
-    expect(fullscreenButton.onPressed, isNull);
+    expect(fullscreenButton.onPressed, isNotNull);
     expect(fullscreenButton.tooltip, 'Loading next episode...');
+
+    await tester.tap(find.widgetWithIcon(IconButton, Icons.fullscreen_exit));
+    await tester.pump();
+
+    expect(find.byType(AppBar), findsNothing);
+    expect(
+      find.text(
+        'Please wait until the next episode finishes loading before leaving.',
+      ),
+      findsOneWidget,
+    );
   });
 
   testWidgets(

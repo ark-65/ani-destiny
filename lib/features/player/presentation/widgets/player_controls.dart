@@ -19,6 +19,7 @@ class PlayerControls extends StatelessWidget {
     required this.onDownload,
     required this.onToggleDanmaku,
     required this.onToggleFullscreen,
+    this.onBlockedFullscreenExit,
     required this.danmakuEnabled,
     required this.isFullscreen,
     required this.isSwitchingEpisode,
@@ -41,6 +42,7 @@ class PlayerControls extends StatelessWidget {
   final VoidCallback? onDownload;
   final VoidCallback onToggleDanmaku;
   final VoidCallback? onToggleFullscreen;
+  final VoidCallback? onBlockedFullscreenExit;
   final bool danmakuEnabled;
   final bool isFullscreen;
   final bool isSwitchingEpisode;
@@ -100,6 +102,11 @@ class PlayerControls extends StatelessWidget {
     final canToggleFullscreen = isFullscreen
         ? !isInteractionLocked
         : !isInteractionLocked && canEnterFullscreen;
+    final fullscreenAction = canToggleFullscreen
+        ? onToggleFullscreen
+        : isFullscreen && isInteractionLocked
+            ? onBlockedFullscreenExit
+            : null;
     final fullscreenTooltip = isSwitchingEpisode
         ? context.l10n.loadingNextEpisode
         : isOpeningExternalPlayer
@@ -216,7 +223,7 @@ class PlayerControls extends StatelessWidget {
                   ),
                   IconButton(
                     tooltip: fullscreenTooltip,
-                    onPressed: canToggleFullscreen ? onToggleFullscreen : null,
+                    onPressed: fullscreenAction,
                     icon: Icon(
                       isFullscreen ? Icons.fullscreen_exit : Icons.fullscreen,
                     ),

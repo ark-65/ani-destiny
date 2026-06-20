@@ -143,6 +143,49 @@ void main() {
     expect(fullscreenButton.tooltip, 'Loading next episode...');
   });
 
+  testWidgets(
+      'fullscreen switching state can surface a blocked-exit explanation',
+      (tester) async {
+    var blockedExitTaps = 0;
+
+    await tester.pumpWidget(
+      _buildApp(
+        PlayerControls(
+          state: _state,
+          hasPlayableSource: true,
+          onPlayPause: _noop,
+          onSeek: (_) {},
+          onSpeed: _noop,
+          onNextEpisode: null,
+          onOpenExternalPlayer: _noop,
+          externalPlayerTooltip: 'External player',
+          downloadTooltip: 'Loading next episode...',
+          onDownload: null,
+          onToggleDanmaku: _noop,
+          onToggleFullscreen: _noop,
+          onBlockedFullscreenExit: () => blockedExitTaps += 1,
+          danmakuEnabled: true,
+          isFullscreen: true,
+          isSwitchingEpisode: true,
+          isOpeningExternalPlayer: false,
+        ),
+      ),
+    );
+
+    await tester.pump();
+
+    final fullscreenButton = tester.widget<IconButton>(
+      find.widgetWithIcon(IconButton, Icons.fullscreen_exit),
+    );
+    expect(fullscreenButton.onPressed, isNotNull);
+    expect(fullscreenButton.tooltip, 'Loading next episode...');
+
+    await tester.tap(find.widgetWithIcon(IconButton, Icons.fullscreen_exit));
+    await tester.pump();
+
+    expect(blockedExitTaps, 1);
+  });
+
   testWidgets('retrying playback also disables danmaku changes',
       (tester) async {
     await tester.pumpWidget(

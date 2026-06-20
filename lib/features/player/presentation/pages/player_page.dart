@@ -449,6 +449,9 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
                     : null,
                 onToggleFullscreen:
                     isRouteBusy ? null : () => unawaited(_toggleFullscreen()),
+                onBlockedFullscreenExit: isRouteBusy && _isFullscreen
+                    ? () => _showSnackBar(playerExitBusyMessage)
+                    : null,
                 onToggleDanmaku: () {
                   ref.read(danmakuSettingsProvider.notifier).state =
                       danmakuSettings.copyWith(

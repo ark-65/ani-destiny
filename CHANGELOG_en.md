@@ -7,6 +7,7 @@
 ## [Unreleased]
 
 ### 🐛 Fixed
+- Fixed fullscreen route-level handoffs like `Next episode`, `Retrying playback...`, and `Opening external player...` still leaving the visible `Exit fullscreen` control as a dead tap target for touch users; that visible exit affordance now explains the active busy reason directly, so it stays consistent with system back and the embedded back arrow.
 - Fixed failed `External player` handoffs only telling users to try again later without clearly saying the current episode was still staying inside AniDestiny; the failure copy now explicitly says playback remains in AniDestiny so an interrupted handoff still feels honest.
 - Fixed player exit attempts during route-level handoffs like `Next episode`, `Opening external player...`, and `Retrying playback...` still collapsing to one generic "current playback action" warning without saying what AniDestiny was actually waiting on; app-bar Back and system back now explain the active handoff directly, so leaving the player uses the same honest language as the visible busy state.
 - Fixed the embedded player app-bar Back arrow becoming a dead tap target during route-level handoffs like `Next episode`, `Retrying playback...`, and `Opening external player...` while system back still explained that AniDestiny needed a moment; that leading exit affordance now surfaces the same busy explanation instead of silently doing nothing, so every way of leaving the player stays consistent.
