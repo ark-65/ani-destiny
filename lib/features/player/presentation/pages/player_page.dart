@@ -132,7 +132,7 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
     final routeTransitionDetail = _isFullscreen
         ? (_isSwitchingEpisode ? _switchingEpisodeTitle : _args.episodeTitle)
         : null;
-    final showDanmakuChrome = !isRouteBusy;
+    final showDanmakuChrome = !isRouteBusy && _state.errorMessage == null;
     final appBarEpisodeTitle = _isSwitchingEpisode
         ? (_switchingEpisodeTitle ?? _args.episodeTitle)
         : _args.episodeTitle;

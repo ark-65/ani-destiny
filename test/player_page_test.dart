@@ -231,6 +231,34 @@ void main() {
     expect(find.text('error'), findsNothing);
   });
 
+  testWidgets('playback failure hides stale danmaku chrome', (tester) async {
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          playerRepositoryProvider.overrideWithValue(
+            const _ThrowingPlayerRepository(),
+          ),
+          historyRepositoryProvider.overrideWithValue(_FakeHistoryRepository()),
+          danmakuRepositoryProvider.overrideWithValue(
+            _PopulatedDanmakuRepository(),
+          ),
+        ],
+        child: _buildPlayerApp(_args),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(
+      find.text(
+        'Playback temporarily failed. Retry later or try another playback line.',
+      ),
+      findsOneWidget,
+    );
+    expect(find.byType(DanmakuOverlay), findsNothing);
+    expect(find.text('Visible danmaku'), findsNothing);
+    expect(find.text('Danmaku: Dandanplay'), findsNothing);
+  });
+
   testWidgets(
       'player shows requested source context when playback is on fallback data',
       (tester) async {
@@ -1638,7 +1666,7 @@ void main() {
     expect(find.text('Danmaku: Dandanplay'), findsNothing);
   });
 
-  testWidgets('retry playback hides stale danmaku chrome', (tester) async {
+  testWidgets('retry playback keeps danmaku chrome hidden', (tester) async {
     final repository = _RetryablePlayerRepository();
 
     await tester.pumpWidget(
@@ -1655,8 +1683,8 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(find.byType(DanmakuOverlay), findsOneWidget);
-    expect(find.text('Danmaku: Dandanplay'), findsOneWidget);
+    expect(find.byType(DanmakuOverlay), findsNothing);
+    expect(find.text('Danmaku: Dandanplay'), findsNothing);
 
     await tester.tap(find.text('Retry'));
     await tester.pump();
