@@ -57,7 +57,7 @@ void main() {
       final l10n = AppLocalizations(locale);
       expect(l10n.externalPlayer.toLowerCase(), isNot(contains('placeholder')));
       expect(
-        l10n.externalPlayerUnavailable.toLowerCase(),
+        l10n.externalPlayerUnavailable('Sakura Anime').toLowerCase(),
         isNot(contains('not implemented')),
       );
       expect(
@@ -73,11 +73,11 @@ void main() {
         isNot(contains('ヘッダー')),
       );
       expect(
-        l10n.externalPlayerOpened.toLowerCase(),
+        l10n.externalPlayerOpened('Sakura Anime').toLowerCase(),
         isNot(contains('success')),
       );
       expect(
-        l10n.externalPlayerOpened.toLowerCase(),
+        l10n.externalPlayerOpened('Sakura Anime').toLowerCase(),
         isNot(contains('placeholder')),
       );
     }
@@ -85,19 +85,38 @@ void main() {
 
   test('external player failure copy explains staying in AniDestiny', () {
     const zh = AppLocalizations(Locale('zh'));
-    expect(zh.externalPlayerUnavailable, contains('AniDestiny'));
-    expect(zh.externalPlayerUnavailable, contains('留在'));
+    final zhNotice = zh.externalPlayerUnavailable('Sakura Anime');
+    expect(zhNotice, contains('Sakura Anime'));
+    expect(zhNotice, contains('AniDestiny'));
+    expect(zhNotice, contains('留在'));
 
     const en = AppLocalizations(Locale('en'));
-    expect(en.externalPlayerUnavailable, contains('Staying in AniDestiny'));
+    final enNotice = en.externalPlayerUnavailable('Sakura Anime');
+    expect(enNotice, contains('Sakura Anime'));
+    expect(enNotice, contains('Staying in AniDestiny'));
     expect(
-      en.externalPlayerUnavailable.toLowerCase(),
+      enNotice.toLowerCase(),
       isNot(contains('later')),
     );
 
     const ja = AppLocalizations(Locale('ja'));
-    expect(ja.externalPlayerUnavailable, contains('AniDestiny'));
-    expect(ja.externalPlayerUnavailable, contains('残ります'));
+    final jaNotice = ja.externalPlayerUnavailable('Sakura Anime');
+    expect(jaNotice, contains('Sakura Anime'));
+    expect(jaNotice, contains('AniDestiny'));
+    expect(jaNotice, contains('残ります'));
+  });
+
+  test('external player success copy names the active source', () {
+    const zh = AppLocalizations(Locale('zh'));
+    expect(zh.externalPlayerOpened('Sakura Anime'), contains('Sakura Anime'));
+
+    const en = AppLocalizations(Locale('en'));
+    final enNotice = en.externalPlayerOpened('Sakura Anime');
+    expect(enNotice, contains('Sakura Anime'));
+    expect(enNotice.toLowerCase(), contains('opened'));
+
+    const ja = AppLocalizations(Locale('ja'));
+    expect(ja.externalPlayerOpened('Sakura Anime'), contains('Sakura Anime'));
   });
 
   test('next episode recovery copy explains staying on the current episode',

@@ -154,8 +154,13 @@ class AppLocalizations {
   String get nextEpisodeStayedOnCurrent => _t('nextEpisodeStayedOnCurrent');
   String get externalPlayerHeadersUnsupported =>
       _t('externalPlayerHeadersUnsupported');
-  String get externalPlayerOpened => _t('externalPlayerOpened');
-  String get externalPlayerUnavailable => _t('externalPlayerUnavailable');
+  String externalPlayerOpened(String activeSource) =>
+      _t('externalPlayerOpened').replaceFirst('{activeSource}', activeSource);
+  String externalPlayerUnavailable(String activeSource) =>
+      _t('externalPlayerUnavailable').replaceFirst(
+        '{activeSource}',
+        activeSource,
+      );
   String get externalPlayerNotImplemented => _t('externalPlayerNotImplemented');
   String get playbackDiagnostics => _t('playbackDiagnostics');
   String get playbackDiagnosticAnime => _t('playbackDiagnosticAnime');
@@ -483,8 +488,9 @@ const _localizedValues = {
     'nextEpisodeStayedOnCurrent': '下一集暂时无法打开，已保留当前这一集。',
     'externalPlayerHeadersUnsupported':
         '当前这条播放线路暂时只能留在 AniDestiny 内播放，还不能直接交给外部播放器。',
-    'externalPlayerOpened': '已在外部播放器中打开当前播放。',
-    'externalPlayerUnavailable': '暂时无法交给外部播放器，当前播放会继续留在 AniDestiny。',
+    'externalPlayerOpened': '已在外部播放器中打开 {activeSource} 的播放。',
+    'externalPlayerUnavailable':
+        '暂时无法把 {activeSource} 的播放交给外部播放器，当前播放会继续留在 AniDestiny。',
     'externalPlayerNotImplemented': '外部播放器暂未实现。',
     'playbackDiagnostics': '播放诊断',
     'playbackDiagnosticAnime': '番剧',
@@ -756,9 +762,9 @@ const _localizedValues = {
     'externalPlayerHeadersUnsupported':
         'This playback line can only stay in AniDestiny for now, so it cannot be opened in another player yet.',
     'externalPlayerOpened':
-        'Opened the current playback in your external player.',
+        'Opened {activeSource} playback in your external player.',
     'externalPlayerUnavailable':
-        'Could not open this in your external player. Staying in AniDestiny.',
+        'Could not open {activeSource} playback in your external player. Staying in AniDestiny.',
     'externalPlayerNotImplemented': 'External player is not implemented yet.',
     'playbackDiagnostics': 'Playback diagnostics',
     'playbackDiagnosticAnime': 'Anime',
@@ -1035,8 +1041,9 @@ const _localizedValues = {
     'nextEpisodeStayedOnCurrent': '次のエピソードを開けなかったため、現在のエピソードに留まります。',
     'externalPlayerHeadersUnsupported':
         'この再生ラインは、いまは AniDestiny 内でのみ再生できます。まだ外部プレイヤーには渡せません。',
-    'externalPlayerOpened': '現在の再生を外部プレイヤーで開きました。',
-    'externalPlayerUnavailable': '外部プレイヤーで開けませんでした。現在の再生は AniDestiny に残ります。',
+    'externalPlayerOpened': '外部プレイヤーで {activeSource} の再生を開きました。',
+    'externalPlayerUnavailable':
+        '{activeSource} の再生を外部プレイヤーで開けませんでした。現在の再生は AniDestiny に残ります。',
     'externalPlayerNotImplemented': '外部プレイヤーはまだ実装されていません。',
     'playbackDiagnostics': '再生診断',
     'playbackDiagnosticAnime': '作品',

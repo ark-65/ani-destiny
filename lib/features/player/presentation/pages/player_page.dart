@@ -1011,7 +1011,9 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
       if (!mounted) return;
       if (!launched) {
         shouldRestorePreviousFailureState = previousState.errorMessage != null;
-        _showSnackBar(context.l10n.externalPlayerUnavailable);
+        _showSnackBar(
+          context.l10n.externalPlayerUnavailable(_activeSourceLabel(context)),
+        );
         return;
       }
 
@@ -1025,7 +1027,9 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
     } catch (_) {
       if (!mounted) return;
       shouldRestorePreviousFailureState = previousState.errorMessage != null;
-      _showSnackBar(context.l10n.externalPlayerUnavailable);
+      _showSnackBar(
+        context.l10n.externalPlayerUnavailable(_activeSourceLabel(context)),
+      );
     } finally {
       if (mounted && shouldResumeCurrentPlayback) {
         try {
@@ -1042,7 +1046,9 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
       }
     }
     if (mounted && didOpenExternalPlayer) {
-      _showSnackBar(context.l10n.externalPlayerOpened);
+      _showSnackBar(
+        context.l10n.externalPlayerOpened(_activeSourceLabel(context)),
+      );
     }
   }
 
@@ -1116,11 +1122,15 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
         requestedSourceId != _args.sourceId;
   }
 
+  String _activeSourceLabel(BuildContext context) {
+    return context.l10n.sourceDisplayLabel(_args.sourceId);
+  }
+
   String _sourceFallbackNotice(BuildContext context) {
     final requestedSourceId = _args.requestedSourceId!;
     return context.l10n.sourceFallbackPlayerNotice(
       context.l10n.sourceDisplayLabel(requestedSourceId),
-      context.l10n.sourceDisplayLabel(_args.sourceId),
+      _activeSourceLabel(context),
     );
   }
 

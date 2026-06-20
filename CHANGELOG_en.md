@@ -7,6 +7,7 @@
 ## [Unreleased]
 
 ### 🐛 Fixed
+- Fixed successful and failed `External player` handoffs still talking only about "current playback" without naming which source AniDestiny was actually handing off; the confirmation and failure copy now call out the active source directly so fallback-backed handoffs stay specific and trustworthy.
 - Fixed fallback-backed playback failures still leading with only diagnostic source/line context after AniDestiny had already switched away from the requested source; the failure card now first says plainly which source AniDestiny continued from, then keeps the detailed diagnostics underneath so users understand the outcome before the internals.
 - Fixed successful next-episode handoffs that quietly fell back to another source still ending with a generic source-unavailable toast; the player now uses the same explicit source-switch wording as the in-page fallback banner, so users can immediately see which source AniDestiny kept playing from.
 - Fixed the player fallback banner still describing a recovered stream as “fallback data”, which made a steady playback handoff sound like implementation detail. It now says plainly which source AniDestiny switched to so the result feels calmer and easier to trust.

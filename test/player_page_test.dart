@@ -855,7 +855,7 @@ void main() {
 
     expect(
       find.text(
-        'Could not open this in your external player. Staying in AniDestiny.',
+        'Could not open Sakura Anime playback in your external player. Staying in AniDestiny.',
       ),
       findsOneWidget,
     );
@@ -899,7 +899,7 @@ void main() {
 
     expect(find.text('Opening external player...'), findsNothing);
     expect(
-      find.text('Opened the current playback in your external player.'),
+      find.text('Opened Sakura Anime playback in your external player.'),
       findsOneWidget,
     );
     expect(
@@ -939,7 +939,7 @@ void main() {
 
     expect(launchedUri?.toString(), 'https://cdn.example.test/video.m3u8');
     expect(
-      find.text('Opened the current playback in your external player.'),
+      find.text('Opened Sakura Anime playback in your external player.'),
       findsOneWidget,
     );
   });
@@ -986,6 +986,11 @@ void main() {
     launchCompleter.complete(true);
     await tester.pumpAndSettle();
 
+    expect(
+      find.text('Opened Sakura Anime playback in your external player.'),
+      findsOneWidget,
+    );
+    expect(find.text('Mock Anime Source'), findsNothing);
     expect(
       find.text(
         'Mock Anime Source is temporarily unavailable. AniDestiny is playing from Sakura Anime instead.',
@@ -1061,7 +1066,7 @@ void main() {
     expect(repository.adapter.pauseCalls, 1);
     expect(find.byType(AppBar), findsOneWidget);
     expect(
-      find.text('Opened the current playback in your external player.'),
+      find.text('Opened Sakura Anime playback in your external player.'),
       findsOneWidget,
     );
   });
@@ -1123,7 +1128,7 @@ void main() {
 
     expect(
       find.text(
-        'Could not open this in your external player. Staying in AniDestiny.',
+        'Could not open Sakura Anime playback in your external player. Staying in AniDestiny.',
       ),
       findsOneWidget,
     );
