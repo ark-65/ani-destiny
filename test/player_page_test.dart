@@ -520,6 +520,50 @@ void main() {
     );
   });
 
+  testWidgets('next episode fallback switch names the active playback source', (
+    tester,
+  ) async {
+    final animeRepository = _NextEpisodeFallbackAnimeRepository();
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          animeRepositoryProvider.overrideWithValue(animeRepository),
+          playerRepositoryProvider
+              .overrideWithValue(const _FakePlayerRepository()),
+          historyRepositoryProvider.overrideWithValue(_FakeHistoryRepository()),
+          danmakuRepositoryProvider.overrideWithValue(_FakeDanmakuRepository()),
+        ],
+        child: _buildPlayerApp(_args),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(
+      find.text(
+        'Mock Anime Source is temporarily unavailable. AniDestiny is playing from Sakura Anime instead.',
+      ),
+      findsNothing,
+    );
+
+    await tester.tap(find.byTooltip('Next episode'));
+    await tester.pumpAndSettle();
+
+    expect(
+      find.text(
+        'Mock Anime Source is temporarily unavailable. AniDestiny is playing from Sakura Anime instead.',
+      ),
+      findsNWidgets(2),
+    );
+    expect(
+      find.text(
+        'The current source is temporarily unavailable. Showing fallback data.',
+      ),
+      findsNothing,
+    );
+    expect(find.text('Episode 2'), findsOneWidget);
+  });
+
   testWidgets('retry playback hides fallback context while recovery is busy', (
     tester,
   ) async {
@@ -2849,6 +2893,29 @@ class _PlayableNextEpisodeAnimeRepository implements AnimeRepository {
     int page = 1,
   }) {
     throw UnimplementedError();
+  }
+}
+
+class _NextEpisodeFallbackAnimeRepository
+    extends _PlayableNextEpisodeAnimeRepository {
+  @override
+  Future<SourceFallbackResult<List<PlaySource>>> getPlaySourcesFromSource({
+    required String sourceId,
+    required String episodeId,
+  }) async {
+    return const SourceFallbackResult(
+      value: [
+        PlaySource(
+          id: 'line-1',
+          episodeId: 'episode-2',
+          title: 'Line 1',
+          url: 'https://cdn.example.test/episode-2.m3u8',
+        ),
+      ],
+      sourceId: 'sakura',
+      usedFallback: true,
+      fromSourceId: 'mock',
+    );
   }
 }
 

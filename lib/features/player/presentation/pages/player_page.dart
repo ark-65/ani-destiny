@@ -935,7 +935,7 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
         return;
       }
       if (detailResult.usedFallback || playSourceResult.usedFallback) {
-        _showSnackBar(context.l10n.sourceFallbackNotice);
+        _showSnackBar(_sourceFallbackNotice(context));
       }
     } catch (error) {
       if (!mounted) return;
