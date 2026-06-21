@@ -181,7 +181,7 @@ void main() {
     expect(diagnostics?.headerKeys, ['Referer']);
     expect(
       find.text(
-        'Playback temporarily failed. Retry later or try another playback line.',
+        'Playback temporarily failed. Retry now or try another playback line.',
       ),
       findsOneWidget,
     );
@@ -195,7 +195,7 @@ void main() {
     expect(playButton.onPressed, isNull);
     expect(
       playButton.tooltip,
-      'Playback temporarily failed. Retry later or try another playback line.',
+      'Playback temporarily failed. Retry now or try another playback line.',
     );
 
     final speedButton = tester.widget<IconButton>(
@@ -204,7 +204,7 @@ void main() {
     expect(speedButton.onPressed, isNull);
     expect(
       speedButton.tooltip,
-      'Playback temporarily failed. Retry later or try another playback line.',
+      'Playback temporarily failed. Retry now or try another playback line.',
     );
 
     final slider = tester.widget<Slider>(find.byType(Slider));
@@ -216,7 +216,7 @@ void main() {
     expect(fullscreenButton.onPressed, isNull);
     expect(
       fullscreenButton.tooltip,
-      'Playback temporarily failed. Retry later or try another playback line.',
+      'Playback temporarily failed. Retry now or try another playback line.',
     );
 
     await tester.tap(find.byTooltip('Playback diagnostics'));
@@ -250,7 +250,7 @@ void main() {
 
     expect(
       find.text(
-        'Playback temporarily failed. Retry later or try another playback line.',
+        'Playback temporarily failed. Retry now or try another playback line.',
       ),
       findsOneWidget,
     );
@@ -293,7 +293,7 @@ void main() {
     expect(diagnostics?.headerKeys, ['Referer']);
     expect(
       find.text(
-        'Playback temporarily failed. Retry later or try another playback line.',
+        'Playback temporarily failed. Retry now or try another playback line.',
       ),
       findsOneWidget,
     );
@@ -318,7 +318,7 @@ void main() {
     expect(playButton.onPressed, isNull);
     expect(
       playButton.tooltip,
-      'Playback temporarily failed. Retry later or try another playback line.',
+      'Playback temporarily failed. Retry now or try another playback line.',
     );
 
     final speedButton = tester.widget<IconButton>(
@@ -327,7 +327,7 @@ void main() {
     expect(speedButton.onPressed, isNull);
     expect(
       speedButton.tooltip,
-      'Playback temporarily failed. Retry later or try another playback line.',
+      'Playback temporarily failed. Retry now or try another playback line.',
     );
 
     final slider = tester.widget<Slider>(find.byType(Slider));
@@ -721,7 +721,7 @@ void main() {
     expect(find.text('Retry'), findsNothing);
     expect(
       find.text(
-        'Playback temporarily failed. Retry later or try another playback line.',
+        'Playback temporarily failed. Retry now or try another playback line.',
       ),
       findsNothing,
     );
@@ -810,7 +810,7 @@ void main() {
 
     expect(
       find.text(
-        'Playback temporarily failed. Retry later or try another playback line.',
+        'Playback temporarily failed. Retry now or try another playback line.',
       ),
       findsOneWidget,
     );
@@ -821,7 +821,7 @@ void main() {
     expect(find.text('Opening external player...'), findsNWidgets(2));
     expect(
       find.text(
-        'Playback temporarily failed. Retry later or try another playback line.',
+        'Playback temporarily failed. Retry now or try another playback line.',
       ),
       findsNothing,
     );
@@ -852,7 +852,7 @@ void main() {
 
     expect(
       find.text(
-        'Playback temporarily failed. Retry later or try another playback line.',
+        'Playback temporarily failed. Retry now or try another playback line.',
       ),
       findsOneWidget,
     );
@@ -868,7 +868,7 @@ void main() {
     );
     expect(
       find.text(
-        'Playback temporarily failed. Retry later or try another playback line.',
+        'Playback temporarily failed. Retry now or try another playback line.',
       ),
       findsOneWidget,
     );
@@ -896,7 +896,7 @@ void main() {
 
     expect(
       find.text(
-        'Playback temporarily failed. Retry later or try another playback line.',
+        'Playback temporarily failed. Retry now or try another playback line.',
       ),
       findsOneWidget,
     );
@@ -911,7 +911,7 @@ void main() {
     );
     expect(
       find.text(
-        'Playback temporarily failed. Retry later or try another playback line.',
+        'Playback temporarily failed. Retry now or try another playback line.',
       ),
       findsOneWidget,
     );
@@ -1663,7 +1663,7 @@ void main() {
 
     expect(
       find.text(
-        'Playback temporarily failed. Retry later or try another playback line.',
+        'Playback temporarily failed. Retry now or try another playback line.',
       ),
       findsOneWidget,
     );
@@ -1676,7 +1676,7 @@ void main() {
     expect(find.text('Episode 2'), findsOneWidget);
     expect(
       find.text(
-        'Playback temporarily failed. Retry later or try another playback line.',
+        'Playback temporarily failed. Retry now or try another playback line.',
       ),
       findsNothing,
     );
@@ -1708,7 +1708,7 @@ void main() {
 
     expect(
       find.text(
-        'Playback temporarily failed. Retry later or try another playback line.',
+        'Playback temporarily failed. Retry now or try another playback line.',
       ),
       findsOneWidget,
     );
@@ -1918,7 +1918,7 @@ void main() {
 
     expect(
       find.text(
-        'Playback temporarily failed. Retry later or try another playback line.',
+        'Playback temporarily failed. Retry now or try another playback line.',
       ),
       findsOneWidget,
     );
@@ -2025,7 +2025,7 @@ void main() {
 
     expect(
       find.text(
-        'Playback temporarily failed. Retry later or try another playback line.',
+        'Playback temporarily failed. Retry now or try another playback line.',
       ),
       findsOneWidget,
     );
@@ -2039,7 +2039,7 @@ void main() {
     );
     expect(
       find.text(
-        'Playback temporarily failed. Retry later or try another playback line.',
+        'Playback temporarily failed. Retry now or try another playback line.',
       ),
       findsOneWidget,
     );
@@ -2073,7 +2073,7 @@ void main() {
 
     expect(
       find.text(
-        'Playback temporarily failed. Retry later or try another playback line.',
+        'Playback temporarily failed. Retry now or try another playback line.',
       ),
       findsOneWidget,
     );
@@ -2087,7 +2087,7 @@ void main() {
     );
     expect(
       find.text(
-        'Playback temporarily failed. Retry later or try another playback line.',
+        'Playback temporarily failed. Retry now or try another playback line.',
       ),
       findsOneWidget,
     );
@@ -2515,7 +2515,7 @@ void main() {
     expect(find.text('No playable source found'), findsOneWidget);
     expect(
       find.text(
-        'Playback temporarily failed. Retry later or try another playback line.',
+        'Playback temporarily failed. Retry now or try another playback line.',
       ),
       findsNothing,
     );

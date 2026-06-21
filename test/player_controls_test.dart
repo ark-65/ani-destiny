@@ -615,7 +615,7 @@ void main() {
         PlayerControls(
           state: PlayerState.initial().copyWith(
             errorMessage:
-                'Playback temporarily failed. Retry later or try another playback line.',
+                'Playback temporarily failed. Retry now or try another playback line.',
           ),
           hasPlayableSource: true,
           onPlayPause: _noop,
@@ -642,7 +642,7 @@ void main() {
     expect(playButton.onPressed, isNull);
     expect(
       playButton.tooltip,
-      'Playback temporarily failed. Retry later or try another playback line.',
+      'Playback temporarily failed. Retry now or try another playback line.',
     );
 
     final speedButton = tester.widget<IconButton>(
@@ -651,7 +651,7 @@ void main() {
     expect(speedButton.onPressed, isNull);
     expect(
       speedButton.tooltip,
-      'Playback temporarily failed. Retry later or try another playback line.',
+      'Playback temporarily failed. Retry now or try another playback line.',
     );
 
     final slider = tester.widget<Slider>(find.byType(Slider));
@@ -663,7 +663,7 @@ void main() {
     expect(fullscreenButton.onPressed, isNull);
     expect(
       fullscreenButton.tooltip,
-      'Playback temporarily failed. Retry later or try another playback line.',
+      'Playback temporarily failed. Retry now or try another playback line.',
     );
   });
 
@@ -675,7 +675,7 @@ void main() {
         PlayerControls(
           state: PlayerState.initial().copyWith(
             errorMessage:
-                'Playback temporarily failed. Retry later or try another playback line.',
+                'Playback temporarily failed. Retry now or try another playback line.',
           ),
           hasPlayableSource: true,
           onPlayPause: _noop,
