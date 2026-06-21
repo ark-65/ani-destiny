@@ -151,6 +151,7 @@ class AppLocalizations {
   String get externalPlayerPlaceholder => _t('externalPlayerPlaceholder');
   String get nextEpisodeNotImplemented => _t('nextEpisodeNotImplemented');
   String get nextEpisodeUnavailable => _t('nextEpisodeUnavailable');
+  String get latestEpisode => _t('latestEpisode');
   String get nextEpisodeStayedOnCurrent => _t('nextEpisodeStayedOnCurrent');
   String externalPlayerHeadersUnsupported(String activeSource) =>
       _t('externalPlayerHeadersUnsupported').replaceFirst(
@@ -488,6 +489,7 @@ const _localizedValues = {
     'externalPlayerPlaceholder': '外部播放器占位',
     'nextEpisodeNotImplemented': '下一集暂未实现。',
     'nextEpisodeUnavailable': '当前已经是最后一集了。',
+    'latestEpisode': '最后一集',
     'nextEpisodeStayedOnCurrent': '下一集暂时无法打开，已保留当前这一集。',
     'externalPlayerHeadersUnsupported':
         '当前这条 {activeSource} 播放暂时只能留在 AniDestiny 内播放，还不能直接交给外部播放器。',
@@ -760,6 +762,7 @@ const _localizedValues = {
     'nextEpisodeNotImplemented': 'Next episode is not implemented yet.',
     'nextEpisodeUnavailable':
         'You are already on the latest available episode.',
+    'latestEpisode': 'Latest episode',
     'nextEpisodeStayedOnCurrent':
         "Couldn't open the next episode. Staying on the current one.",
     'externalPlayerHeadersUnsupported':
@@ -1041,6 +1044,7 @@ const _localizedValues = {
     'externalPlayerPlaceholder': '外部プレイヤー',
     'nextEpisodeNotImplemented': '次のエピソードはまだ実装されていません。',
     'nextEpisodeUnavailable': 'すでに最新の配信済みエピソードです。',
+    'latestEpisode': '最新話',
     'nextEpisodeStayedOnCurrent': '次のエピソードを開けなかったため、現在のエピソードに留まります。',
     'externalPlayerHeadersUnsupported':
         'この {activeSource} の再生は、いまは AniDestiny 内に留める必要があります。まだ外部プレイヤーには渡せません。',

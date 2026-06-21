@@ -141,6 +141,17 @@ void main() {
     expect(ja.nextEpisodeStayedOnCurrent, isNot(contains('ソース')));
   });
 
+  test('latest episode label stays short and localized', () {
+    const zh = AppLocalizations(Locale('zh'));
+    expect(zh.latestEpisode, '最后一集');
+
+    const en = AppLocalizations(Locale('en'));
+    expect(en.latestEpisode, 'Latest episode');
+
+    const ja = AppLocalizations(Locale('ja'));
+    expect(ja.latestEpisode, '最新話');
+  });
+
   test('player fallback copy stays calm and avoids fallback jargon', () {
     const zh = AppLocalizations(Locale('zh'));
     final zhNotice = zh.sourceFallbackPlayerNotice(

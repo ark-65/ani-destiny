@@ -2060,7 +2060,8 @@ void main() {
       ),
       findsOneWidget,
     );
-    expect(find.text('Next episode'), findsOneWidget);
+    expect(find.text('Latest episode'), findsOneWidget);
+    expect(find.text('Next episode'), findsNothing);
     final nextEpisodeButton = tester.widget<IconButton>(
       find.widgetWithIcon(IconButton, Icons.skip_next),
     );
@@ -2073,7 +2074,7 @@ void main() {
       find.byTooltip('You are already on the latest available episode.'),
       findsNWidgets(2),
     );
-    await tester.tap(find.text('Next episode'));
+    await tester.tap(find.text('Latest episode'));
     await tester.pumpAndSettle();
     expect(
       find.text('You are already on the latest available episode.'),

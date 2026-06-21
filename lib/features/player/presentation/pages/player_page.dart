@@ -371,7 +371,11 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
                                               _isSwitchingEpisode
                                                   ? context
                                                       .l10n.loadingNextEpisode
-                                                  : context.l10n.nextEpisode,
+                                                  : canExplainUnavailableNextEpisode
+                                                      ? context
+                                                          .l10n.latestEpisode
+                                                      : context
+                                                          .l10n.nextEpisode,
                                             ),
                                           ),
                                         ),

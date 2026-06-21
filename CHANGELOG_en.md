@@ -7,6 +7,7 @@
 ## [Unreleased]
 
 ### 🐛 Fixed
+- Fixed the playback-failure card still labeling its main latest-episode boundary action as `Next episode` even when AniDestiny already knew there was nowhere further to go; that recovery button now reads `Latest episode` while keeping the existing explanation tooltip and snackbar, so the dead end is honest before users tap it.
 - Fixed AniDestiny still describing fallback results as "fallback data" across surfaces like Home, Search, Anime detail, Schedule, and History; those notices now say plainly that AniDestiny is showing content from another source instead, so fallback outside the player reads like a user-facing outcome instead of implementation detail.
 - Fixed `Next episode` still leaving the new episode paused when users intentionally continued from a currently paused episode, which made the player feel like it only changed pages instead of continuing playback; a successful next-episode switch now starts playing immediately so the keep-watching flow stays coherent.
 - Fixed successful `Retry` recovery still being able to write watch history back to `00:00` or an older position when the controller reported the restored seek position a moment later; AniDestiny now writes the resumed position back to history immediately so leaving right after recovery or resuming later still reflects the playback that just came back.
