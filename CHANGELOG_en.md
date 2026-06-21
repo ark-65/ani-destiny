@@ -7,6 +7,7 @@
 ## [Unreleased]
 
 ### 🐛 Fixed
+- Fixed AniDestiny treating the player like a full route-level handoff as soon as `Next episode` started checking whether the next episode was even playable, which hid danmaku and wiped the current progress display before there was a real switch to make; it now keeps the current viewing context calm during that verification step and only enters the full transition state once the next episode can truly take over.
 - Fixed AniDestiny starting the `Next episode` handoff before it had confirmed the next episode actually had a playable source, which could interrupt current playback or clear the failure card before there was a real path forward; it now verifies that route first and only enters the switching state once the next episode can truly take over.
 - Fixed the playback-failure card still labeling its main latest-episode boundary action as `Next episode` even when AniDestiny already knew there was nowhere further to go; that recovery button now reads `Latest episode` while keeping the existing explanation tooltip and snackbar, so the dead end is honest before users tap it.
 - Fixed AniDestiny still describing fallback results as "fallback data" across surfaces like Home, Search, Anime detail, Schedule, and History; those notices now say plainly that AniDestiny is showing content from another source instead, so fallback outside the player reads like a user-facing outcome instead of implementation detail.

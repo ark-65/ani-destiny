@@ -1480,7 +1480,7 @@ void main() {
     await tester.tap(find.widgetWithIcon(IconButton, Icons.skip_next));
     await tester.pump();
 
-    expect(find.text('Loading next episode...'), findsNWidgets(2));
+    expect(find.text('Loading next episode...'), findsNothing);
     final playButton = tester.widget<IconButton>(find.byType(IconButton).first);
     expect(playButton.onPressed, isNull);
     expect(playButton.tooltip, 'Loading next episode...');
@@ -1546,10 +1546,11 @@ void main() {
     final playButton = tester.widget<IconButton>(find.byType(IconButton).first);
     expect(playButton.onPressed, isNull);
     expect(playButton.tooltip, 'Loading next episode...');
+    expect(find.text('--:-- / --:--'), findsNothing);
   });
 
   testWidgets(
-      'embedded next episode transition keeps the upcoming title with a loading status',
+      'embedded next episode verification keeps the current title quiet until playback can switch',
       (tester) async {
     final animeRepository = _PendingPlayableNextEpisodeAnimeRepository();
     final playerRepository = _TrackingPlayerRepository();
@@ -1571,20 +1572,20 @@ void main() {
     await tester.pump();
     await tester.pump();
 
-    expect(find.text('Loading next episode...'), findsNWidgets(2));
-    expect(find.text('Episode 2'), findsOneWidget);
+    expect(find.text('Loading next episode...'), findsNothing);
+    expect(find.text('Episode 2'), findsNothing);
     expect(
       find.descendant(
         of: find.byType(AppBar),
-        matching: find.text('Loading next episode...'),
+        matching: find.text('Episode 1'),
       ),
       findsOneWidget,
     );
   });
 
-  testWidgets('fullscreen next episode transition names the upcoming episode', (
-    tester,
-  ) async {
+  testWidgets(
+      'fullscreen next episode verification avoids the transition overlay until playback can switch',
+      (tester) async {
     final animeRepository = _PendingPlayableNextEpisodeAnimeRepository();
     final playerRepository = _TrackingPlayerRepository();
 
@@ -1609,8 +1610,8 @@ void main() {
     await tester.pump();
 
     expect(find.byType(AppBar), findsNothing);
-    expect(find.text('Loading next episode...'), findsOneWidget);
-    expect(find.text('Episode 2'), findsOneWidget);
+    expect(find.text('Loading next episode...'), findsNothing);
+    expect(find.text('Episode 2'), findsNothing);
   });
 
   testWidgets('fullscreen exit explains why it stays locked mid-handoff', (
@@ -1657,7 +1658,7 @@ void main() {
   });
 
   testWidgets(
-      'app bar keeps the current episode and loading status while the next episode is unresolved',
+      'app bar keeps the current episode quiet while the next episode is unresolved',
       (tester) async {
     final animeRepository = _PendingNextEpisodeAnimeRepository();
     final playerRepository = _TrackingPlayerRepository();
@@ -1698,11 +1699,11 @@ void main() {
         of: find.byType(AppBar),
         matching: find.text('Loading next episode...'),
       ),
-      findsOneWidget,
+      findsNothing,
     );
   });
 
-  testWidgets('app bar switches to the upcoming episode after it is known',
+  testWidgets('app bar keeps the current episode until playback can switch',
       (tester) async {
     final animeRepository = _PendingPlayableNextEpisodeAnimeRepository();
     final playerRepository = _TrackingPlayerRepository();
@@ -1727,7 +1728,7 @@ void main() {
     expect(
       find.descendant(
         of: find.byType(AppBar),
-        matching: find.text('Episode 2'),
+        matching: find.text('Episode 1'),
       ),
       findsOneWidget,
     );
@@ -1736,7 +1737,7 @@ void main() {
         of: find.byType(AppBar),
         matching: find.text('Loading next episode...'),
       ),
-      findsOneWidget,
+      findsNothing,
     );
   });
 
@@ -1776,8 +1777,8 @@ void main() {
     await tester.pump();
     await tester.pump();
 
-    expect(find.text('Loading next episode...'), findsNWidgets(2));
-    expect(find.text('Episode 2'), findsOneWidget);
+    expect(find.text('Loading next episode...'), findsOneWidget);
+    expect(find.text('Episode 2'), findsNothing);
     expect(
       find.text(
         'Playback temporarily failed. Retry now or try another playback line.',
@@ -1863,7 +1864,8 @@ void main() {
     expect(find.text('Episode 2'), findsOneWidget);
   });
 
-  testWidgets('next episode transition hides stale danmaku chrome', (
+  testWidgets(
+      'next episode verification keeps the current danmaku chrome visible', (
     tester,
   ) async {
     final animeRepository = _PendingNextEpisodeAnimeRepository();
@@ -1890,9 +1892,9 @@ void main() {
     await tester.tap(find.byTooltip('Next episode'));
     await tester.pump();
 
-    expect(find.text('Loading next episode...'), findsNWidgets(2));
-    expect(find.byType(DanmakuOverlay), findsNothing);
-    expect(find.text('Danmaku: Dandanplay'), findsNothing);
+    expect(find.text('Loading next episode...'), findsNothing);
+    expect(find.byType(DanmakuOverlay), findsOneWidget);
+    expect(find.text('Danmaku: Dandanplay'), findsOneWidget);
   });
 
   testWidgets('retry playback keeps danmaku chrome hidden', (tester) async {

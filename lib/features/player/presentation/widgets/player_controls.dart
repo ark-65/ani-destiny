@@ -58,10 +58,12 @@ class PlayerControls extends StatelessWidget {
         isOpeningExternalPlayer ||
         isRetryingPlayback;
     final isPreparingNextEpisode = isResolvingNextEpisode || isSwitchingEpisode;
+    final shouldHidePlaybackProgress =
+        isSwitchingEpisode || isOpeningExternalPlayer || isRetryingPlayback;
     final displayedDuration =
-        isInteractionLocked ? Duration.zero : state.duration;
+        shouldHidePlaybackProgress ? Duration.zero : state.duration;
     final displayedPosition =
-        isInteractionLocked ? Duration.zero : state.position;
+        shouldHidePlaybackProgress ? Duration.zero : state.position;
     final durationMs = displayedDuration.inMilliseconds;
     final positionMs = displayedPosition.inMilliseconds.clamp(0, durationMs);
     final playbackActionsEnabled = hasPlayableSource &&
@@ -159,7 +161,7 @@ class PlayerControls extends StatelessWidget {
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
-                    isInteractionLocked
+                    shouldHidePlaybackProgress
                         ? '--:-- / --:--'
                         : '${_formatDuration(state.position)} / ${_formatDuration(state.duration)}',
                     style: Theme.of(context).textTheme.bodySmall,

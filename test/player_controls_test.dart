@@ -186,6 +186,45 @@ void main() {
     expect(blockedExitTaps, 1);
   });
 
+  testWidgets(
+      'next episode verification keeps the current progress visible while controls stay locked',
+      (tester) async {
+    await tester.pumpWidget(
+      _buildApp(
+        PlayerControls(
+          state: _state,
+          hasPlayableSource: true,
+          onPlayPause: _noop,
+          onSeek: (_) {},
+          onSpeed: _noop,
+          onNextEpisode: null,
+          onOpenExternalPlayer: _noop,
+          externalPlayerTooltip: 'External player',
+          downloadTooltip: 'Loading next episode...',
+          onDownload: null,
+          onToggleDanmaku: _noop,
+          onToggleFullscreen: _noop,
+          danmakuEnabled: true,
+          isFullscreen: false,
+          isResolvingNextEpisode: true,
+          isSwitchingEpisode: false,
+          isOpeningExternalPlayer: false,
+        ),
+      ),
+    );
+
+    await tester.pump();
+
+    final playButton = tester.widget<IconButton>(find.byType(IconButton).first);
+    expect(playButton.onPressed, isNull);
+    expect(playButton.tooltip, 'Loading next episode...');
+
+    final slider = tester.widget<Slider>(find.byType(Slider));
+    expect(slider.onChanged, isNull);
+    expect(find.text('03:00 / 24:00'), findsOneWidget);
+    expect(find.text('--:-- / --:--'), findsNothing);
+  });
+
   testWidgets('retrying playback also disables danmaku changes',
       (tester) async {
     await tester.pumpWidget(

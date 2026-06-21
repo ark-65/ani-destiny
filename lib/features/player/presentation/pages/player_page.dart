@@ -121,30 +121,31 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
     final knowsNoNextEpisode =
         cachedAnimeDetail != null && knownNextEpisode == null;
     final isRetryingPlayback = _isRetryingPlayback;
-    final isRouteBusy = _isResolvingNextEpisode ||
-        _isSwitchingEpisode ||
-        _isOpeningExternalPlayer ||
-        isRetryingPlayback;
+    final hasCommittedRouteTransition =
+        _isSwitchingEpisode || _isOpeningExternalPlayer || isRetryingPlayback;
+    final isRouteBusy = _isResolvingNextEpisode || hasCommittedRouteTransition;
     final isPreparingNextEpisode =
         _isResolvingNextEpisode || _isSwitchingEpisode;
     final showRouteTransitionOverlay =
-        isRouteBusy && _state.errorMessage == null;
-    final routeTransitionMessage = isPreparingNextEpisode
+        hasCommittedRouteTransition && _state.errorMessage == null;
+    final routeTransitionMessage = _isSwitchingEpisode
         ? context.l10n.loadingNextEpisode
         : _isOpeningExternalPlayer
             ? context.l10n.openingExternalPlayer
             : context.l10n.retryingPlayback;
     final routeTransitionDetail = _isFullscreen
-        ? (isPreparingNextEpisode
+        ? (_isSwitchingEpisode
             ? (_switchingEpisodeTitle ?? _args.episodeTitle)
             : _args.episodeTitle)
         : null;
     final playerExitBusyMessage = _routeBusyExitMessage(context);
-    final showDanmakuChrome = !isRouteBusy && _state.errorMessage == null;
-    final appBarEpisodeTitle = isPreparingNextEpisode
+    final showDanmakuChrome =
+        !hasCommittedRouteTransition && _state.errorMessage == null;
+    final appBarEpisodeTitle = _isSwitchingEpisode
         ? (_switchingEpisodeTitle ?? _args.episodeTitle)
         : _args.episodeTitle;
-    final appBarStatus = isRouteBusy ? routeTransitionMessage : null;
+    final appBarStatus =
+        hasCommittedRouteTransition ? routeTransitionMessage : null;
     final nextEpisodeTooltip = isPreparingNextEpisode
         ? context.l10n.loadingNextEpisode
         : _isOpeningExternalPlayer
