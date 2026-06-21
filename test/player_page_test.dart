@@ -826,6 +826,42 @@ void main() {
   });
 
   testWidgets(
+      'successful retry immediately preserves the interrupted history position even if seek state settles later',
+      (tester) async {
+    final repository = _DelayedSeekRetryHistoryRepository();
+    final historyRepository = _FakeHistoryRepository();
+    const interruptedPosition = Duration(minutes: 7, seconds: 24);
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          playerRepositoryProvider.overrideWithValue(repository),
+          historyRepositoryProvider.overrideWithValue(historyRepository),
+          danmakuRepositoryProvider.overrideWithValue(_FakeDanmakuRepository()),
+        ],
+        child: _buildPlayerApp(_args),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    repository.emitPlaybackFailure(position: interruptedPosition);
+    await tester.pumpAndSettle();
+
+    await historyRepository.clear();
+
+    await tester.tap(find.text('Retry'));
+    await tester.pumpAndSettle();
+
+    expect(repository.adapter.loadCalls, 2);
+    expect(repository.adapter.lastSeekPosition, interruptedPosition);
+
+    final savedHistory = await historyRepository.getByEpisode(_args.episodeId);
+    expect(savedHistory, isNotNull);
+    expect(savedHistory?.position, interruptedPosition);
+    expect(savedHistory?.duration, const Duration(minutes: 24, seconds: 12));
+  });
+
+  testWidgets(
       'playback failure card offers external player recovery for handoffable streams',
       (tester) async {
     final repository = _RetryablePlayerRepository();
@@ -3132,6 +3168,21 @@ class _InterruptedRetryRecoveryRepository implements PlayerRepository {
   }
 }
 
+class _DelayedSeekRetryHistoryRepository implements PlayerRepository {
+  _DelayedSeekRetryHistoryRepository();
+
+  final adapter = _DelayedSeekRetryHistoryAdapter();
+
+  @override
+  PlayerControllerAdapter createController() => adapter;
+
+  void emitPlaybackFailure({
+    required Duration position,
+  }) {
+    adapter.emitPlaybackFailure(position: position);
+  }
+}
+
 class _FakePlayerRepository implements PlayerRepository {
   const _FakePlayerRepository();
 
@@ -3610,6 +3661,79 @@ class _InterruptedRetryRecoveryAdapter implements PlayerControllerAdapter {
       isInitialized: true,
       isPlaying: false,
       position: position,
+      errorMessage: 'stream interrupted',
+    );
+    _controller.add(_state);
+  }
+}
+
+class _DelayedSeekRetryHistoryAdapter implements PlayerControllerAdapter {
+  _DelayedSeekRetryHistoryAdapter();
+
+  final _controller = StreamController<PlayerState>.broadcast();
+  PlayerState _state = PlayerState.initial();
+  int loadCalls = 0;
+  Duration? lastSeekPosition;
+
+  @override
+  Stream<PlayerState> get stateStream => _controller.stream;
+
+  @override
+  Future<void> dispose() async {
+    await _controller.close();
+  }
+
+  @override
+  Future<void> load(
+    String url, {
+    Map<String, String> headers = const {},
+  }) async {
+    loadCalls += 1;
+    _state = PlayerState.initial().copyWith(
+      isInitialized: true,
+      duration: const Duration(minutes: 24, seconds: 12),
+      speed: 1.25,
+      clearErrorMessage: true,
+    );
+    _controller.add(_state);
+  }
+
+  @override
+  Future<void> pause() async {
+    _state = _state.copyWith(isPlaying: false);
+    _controller.add(_state);
+  }
+
+  @override
+  Future<void> play() async {
+    _state = _state.copyWith(isPlaying: true);
+    _controller.add(_state);
+  }
+
+  @override
+  Future<void> seek(Duration position) async {
+    lastSeekPosition = position;
+    _state = _state.copyWith(position: position);
+    Future<void>.delayed(Duration.zero, () {
+      if (_controller.isClosed) return;
+      _controller.add(_state);
+    });
+  }
+
+  @override
+  Future<void> setSpeed(double speed) async {
+    _state = _state.copyWith(speed: speed);
+    _controller.add(_state);
+  }
+
+  void emitPlaybackFailure({
+    required Duration position,
+  }) {
+    _state = _state.copyWith(
+      isInitialized: true,
+      isPlaying: false,
+      position: position,
+      duration: const Duration(minutes: 24, seconds: 12),
       errorMessage: 'stream interrupted',
     );
     _controller.add(_state);

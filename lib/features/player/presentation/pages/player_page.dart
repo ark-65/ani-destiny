@@ -767,8 +767,24 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
         _hasPlayableUrl();
   }
 
-  Future<void> _saveHistory({bool force = false}) async {
-    if (!_state.isInitialized) return;
+  Future<void> _saveHistory({bool force = false}) {
+    return _saveHistoryWithOverrides(force: force);
+  }
+
+  Future<void> _saveHistoryWithOverrides({
+    bool force = false,
+    PlayerRouteArgs? routeArgs,
+    Duration? positionOverride,
+    Duration? durationOverride,
+  }) async {
+    final historyArgs = routeArgs ?? _args;
+    final historyPosition = positionOverride ?? _state.position;
+    final historyDuration = durationOverride ?? _state.duration;
+    if (!_state.isInitialized &&
+        historyPosition <= Duration.zero &&
+        historyDuration <= Duration.zero) {
+      return;
+    }
     final now = DateTime.now();
     final lastSavedAt = _lastHistorySavedAt;
     if (!force &&
@@ -779,19 +795,19 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
     _lastHistorySavedAt = now;
     await _historyRepository.upsert(
       WatchHistory(
-        id: '${_args.sourceId}:${_args.animeId}:${_args.episodeId}',
-        animeId: _args.animeId,
-        episodeId: _args.episodeId,
-        animeTitle: _args.animeTitle,
-        episodeTitle: _args.episodeTitle,
-        coverUrl: _args.coverUrl,
-        position: _state.position,
-        duration: _state.duration,
-        sourceId: _args.sourceId,
-        playSourceId: _args.playSourceId,
-        playSourceTitle: _args.playSourceTitle,
-        playUrl: _args.playUrl,
-        playHeaders: _args.playHeaders,
+        id: '${historyArgs.sourceId}:${historyArgs.animeId}:${historyArgs.episodeId}',
+        animeId: historyArgs.animeId,
+        episodeId: historyArgs.episodeId,
+        animeTitle: historyArgs.animeTitle,
+        episodeTitle: historyArgs.episodeTitle,
+        coverUrl: historyArgs.coverUrl,
+        position: historyPosition,
+        duration: historyDuration,
+        sourceId: historyArgs.sourceId,
+        playSourceId: historyArgs.playSourceId,
+        playSourceTitle: historyArgs.playSourceTitle,
+        playUrl: historyArgs.playUrl,
+        playHeaders: historyArgs.playHeaders,
         updatedAt: now,
       ),
     );
@@ -830,6 +846,8 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
     PlayerRouteArgs? args,
     bool autoplay = false,
     double? playbackSpeed,
+    Duration? historyPositionOverride,
+    Duration? historyDurationOverride,
   }) async {
     final routeArgs = args ?? _args;
     _recordPlaybackDiagnostics(args: routeArgs);
@@ -859,7 +877,18 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
       if (autoplay) {
         await _controller.play();
       }
-      unawaited(_saveHistory(force: true));
+      final resumePosition = historyPositionOverride ??
+          (initialPosition != null && initialPosition > Duration.zero
+              ? initialPosition
+              : null);
+      unawaited(
+        _saveHistoryWithOverrides(
+          force: true,
+          routeArgs: routeArgs,
+          positionOverride: resumePosition,
+          durationOverride: historyDurationOverride,
+        ),
+      );
       return true;
     } catch (error) {
       if (!mounted) return false;
@@ -993,6 +1022,10 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
           args: restoreArgs,
           autoplay: shouldResumePlayback,
           playbackSpeed: playbackSpeed,
+          historyPositionOverride: restorePosition,
+          historyDurationOverride: previousState.duration > Duration.zero
+              ? previousState.duration
+              : null,
         );
         if (!mounted) return;
         _showSnackBar(context.l10n.nextEpisodeStayedOnCurrent);
@@ -1209,6 +1242,10 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
         args: retryArgs,
         autoplay: true,
         playbackSpeed: playbackSpeed,
+        historyPositionOverride: resumePosition,
+        historyDurationOverride: previousState.duration > Duration.zero
+            ? previousState.duration
+            : null,
       );
       if (!mounted) return;
       shouldRestoreRetryContext = !retried;
