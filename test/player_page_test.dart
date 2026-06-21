@@ -1706,8 +1706,9 @@ void main() {
       ),
       findsOneWidget,
     );
+    expect(find.text('Next episode'), findsOneWidget);
 
-    await tester.tap(find.byTooltip('Next episode'));
+    await tester.tap(find.text('Next episode'));
     await tester.pumpAndSettle();
 
     expect(playerRepository.adapter.playCalls, 1);
@@ -1915,6 +1916,7 @@ void main() {
       ),
       findsOneWidget,
     );
+    expect(find.text('Next episode'), findsOneWidget);
     final nextEpisodeButton = tester.widget<IconButton>(
       find.widgetWithIcon(IconButton, Icons.skip_next),
     );
@@ -1923,9 +1925,7 @@ void main() {
       nextEpisodeButton.tooltip,
       'You are already on the latest available episode.',
     );
-    await tester.tap(
-      find.byTooltip('You are already on the latest available episode.'),
-    );
+    await tester.tap(find.text('Next episode'));
     await tester.pumpAndSettle();
     expect(
       find.text('You are already on the latest available episode.'),

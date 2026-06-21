@@ -343,6 +343,24 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
                                             icon: const Icon(Icons.refresh),
                                             label: Text(context.l10n.retry),
                                           ),
+                                        TextButton.icon(
+                                          onPressed: nextEpisodeAction,
+                                          icon: _isSwitchingEpisode
+                                              ? const SizedBox.square(
+                                                  dimension: 18,
+                                                  child:
+                                                      CircularProgressIndicator(
+                                                    strokeWidth: 2,
+                                                  ),
+                                                )
+                                              : const Icon(Icons.skip_next),
+                                          label: Text(
+                                            _isSwitchingEpisode
+                                                ? context
+                                                    .l10n.loadingNextEpisode
+                                                : context.l10n.nextEpisode,
+                                          ),
+                                        ),
                                         if (_hasPlayableUrl())
                                           TextButton.icon(
                                             onPressed:
