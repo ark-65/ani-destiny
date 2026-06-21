@@ -758,6 +758,42 @@ void main() {
   });
 
   testWidgets(
+      'retry keeps the interrupted playback context after a failed retry attempt',
+      (tester) async {
+    final repository = _InterruptedRetryRecoveryRepository();
+    const interruptedPosition = Duration(minutes: 7, seconds: 24);
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          playerRepositoryProvider.overrideWithValue(repository),
+          historyRepositoryProvider.overrideWithValue(_FakeHistoryRepository()),
+          danmakuRepositoryProvider.overrideWithValue(_FakeDanmakuRepository()),
+        ],
+        child: _buildPlayerApp(_args),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    repository.emitPlaybackFailure(position: interruptedPosition);
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Retry'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Retry'), findsOneWidget);
+    expect(find.text('07:24 / 24:12'), findsOneWidget);
+
+    await tester.tap(find.text('Retry'));
+    await tester.pumpAndSettle();
+
+    expect(repository.adapter.loadCalls, 3);
+    expect(repository.adapter.lastSeekPosition, interruptedPosition);
+    expect(repository.adapter.lastSetSpeed, 1.25);
+    expect(find.text('Retry'), findsNothing);
+  });
+
+  testWidgets(
       'playback failure card offers external player recovery for handoffable streams',
       (tester) async {
     final repository = _RetryablePlayerRepository();
@@ -3049,6 +3085,21 @@ class _InterruptedPlayerRepository implements PlayerRepository {
   }
 }
 
+class _InterruptedRetryRecoveryRepository implements PlayerRepository {
+  _InterruptedRetryRecoveryRepository();
+
+  final adapter = _InterruptedRetryRecoveryAdapter();
+
+  @override
+  PlayerControllerAdapter createController() => adapter;
+
+  void emitPlaybackFailure({
+    required Duration position,
+  }) {
+    adapter.emitPlaybackFailure(position: position);
+  }
+}
+
 class _FakePlayerRepository implements PlayerRepository {
   const _FakePlayerRepository();
 
@@ -3441,6 +3492,81 @@ class _InterruptedPlayerAdapter implements PlayerControllerAdapter {
 
   @override
   Future<void> setSpeed(double speed) async {
+    _state = _state.copyWith(speed: speed);
+    _controller.add(_state);
+  }
+
+  void emitPlaybackFailure({
+    required Duration position,
+  }) {
+    _state = _state.copyWith(
+      isInitialized: true,
+      isPlaying: false,
+      position: position,
+      errorMessage: 'stream interrupted',
+    );
+    _controller.add(_state);
+  }
+}
+
+class _InterruptedRetryRecoveryAdapter implements PlayerControllerAdapter {
+  _InterruptedRetryRecoveryAdapter();
+
+  final _controller = StreamController<PlayerState>.broadcast();
+  PlayerState _state = PlayerState.initial();
+  int loadCalls = 0;
+  Duration? lastSeekPosition;
+  double? lastSetSpeed;
+
+  @override
+  Stream<PlayerState> get stateStream => _controller.stream;
+
+  @override
+  Future<void> dispose() async {
+    await _controller.close();
+  }
+
+  @override
+  Future<void> load(
+    String url, {
+    Map<String, String> headers = const {},
+  }) async {
+    loadCalls += 1;
+    if (loadCalls == 2) {
+      await Future<void>.delayed(Duration.zero);
+      throw StateError('retry failed');
+    }
+    _state = PlayerState.initial().copyWith(
+      isInitialized: true,
+      duration: const Duration(minutes: 24, seconds: 12),
+      speed: 1.25,
+      clearErrorMessage: true,
+    );
+    _controller.add(_state);
+  }
+
+  @override
+  Future<void> pause() async {
+    _state = _state.copyWith(isPlaying: false);
+    _controller.add(_state);
+  }
+
+  @override
+  Future<void> play() async {
+    _state = _state.copyWith(isPlaying: true);
+    _controller.add(_state);
+  }
+
+  @override
+  Future<void> seek(Duration position) async {
+    lastSeekPosition = position;
+    _state = _state.copyWith(position: position);
+    _controller.add(_state);
+  }
+
+  @override
+  Future<void> setSpeed(double speed) async {
+    lastSetSpeed = speed;
     _state = _state.copyWith(speed: speed);
     _controller.add(_state);
   }

@@ -1187,10 +1187,13 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
   Future<void> _retryPlayback() async {
     if (!_canRetryPlayback() || _isRetryingPlayback) return;
 
+    final previousState = _state;
     final playbackSpeed = _state.speed;
     final resumePosition =
         _state.position > Duration.zero ? _state.position : null;
     final retryArgs = _args.copyWith(initialPosition: resumePosition);
+    var shouldRestoreRetryContext = false;
+    String? retryFailureMessage;
     setState(() {
       _isRetryingPlayback = true;
       _state = PlayerState.initial().copyWith(
@@ -1198,14 +1201,26 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
       );
     });
     try {
-      await _loadPlayer(
+      final retried = await _loadPlayer(
         args: retryArgs,
         autoplay: true,
         playbackSpeed: playbackSpeed,
       );
+      if (!mounted) return;
+      shouldRestoreRetryContext = !retried;
+      retryFailureMessage = _state.errorMessage;
     } finally {
       if (mounted) {
-        setState(() => _isRetryingPlayback = false);
+        setState(() {
+          _isRetryingPlayback = false;
+          if (shouldRestoreRetryContext) {
+            _state = previousState.copyWith(
+              isPlaying: false,
+              isBuffering: false,
+              errorMessage: retryFailureMessage ?? previousState.errorMessage,
+            );
+          }
+        });
       }
     }
   }
