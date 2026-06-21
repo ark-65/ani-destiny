@@ -49,6 +49,7 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
   PlayerState _state = PlayerState.initial();
   bool _isFullscreen = false;
   bool _isDisposed = false;
+  bool _isResolvingNextEpisode = false;
   bool _isSwitchingEpisode = false;
   String? _switchingEpisodeTitle;
   bool _isOpeningExternalPlayer = false;
@@ -120,27 +121,31 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
     final knowsNoNextEpisode =
         cachedAnimeDetail != null && knownNextEpisode == null;
     final isRetryingPlayback = _isRetryingPlayback;
-    final isRouteBusy =
-        _isSwitchingEpisode || _isOpeningExternalPlayer || isRetryingPlayback;
-    final showRouteTransitionOverlay = (_isSwitchingEpisode ||
-            _isOpeningExternalPlayer ||
-            isRetryingPlayback) &&
-        _state.errorMessage == null;
-    final routeTransitionMessage = _isSwitchingEpisode
+    final isRouteBusy = _isResolvingNextEpisode ||
+        _isSwitchingEpisode ||
+        _isOpeningExternalPlayer ||
+        isRetryingPlayback;
+    final isPreparingNextEpisode =
+        _isResolvingNextEpisode || _isSwitchingEpisode;
+    final showRouteTransitionOverlay =
+        isRouteBusy && _state.errorMessage == null;
+    final routeTransitionMessage = isPreparingNextEpisode
         ? context.l10n.loadingNextEpisode
         : _isOpeningExternalPlayer
             ? context.l10n.openingExternalPlayer
             : context.l10n.retryingPlayback;
     final routeTransitionDetail = _isFullscreen
-        ? (_isSwitchingEpisode ? _switchingEpisodeTitle : _args.episodeTitle)
+        ? (isPreparingNextEpisode
+            ? (_switchingEpisodeTitle ?? _args.episodeTitle)
+            : _args.episodeTitle)
         : null;
     final playerExitBusyMessage = _routeBusyExitMessage(context);
     final showDanmakuChrome = !isRouteBusy && _state.errorMessage == null;
-    final appBarEpisodeTitle = _isSwitchingEpisode
+    final appBarEpisodeTitle = isPreparingNextEpisode
         ? (_switchingEpisodeTitle ?? _args.episodeTitle)
         : _args.episodeTitle;
     final appBarStatus = isRouteBusy ? routeTransitionMessage : null;
-    final nextEpisodeTooltip = _isSwitchingEpisode
+    final nextEpisodeTooltip = isPreparingNextEpisode
         ? context.l10n.loadingNextEpisode
         : _isOpeningExternalPlayer
             ? context.l10n.openingExternalPlayer
@@ -149,11 +154,13 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
                 : knowsNoNextEpisode
                     ? context.l10n.nextEpisodeUnavailable
                     : context.l10n.nextEpisode;
-    final canStartNextEpisodeTransition = !_isSwitchingEpisode &&
+    final canStartNextEpisodeTransition = !_isResolvingNextEpisode &&
+        !_isSwitchingEpisode &&
         !_isOpeningExternalPlayer &&
         !_isRetryingPlayback &&
         !knowsNoNextEpisode;
-    final canExplainUnavailableNextEpisode = !_isSwitchingEpisode &&
+    final canExplainUnavailableNextEpisode = !_isResolvingNextEpisode &&
+        !_isSwitchingEpisode &&
         !_isOpeningExternalPlayer &&
         !_isRetryingPlayback &&
         knowsNoNextEpisode;
@@ -167,6 +174,7 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
     final unavailableActionColor =
         Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.38);
     final canCreateDownload = hasPlayableSource &&
+        !_isResolvingNextEpisode &&
         !_isSwitchingEpisode &&
         !_isOpeningExternalPlayer &&
         !isRetryingPlayback;
@@ -234,7 +242,7 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
                         : null,
                     tooltip: nextEpisodeTooltip,
                     onPressed: nextEpisodeAction,
-                    icon: _isSwitchingEpisode
+                    icon: isPreparingNextEpisode
                         ? const SizedBox.square(
                             dimension: 18,
                             child: CircularProgressIndicator(strokeWidth: 2),
@@ -358,7 +366,7 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
                                                       )
                                                     : null,
                                             onPressed: nextEpisodeAction,
-                                            icon: _isSwitchingEpisode
+                                            icon: isPreparingNextEpisode
                                                 ? const SizedBox.square(
                                                     dimension: 18,
                                                     child:
@@ -368,7 +376,7 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
                                                   )
                                                 : const Icon(Icons.skip_next),
                                             label: Text(
-                                              _isSwitchingEpisode
+                                              isPreparingNextEpisode
                                                   ? context
                                                       .l10n.loadingNextEpisode
                                                   : canExplainUnavailableNextEpisode
@@ -523,6 +531,7 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
                   );
                 },
                 isFullscreen: _isFullscreen,
+                isResolvingNextEpisode: _isResolvingNextEpisode,
                 isSwitchingEpisode: _isSwitchingEpisode,
                 isOpeningExternalPlayer: _isOpeningExternalPlayer,
                 isRetryingPlayback: isRetryingPlayback,
@@ -536,6 +545,7 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
 
   bool _canUseExternalPlayerAction() {
     if (!_supportsExternalPlayerHandoff() ||
+        _isResolvingNextEpisode ||
         _isSwitchingEpisode ||
         _isOpeningExternalPlayer ||
         _isRetryingPlayback) {
@@ -556,7 +566,7 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
     if (_isOpeningExternalPlayer) {
       return context.l10n.openingExternalPlayer;
     }
-    if (_isSwitchingEpisode) {
+    if (_isResolvingNextEpisode || _isSwitchingEpisode) {
       return context.l10n.loadingNextEpisode;
     }
     if (_isRetryingPlayback) {
@@ -577,7 +587,7 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
     if (_isOpeningExternalPlayer) {
       return context.l10n.openingExternalPlayer;
     }
-    if (_isSwitchingEpisode) {
+    if (_isResolvingNextEpisode || _isSwitchingEpisode) {
       return context.l10n.loadingNextEpisode;
     }
     if (_isRetryingPlayback) {
@@ -590,7 +600,7 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
   }
 
   String _routeBusyExitMessage(BuildContext context) {
-    if (_isSwitchingEpisode) {
+    if (_isResolvingNextEpisode || _isSwitchingEpisode) {
       return context.l10n.playerExitBusyNextEpisode;
     }
     if (_isOpeningExternalPlayer) {
@@ -765,6 +775,7 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
   bool _canRetryPlayback() {
     return _state.errorMessage != null &&
         _state.errorMessage != context.l10n.playerNoPlayUrl &&
+        !_isResolvingNextEpisode &&
         !_isSwitchingEpisode &&
         !_isOpeningExternalPlayer &&
         !_isRetryingPlayback &&
@@ -919,7 +930,12 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
   }
 
   Future<void> _playNextEpisode() async {
-    if (_isSwitchingEpisode || _isOpeningExternalPlayer) return;
+    if (_isResolvingNextEpisode ||
+        _isSwitchingEpisode ||
+        _isOpeningExternalPlayer ||
+        _isRetryingPlayback) {
+      return;
+    }
 
     final currentArgs = _args;
     final previousState = _state;
@@ -931,19 +947,10 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
     final restoreArgs = currentArgs.copyWith(initialPosition: restorePosition);
     var shouldRestoreCurrentPlayback = false;
     var shouldRestorePreviousFailureState = false;
+    var startedEpisodeSwitch = false;
 
-    setState(() {
-      _isSwitchingEpisode = true;
-      _switchingEpisodeTitle = null;
-      if (_state.errorMessage != null) {
-        _state = _state.copyWith(clearErrorMessage: true);
-      }
-    });
+    setState(() => _isResolvingNextEpisode = true);
     try {
-      if (shouldResumePlayback) {
-        await _controller.pause();
-        shouldRestoreCurrentPlayback = true;
-      }
       final detailResult = await ref.read(
         animeDetailBySourceProvider(
           (sourceId: currentArgs.sourceId, animeId: currentArgs.animeId),
@@ -981,6 +988,19 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
         preferredSourceId: currentArgs.playSourceId,
         preferredSourceTitle: currentArgs.playSourceTitle,
       );
+      setState(() {
+        _isResolvingNextEpisode = false;
+        _isSwitchingEpisode = true;
+        _switchingEpisodeTitle = nextEpisode.title;
+        if (_state.errorMessage != null) {
+          _state = _state.copyWith(clearErrorMessage: true);
+        }
+      });
+      startedEpisodeSwitch = true;
+      if (shouldResumePlayback) {
+        await _controller.pause();
+        shouldRestoreCurrentPlayback = true;
+      }
       await _saveHistory(force: true);
       if (!mounted) return;
 
@@ -1049,8 +1069,14 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
       }
       if (mounted) {
         setState(() {
-          _isSwitchingEpisode = false;
-          _switchingEpisodeTitle = null;
+          _isResolvingNextEpisode = false;
+          if (!startedEpisodeSwitch) {
+            _switchingEpisodeTitle = null;
+          }
+          if (startedEpisodeSwitch) {
+            _isSwitchingEpisode = false;
+            _switchingEpisodeTitle = null;
+          }
           if (shouldRestorePreviousFailureState) {
             _state = previousState;
           }

@@ -1518,9 +1518,9 @@ void main() {
     expect(launchedUri, isNull);
   });
 
-  testWidgets('next episode transition pauses the current playback first', (
-    tester,
-  ) async {
+  testWidgets(
+      'next episode transition keeps current playback running until the next episode is playable',
+      (tester) async {
     final pendingRepository = _PendingNextEpisodeAnimeRepository();
     final playerRepository = _TrackingPlayerRepository();
 
@@ -1542,7 +1542,7 @@ void main() {
     await tester.tap(find.widgetWithIcon(IconButton, Icons.skip_next));
     await tester.pump();
 
-    expect(playerRepository.adapter.pauseCalls, 1);
+    expect(playerRepository.adapter.pauseCalls, 0);
     final playButton = tester.widget<IconButton>(find.byType(IconButton).first);
     expect(playButton.onPressed, isNull);
     expect(playButton.tooltip, 'Loading next episode...');
@@ -1741,7 +1741,7 @@ void main() {
   });
 
   testWidgets(
-      'failed playback clears stale error UI before next episode finishes loading',
+      'failed playback keeps its current error card visible until the next episode is playable',
       (tester) async {
     final animeRepository = _PendingPlayableNextEpisodeAnimeRepository();
 
@@ -1782,8 +1782,9 @@ void main() {
       find.text(
         'Playback temporarily failed. Retry now or try another playback line.',
       ),
-      findsNothing,
+      findsOneWidget,
     );
+    expect(find.text('Retry'), findsNothing);
   });
 
   testWidgets(
@@ -2255,8 +2256,8 @@ void main() {
     await tester.tap(find.byTooltip('Next episode'));
     await tester.pumpAndSettle();
 
-    expect(playerRepository.adapter.pauseCalls, 1);
-    expect(playerRepository.adapter.playCalls, 1);
+    expect(playerRepository.adapter.pauseCalls, 0);
+    expect(playerRepository.adapter.playCalls, 0);
     expect(
       find.text("Couldn't open the next episode. Staying on the current one."),
       findsOneWidget,

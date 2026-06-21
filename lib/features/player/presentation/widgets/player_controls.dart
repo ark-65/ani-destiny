@@ -22,6 +22,7 @@ class PlayerControls extends StatelessWidget {
     this.onBlockedFullscreenExit,
     required this.danmakuEnabled,
     required this.isFullscreen,
+    this.isResolvingNextEpisode = false,
     required this.isSwitchingEpisode,
     required this.isOpeningExternalPlayer,
     this.isRetryingPlayback = false,
@@ -45,14 +46,18 @@ class PlayerControls extends StatelessWidget {
   final VoidCallback? onBlockedFullscreenExit;
   final bool danmakuEnabled;
   final bool isFullscreen;
+  final bool isResolvingNextEpisode;
   final bool isSwitchingEpisode;
   final bool isOpeningExternalPlayer;
   final bool isRetryingPlayback;
 
   @override
   Widget build(BuildContext context) {
-    final isInteractionLocked =
-        isSwitchingEpisode || isOpeningExternalPlayer || isRetryingPlayback;
+    final isInteractionLocked = isResolvingNextEpisode ||
+        isSwitchingEpisode ||
+        isOpeningExternalPlayer ||
+        isRetryingPlayback;
+    final isPreparingNextEpisode = isResolvingNextEpisode || isSwitchingEpisode;
     final displayedDuration =
         isInteractionLocked ? Duration.zero : state.duration;
     final displayedPosition =
@@ -63,7 +68,7 @@ class PlayerControls extends StatelessWidget {
         !isInteractionLocked &&
         state.errorMessage == null &&
         state.isInitialized;
-    final playbackActionTooltip = isSwitchingEpisode
+    final playbackActionTooltip = isPreparingNextEpisode
         ? context.l10n.loadingNextEpisode
         : isOpeningExternalPlayer
             ? context.l10n.openingExternalPlayer
@@ -74,7 +79,7 @@ class PlayerControls extends StatelessWidget {
                     : state.errorMessage != null
                         ? context.l10n.playbackFailedSuggestion
                         : context.l10n.playerPreparingPlayback;
-    final nextEpisodeTooltip = isSwitchingEpisode
+    final nextEpisodeTooltip = isPreparingNextEpisode
         ? context.l10n.loadingNextEpisode
         : isOpeningExternalPlayer
             ? context.l10n.openingExternalPlayer
@@ -88,7 +93,7 @@ class PlayerControls extends StatelessWidget {
         : isRetryingPlayback
             ? context.l10n.retryingPlayback
             : downloadTooltip;
-    final danmakuTooltip = isSwitchingEpisode
+    final danmakuTooltip = isPreparingNextEpisode
         ? context.l10n.loadingNextEpisode
         : isOpeningExternalPlayer
             ? context.l10n.openingExternalPlayer
@@ -107,7 +112,7 @@ class PlayerControls extends StatelessWidget {
         : isFullscreen && isInteractionLocked
             ? onBlockedFullscreenExit
             : null;
-    final fullscreenTooltip = isSwitchingEpisode
+    final fullscreenTooltip = isPreparingNextEpisode
         ? context.l10n.loadingNextEpisode
         : isOpeningExternalPlayer
             ? context.l10n.openingExternalPlayer
@@ -187,8 +192,10 @@ class PlayerControls extends StatelessWidget {
                             )
                           : null,
                       tooltip: nextEpisodeTooltip,
-                      onPressed: isInteractionLocked ? null : onNextEpisode,
-                      icon: isSwitchingEpisode
+                      onPressed: isInteractionLocked || isResolvingNextEpisode
+                          ? null
+                          : onNextEpisode,
+                      icon: isPreparingNextEpisode
                           ? const SizedBox.square(
                               dimension: 18,
                               child: CircularProgressIndicator(strokeWidth: 2),
