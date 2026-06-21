@@ -920,8 +920,7 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
     final currentArgs = _args;
     final previousState = _state;
     final shouldResumePlayback = _state.isPlaying;
-    final shouldAutoplayNextEpisode =
-        shouldResumePlayback || previousState.errorMessage != null;
+    const shouldAutoplayNextEpisode = true;
     final playbackSpeed = _state.speed;
     final restorePosition =
         _state.position > Duration.zero ? _state.position : null;
