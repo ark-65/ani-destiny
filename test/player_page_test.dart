@@ -421,6 +421,12 @@ void main() {
       findsOneWidget,
     );
     expect(find.text('External player'), findsOneWidget);
+    expect(
+      find.byTooltip(
+        'This Sakura Anime playback needs to stay in AniDestiny for now, so it cannot be opened in another player yet.',
+      ),
+      findsNWidgets(2),
+    );
   });
 
   testWidgets('playback failure UI stays usable on narrow screens', (
@@ -516,7 +522,7 @@ void main() {
       findsOneWidget,
     );
 
-    await tester.tap(find.byTooltip('Next episode'));
+    await tester.tap(find.widgetWithIcon(IconButton, Icons.skip_next));
     await tester.pump();
 
     expect(
@@ -553,7 +559,7 @@ void main() {
       findsNothing,
     );
 
-    await tester.tap(find.byTooltip('Next episode'));
+    await tester.tap(find.widgetWithIcon(IconButton, Icons.skip_next));
     await tester.pumpAndSettle();
 
     expect(
@@ -1367,7 +1373,7 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    await tester.tap(find.byTooltip('Next episode'));
+    await tester.tap(find.widgetWithIcon(IconButton, Icons.skip_next));
     await tester.pump();
 
     expect(find.text('Loading next episode...'), findsNWidgets(2));
@@ -1429,7 +1435,7 @@ void main() {
 
     expect(playerRepository.adapter.pauseCalls, 0);
 
-    await tester.tap(find.byTooltip('Next episode'));
+    await tester.tap(find.widgetWithIcon(IconButton, Icons.skip_next));
     await tester.pump();
 
     expect(playerRepository.adapter.pauseCalls, 1);
@@ -1662,7 +1668,7 @@ void main() {
       findsOneWidget,
     );
 
-    await tester.tap(find.byTooltip('Next episode'));
+    await tester.tap(find.widgetWithIcon(IconButton, Icons.skip_next));
     await tester.pump();
     await tester.pump();
 
@@ -1925,6 +1931,10 @@ void main() {
       nextEpisodeButton.tooltip,
       'You are already on the latest available episode.',
     );
+    expect(
+      find.byTooltip('You are already on the latest available episode.'),
+      findsNWidgets(2),
+    );
     await tester.tap(find.text('Next episode'));
     await tester.pumpAndSettle();
     expect(
@@ -2020,7 +2030,7 @@ void main() {
       findsOneWidget,
     );
 
-    await tester.tap(find.byTooltip('Next episode'));
+    await tester.tap(find.widgetWithIcon(IconButton, Icons.skip_next));
     await tester.pumpAndSettle();
 
     expect(
@@ -2068,7 +2078,7 @@ void main() {
       findsOneWidget,
     );
 
-    await tester.tap(find.byTooltip('Next episode'));
+    await tester.tap(find.widgetWithIcon(IconButton, Icons.skip_next));
     await tester.pumpAndSettle();
 
     expect(

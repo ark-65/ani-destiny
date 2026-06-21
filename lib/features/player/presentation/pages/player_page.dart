@@ -162,6 +162,8 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
             : null;
     final externalPlayerTooltip = _externalPlayerTooltip(context);
     final downloadTooltip = _downloadTooltip(context);
+    final unavailableActionColor =
+        Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.38);
     final canCreateDownload = hasPlayableSource &&
         !_isSwitchingEpisode &&
         !_isOpeningExternalPlayer &&
@@ -343,33 +345,18 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
                                             icon: const Icon(Icons.refresh),
                                             label: Text(context.l10n.retry),
                                           ),
-                                        TextButton.icon(
-                                          onPressed: nextEpisodeAction,
-                                          icon: _isSwitchingEpisode
-                                              ? const SizedBox.square(
-                                                  dimension: 18,
-                                                  child:
-                                                      CircularProgressIndicator(
-                                                    strokeWidth: 2,
-                                                  ),
-                                                )
-                                              : const Icon(Icons.skip_next),
-                                          label: Text(
-                                            _isSwitchingEpisode
-                                                ? context
-                                                    .l10n.loadingNextEpisode
-                                                : context.l10n.nextEpisode,
-                                          ),
-                                        ),
-                                        if (_hasPlayableUrl())
-                                          TextButton.icon(
-                                            onPressed:
-                                                canUseExternalPlayerAction
-                                                    ? () => unawaited(
-                                                          _openExternalPlayer(),
-                                                        )
+                                        Tooltip(
+                                          message: nextEpisodeTooltip,
+                                          child: TextButton.icon(
+                                            style:
+                                                canExplainUnavailableNextEpisode
+                                                    ? TextButton.styleFrom(
+                                                        foregroundColor:
+                                                            unavailableActionColor,
+                                                      )
                                                     : null,
-                                            icon: _isOpeningExternalPlayer
+                                            onPressed: nextEpisodeAction,
+                                            icon: _isSwitchingEpisode
                                                 ? const SizedBox.square(
                                                     dimension: 18,
                                                     child:
@@ -377,12 +364,49 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
                                                       strokeWidth: 2,
                                                     ),
                                                   )
-                                                : const Icon(Icons.open_in_new),
+                                                : const Icon(Icons.skip_next),
                                             label: Text(
-                                              _isOpeningExternalPlayer
-                                                  ? context.l10n
-                                                      .openingExternalPlayer
-                                                  : context.l10n.externalPlayer,
+                                              _isSwitchingEpisode
+                                                  ? context
+                                                      .l10n.loadingNextEpisode
+                                                  : context.l10n.nextEpisode,
+                                            ),
+                                          ),
+                                        ),
+                                        if (_hasPlayableUrl())
+                                          Tooltip(
+                                            message: externalPlayerTooltip,
+                                            child: TextButton.icon(
+                                              style: canUseExternalPlayerAction
+                                                  ? null
+                                                  : TextButton.styleFrom(
+                                                      foregroundColor:
+                                                          unavailableActionColor,
+                                                    ),
+                                              onPressed:
+                                                  canUseExternalPlayerAction
+                                                      ? () => unawaited(
+                                                            _openExternalPlayer(),
+                                                          )
+                                                      : null,
+                                              icon: _isOpeningExternalPlayer
+                                                  ? const SizedBox.square(
+                                                      dimension: 18,
+                                                      child:
+                                                          CircularProgressIndicator(
+                                                        strokeWidth: 2,
+                                                      ),
+                                                    )
+                                                  : const Icon(
+                                                      Icons.open_in_new,
+                                                    ),
+                                              label: Text(
+                                                _isOpeningExternalPlayer
+                                                    ? context.l10n
+                                                        .openingExternalPlayer
+                                                    : context
+                                                        .l10n.externalPlayer,
+                                              ),
                                             ),
                                           ),
                                         TextButton.icon(
