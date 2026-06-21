@@ -53,6 +53,8 @@ class PlayerControls extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isCommittedRouteTransition =
+        isSwitchingEpisode || isOpeningExternalPlayer || isRetryingPlayback;
     final isInteractionLocked = isResolvingNextEpisode ||
         isSwitchingEpisode ||
         isOpeningExternalPlayer ||
@@ -107,14 +109,14 @@ class PlayerControls extends StatelessWidget {
     final canEnterFullscreen =
         hasPlayableSource && state.errorMessage == null && state.isInitialized;
     final canToggleFullscreen = isFullscreen
-        ? !isInteractionLocked
+        ? !isCommittedRouteTransition
         : !isInteractionLocked && canEnterFullscreen;
     final fullscreenAction = canToggleFullscreen
         ? onToggleFullscreen
-        : isFullscreen && isInteractionLocked
+        : isFullscreen && isCommittedRouteTransition
             ? onBlockedFullscreenExit
             : null;
-    final fullscreenTooltip = isPreparingNextEpisode
+    final fullscreenTooltip = isSwitchingEpisode
         ? context.l10n.loadingNextEpisode
         : isOpeningExternalPlayer
             ? context.l10n.openingExternalPlayer
@@ -122,13 +124,15 @@ class PlayerControls extends StatelessWidget {
                 ? context.l10n.retryingPlayback
                 : isFullscreen
                     ? context.l10n.exitFullscreen
-                    : !hasPlayableSource
-                        ? context.l10n.noPlayableSourceFound
-                        : state.errorMessage != null
-                            ? context.l10n.playbackFailedSuggestion
-                            : !state.isInitialized
-                                ? context.l10n.playerPreparingPlayback
-                                : context.l10n.enterFullscreen;
+                    : isResolvingNextEpisode
+                        ? context.l10n.loadingNextEpisode
+                        : !hasPlayableSource
+                            ? context.l10n.noPlayableSourceFound
+                            : state.errorMessage != null
+                                ? context.l10n.playbackFailedSuggestion
+                                : !state.isInitialized
+                                    ? context.l10n.playerPreparingPlayback
+                                    : context.l10n.enterFullscreen;
 
     return SafeArea(
       top: false,

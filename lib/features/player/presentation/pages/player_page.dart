@@ -123,7 +123,7 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
     final isRetryingPlayback = _isRetryingPlayback;
     final hasCommittedRouteTransition =
         _isSwitchingEpisode || _isOpeningExternalPlayer || isRetryingPlayback;
-    final isRouteBusy = _isResolvingNextEpisode || hasCommittedRouteTransition;
+    final isRouteBusy = hasCommittedRouteTransition;
     final isPreparingNextEpisode =
         _isResolvingNextEpisode || _isSwitchingEpisode;
     final showRouteTransitionOverlay =
