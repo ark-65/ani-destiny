@@ -170,6 +170,26 @@ void main() {
     expect(jaNotice, isNot(contains('代替データ')));
   });
 
+  test('generic fallback copy stays calm and avoids fallback jargon', () {
+    const zh = AppLocalizations(Locale('zh'));
+    expect(zh.sourceFallbackNotice, contains('AniDestiny'));
+    expect(zh.sourceFallbackNotice, contains('其他数据源'));
+    expect(zh.sourceFallbackNotice, isNot(contains('备用数据')));
+
+    const en = AppLocalizations(Locale('en'));
+    expect(en.sourceFallbackNotice, contains('AniDestiny'));
+    expect(en.sourceFallbackNotice, contains('another source'));
+    expect(
+      en.sourceFallbackNotice.toLowerCase(),
+      isNot(contains('fallback data')),
+    );
+
+    const ja = AppLocalizations(Locale('ja'));
+    expect(ja.sourceFallbackNotice, contains('AniDestiny'));
+    expect(ja.sourceFallbackNotice, contains('別のソース'));
+    expect(ja.sourceFallbackNotice, isNot(contains('代替データ')));
+  });
+
   test('busy player exit copy matches the active handoff', () {
     const zh = AppLocalizations(Locale('zh'));
     expect(zh.playerExitBusyNextEpisode, contains('下一集'));

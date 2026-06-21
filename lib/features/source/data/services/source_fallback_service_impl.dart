@@ -78,7 +78,7 @@ class SourceFallbackServiceImpl implements SourceFallbackService {
               adapter.id == selectedSourceId ? null : selectedSourceId,
           message: adapter.id == selectedSourceId
               ? null
-              : 'Selected source is temporarily unavailable. Showing fallback data.',
+              : 'Selected source is temporarily unavailable. AniDestiny is showing another source instead.',
         );
       } on Object catch (error) {
         lastError = error;

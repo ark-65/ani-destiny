@@ -110,6 +110,49 @@ void main() {
     expect(find.text('Sakura Anime'), findsOneWidget);
     expect(find.text('sakura'), findsNothing);
   });
+
+  testWidgets('schedule fallback notice avoids fallback-data jargon', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          scheduleProvider.overrideWith(
+            (ref) async => const SourceFallbackResult<List<ScheduleItem>>(
+              value: [
+                ScheduleItem(
+                  id: 'schedule-1',
+                  animeId: 'anime-1',
+                  title: 'Schedule Title',
+                  weekday: 1,
+                  sourceId: 'sakura',
+                ),
+              ],
+              sourceId: 'sakura',
+              usedFallback: true,
+              fromSourceId: 'mock',
+            ),
+          ),
+        ],
+        child: _buildLocalizedApp(home: const SchedulePage()),
+      ),
+    );
+
+    await tester.pumpAndSettle();
+
+    expect(
+      find.text(
+        'The current source is temporarily unavailable. AniDestiny is showing content from another source instead.',
+      ),
+      findsOneWidget,
+    );
+    expect(
+      find.text(
+        'The current source is temporarily unavailable. Showing fallback data.',
+      ),
+      findsNothing,
+    );
+  });
 }
 
 Widget _buildLocalizedApp({required Widget home}) {

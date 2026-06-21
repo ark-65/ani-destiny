@@ -51,6 +51,10 @@ void main() {
     expect(result.sourceId, 'sakura');
     expect(result.usedFallback, isTrue);
     expect(harness.calls, ['remote-proxy', 'sakura']);
+    expect(
+      result.message,
+      'Selected source is temporarily unavailable. AniDestiny is showing another source instead.',
+    );
   });
 
   test('fallback returns mock only when real source fails', () async {
@@ -70,6 +74,10 @@ void main() {
     expect(result.fromSourceId, 'sakura');
     expect(harness.calls, ['sakura', 'mock']);
     expect(harness.events.single.toSourceId, 'mock');
+    expect(
+      result.message,
+      'Selected source is temporarily unavailable. AniDestiny is showing another source instead.',
+    );
   });
 
   test('all sources failed throws AppException', () async {
