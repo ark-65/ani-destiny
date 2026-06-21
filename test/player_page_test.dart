@@ -757,17 +757,44 @@ void main() {
     expect(find.text('Retry'), findsNothing);
   });
 
-  testWidgets(
-      'retry keeps the interrupted playback context after a failed retry attempt',
+  testWidgets('playback failure immediately saves the interrupted position',
       (tester) async {
-    final repository = _InterruptedRetryRecoveryRepository();
+    final repository = _InterruptedPlayerRepository();
+    final historyRepository = _FakeHistoryRepository();
     const interruptedPosition = Duration(minutes: 7, seconds: 24);
 
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
           playerRepositoryProvider.overrideWithValue(repository),
-          historyRepositoryProvider.overrideWithValue(_FakeHistoryRepository()),
+          historyRepositoryProvider.overrideWithValue(historyRepository),
+          danmakuRepositoryProvider.overrideWithValue(_FakeDanmakuRepository()),
+        ],
+        child: _buildPlayerApp(_args),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    repository.emitPlaybackFailure(position: interruptedPosition);
+    await tester.pumpAndSettle();
+
+    final savedHistory = await historyRepository.getByEpisode(_args.episodeId);
+    expect(savedHistory, isNotNull);
+    expect(savedHistory?.position, interruptedPosition);
+  });
+
+  testWidgets(
+      'retry keeps the interrupted playback context after a failed retry attempt',
+      (tester) async {
+    final repository = _InterruptedRetryRecoveryRepository();
+    final historyRepository = _FakeHistoryRepository();
+    const interruptedPosition = Duration(minutes: 7, seconds: 24);
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          playerRepositoryProvider.overrideWithValue(repository),
+          historyRepositoryProvider.overrideWithValue(historyRepository),
           danmakuRepositoryProvider.overrideWithValue(_FakeDanmakuRepository()),
         ],
         child: _buildPlayerApp(_args),
@@ -784,12 +811,17 @@ void main() {
     expect(find.text('Retry'), findsOneWidget);
     expect(find.text('07:24 / 24:12'), findsOneWidget);
 
+    await historyRepository.clear();
+
     await tester.tap(find.text('Retry'));
     await tester.pumpAndSettle();
 
     expect(repository.adapter.loadCalls, 3);
     expect(repository.adapter.lastSeekPosition, interruptedPosition);
     expect(repository.adapter.lastSetSpeed, 1.25);
+    final savedHistory = await historyRepository.getByEpisode(_args.episodeId);
+    expect(savedHistory, isNotNull);
+    expect(savedHistory?.position, interruptedPosition);
     expect(find.text('Retry'), findsNothing);
   });
 

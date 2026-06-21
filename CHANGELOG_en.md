@@ -7,6 +7,7 @@
 ## [Unreleased]
 
 ### 🐛 Fixed
+- Fixed interrupted playback failures and failed `Retry` attempts still leaving watch history at an older position; AniDestiny now writes the latest interruption point back to history as soon as the failure state settles so resume progress stays aligned with the recovery screen.
 - Fixed failed `Retry` attempts dropping the interrupted playback position and speed context, which made the next recovery attempt feel like starting over; when a retry still cannot resume playback, AniDestiny now keeps the last interruption context visible so the failure state and the next retry both continue from the same place.
 - Fixed the player already exposing a direct `Retry` action while the failure message and disabled-control copy still told users to retry later; the shared failure wording now says to retry now or try another playback line so the recovery state uses one consistent voice.
 - Fixed the playback-failure card keeping its `Next episode` and `External player` recovery actions less explicit than the main player controls; those failure-state actions now reuse the same tooltip explanations and subdued styling, so "already on the latest episode" and "this stream must stay in AniDestiny" are just as clear without leaving the error scene.

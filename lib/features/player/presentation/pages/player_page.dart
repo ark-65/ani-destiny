@@ -65,8 +65,10 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
     _controller = ref.read(playerRepositoryProvider).createController();
     _subscription = _controller.stateStream.listen((state) {
       if (!mounted || _isDisposed) return;
+      final enteredFailureState =
+          _state.errorMessage == null && state.errorMessage != null;
       setState(() => _state = state);
-      unawaited(_saveHistory());
+      unawaited(_saveHistory(force: enteredFailureState));
     });
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted || _isDisposed) return;
@@ -841,6 +843,7 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
             errorMessage: context.l10n.playerNoPlayUrl,
           ),
         );
+        unawaited(_saveHistory(force: true));
         return false;
       }
       await _controller.load(routeArgs.playUrl, headers: routeArgs.playHeaders);
@@ -866,6 +869,7 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
           errorMessage: context.l10n.playbackFailedSuggestion,
         ),
       );
+      unawaited(_saveHistory(force: true));
       return false;
     }
   }
@@ -1221,6 +1225,9 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
             );
           }
         });
+        if (shouldRestoreRetryContext) {
+          unawaited(_saveHistory(force: true));
+        }
       }
     }
   }
