@@ -1782,7 +1782,11 @@ void main() {
       ),
       findsOneWidget,
     );
-    expect(find.text('Retry'), findsNothing);
+    expect(find.text('Retry'), findsOneWidget);
+    expect(find.byTooltip('Loading next episode...'), findsWidgets);
+    await tester.tap(find.text('Retry'));
+    await tester.pump();
+    expect(find.text('Retrying playback...'), findsNothing);
   });
 
   testWidgets(

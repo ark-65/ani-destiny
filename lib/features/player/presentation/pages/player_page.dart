@@ -155,6 +155,20 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
                 : knowsNoNextEpisode
                     ? context.l10n.nextEpisodeUnavailable
                     : context.l10n.nextEpisode;
+    final canRetryPlayback = _canRetryPlayback();
+    final keepRetryActionVisible = _state.errorMessage != null &&
+        _state.errorMessage != context.l10n.playerNoPlayUrl &&
+        !_isSwitchingEpisode &&
+        !_isOpeningExternalPlayer &&
+        !isRetryingPlayback &&
+        _hasPlayableUrl();
+    final retryActionTooltip = isPreparingNextEpisode
+        ? context.l10n.loadingNextEpisode
+        : _isOpeningExternalPlayer
+            ? context.l10n.openingExternalPlayer
+            : isRetryingPlayback
+                ? context.l10n.retryingPlayback
+                : context.l10n.retry;
     final canStartNextEpisodeTransition = !_isResolvingNextEpisode &&
         !_isSwitchingEpisode &&
         !_isOpeningExternalPlayer &&
@@ -349,12 +363,18 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
                                       spacing: 8,
                                       runSpacing: 8,
                                       children: [
-                                        if (_canRetryPlayback())
-                                          TextButton.icon(
-                                            onPressed: () =>
-                                                unawaited(_retryPlayback()),
-                                            icon: const Icon(Icons.refresh),
-                                            label: Text(context.l10n.retry),
+                                        if (keepRetryActionVisible)
+                                          Tooltip(
+                                            message: retryActionTooltip,
+                                            child: TextButton.icon(
+                                              onPressed: canRetryPlayback
+                                                  ? () => unawaited(
+                                                        _retryPlayback(),
+                                                      )
+                                                  : null,
+                                              icon: const Icon(Icons.refresh),
+                                              label: Text(context.l10n.retry),
+                                            ),
                                           ),
                                         Tooltip(
                                           message: nextEpisodeTooltip,
