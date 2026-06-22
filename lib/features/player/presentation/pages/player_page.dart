@@ -49,6 +49,7 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
   PlayerState _state = PlayerState.initial();
   bool _isFullscreen = false;
   bool _isDisposed = false;
+  String? _lastPlaybackDiagnosticKey;
   bool _isResolvingNextEpisode = false;
   bool _isSwitchingEpisode = false;
   String? _switchingEpisodeTitle;
@@ -69,6 +70,7 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
       final enteredFailureState =
           _state.errorMessage == null && state.errorMessage != null;
       setState(() => _state = state);
+      _recordPlaybackDiagnostics();
       unawaited(_saveHistory(force: enteredFailureState));
     });
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -760,6 +762,7 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
 
   PlaybackDiagnostics _recordPlaybackDiagnostics({
     PlayerRouteArgs? args,
+    bool force = false,
   }) {
     final routeArgs = args ?? _args;
     final diagnostics = const PlaybackDiagnosticsBuilder().build(
@@ -772,13 +775,35 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
       headers: routeArgs.playHeaders,
       state: _currentDiagnosticState(),
     );
+    final diagnosticKey = _playbackDiagnosticKey(routeArgs, diagnostics.state);
     unawaited(
       Future<void>(() {
         if (!mounted || _isDisposed) return;
+        if (!force && _lastPlaybackDiagnosticKey == diagnosticKey) return;
+        _lastPlaybackDiagnosticKey = diagnosticKey;
         ref.read(lastPlaybackDiagnosticsProvider.notifier).state = diagnostics;
       }),
     );
     return diagnostics;
+  }
+
+  String _playbackDiagnosticKey(
+    PlayerRouteArgs routeArgs,
+    PlaybackDiagnosticState state,
+  ) {
+    final headerKeys = routeArgs.playHeaders.keys.toList(growable: false)
+      ..sort();
+    return [
+      routeArgs.animeId,
+      routeArgs.episodeId,
+      routeArgs.sourceId,
+      routeArgs.requestedSourceId ?? '',
+      routeArgs.playSourceId ?? '',
+      routeArgs.playSourceTitle ?? '',
+      routeArgs.playUrl,
+      headerKeys.join(','),
+      state.name,
+    ].join('|');
   }
 
   PlaybackDiagnosticState _currentDiagnosticState() {
@@ -923,6 +948,7 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
             errorMessage: context.l10n.playerNoPlayUrl,
           ),
         );
+        _recordPlaybackDiagnostics(args: routeArgs);
         unawaited(_saveHistory(force: true));
         return false;
       }
@@ -960,6 +986,7 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
           errorMessage: context.l10n.playbackFailedSuggestion,
         ),
       );
+      _recordPlaybackDiagnostics(args: routeArgs);
       unawaited(_saveHistory(force: true));
       return false;
     }

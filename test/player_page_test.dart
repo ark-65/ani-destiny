@@ -22,6 +22,7 @@ import 'package:ani_destiny/features/history/domain/entities/watch_history.dart'
 import 'package:ani_destiny/features/history/domain/repositories/history_repository.dart';
 import 'package:ani_destiny/features/history/presentation/providers/history_providers.dart';
 import 'package:ani_destiny/features/player/domain/adapters/player_controller_adapter.dart';
+import 'package:ani_destiny/features/player/domain/services/playback_diagnostics.dart';
 import 'package:ani_destiny/features/player/domain/entities/player_state.dart';
 import 'package:ani_destiny/features/player/domain/repositories/player_repository.dart';
 import 'package:ani_destiny/features/player/data/repositories/player_repository_impl.dart';
@@ -229,6 +230,49 @@ void main() {
     expect(find.text('State'), findsOneWidget);
     expect(find.text('Failed'), findsOneWidget);
     expect(find.text('error'), findsNothing);
+  });
+
+  testWidgets('runtime playback snapshot follows player state changes', (
+    tester,
+  ) async {
+    final repository = _TrackingPlayerRepository();
+    final container = ProviderContainer(
+      overrides: [
+        playerRepositoryProvider.overrideWithValue(repository),
+        historyRepositoryProvider.overrideWithValue(_FakeHistoryRepository()),
+        danmakuRepositoryProvider.overrideWithValue(_FakeDanmakuRepository()),
+      ],
+    );
+    addTearDown(container.dispose);
+
+    await tester.pumpWidget(
+      UncontrolledProviderScope(
+        container: container,
+        child: _buildPlayerApp(_args),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(
+      container.read(lastPlaybackDiagnosticsProvider)?.state,
+      PlaybackDiagnosticState.playing,
+    );
+
+    await repository.adapter.pause();
+    await tester.pumpAndSettle();
+
+    expect(
+      container.read(lastPlaybackDiagnosticsProvider)?.state,
+      PlaybackDiagnosticState.ready,
+    );
+
+    await repository.adapter.play();
+    await tester.pumpAndSettle();
+
+    expect(
+      container.read(lastPlaybackDiagnosticsProvider)?.state,
+      PlaybackDiagnosticState.playing,
+    );
   });
 
   testWidgets('playback failure hides stale danmaku chrome', (tester) async {
