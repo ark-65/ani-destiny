@@ -37,6 +37,22 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+String _formatCapturedAtForDisplay(
+  WidgetTester tester,
+  DateTime capturedAt,
+) {
+  final localizations = MaterialLocalizations.of(
+    tester.element(find.byType(PlayerPage)),
+  );
+  final localCapturedAt = capturedAt.toLocal();
+  final date = localizations.formatMediumDate(localCapturedAt);
+  final time = localizations.formatTimeOfDay(
+    TimeOfDay.fromDateTime(localCapturedAt),
+    alwaysUse24HourFormat: true,
+  );
+  return '$date $time';
+}
+
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
@@ -224,7 +240,10 @@ void main() {
     await tester.tap(find.byTooltip('Playback diagnostics'));
     await tester.pumpAndSettle();
 
-    final capturedAt = diagnostics!.capturedAt.toIso8601String();
+    final capturedAt = _formatCapturedAtForDisplay(
+      tester,
+      diagnostics!.capturedAt,
+    );
 
     expect(find.text('Captured at'), findsOneWidget);
     expect(find.text(capturedAt), findsOneWidget);

@@ -692,7 +692,10 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
                   const SizedBox(height: 12),
                   _DiagnosticRow(
                     label: context.l10n.playbackDiagnosticCapturedAt,
-                    value: diagnostics.capturedAt.toIso8601String(),
+                    value: _formatPlaybackDiagnosticCapturedAt(
+                      context,
+                      diagnostics.capturedAt,
+                    ),
                   ),
                   _DiagnosticRow(
                     label: context.l10n.playbackDiagnosticAnime,
@@ -908,6 +911,20 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
       PlaybackDiagnosticState.error =>
         context.l10n.playbackDiagnosticStateError,
     };
+  }
+
+  String _formatPlaybackDiagnosticCapturedAt(
+    BuildContext context,
+    DateTime capturedAt,
+  ) {
+    final localizations = MaterialLocalizations.of(context);
+    final localCapturedAt = capturedAt.toLocal();
+    final date = localizations.formatMediumDate(localCapturedAt);
+    final time = localizations.formatTimeOfDay(
+      TimeOfDay.fromDateTime(localCapturedAt),
+      alwaysUse24HourFormat: true,
+    );
+    return '$date $time';
   }
 
   String _playbackErrorMessage() {
