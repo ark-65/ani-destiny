@@ -7,6 +7,7 @@
 ## [Unreleased]
 
 ### 🐛 Fixed
+- Fixed Runtime diagnostics and in-player playback diagnostics still using source labels that blurred together the global current source, the selected source, and the source actually carrying this playback; those rows now explicitly distinguish the selected playback source, the active playback source, and the playback source status so fallback-backed playback is easier to read at a glance.
 - Fixed fallback playback diagnostics still making users infer the outcome from separate "Requested source" and "Source" fields; AniDestiny now adds a plain-language "Source status" line that says the requested source is temporarily unavailable and which source is currently carrying playback instead.
 - Fixed the playback-failure card dropping its in-place `Retry` recovery action as soon as `Next episode` was tapped, even while AniDestiny was still only checking whether the next episode could really take over; the card now keeps `Retry` in place and temporarily disabled so the failure scene stays stable until the switch is actually committed.
 - Fixed AniDestiny already treating the player as route-level busy while `Next episode` was only checking whether the next episode had a playable path, which locked Back and Exit fullscreen too early and hid the current fallback banner before any real takeover had begun; only committed handoffs like switching episodes, opening an external player, or retrying playback now enter the page-level busy state, so verification keeps the current viewing context and stable exit path intact.

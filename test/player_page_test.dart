@@ -187,7 +187,7 @@ void main() {
     );
     expect(find.text('Anime: Anime 1'), findsOneWidget);
     expect(find.text('Episode: Episode 2'), findsOneWidget);
-    expect(find.text('Source: Sakura Anime'), findsOneWidget);
+    expect(find.text('Active playback source: Sakura Anime'), findsOneWidget);
     expect(find.text('Line: Broken Line'), findsOneWidget);
     expect(find.text('Playback diagnostics'), findsOneWidget);
 
@@ -307,7 +307,7 @@ void main() {
     expect(find.text('Episode: Episode 2'), findsOneWidget);
     expect(
       find.text(
-        'Source: Sakura Anime (Requested source: Mock Anime Source)',
+        'Active playback source: Sakura Anime (Selected playback source: Mock Anime Source)',
       ),
       findsOneWidget,
     );
@@ -340,9 +340,9 @@ void main() {
     expect(find.text('Anime 1'), findsAtLeastNWidgets(1));
     expect(find.text('Episode'), findsWidgets);
     expect(find.text('Episode 2'), findsAtLeastNWidgets(1));
-    expect(find.text('Requested source'), findsOneWidget);
+    expect(find.text('Selected playback source'), findsOneWidget);
     expect(find.text('Mock Anime Source'), findsAtLeastNWidgets(1));
-    expect(find.text('Source status'), findsOneWidget);
+    expect(find.text('Playback source status'), findsOneWidget);
     expect(
       find.text(
         'Mock Anime Source is temporarily unavailable. AniDestiny is playing from Sakura Anime instead.',
@@ -392,14 +392,17 @@ void main() {
     expect(copiedText, contains('Captured at: '));
     expect(copiedText, contains('Anime: Anime 1'));
     expect(copiedText, contains('Episode: Episode 2'));
-    expect(copiedText, contains('Requested source: Mock Anime Source'));
+    expect(
+      copiedText,
+      contains('Selected playback source: Mock Anime Source'),
+    );
     expect(
       copiedText,
       contains(
-        'Source status: Mock Anime Source is temporarily unavailable. AniDestiny is playing from Sakura Anime instead.',
+        'Playback source status: Mock Anime Source is temporarily unavailable. AniDestiny is playing from Sakura Anime instead.',
       ),
     );
-    expect(copiedText, contains('Source: Sakura Anime'));
+    expect(copiedText, contains('Active playback source: Sakura Anime'));
     expect(copiedText, contains('Line: Broken Line'));
     expect(copiedText, contains('URL type: m3u8'));
     expect(
@@ -2591,7 +2594,7 @@ void main() {
     expect(find.text('No playable source found'), findsOneWidget);
     expect(find.text('Anime: Anime 1'), findsOneWidget);
     expect(find.text('Episode: Episode 3'), findsOneWidget);
-    expect(find.text('Source: Sakura Anime'), findsOneWidget);
+    expect(find.text('Active playback source: Sakura Anime'), findsOneWidget);
     expect(find.text('Line: Missing Line'), findsOneWidget);
     expect(find.text('Playback diagnostics'), findsOneWidget);
     final downloadButton = tester.widget<IconButton>(
