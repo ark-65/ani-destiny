@@ -142,7 +142,8 @@ class FeedbackPackageCollector {
       '- ${l10n.playbackDiagnosticAnime}: ${diagnostics.animeTitle}',
       '- ${l10n.playbackDiagnosticEpisode}: ${diagnostics.episodeTitle}',
       if (selectedAppSourceId != null)
-        '- ${l10n.selectedAppSource}: ${_sourceLabel(selectedAppSourceId)}',
+        '- ${l10n.playbackDiagnosticSelectedAppSource}: '
+            '${_sourceLabel(selectedAppSourceId)}',
       if (diagnostics.usedSourceFallback &&
           diagnostics.requestedSourceId != null)
         '- ${l10n.playbackDiagnosticRequestedSource}: '

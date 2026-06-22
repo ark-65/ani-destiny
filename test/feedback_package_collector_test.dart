@@ -270,7 +270,13 @@ void main() {
             .allMatches(markdown)
             .length;
 
-    expect(selectedAppSourceMatches, 2);
+    expect(selectedAppSourceMatches, 1);
+    expect(
+      markdown,
+      contains(
+        '- Selected app source at playback: Remote Source Proxy',
+      ),
+    );
     expect(markdown, contains('- Selected playback source: Mock Anime Source'));
     expect(markdown, contains('- Active playback source: Sakura Anime'));
   });
@@ -323,7 +329,7 @@ void main() {
     );
     expect(
       markdown,
-      contains('- Selected app source: Remote Source Proxy'),
+      contains('- Selected app source at playback: Remote Source Proxy'),
     );
   });
 }

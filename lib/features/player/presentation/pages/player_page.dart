@@ -704,7 +704,7 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
                   ),
                   if (selectedAppSourceLabel != null)
                     _DiagnosticRow(
-                      label: context.l10n.selectedAppSource,
+                      label: context.l10n.playbackDiagnosticSelectedAppSource,
                       value: selectedAppSourceLabel,
                     ),
                   if (diagnostics.usedSourceFallback)
@@ -1360,7 +1360,8 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
     ];
     if (selectedAppSourceLabel != null) {
       summary.add(
-        '${context.l10n.selectedAppSource}: $selectedAppSourceLabel',
+        '${context.l10n.playbackDiagnosticSelectedAppSource}: '
+        '$selectedAppSourceLabel',
       );
     }
     if (diagnostics.usedSourceFallback) {

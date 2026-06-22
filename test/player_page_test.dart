@@ -505,14 +505,17 @@ void main() {
     await tester.tap(find.byIcon(Icons.bug_report_outlined).last);
     await tester.pumpAndSettle();
 
-    expect(find.text('Selected app source'), findsOneWidget);
+    expect(find.text('Selected app source at playback'), findsOneWidget);
     expect(find.text('Remote Source Proxy'), findsOneWidget);
 
     await tester.ensureVisible(find.text('Copy diagnostics').last);
     await tester.tap(find.text('Copy diagnostics').last);
     await tester.pumpAndSettle();
 
-    expect(copiedText, contains('Selected app source: Remote Source Proxy'));
+    expect(
+      copiedText,
+      contains('Selected app source at playback: Remote Source Proxy'),
+    );
     expect(
       copiedText,
       contains('Selected playback source: Mock Anime Source'),
@@ -566,17 +569,20 @@ void main() {
     await tester.tap(find.byIcon(Icons.bug_report_outlined).last);
     await tester.pumpAndSettle();
 
-    expect(find.text('Selected app source'), findsOneWidget);
+    expect(find.text('Selected app source at playback'), findsOneWidget);
     expect(find.text('Remote Source Proxy'), findsOneWidget);
 
     await tester.ensureVisible(find.text('Copy diagnostics').last);
     await tester.tap(find.text('Copy diagnostics').last);
     await tester.pumpAndSettle();
 
-    expect(copiedText, contains('Selected app source: Remote Source Proxy'));
     expect(
       copiedText,
-      isNot(contains('Selected app source: Sakura Anime')),
+      contains('Selected app source at playback: Remote Source Proxy'),
+    );
+    expect(
+      copiedText,
+      isNot(contains('Selected app source at playback: Sakura Anime')),
     );
   });
 

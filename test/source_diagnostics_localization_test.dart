@@ -332,7 +332,8 @@ void main() {
 
     await tester.pumpAndSettle();
 
-    expect(find.text('Selected app source'), findsNWidgets(2));
+    expect(find.text('Selected app source'), findsOneWidget);
+    expect(find.text('Selected app source at playback'), findsOneWidget);
     expect(find.text('Remote Source Proxy'), findsNWidgets(2));
     expect(find.text('Sakura Anime'), findsWidgets);
     expect(find.text('Selected playback source'), findsOneWidget);
@@ -378,6 +379,7 @@ void main() {
 
     await tester.pumpAndSettle();
 
+    expect(find.text('Selected app source at playback'), findsOneWidget);
     expect(find.text('Remote Source Proxy'), findsOneWidget);
     expect(find.text('Sakura Anime'), findsWidgets);
   });

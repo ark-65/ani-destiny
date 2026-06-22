@@ -208,7 +208,7 @@ List<Widget> _playbackDiagnosticTiles(
     ),
     if (selectedAppSourceId != null)
       _DiagnosticTile(
-        label: context.l10n.selectedAppSource,
+        label: context.l10n.playbackDiagnosticSelectedAppSource,
         value: context.l10n.sourceDisplayLabel(selectedAppSourceId),
         icon: Icons.route_outlined,
       ),
