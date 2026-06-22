@@ -521,6 +521,66 @@ void main() {
   });
 
   testWidgets(
+      'playback diagnostics keep the captured app source after the live source changes',
+      (tester) async {
+    String? copiedText;
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMethodCallHandler(SystemChannels.platform, (call) async {
+      if (call.method == 'Clipboard.setData') {
+        copiedText =
+            (call.arguments as Map<Object?, Object?>)['text'] as String?;
+      }
+      return null;
+    });
+
+    final container = ProviderContainer(
+      overrides: [
+        playerRepositoryProvider.overrideWithValue(
+          const _ThrowingPlayerRepository(),
+        ),
+        historyRepositoryProvider.overrideWithValue(_FakeHistoryRepository()),
+        danmakuRepositoryProvider.overrideWithValue(_FakeDanmakuRepository()),
+        currentSourceIdProvider.overrideWith(
+          () => _MutableCurrentSourceIdController('remote-proxy'),
+        ),
+      ],
+    );
+    addTearDown(container.dispose);
+
+    await tester.pumpWidget(
+      UncontrolledProviderScope(
+        container: container,
+        child: _buildPlayerApp(_fallbackFailingArgs),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    final diagnostics = container.read(lastPlaybackDiagnosticsProvider);
+    expect(diagnostics?.selectedAppSourceId, 'remote-proxy');
+
+    final sourceController = container.read(currentSourceIdProvider.notifier)
+        as _MutableCurrentSourceIdController;
+    sourceController.setTestSource('sakura');
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byIcon(Icons.bug_report_outlined).last);
+    await tester.pumpAndSettle();
+
+    expect(find.text('Selected app source'), findsOneWidget);
+    expect(find.text('Remote Source Proxy'), findsOneWidget);
+
+    await tester.ensureVisible(find.text('Copy diagnostics').last);
+    await tester.tap(find.text('Copy diagnostics').last);
+    await tester.pumpAndSettle();
+
+    expect(copiedText, contains('Selected app source: Remote Source Proxy'));
+    expect(
+      copiedText,
+      isNot(contains('Selected app source: Sakura Anime')),
+    );
+  });
+
+  testWidgets(
       'playback failure card explains when external player handoff is blocked by headers',
       (tester) async {
     await tester.pumpWidget(
@@ -2829,6 +2889,19 @@ class _HostPage extends StatelessWidget {
 class _RemoteProxyCurrentSourceIdController extends CurrentSourceIdController {
   @override
   Future<String> build() async => 'remote-proxy';
+}
+
+class _MutableCurrentSourceIdController extends CurrentSourceIdController {
+  _MutableCurrentSourceIdController(this._initialSourceId);
+
+  final String _initialSourceId;
+
+  @override
+  Future<String> build() async => _initialSourceId;
+
+  void setTestSource(String sourceId) {
+    state = AsyncValue.data(sourceId);
+  }
 }
 
 class _FakeHistoryRepository implements HistoryRepository {

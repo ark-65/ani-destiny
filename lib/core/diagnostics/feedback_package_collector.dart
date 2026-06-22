@@ -134,9 +134,7 @@ class FeedbackPackageCollector {
       return '${l10n.feedbackPackageUnavailable}: '
           '${l10n.feedbackPackagePlaybackUnavailable}';
     }
-    final selectedAppSourceId = diagnostics.divergentSelectedAppSourceId(
-      currentSourceId,
-    );
+    final selectedAppSourceId = diagnostics.divergentSelectedAppSourceId();
 
     final lines = <String>[
       '- ${l10n.playbackDiagnosticCapturedAt}: '

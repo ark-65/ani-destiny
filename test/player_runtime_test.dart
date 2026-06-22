@@ -284,6 +284,7 @@ void main() {
     final diagnostics = const PlaybackDiagnosticsBuilder().build(
       animeTitle: 'Anime 1',
       episodeTitle: 'Episode 1',
+      selectedAppSourceId: null,
       sourceId: 'sakura',
       requestedSourceId: 'mock',
       playSourceTitle: 'Line 1',

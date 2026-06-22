@@ -13,6 +13,7 @@ class PlaybackDiagnostics {
     required this.capturedAt,
     required this.animeTitle,
     required this.episodeTitle,
+    required this.selectedAppSourceId,
     required this.sourceId,
     required this.requestedSourceId,
     required this.playSourceTitle,
@@ -25,6 +26,7 @@ class PlaybackDiagnostics {
   final DateTime capturedAt;
   final String animeTitle;
   final String episodeTitle;
+  final String? selectedAppSourceId;
   final String sourceId;
   final String? requestedSourceId;
   final String? playSourceTitle;
@@ -38,7 +40,7 @@ class PlaybackDiagnostics {
     return requested != null && requested.isNotEmpty && requested != sourceId;
   }
 
-  String? divergentSelectedAppSourceId(String? selectedAppSourceId) {
+  String? divergentSelectedAppSourceId() {
     final selected = selectedAppSourceId?.trim();
     if (selected == null || selected.isEmpty) {
       return null;
@@ -47,6 +49,24 @@ class PlaybackDiagnostics {
       return null;
     }
     return selected;
+  }
+
+  PlaybackDiagnostics copyWith({
+    String? selectedAppSourceId,
+  }) {
+    return PlaybackDiagnostics(
+      capturedAt: capturedAt,
+      animeTitle: animeTitle,
+      episodeTitle: episodeTitle,
+      selectedAppSourceId: selectedAppSourceId ?? this.selectedAppSourceId,
+      sourceId: sourceId,
+      requestedSourceId: requestedSourceId,
+      playSourceTitle: playSourceTitle,
+      urlType: urlType,
+      sanitizedUrl: sanitizedUrl,
+      headerKeys: headerKeys,
+      state: state,
+    );
   }
 }
 
@@ -57,6 +77,7 @@ class PlaybackDiagnosticsBuilder {
     DateTime? capturedAt,
     required String animeTitle,
     required String episodeTitle,
+    required String? selectedAppSourceId,
     required String sourceId,
     String? requestedSourceId,
     required String? playSourceTitle,
@@ -68,6 +89,7 @@ class PlaybackDiagnosticsBuilder {
       capturedAt: capturedAt ?? DateTime.now(),
       animeTitle: animeTitle,
       episodeTitle: episodeTitle,
+      selectedAppSourceId: selectedAppSourceId,
       sourceId: sourceId,
       requestedSourceId: requestedSourceId,
       playSourceTitle: playSourceTitle,

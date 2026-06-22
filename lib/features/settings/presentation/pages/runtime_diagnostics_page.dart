@@ -131,7 +131,6 @@ class RuntimeDiagnosticsPage extends ConsumerWidget {
                   ..._playbackDiagnosticTiles(
                     context,
                     playbackDiagnostics,
-                    currentSourceId: currentSourceId,
                   ),
               ],
             ),
@@ -183,16 +182,13 @@ class RuntimeDiagnosticsPage extends ConsumerWidget {
 
 List<Widget> _playbackDiagnosticTiles(
   BuildContext context,
-  PlaybackDiagnostics diagnostics, {
-  String? currentSourceId,
-}) {
+  PlaybackDiagnostics diagnostics,
+) {
   final lineTitle = diagnostics.playSourceTitle?.trim();
   final lineValue = lineTitle == null || lineTitle.isEmpty ? '-' : lineTitle;
   final headers =
       diagnostics.headerKeys.isEmpty ? '-' : diagnostics.headerKeys.join(', ');
-  final selectedAppSourceId = diagnostics.divergentSelectedAppSourceId(
-    currentSourceId,
-  );
+  final selectedAppSourceId = diagnostics.divergentSelectedAppSourceId();
 
   return [
     _DiagnosticTile(

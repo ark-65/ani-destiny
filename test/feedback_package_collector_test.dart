@@ -52,6 +52,7 @@ void main() {
         capturedAt: now,
         animeTitle: 'Anime',
         episodeTitle: 'Episode 1',
+        selectedAppSourceId: 'sakura',
         sourceId: 'sakura',
         requestedSourceId: 'mock',
         playSourceTitle: 'Line 1',
@@ -145,6 +146,7 @@ void main() {
         capturedAt: now,
         animeTitle: 'Anime',
         episodeTitle: 'Episode 1',
+        selectedAppSourceId: 'sakura',
         sourceId: 'sakura',
         requestedSourceId: null,
         playSourceTitle: 'Line 1',
@@ -241,6 +243,7 @@ void main() {
         capturedAt: now,
         animeTitle: 'Anime',
         episodeTitle: 'Episode 1',
+        selectedAppSourceId: 'remote-proxy',
         sourceId: 'sakura',
         requestedSourceId: 'mock',
         playSourceTitle: 'Line 1',
@@ -270,6 +273,58 @@ void main() {
     expect(selectedAppSourceMatches, 2);
     expect(markdown, contains('- Selected playback source: Mock Anime Source'));
     expect(markdown, contains('- Active playback source: Sakura Anime'));
+  });
+
+  test(
+      'collector keeps the captured app source in playback summary after the live source changes',
+      () {
+    final now = DateTime.utc(2026, 6, 8, 1, 2, 3);
+    const l10n = AppLocalizations(Locale('en'));
+    final package = FeedbackPackageCollector(
+      l10n: l10n,
+      appName: 'AniDestiny',
+      appVersion: '1.0.2',
+      platform: 'Android',
+      currentSourceId: 'sakura',
+      sourceHealth: const [],
+      sourceDiagnostics: const [],
+      fallbackEvents: const [],
+      playbackDiagnostics: PlaybackDiagnostics(
+        capturedAt: now,
+        animeTitle: 'Anime',
+        episodeTitle: 'Episode 1',
+        selectedAppSourceId: 'remote-proxy',
+        sourceId: 'sakura',
+        requestedSourceId: 'mock',
+        playSourceTitle: 'Line 1',
+        urlType: 'm3u8',
+        sanitizedUrl: 'https://cdn.example.test/.../video.m3u8',
+        headerKeys: const [],
+        state: PlaybackDiagnosticState.playing,
+      ),
+      danmakuEnabled: true,
+      dandanplayAppIdConfigured: false,
+      dandanplayAppSecretConfigured: false,
+      downloadTasks: const [],
+      sourceLabelForId: (sourceId) {
+        return switch (sourceId) {
+          'remote-proxy' => 'Remote Source Proxy',
+          _ => _sourceLabelForId(sourceId),
+        };
+      },
+    ).collect(generatedAt: now);
+
+    final markdown = const FeedbackPackageFormatter(l10n: l10n).format(package);
+
+    expect(markdown, contains('- Selected app source: Sakura Anime'));
+    expect(
+      markdown,
+      contains('## Playback\n- Captured at: 2026-06-08T01:02:03.000Z'),
+    );
+    expect(
+      markdown,
+      contains('- Selected app source: Remote Source Proxy'),
+    );
   });
 }
 

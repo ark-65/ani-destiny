@@ -781,6 +781,7 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
     final candidate = const PlaybackDiagnosticsBuilder().build(
       animeTitle: routeArgs.animeTitle,
       episodeTitle: routeArgs.episodeTitle,
+      selectedAppSourceId: ref.read(currentSourceIdProvider).valueOrNull,
       sourceId: routeArgs.sourceId,
       requestedSourceId: routeArgs.requestedSourceId,
       playSourceTitle: routeArgs.playSourceTitle,
@@ -792,13 +793,16 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
     final diagnostics = !force &&
             previousDiagnostics != null &&
             _matchesPlaybackDiagnostics(previousDiagnostics, candidate)
-        ? previousDiagnostics
+        ? _enrichCapturedSelectedAppSource(previousDiagnostics, candidate)
         : candidate;
     final diagnosticKey = _playbackDiagnosticKey(routeArgs, diagnostics.state);
+    final shouldPersistSnapshot = force ||
+        _lastPlaybackDiagnosticKey != diagnosticKey ||
+        !_samePlaybackDiagnostics(previousDiagnostics, diagnostics);
     unawaited(
       Future<void>(() {
         if (!mounted || _isDisposed) return;
-        if (!force && _lastPlaybackDiagnosticKey == diagnosticKey) return;
+        if (!shouldPersistSnapshot) return;
         _lastPlaybackDiagnosticKey = diagnosticKey;
         ref.read(lastPlaybackDiagnosticsProvider.notifier).state = diagnostics;
       }),
@@ -812,6 +816,41 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
   ) {
     return previous.animeTitle == next.animeTitle &&
         previous.episodeTitle == next.episodeTitle &&
+        previous.sourceId == next.sourceId &&
+        previous.requestedSourceId == next.requestedSourceId &&
+        previous.playSourceTitle == next.playSourceTitle &&
+        previous.urlType == next.urlType &&
+        previous.sanitizedUrl == next.sanitizedUrl &&
+        previous.state == next.state &&
+        listEquals(previous.headerKeys, next.headerKeys);
+  }
+
+  PlaybackDiagnostics _enrichCapturedSelectedAppSource(
+    PlaybackDiagnostics previous,
+    PlaybackDiagnostics next,
+  ) {
+    final previousSelected = previous.selectedAppSourceId?.trim();
+    if (previousSelected != null && previousSelected.isNotEmpty) {
+      return previous;
+    }
+    final nextSelected = next.selectedAppSourceId?.trim();
+    if (nextSelected == null || nextSelected.isEmpty) {
+      return previous;
+    }
+    return previous.copyWith(selectedAppSourceId: nextSelected);
+  }
+
+  bool _samePlaybackDiagnostics(
+    PlaybackDiagnostics? previous,
+    PlaybackDiagnostics next,
+  ) {
+    if (previous == null) {
+      return false;
+    }
+    return previous.capturedAt == next.capturedAt &&
+        previous.animeTitle == next.animeTitle &&
+        previous.episodeTitle == next.episodeTitle &&
+        previous.selectedAppSourceId == next.selectedAppSourceId &&
         previous.sourceId == next.sourceId &&
         previous.requestedSourceId == next.requestedSourceId &&
         previous.playSourceTitle == next.playSourceTitle &&
@@ -1357,9 +1396,7 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
     BuildContext context,
     PlaybackDiagnostics diagnostics,
   ) {
-    final selectedAppSourceId = diagnostics.divergentSelectedAppSourceId(
-      ref.read(currentSourceIdProvider).valueOrNull,
-    );
+    final selectedAppSourceId = diagnostics.divergentSelectedAppSourceId();
     if (selectedAppSourceId == null) {
       return null;
     }
