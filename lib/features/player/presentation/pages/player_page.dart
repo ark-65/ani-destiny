@@ -734,7 +734,7 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
                   ),
                   _DiagnosticRow(
                     label: context.l10n.playbackDiagnosticState,
-                    value: _stateLabel(),
+                    value: _diagnosticStateLabel(diagnostics.state),
                   ),
                   const SizedBox(height: 12),
                   Text(
@@ -770,6 +770,7 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
       playSourceTitle: routeArgs.playSourceTitle,
       playUrl: routeArgs.playUrl,
       headers: routeArgs.playHeaders,
+      state: _currentDiagnosticState(),
     );
     unawaited(
       Future<void>(() {
@@ -780,20 +781,35 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
     return diagnostics;
   }
 
-  String _stateLabel() {
+  PlaybackDiagnosticState _currentDiagnosticState() {
     if (_state.errorMessage != null) {
-      return context.l10n.playbackDiagnosticStateError;
+      return PlaybackDiagnosticState.error;
     }
     if (_state.isBuffering) {
-      return context.l10n.playbackDiagnosticStateBuffering;
+      return PlaybackDiagnosticState.buffering;
     }
     if (_state.isPlaying) {
-      return context.l10n.playbackDiagnosticStatePlaying;
+      return PlaybackDiagnosticState.playing;
     }
     if (_state.isInitialized) {
-      return context.l10n.playbackDiagnosticStateReady;
+      return PlaybackDiagnosticState.ready;
     }
-    return context.l10n.playbackDiagnosticStateLoading;
+    return PlaybackDiagnosticState.loading;
+  }
+
+  String _diagnosticStateLabel(PlaybackDiagnosticState state) {
+    return switch (state) {
+      PlaybackDiagnosticState.loading =>
+        context.l10n.playbackDiagnosticStateLoading,
+      PlaybackDiagnosticState.ready =>
+        context.l10n.playbackDiagnosticStateReady,
+      PlaybackDiagnosticState.playing =>
+        context.l10n.playbackDiagnosticStatePlaying,
+      PlaybackDiagnosticState.buffering =>
+        context.l10n.playbackDiagnosticStateBuffering,
+      PlaybackDiagnosticState.error =>
+        context.l10n.playbackDiagnosticStateError,
+    };
   }
 
   String _playbackErrorMessage() {
@@ -1256,7 +1272,8 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
       '${context.l10n.playbackDiagnosticUrlType}: ${diagnostics.urlType}',
       '${context.l10n.playbackDiagnosticUrl}: ${diagnostics.sanitizedUrl}',
       '${context.l10n.playbackDiagnosticHeaders}: $headers',
-      '${context.l10n.playbackDiagnosticState}: ${_stateLabel()}',
+      '${context.l10n.playbackDiagnosticState}: '
+          '${_diagnosticStateLabel(diagnostics.state)}',
     ]);
     return summary.join('\n');
   }

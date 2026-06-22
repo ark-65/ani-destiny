@@ -158,6 +158,8 @@ class FeedbackPackageCollector {
       '- ${l10n.playbackDiagnosticUrl}: ${diagnostics.sanitizedUrl}',
       '- ${l10n.playbackDiagnosticHeaders}: '
           '${diagnostics.headerKeys.isEmpty ? l10n.feedbackPackageNone : diagnostics.headerKeys.join(', ')}',
+      '- ${l10n.playbackDiagnosticState}: '
+          '${_playbackDiagnosticStateLabel(diagnostics.state)}',
     ];
 
     return lines.join('\n');
@@ -176,6 +178,17 @@ class FeedbackPackageCollector {
   }
 
   String _sourceLabel(String sourceId) => _sourceLabelForId(sourceId);
+
+  String _playbackDiagnosticStateLabel(PlaybackDiagnosticState state) {
+    return switch (state) {
+      PlaybackDiagnosticState.loading => l10n.playbackDiagnosticStateLoading,
+      PlaybackDiagnosticState.ready => l10n.playbackDiagnosticStateReady,
+      PlaybackDiagnosticState.playing => l10n.playbackDiagnosticStatePlaying,
+      PlaybackDiagnosticState.buffering =>
+        l10n.playbackDiagnosticStateBuffering,
+      PlaybackDiagnosticState.error => l10n.playbackDiagnosticStateError,
+    };
+  }
 
   String _sourceLabelOrUnavailable(String? sourceId) {
     if (sourceId == null) return l10n.feedbackPackageUnavailable;

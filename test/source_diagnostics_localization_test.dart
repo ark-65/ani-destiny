@@ -241,6 +241,7 @@ void main() {
       urlType: 'm3u8',
       sanitizedUrl: 'https://cdn.example.test/.../episode-2.m3u8',
       headerKeys: ['Referer', 'User-Agent'],
+      state: PlaybackDiagnosticState.buffering,
     );
 
     await tester.pumpWidget(
@@ -280,6 +281,8 @@ void main() {
       findsOneWidget,
     );
     expect(find.text('Referer, User-Agent'), findsOneWidget);
+    expect(find.text('State'), findsOneWidget);
+    expect(find.text('Buffering'), findsOneWidget);
   });
 
   testWidgets('source diagnostics sheet sanitizes inline support details', (

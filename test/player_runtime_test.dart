@@ -292,6 +292,7 @@ void main() {
         'User-Agent': 'AniDestinyTest',
         'Referer': 'https://example.test/player?token=secret',
       },
+      state: PlaybackDiagnosticState.playing,
     );
 
     expect(diagnostics.urlType, 'm3u8');
@@ -301,6 +302,7 @@ void main() {
     );
     expect(diagnostics.sanitizedUrl, isNot(contains('token')));
     expect(diagnostics.headerKeys, ['Referer', 'User-Agent']);
+    expect(diagnostics.state, PlaybackDiagnosticState.playing);
     expect(diagnostics.usedSourceFallback, isTrue);
   });
 }

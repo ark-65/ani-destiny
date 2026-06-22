@@ -7,6 +7,7 @@
 ## [Unreleased]
 
 ### 🐛 Fixed
+- Fixed the in-player Playback diagnostics already capturing playback state while Runtime diagnostics and copied feedback summaries still rebuilt that context separately; all three support surfaces now show the same snapshot state from the moment diagnostics were captured, so loading, buffering, playing, and failure states stay consistent across support flows.
 - Fixed Runtime diagnostics and copied feedback summaries still labeling the app-level source like it was the source carrying the current playback; AniDestiny now calls that field `Selected app source`, clearly separating it from `Selected playback source`, `Active playback source`, and `Playback source status` so support copy no longer blurs global settings with the live playback context.
 - Fixed Runtime diagnostics and in-player playback diagnostics still using source labels that blurred together the global current source, the selected source, and the source actually carrying this playback; those rows now explicitly distinguish the selected playback source, the active playback source, and the playback source status so fallback-backed playback is easier to read at a glance.
 - Fixed fallback playback diagnostics still making users infer the outcome from separate "Requested source" and "Source" fields; AniDestiny now adds a plain-language "Source status" line that says the requested source is temporarily unavailable and which source is currently carrying playback instead.

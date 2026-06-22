@@ -1,5 +1,13 @@
 import '../../../../core/utils/url_sanitizer.dart';
 
+enum PlaybackDiagnosticState {
+  loading,
+  ready,
+  playing,
+  buffering,
+  error,
+}
+
 class PlaybackDiagnostics {
   const PlaybackDiagnostics({
     required this.capturedAt,
@@ -11,6 +19,7 @@ class PlaybackDiagnostics {
     required this.urlType,
     required this.sanitizedUrl,
     required this.headerKeys,
+    required this.state,
   });
 
   final DateTime capturedAt;
@@ -22,6 +31,7 @@ class PlaybackDiagnostics {
   final String urlType;
   final String sanitizedUrl;
   final List<String> headerKeys;
+  final PlaybackDiagnosticState state;
 
   bool get usedSourceFallback {
     final requested = requestedSourceId?.trim();
@@ -41,6 +51,7 @@ class PlaybackDiagnosticsBuilder {
     required String? playSourceTitle,
     required String playUrl,
     required Map<String, String> headers,
+    required PlaybackDiagnosticState state,
   }) {
     return PlaybackDiagnostics(
       capturedAt: capturedAt ?? DateTime.now(),
@@ -52,6 +63,7 @@ class PlaybackDiagnosticsBuilder {
       urlType: detectUrlType(playUrl),
       sanitizedUrl: sanitizeUrl(playUrl),
       headerKeys: headers.keys.toList(growable: false)..sort(),
+      state: state,
     );
   }
 

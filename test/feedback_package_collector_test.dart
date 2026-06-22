@@ -58,6 +58,7 @@ void main() {
         urlType: 'm3u8',
         sanitizedUrl: 'https://cdn.example.test/.../video.m3u8',
         headerKeys: ['Referer', 'User-Agent'],
+        state: PlaybackDiagnosticState.error,
       ),
       danmakuEnabled: true,
       dandanplayAppIdConfigured: true,
@@ -97,6 +98,7 @@ void main() {
       ),
     );
     expect(markdown, contains('- Active playback source: sakura'));
+    expect(markdown, contains('- State: Failed'));
     expect(markdown, contains('- Failed: 1'));
     expect(markdown, contains('Reason: Network error'));
     expect(markdown, contains('https://example.test/.../detail.html'));
@@ -149,6 +151,7 @@ void main() {
         urlType: 'm3u8',
         sanitizedUrl: 'https://cdn.example.test/.../video.m3u8',
         headerKeys: [],
+        state: PlaybackDiagnosticState.ready,
       ),
       danmakuEnabled: true,
       dandanplayAppIdConfigured: false,
@@ -166,6 +169,7 @@ void main() {
     expect(markdown, contains('详情: Sakura Anime -> Mock 动漫数据源'));
     expect(markdown, contains('- 采集时间: 2026-06-08T01:02:03.000Z'));
     expect(markdown, contains('- 线路: Line 1'));
+    expect(markdown, contains('- 状态: 就绪'));
     expect(markdown, contains('- 启用: 是'));
     expect(markdown, contains('Dandanplay App ID 已配置: 否'));
     expect(markdown, isNot(contains('- 当前数据源: sakura')));

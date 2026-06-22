@@ -245,7 +245,28 @@ List<Widget> _playbackDiagnosticTiles(
       value: headers,
       icon: Icons.key_outlined,
     ),
+    _DiagnosticTile(
+      label: context.l10n.playbackDiagnosticState,
+      value: _playbackDiagnosticStateLabel(context, diagnostics.state),
+      icon: Icons.monitor_heart_outlined,
+    ),
   ];
+}
+
+String _playbackDiagnosticStateLabel(
+  BuildContext context,
+  PlaybackDiagnosticState state,
+) {
+  return switch (state) {
+    PlaybackDiagnosticState.loading =>
+      context.l10n.playbackDiagnosticStateLoading,
+    PlaybackDiagnosticState.ready => context.l10n.playbackDiagnosticStateReady,
+    PlaybackDiagnosticState.playing =>
+      context.l10n.playbackDiagnosticStatePlaying,
+    PlaybackDiagnosticState.buffering =>
+      context.l10n.playbackDiagnosticStateBuffering,
+    PlaybackDiagnosticState.error => context.l10n.playbackDiagnosticStateError,
+  };
 }
 
 String _diagnosticContextValue(String? value) {
