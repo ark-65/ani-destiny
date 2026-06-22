@@ -134,12 +134,17 @@ class FeedbackPackageCollector {
       return '${l10n.feedbackPackageUnavailable}: '
           '${l10n.feedbackPackagePlaybackUnavailable}';
     }
+    final selectedAppSourceId = diagnostics.divergentSelectedAppSourceId(
+      currentSourceId,
+    );
 
     final lines = <String>[
       '- ${l10n.playbackDiagnosticCapturedAt}: '
           '${diagnostics.capturedAt.toIso8601String()}',
       '- ${l10n.playbackDiagnosticAnime}: ${diagnostics.animeTitle}',
       '- ${l10n.playbackDiagnosticEpisode}: ${diagnostics.episodeTitle}',
+      if (selectedAppSourceId != null)
+        '- ${l10n.selectedAppSource}: ${_sourceLabel(selectedAppSourceId)}',
       if (diagnostics.usedSourceFallback &&
           diagnostics.requestedSourceId != null)
         '- ${l10n.playbackDiagnosticRequestedSource}: '

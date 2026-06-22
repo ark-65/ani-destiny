@@ -285,6 +285,58 @@ void main() {
     expect(find.text('Buffering'), findsOneWidget);
   });
 
+  testWidgets(
+      'runtime diagnostics playback snapshot adds app source only when it explains a mismatch',
+      (tester) async {
+    final container = ProviderContainer(
+      overrides: [
+        ..._providerOverrides,
+        currentSourceIdProvider.overrideWith(
+          () => _RemoteProxyCurrentSourceIdController(),
+        ),
+      ],
+    );
+    addTearDown(container.dispose);
+    container.read(lastPlaybackDiagnosticsProvider.notifier).state =
+        PlaybackDiagnostics(
+      capturedAt: DateTime(2026, 6, 17, 1, 2, 3),
+      animeTitle: 'Anime 1',
+      episodeTitle: 'Episode 2',
+      sourceId: 'mock',
+      requestedSourceId: 'sakura',
+      playSourceTitle: 'Line 1',
+      urlType: 'm3u8',
+      sanitizedUrl: 'https://cdn.example.test/.../episode-2.m3u8',
+      headerKeys: const ['Referer'],
+      state: PlaybackDiagnosticState.buffering,
+    );
+
+    await tester.pumpWidget(
+      UncontrolledProviderScope(
+        container: container,
+        child: const MaterialApp(
+          locale: Locale('en'),
+          supportedLocales: AppLocalizations.supportedLocales,
+          localizationsDelegates: [
+            AppLocalizations.delegate,
+            GlobalMaterialLocalizations.delegate,
+            GlobalWidgetsLocalizations.delegate,
+            GlobalCupertinoLocalizations.delegate,
+          ],
+          home: Scaffold(body: RuntimeDiagnosticsPage()),
+        ),
+      ),
+    );
+
+    await tester.pumpAndSettle();
+
+    expect(find.text('Selected app source'), findsNWidgets(2));
+    expect(find.text('Remote Source Proxy'), findsNWidgets(2));
+    expect(find.text('Selected playback source'), findsOneWidget);
+    expect(find.text('Mock Anime Source'), findsWidgets);
+    expect(find.text('Sakura Anime'), findsWidgets);
+  });
+
   testWidgets('source diagnostics sheet sanitizes inline support details', (
     tester,
   ) async {
@@ -380,6 +432,11 @@ final _providerOverrides = <Override>[
 class _FakeCurrentSourceIdController extends CurrentSourceIdController {
   @override
   Future<String> build() async => 'sakura';
+}
+
+class _RemoteProxyCurrentSourceIdController extends CurrentSourceIdController {
+  @override
+  Future<String> build() async => 'remote-proxy';
 }
 
 class _FakeSourceHealthController extends SourceHealthController {

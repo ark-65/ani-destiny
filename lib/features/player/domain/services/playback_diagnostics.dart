@@ -37,6 +37,17 @@ class PlaybackDiagnostics {
     final requested = requestedSourceId?.trim();
     return requested != null && requested.isNotEmpty && requested != sourceId;
   }
+
+  String? divergentSelectedAppSourceId(String? selectedAppSourceId) {
+    final selected = selectedAppSourceId?.trim();
+    if (selected == null || selected.isEmpty) {
+      return null;
+    }
+    if (selected == sourceId || selected == requestedSourceId) {
+      return null;
+    }
+    return selected;
+  }
 }
 
 class PlaybackDiagnosticsBuilder {

@@ -1357,13 +1357,10 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
     BuildContext context,
     PlaybackDiagnostics diagnostics,
   ) {
-    final selectedAppSourceId =
-        ref.read(currentSourceIdProvider).valueOrNull?.trim();
-    if (selectedAppSourceId == null || selectedAppSourceId.isEmpty) {
-      return null;
-    }
-    if (selectedAppSourceId == diagnostics.sourceId ||
-        selectedAppSourceId == diagnostics.requestedSourceId) {
+    final selectedAppSourceId = diagnostics.divergentSelectedAppSourceId(
+      ref.read(currentSourceIdProvider).valueOrNull,
+    );
+    if (selectedAppSourceId == null) {
       return null;
     }
     return context.l10n.sourceDisplayLabel(selectedAppSourceId);

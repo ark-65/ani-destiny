@@ -131,6 +131,7 @@ class RuntimeDiagnosticsPage extends ConsumerWidget {
                   ..._playbackDiagnosticTiles(
                     context,
                     playbackDiagnostics,
+                    currentSourceId: currentSourceId,
                   ),
               ],
             ),
@@ -182,12 +183,16 @@ class RuntimeDiagnosticsPage extends ConsumerWidget {
 
 List<Widget> _playbackDiagnosticTiles(
   BuildContext context,
-  PlaybackDiagnostics diagnostics,
-) {
+  PlaybackDiagnostics diagnostics, {
+  String? currentSourceId,
+}) {
   final lineTitle = diagnostics.playSourceTitle?.trim();
   final lineValue = lineTitle == null || lineTitle.isEmpty ? '-' : lineTitle;
   final headers =
       diagnostics.headerKeys.isEmpty ? '-' : diagnostics.headerKeys.join(', ');
+  final selectedAppSourceId = diagnostics.divergentSelectedAppSourceId(
+    currentSourceId,
+  );
 
   return [
     _DiagnosticTile(
@@ -205,6 +210,12 @@ List<Widget> _playbackDiagnosticTiles(
       value: _diagnosticContextValue(diagnostics.episodeTitle),
       icon: Icons.live_tv_outlined,
     ),
+    if (selectedAppSourceId != null)
+      _DiagnosticTile(
+        label: context.l10n.selectedAppSource,
+        value: context.l10n.sourceDisplayLabel(selectedAppSourceId),
+        icon: Icons.route_outlined,
+      ),
     if (diagnostics.usedSourceFallback && diagnostics.requestedSourceId != null)
       _DiagnosticTile(
         label: context.l10n.playbackDiagnosticRequestedSource,

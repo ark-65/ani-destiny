@@ -222,6 +222,55 @@ void main() {
     expect(markdown, isNot(contains('Reason: Canceled')));
     expect(markdown, isNot(contains('Download canceled.')));
   });
+
+  test(
+      'collector adds selected app source to playback summary only for divergent playback context',
+      () {
+    final now = DateTime.utc(2026, 6, 8, 1, 2, 3);
+    const l10n = AppLocalizations(Locale('en'));
+    final package = FeedbackPackageCollector(
+      l10n: l10n,
+      appName: 'AniDestiny',
+      appVersion: '1.0.2',
+      platform: 'Android',
+      currentSourceId: 'remote-proxy',
+      sourceHealth: const [],
+      sourceDiagnostics: const [],
+      fallbackEvents: const [],
+      playbackDiagnostics: PlaybackDiagnostics(
+        capturedAt: now,
+        animeTitle: 'Anime',
+        episodeTitle: 'Episode 1',
+        sourceId: 'sakura',
+        requestedSourceId: 'mock',
+        playSourceTitle: 'Line 1',
+        urlType: 'm3u8',
+        sanitizedUrl: 'https://cdn.example.test/.../video.m3u8',
+        headerKeys: const [],
+        state: PlaybackDiagnosticState.playing,
+      ),
+      danmakuEnabled: true,
+      dandanplayAppIdConfigured: false,
+      dandanplayAppSecretConfigured: false,
+      downloadTasks: const [],
+      sourceLabelForId: (sourceId) {
+        return switch (sourceId) {
+          'remote-proxy' => 'Remote Source Proxy',
+          _ => _sourceLabelForId(sourceId),
+        };
+      },
+    ).collect(generatedAt: now);
+
+    final markdown = const FeedbackPackageFormatter(l10n: l10n).format(package);
+    final selectedAppSourceMatches =
+        RegExp(r'^- Selected app source: Remote Source Proxy$', multiLine: true)
+            .allMatches(markdown)
+            .length;
+
+    expect(selectedAppSourceMatches, 2);
+    expect(markdown, contains('- Selected playback source: Mock Anime Source'));
+    expect(markdown, contains('- Active playback source: Sakura Anime'));
+  });
 }
 
 String _sourceLabelForId(String sourceId) {
