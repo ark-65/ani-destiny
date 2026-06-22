@@ -273,6 +273,8 @@ void main() {
     expect(en.playbackDiagnosticHeaders, 'Request headers');
     expect(en.playbackDiagnosticCapturedAt, 'Captured at');
     expect(en.selectedAppSource, 'Selected app source');
+    expect(en.copyPlaybackDiagnostics, 'Copy playback diagnostics');
+    expect(en.playbackDiagnosticsCopied, 'Playback diagnostics copied');
     expect(
       en.playbackDiagnosticSelectedAppSource,
       'Selected app source at playback',
@@ -292,6 +294,8 @@ void main() {
     expect(ja.playbackDiagnosticsDebugHint, isNot(contains('header keys')));
     expect(ja.playbackDiagnosticCapturedAt, '取得時刻');
     expect(ja.selectedAppSource, '選択中のアプリソース');
+    expect(ja.copyPlaybackDiagnostics, '再生診断をコピー');
+    expect(ja.playbackDiagnosticsCopied, '再生診断をコピーしました');
     expect(ja.playbackDiagnosticSelectedAppSource, '再生時のアプリソース');
     expect(ja.playbackDiagnosticRequestedSource, '選択した再生ソース');
     expect(ja.playbackDiagnosticSource, '現在の再生ソース');

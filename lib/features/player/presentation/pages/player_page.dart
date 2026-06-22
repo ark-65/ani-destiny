@@ -456,7 +456,8 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
                                             Icons.content_copy_outlined,
                                           ),
                                           label: Text(
-                                            context.l10n.copyDiagnostics,
+                                            context
+                                                .l10n.copyPlaybackDiagnostics,
                                           ),
                                         ),
                                         TextButton.icon(
@@ -770,7 +771,7 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
                       _copyPlaybackDiagnostics(diagnostics: diagnostics),
                     ),
                     icon: const Icon(Icons.content_copy_outlined),
-                    label: Text(context.l10n.copyDiagnostics),
+                    label: Text(context.l10n.copyPlaybackDiagnostics),
                   ),
                 ],
               ),
@@ -1358,7 +1359,7 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
     try {
       await Clipboard.setData(ClipboardData(text: summary));
       if (!mounted) return;
-      _showSnackBar(context.l10n.diagnosticsCopied);
+      _showSnackBar(context.l10n.playbackDiagnosticsCopied);
     } catch (_) {
       if (!mounted) return;
       _showSnackBar(context.l10n.diagnosticsCopyFailed);

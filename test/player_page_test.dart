@@ -466,12 +466,12 @@ void main() {
     final capturedAt = initialDiagnostics!.capturedAt.toIso8601String();
 
     await tester.pump(const Duration(seconds: 2));
-    final copyDiagnosticsButton = find.text('Copy diagnostics');
+    final copyDiagnosticsButton = find.text('Copy playback diagnostics');
     await tester.ensureVisible(copyDiagnosticsButton);
     await tester.tap(copyDiagnosticsButton);
     await tester.pumpAndSettle();
 
-    expect(find.text('Diagnostics copied'), findsOneWidget);
+    expect(find.text('Playback diagnostics copied'), findsOneWidget);
     expect(copiedText, startsWith('Playback diagnostics summary\n'));
     expect(copiedText, contains('Captured at: $capturedAt'));
     expect(copiedText, contains('Anime: Anime 1'));
@@ -533,8 +533,8 @@ void main() {
     expect(find.text('Selected app source at playback'), findsOneWidget);
     expect(find.text('Remote Source Proxy'), findsOneWidget);
 
-    await tester.ensureVisible(find.text('Copy diagnostics').last);
-    await tester.tap(find.text('Copy diagnostics').last);
+    await tester.ensureVisible(find.text('Copy playback diagnostics').last);
+    await tester.tap(find.text('Copy playback diagnostics').last);
     await tester.pumpAndSettle();
 
     expect(
@@ -597,8 +597,8 @@ void main() {
     expect(find.text('Selected app source at playback'), findsOneWidget);
     expect(find.text('Remote Source Proxy'), findsOneWidget);
 
-    await tester.ensureVisible(find.text('Copy diagnostics').last);
-    await tester.tap(find.text('Copy diagnostics').last);
+    await tester.ensureVisible(find.text('Copy playback diagnostics').last);
+    await tester.tap(find.text('Copy playback diagnostics').last);
     await tester.pumpAndSettle();
 
     expect(
@@ -681,7 +681,7 @@ void main() {
     await tester.tap(copyButton);
     await tester.pumpAndSettle();
 
-    expect(find.text('Diagnostics copied'), findsOneWidget);
+    expect(find.text('Playback diagnostics copied'), findsOneWidget);
     expect(copiedText, isNotNull);
     expect(find.text('Playback diagnostics'), findsOneWidget);
   });
@@ -1145,7 +1145,7 @@ void main() {
       findsNothing,
     );
     expect(find.text('Retry'), findsNothing);
-    expect(find.text('Copy diagnostics'), findsNothing);
+    expect(find.text('Copy playback diagnostics'), findsNothing);
 
     launchCompleter.complete(true);
     await tester.pumpAndSettle();
@@ -1192,7 +1192,7 @@ void main() {
       findsOneWidget,
     );
     expect(find.text('Retry'), findsOneWidget);
-    expect(find.text('Copy diagnostics'), findsOneWidget);
+    expect(find.text('Copy playback diagnostics'), findsOneWidget);
   });
 
   testWidgets(
@@ -1235,7 +1235,7 @@ void main() {
       findsOneWidget,
     );
     expect(find.text('Retry'), findsOneWidget);
-    expect(find.text('Copy diagnostics'), findsOneWidget);
+    expect(find.text('Copy playback diagnostics'), findsOneWidget);
   });
 
   testWidgets('external player action launches the current playback url', (

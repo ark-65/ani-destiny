@@ -246,7 +246,9 @@ class AppLocalizations {
   String get danmakuAbout => _t('danmakuAbout');
   String get danmakuAboutValue => _t('danmakuAboutValue');
   String get copyDiagnostics => _t('copyDiagnostics');
+  String get copyPlaybackDiagnostics => _t('copyPlaybackDiagnostics');
   String get diagnosticsCopied => _t('diagnosticsCopied');
+  String get playbackDiagnosticsCopied => _t('playbackDiagnosticsCopied');
   String get diagnosticsCopyFailed => _t('diagnosticsCopyFailed');
   String get diagnosticsPrivacyNote => _t('diagnosticsPrivacyNote');
   String get reportIssue => _t('reportIssue');
@@ -572,7 +574,9 @@ const _localizedValues = {
     'danmakuAbout': '弹幕',
     'danmakuAboutValue': '弹弹play 为可选集成；不可用时会改用备用来源。',
     'copyDiagnostics': '复制诊断信息',
+    'copyPlaybackDiagnostics': '复制播放诊断',
     'diagnosticsCopied': '诊断信息已复制',
+    'playbackDiagnosticsCopied': '播放诊断已复制',
     'diagnosticsCopyFailed': '复制诊断信息失败',
     'diagnosticsPrivacyNote': '将生成已脱敏的反馈摘要，不包含敏感值。',
     'reportIssue': '反馈问题',
@@ -854,7 +858,9 @@ const _localizedValues = {
     'danmakuAboutValue':
         'Dandanplay is optional; a backup provider is used when unavailable.',
     'copyDiagnostics': 'Copy diagnostics',
+    'copyPlaybackDiagnostics': 'Copy playback diagnostics',
     'diagnosticsCopied': 'Diagnostics copied',
+    'playbackDiagnosticsCopied': 'Playback diagnostics copied',
     'diagnosticsCopyFailed': 'Failed to copy diagnostics',
     'diagnosticsPrivacyNote':
         'Generates a sanitized feedback summary without sensitive values.',
@@ -1134,7 +1140,9 @@ const _localizedValues = {
     'danmakuAbout': '弾幕',
     'danmakuAboutValue': '弹弹play は任意連携です。利用できない場合は代替提供元を使います。',
     'copyDiagnostics': '診断情報をコピー',
+    'copyPlaybackDiagnostics': '再生診断をコピー',
     'diagnosticsCopied': '診断情報をコピーしました',
+    'playbackDiagnosticsCopied': '再生診断をコピーしました',
     'diagnosticsCopyFailed': '診断情報のコピーに失敗しました',
     'diagnosticsPrivacyNote': '機密値を含まないフィードバック概要を生成します。',
     'reportIssue': '問題を報告',

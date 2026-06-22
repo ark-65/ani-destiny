@@ -7,6 +7,7 @@
 ## [Unreleased]
 
 ### 🐛 Fixed
+- Fixed the in-player Playback diagnostics sheet still using the same generic `Copy diagnostics` action name and success feedback as the Settings page even though it only copies the playback snapshot summary; the player sheet now explicitly says `Copy playback diagnostics` so the support action matches the content it actually exports.
 - Fixed the in-player `Playback diagnostics` sheet still dropping users directly into raw support fields without first saying that the panel is the latest playback snapshot from this session; it now leads with the same confirm-before-copy hint as Runtime diagnostics so both support surfaces explain the snapshot in one consistent, user-facing way.
 - Fixed the in-player `Playback diagnostics` sheet still exposing `Captured at` as a raw ISO timestamp while `Runtime diagnostics` already showed a local readable time; the player snapshot now uses the same local date-and-time presentation so the support flow reads like a user-facing moment instead of raw debug output.
 - Fixed Runtime diagnostics, in-player Playback diagnostics, and copied support summaries still labeling both the live global source and the playback-captured global source as the same `Selected app source`, which made users infer the time context from layout alone; playback snapshots now explicitly call that captured field `Selected app source at playback` so support details say which state was current and which one belonged to the playback moment.
