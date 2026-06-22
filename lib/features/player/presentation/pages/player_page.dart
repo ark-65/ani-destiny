@@ -690,6 +690,11 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
                     style: Theme.of(context).textTheme.titleLarge,
                   ),
                   const SizedBox(height: 12),
+                  Text(
+                    context.l10n.playbackDiagnosticsDebugHint,
+                    style: Theme.of(context).textTheme.bodyMedium,
+                  ),
+                  const SizedBox(height: 12),
                   _DiagnosticRow(
                     label: context.l10n.playbackDiagnosticCapturedAt,
                     value: _formatPlaybackDiagnosticCapturedAt(

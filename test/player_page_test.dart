@@ -247,6 +247,12 @@ void main() {
 
     expect(find.text('Captured at'), findsOneWidget);
     expect(find.text(capturedAt), findsOneWidget);
+    expect(
+      find.text(
+        'The latest playback snapshot captured in this session appears here so you can confirm the anime, line, URL type, and request-header names before copying diagnostics.',
+      ),
+      findsOneWidget,
+    );
     expect(find.text('Anime'), findsOneWidget);
     expect(find.text('Anime 1'), findsAtLeastNWidgets(1));
     expect(find.text('Episode'), findsWidgets);
