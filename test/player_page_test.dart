@@ -223,6 +223,10 @@ void main() {
     await tester.tap(find.byTooltip('Playback diagnostics'));
     await tester.pumpAndSettle();
 
+    final capturedAt = diagnostics!.capturedAt.toIso8601String();
+
+    expect(find.text('Captured at'), findsOneWidget);
+    expect(find.text(capturedAt), findsOneWidget);
     expect(find.text('Anime'), findsOneWidget);
     expect(find.text('Anime 1'), findsAtLeastNWidgets(1));
     expect(find.text('Episode'), findsWidgets);
@@ -412,20 +416,30 @@ void main() {
       return null;
     });
 
+    final container = ProviderContainer(
+      overrides: [
+        playerRepositoryProvider.overrideWithValue(
+          const _ThrowingPlayerRepository(),
+        ),
+        historyRepositoryProvider.overrideWithValue(_FakeHistoryRepository()),
+        danmakuRepositoryProvider.overrideWithValue(_FakeDanmakuRepository()),
+      ],
+    );
+    addTearDown(container.dispose);
+
     await tester.pumpWidget(
-      ProviderScope(
-        overrides: [
-          playerRepositoryProvider.overrideWithValue(
-            const _ThrowingPlayerRepository(),
-          ),
-          historyRepositoryProvider.overrideWithValue(_FakeHistoryRepository()),
-          danmakuRepositoryProvider.overrideWithValue(_FakeDanmakuRepository()),
-        ],
+      UncontrolledProviderScope(
+        container: container,
         child: _buildPlayerApp(_fallbackFailingArgs),
       ),
     );
     await tester.pumpAndSettle();
 
+    final initialDiagnostics = container.read(lastPlaybackDiagnosticsProvider);
+    expect(initialDiagnostics, isNotNull);
+    final capturedAt = initialDiagnostics!.capturedAt.toIso8601String();
+
+    await tester.pump(const Duration(seconds: 2));
     final copyDiagnosticsButton = find.text('Copy diagnostics');
     await tester.ensureVisible(copyDiagnosticsButton);
     await tester.tap(copyDiagnosticsButton);
@@ -433,7 +447,7 @@ void main() {
 
     expect(find.text('Diagnostics copied'), findsOneWidget);
     expect(copiedText, startsWith('Playback diagnostics summary\n'));
-    expect(copiedText, contains('Captured at: '));
+    expect(copiedText, contains('Captured at: $capturedAt'));
     expect(copiedText, contains('Anime: Anime 1'));
     expect(copiedText, contains('Episode: Episode 2'));
     expect(

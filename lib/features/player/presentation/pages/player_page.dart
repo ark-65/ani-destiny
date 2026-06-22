@@ -687,6 +687,10 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
                   ),
                   const SizedBox(height: 12),
                   _DiagnosticRow(
+                    label: context.l10n.playbackDiagnosticCapturedAt,
+                    value: diagnostics.capturedAt.toIso8601String(),
+                  ),
+                  _DiagnosticRow(
                     label: context.l10n.playbackDiagnosticAnime,
                     value: _diagnosticContextValue(diagnostics.animeTitle),
                   ),
@@ -765,7 +769,7 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
     bool force = false,
   }) {
     final routeArgs = args ?? _args;
-    final diagnostics = const PlaybackDiagnosticsBuilder().build(
+    final candidate = const PlaybackDiagnosticsBuilder().build(
       animeTitle: routeArgs.animeTitle,
       episodeTitle: routeArgs.episodeTitle,
       sourceId: routeArgs.sourceId,
@@ -775,6 +779,12 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
       headers: routeArgs.playHeaders,
       state: _currentDiagnosticState(),
     );
+    final previousDiagnostics = ref.read(lastPlaybackDiagnosticsProvider);
+    final diagnostics = !force &&
+            previousDiagnostics != null &&
+            _matchesPlaybackDiagnostics(previousDiagnostics, candidate)
+        ? previousDiagnostics
+        : candidate;
     final diagnosticKey = _playbackDiagnosticKey(routeArgs, diagnostics.state);
     unawaited(
       Future<void>(() {
@@ -785,6 +795,21 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
       }),
     );
     return diagnostics;
+  }
+
+  bool _matchesPlaybackDiagnostics(
+    PlaybackDiagnostics previous,
+    PlaybackDiagnostics next,
+  ) {
+    return previous.animeTitle == next.animeTitle &&
+        previous.episodeTitle == next.episodeTitle &&
+        previous.sourceId == next.sourceId &&
+        previous.requestedSourceId == next.requestedSourceId &&
+        previous.playSourceTitle == next.playSourceTitle &&
+        previous.urlType == next.urlType &&
+        previous.sanitizedUrl == next.sanitizedUrl &&
+        previous.state == next.state &&
+        listEquals(previous.headerKeys, next.headerKeys);
   }
 
   String _playbackDiagnosticKey(
