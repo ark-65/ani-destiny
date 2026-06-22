@@ -255,6 +255,7 @@ void main() {
     expect(zh.playbackDiagnosticsDebugHint, isNot(contains('Debug')));
     expect(zh.playbackDiagnosticsDebugHint, isNot(contains('header keys')));
     expect(zh.playbackDiagnosticCapturedAt, '采集时间');
+    expect(zh.selectedAppSource, '应用所选数据源');
     expect(zh.playbackDiagnosticRequestedSource, '所选播放源');
     expect(zh.playbackDiagnosticSource, '当前播放源');
     expect(zh.playbackDiagnosticSourceStatus, '播放源状态');
@@ -270,6 +271,7 @@ void main() {
     expect(en.playbackDiagnosticsSummaryHint, isNot(contains('player page')));
     expect(en.playbackDiagnosticHeaders, 'Request headers');
     expect(en.playbackDiagnosticCapturedAt, 'Captured at');
+    expect(en.selectedAppSource, 'Selected app source');
     expect(en.playbackDiagnosticRequestedSource, 'Selected playback source');
     expect(en.playbackDiagnosticSource, 'Active playback source');
     expect(en.playbackDiagnosticSourceStatus, 'Playback source status');
@@ -284,6 +286,7 @@ void main() {
     expect(ja.playbackDiagnosticsDebugHint, isNot(contains('Debug')));
     expect(ja.playbackDiagnosticsDebugHint, isNot(contains('header keys')));
     expect(ja.playbackDiagnosticCapturedAt, '取得時刻');
+    expect(ja.selectedAppSource, '選択中のアプリソース');
     expect(ja.playbackDiagnosticRequestedSource, '選択した再生ソース');
     expect(ja.playbackDiagnosticSource, '現在の再生ソース');
     expect(ja.playbackDiagnosticSourceStatus, '再生ソース状態');

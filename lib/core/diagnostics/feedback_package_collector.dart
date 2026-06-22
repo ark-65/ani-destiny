@@ -60,7 +60,7 @@ class FeedbackPackageCollector {
 
   String _sourceSummary() {
     final lines = <String>[
-      '- ${l10n.currentSource}: ${_sourceLabelOrUnavailable(currentSourceId)}',
+      '- ${l10n.selectedAppSource}: ${_sourceLabelOrUnavailable(currentSourceId)}',
     ];
 
     if (sourceHealth.isEmpty) {

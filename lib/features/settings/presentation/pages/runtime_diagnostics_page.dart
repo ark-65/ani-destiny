@@ -78,7 +78,7 @@ class RuntimeDiagnosticsPage extends ConsumerWidget {
                   icon: Icons.devices_outlined,
                 ),
                 _DiagnosticTile(
-                  label: context.l10n.currentSource,
+                  label: context.l10n.selectedAppSource,
                   value: currentSourceId == null
                       ? '-'
                       : context.l10n.sourceDisplayLabel(currentSourceId),

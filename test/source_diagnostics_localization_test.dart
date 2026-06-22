@@ -32,7 +32,7 @@ void main() {
 
     await tester.pumpAndSettle();
 
-    expect(find.text('Current source'), findsOneWidget);
+    expect(find.text('Selected app source'), findsOneWidget);
     expect(find.textContaining('Sakura Anime'), findsWidgets);
     await tester.scrollUntilVisible(
       find.textContaining('Mock Anime Source'),

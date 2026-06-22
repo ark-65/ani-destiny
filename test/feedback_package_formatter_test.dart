@@ -13,7 +13,7 @@ void main() {
         appName: 'AniDestiny',
         appVersion: '1.0.1',
         platform: 'Android',
-        sourceSummary: '- Current source: Sakura Anime',
+        sourceSummary: '- Selected app source: Sakura Anime',
         playbackSummary: '- URL type: m3u8',
         danmakuSummary: '- Enabled: Yes',
         downloadSummary: '- Total tasks: 0',

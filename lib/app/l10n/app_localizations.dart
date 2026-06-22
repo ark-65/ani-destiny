@@ -304,6 +304,7 @@ class AppLocalizations {
   String get feedbackPackageDanmakuFallbackProvider =>
       _t('feedbackPackageDanmakuFallbackProvider');
   String get feedbackPackageAvailable => _t('feedbackPackageAvailable');
+  String get selectedAppSource => _t('selectedAppSource');
   String get currentSource => _t('currentSource');
   String get currentSourceId => _t('currentSourceId');
   String get latestSourceDiagnostics => _t('latestSourceDiagnostics');
@@ -613,6 +614,7 @@ const _localizedValues = {
     'feedbackPackageDandanplayAppSecretConfigured': 'Dandanplay 次级凭据已配置',
     'feedbackPackageDanmakuFallbackProvider': '备用提供元',
     'feedbackPackageAvailable': '可用',
+    'selectedAppSource': '应用所选数据源',
     'currentSource': '当前数据源',
     'currentSourceId': '当前数据源 ID',
     'latestSourceDiagnostics': '最近数据源诊断',
@@ -897,6 +899,7 @@ const _localizedValues = {
         'Dandanplay secondary credential configured',
     'feedbackPackageDanmakuFallbackProvider': 'Fallback provider',
     'feedbackPackageAvailable': 'Available',
+    'selectedAppSource': 'Selected app source',
     'currentSource': 'Current source',
     'currentSourceId': 'Current source ID',
     'latestSourceDiagnostics': 'Latest source diagnostics',
@@ -1171,6 +1174,7 @@ const _localizedValues = {
     'feedbackPackageDandanplayAppSecretConfigured': 'Dandanplay 二次認証情報 設定済み',
     'feedbackPackageDanmakuFallbackProvider': '代替提供元',
     'feedbackPackageAvailable': '利用可能',
+    'selectedAppSource': '選択中のアプリソース',
     'currentSource': '現在のソース',
     'currentSourceId': '現在のソース ID',
     'latestSourceDiagnostics': '最近のソース診断',

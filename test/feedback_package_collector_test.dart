@@ -53,7 +53,7 @@ void main() {
         animeTitle: 'Anime',
         episodeTitle: 'Episode 1',
         sourceId: 'sakura',
-        requestedSourceId: null,
+        requestedSourceId: 'mock',
         playSourceTitle: 'Line 1',
         urlType: 'm3u8',
         sanitizedUrl: 'https://cdn.example.test/.../video.m3u8',
@@ -88,6 +88,15 @@ void main() {
 
     expect(markdown, contains('- Total tasks: 1'));
     expect(markdown, contains('- Captured at: 2026-05-30T02:03:04.000Z'));
+    expect(markdown, contains('- Selected app source: sakura'));
+    expect(markdown, contains('- Selected playback source: mock'));
+    expect(
+      markdown,
+      contains(
+        '- Playback source status: mock is temporarily unavailable. AniDestiny is playing from sakura instead.',
+      ),
+    );
+    expect(markdown, contains('- Active playback source: sakura'));
     expect(markdown, contains('- Failed: 1'));
     expect(markdown, contains('Reason: Network error'));
     expect(markdown, contains('https://example.test/.../detail.html'));
@@ -151,7 +160,7 @@ void main() {
     final markdown = const FeedbackPackageFormatter(l10n: l10n).format(package);
 
     expect(markdown, contains('# AniDestiny 反馈摘要'));
-    expect(markdown, contains('- 当前数据源: Sakura Anime'));
+    expect(markdown, contains('- 应用所选数据源: Sakura Anime'));
     expect(markdown, contains('Sakura Anime · 正常'));
     expect(markdown, contains('失败次数: 0'));
     expect(markdown, contains('详情: Sakura Anime -> Mock 动漫数据源'));
