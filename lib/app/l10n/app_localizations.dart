@@ -172,6 +172,8 @@ class AppLocalizations {
   String get playbackDiagnosticRequestedSource =>
       _t('playbackDiagnosticRequestedSource');
   String get playbackDiagnosticSource => _t('playbackDiagnosticSource');
+  String get playbackDiagnosticSourceStatus =>
+      _t('playbackDiagnosticSourceStatus');
   String get playbackDiagnosticLine => _t('playbackDiagnosticLine');
   String get playbackDiagnosticUrlType => _t('playbackDiagnosticUrlType');
   String get playbackDiagnosticUrl => _t('playbackDiagnosticUrl');
@@ -502,6 +504,7 @@ const _localizedValues = {
     'playbackDiagnosticEpisode': '剧集',
     'playbackDiagnosticRequestedSource': '原始数据源',
     'playbackDiagnosticSource': '数据源',
+    'playbackDiagnosticSourceStatus': '数据源状态',
     'playbackDiagnosticLine': '线路',
     'playbackDiagnosticUrlType': 'URL 类型',
     'playbackDiagnosticUrl': 'URL',
@@ -777,6 +780,7 @@ const _localizedValues = {
     'playbackDiagnosticEpisode': 'Episode',
     'playbackDiagnosticRequestedSource': 'Requested source',
     'playbackDiagnosticSource': 'Source',
+    'playbackDiagnosticSourceStatus': 'Source status',
     'playbackDiagnosticLine': 'Line',
     'playbackDiagnosticUrlType': 'URL type',
     'playbackDiagnosticUrl': 'URL',
@@ -1057,6 +1061,7 @@ const _localizedValues = {
     'playbackDiagnosticEpisode': 'エピソード',
     'playbackDiagnosticRequestedSource': '元のソース',
     'playbackDiagnosticSource': 'ソース',
+    'playbackDiagnosticSourceStatus': 'ソース状態',
     'playbackDiagnosticLine': 'ライン',
     'playbackDiagnosticUrlType': 'URL 種類',
     'playbackDiagnosticUrl': 'URL',

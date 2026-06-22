@@ -211,6 +211,15 @@ List<Widget> _playbackDiagnosticTiles(
         value: context.l10n.sourceDisplayLabel(diagnostics.requestedSourceId!),
         icon: Icons.compare_arrows_outlined,
       ),
+    if (diagnostics.usedSourceFallback && diagnostics.requestedSourceId != null)
+      _DiagnosticTile(
+        label: context.l10n.playbackDiagnosticSourceStatus,
+        value: context.l10n.sourceFallbackPlayerNotice(
+          context.l10n.sourceDisplayLabel(diagnostics.requestedSourceId!),
+          context.l10n.sourceDisplayLabel(diagnostics.sourceId),
+        ),
+        icon: Icons.swap_horiz_outlined,
+      ),
     _DiagnosticTile(
       label: context.l10n.playbackDiagnosticSource,
       value: context.l10n.sourceDisplayLabel(diagnostics.sourceId),

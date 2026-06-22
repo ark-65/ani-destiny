@@ -342,6 +342,13 @@ void main() {
     expect(find.text('Episode 2'), findsAtLeastNWidgets(1));
     expect(find.text('Requested source'), findsOneWidget);
     expect(find.text('Mock Anime Source'), findsAtLeastNWidgets(1));
+    expect(find.text('Source status'), findsOneWidget);
+    expect(
+      find.text(
+        'Mock Anime Source is temporarily unavailable. AniDestiny is playing from Sakura Anime instead.',
+      ),
+      findsNWidgets(2),
+    );
     expect(find.text('State'), findsOneWidget);
     expect(find.text('Failed'), findsOneWidget);
     expect(find.text('error'), findsNothing);
@@ -386,6 +393,12 @@ void main() {
     expect(copiedText, contains('Anime: Anime 1'));
     expect(copiedText, contains('Episode: Episode 2'));
     expect(copiedText, contains('Requested source: Mock Anime Source'));
+    expect(
+      copiedText,
+      contains(
+        'Source status: Mock Anime Source is temporarily unavailable. AniDestiny is playing from Sakura Anime instead.',
+      ),
+    );
     expect(copiedText, contains('Source: Sakura Anime'));
     expect(copiedText, contains('Line: Broken Line'));
     expect(copiedText, contains('URL type: m3u8'));

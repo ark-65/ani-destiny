@@ -699,6 +699,16 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
                         diagnostics.requestedSourceId!,
                       ),
                     ),
+                  if (diagnostics.usedSourceFallback)
+                    _DiagnosticRow(
+                      label: context.l10n.playbackDiagnosticSourceStatus,
+                      value: context.l10n.sourceFallbackPlayerNotice(
+                        context.l10n.sourceDisplayLabel(
+                          diagnostics.requestedSourceId!,
+                        ),
+                        context.l10n.sourceDisplayLabel(diagnostics.sourceId),
+                      ),
+                    ),
                   _DiagnosticRow(
                     label: context.l10n.playbackDiagnosticSource,
                     value:
@@ -1227,6 +1237,13 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
       summary.add(
         '${context.l10n.playbackDiagnosticRequestedSource}: '
         '${context.l10n.sourceDisplayLabel(diagnostics.requestedSourceId!)}',
+      );
+      summary.add(
+        '${context.l10n.playbackDiagnosticSourceStatus}: '
+        '${context.l10n.sourceFallbackPlayerNotice(
+          context.l10n.sourceDisplayLabel(diagnostics.requestedSourceId!),
+          context.l10n.sourceDisplayLabel(diagnostics.sourceId),
+        )}',
       );
     }
     summary.addAll([

@@ -144,6 +144,13 @@ class FeedbackPackageCollector {
           diagnostics.requestedSourceId != null)
         '- ${l10n.playbackDiagnosticRequestedSource}: '
             '${_sourceLabel(diagnostics.requestedSourceId!)}',
+      if (diagnostics.usedSourceFallback &&
+          diagnostics.requestedSourceId != null)
+        '- ${l10n.playbackDiagnosticSourceStatus}: '
+            '${l10n.sourceFallbackPlayerNotice(
+          _sourceLabel(diagnostics.requestedSourceId!),
+          _sourceLabel(diagnostics.sourceId),
+        )}',
       '- ${l10n.playbackDiagnosticSource}: ${_sourceLabel(diagnostics.sourceId)}',
       '- ${l10n.playbackDiagnosticLine}: '
           '${diagnostics.playSourceTitle ?? l10n.feedbackPackageUnavailable}',
