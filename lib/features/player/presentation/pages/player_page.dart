@@ -20,6 +20,7 @@ import '../../domain/entities/player_route_args.dart';
 import '../../domain/entities/player_state.dart';
 import '../../domain/services/playback_diagnostics.dart';
 import '../../domain/services/next_episode_navigation.dart';
+import '../../../source/presentation/providers/source_providers.dart';
 import '../providers/player_providers.dart';
 import '../widgets/playback_speed_sheet.dart';
 import '../widgets/player_controls.dart';
@@ -65,6 +66,7 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
     _currentArgs = widget.args;
     _historyRepository = ref.read(historyRepositoryProvider);
     _controller = ref.read(playerRepositoryProvider).createController();
+    unawaited(ref.read(currentSourceIdProvider.future));
     _subscription = _controller.stateStream.listen((state) {
       if (!mounted || _isDisposed) return;
       final enteredFailureState =
@@ -668,6 +670,8 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
 
   void _showPlaybackDiagnostics() {
     final diagnostics = _recordPlaybackDiagnostics();
+    final selectedAppSourceLabel =
+        _selectedAppSourceLabelForDiagnostics(context, diagnostics);
 
     showModalBottomSheet<void>(
       context: context,
@@ -698,6 +702,11 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
                     label: context.l10n.playbackDiagnosticEpisode,
                     value: _diagnosticContextValue(diagnostics.episodeTitle),
                   ),
+                  if (selectedAppSourceLabel != null)
+                    _DiagnosticRow(
+                      label: context.l10n.selectedAppSource,
+                      value: selectedAppSourceLabel,
+                    ),
                   if (diagnostics.usedSourceFallback)
                     _DiagnosticRow(
                       label: context.l10n.playbackDiagnosticRequestedSource,
@@ -1277,7 +1286,13 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
     PlaybackDiagnostics? diagnostics,
   }) async {
     final snapshot = diagnostics ?? _recordPlaybackDiagnostics();
-    final summary = _playbackDiagnosticsSummary(snapshot);
+    final summary = _playbackDiagnosticsSummary(
+      snapshot,
+      selectedAppSourceLabel: _selectedAppSourceLabelForDiagnostics(
+        context,
+        snapshot,
+      ),
+    );
 
     try {
       await Clipboard.setData(ClipboardData(text: summary));
@@ -1289,7 +1304,10 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
     }
   }
 
-  String _playbackDiagnosticsSummary(PlaybackDiagnostics diagnostics) {
+  String _playbackDiagnosticsSummary(
+    PlaybackDiagnostics diagnostics, {
+    String? selectedAppSourceLabel,
+  }) {
     final lineTitle = diagnostics.playSourceTitle?.trim();
     final headers = diagnostics.headerKeys.isEmpty
         ? '-'
@@ -1301,6 +1319,11 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
       '${context.l10n.playbackDiagnosticEpisode}: '
           '${_diagnosticContextValue(diagnostics.episodeTitle)}',
     ];
+    if (selectedAppSourceLabel != null) {
+      summary.add(
+        '${context.l10n.selectedAppSource}: $selectedAppSourceLabel',
+      );
+    }
     if (diagnostics.usedSourceFallback) {
       summary.add(
         '${context.l10n.playbackDiagnosticRequestedSource}: '
@@ -1328,6 +1351,22 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
           '${_diagnosticStateLabel(diagnostics.state)}',
     ]);
     return summary.join('\n');
+  }
+
+  String? _selectedAppSourceLabelForDiagnostics(
+    BuildContext context,
+    PlaybackDiagnostics diagnostics,
+  ) {
+    final selectedAppSourceId =
+        ref.read(currentSourceIdProvider).valueOrNull?.trim();
+    if (selectedAppSourceId == null || selectedAppSourceId.isEmpty) {
+      return null;
+    }
+    if (selectedAppSourceId == diagnostics.sourceId ||
+        selectedAppSourceId == diagnostics.requestedSourceId) {
+      return null;
+    }
+    return context.l10n.sourceDisplayLabel(selectedAppSourceId);
   }
 
   String _diagnosticContextValue(String? value) {

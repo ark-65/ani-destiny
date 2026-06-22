@@ -30,6 +30,7 @@ import 'package:ani_destiny/features/player/domain/entities/player_route_args.da
 import 'package:ani_destiny/features/player/presentation/pages/player_page.dart';
 import 'package:ani_destiny/features/player/presentation/providers/player_providers.dart';
 import 'package:ani_destiny/features/source/domain/entities/source_fallback_result.dart';
+import 'package:ani_destiny/features/source/presentation/providers/source_providers.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -469,6 +470,54 @@ void main() {
     );
     expect(copiedText, contains('Request headers: Referer'));
     expect(copiedText, contains('State: Failed'));
+  });
+
+  testWidgets(
+      'playback diagnostics surface app source only when it differs from playback context',
+      (tester) async {
+    String? copiedText;
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMethodCallHandler(SystemChannels.platform, (call) async {
+      if (call.method == 'Clipboard.setData') {
+        copiedText =
+            (call.arguments as Map<Object?, Object?>)['text'] as String?;
+      }
+      return null;
+    });
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          playerRepositoryProvider.overrideWithValue(
+            const _ThrowingPlayerRepository(),
+          ),
+          historyRepositoryProvider.overrideWithValue(_FakeHistoryRepository()),
+          danmakuRepositoryProvider.overrideWithValue(_FakeDanmakuRepository()),
+          currentSourceIdProvider.overrideWith(
+            () => _RemoteProxyCurrentSourceIdController(),
+          ),
+        ],
+        child: _buildPlayerApp(_fallbackFailingArgs),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byIcon(Icons.bug_report_outlined).last);
+    await tester.pumpAndSettle();
+
+    expect(find.text('Selected app source'), findsOneWidget);
+    expect(find.text('Remote Source Proxy'), findsOneWidget);
+
+    await tester.ensureVisible(find.text('Copy diagnostics').last);
+    await tester.tap(find.text('Copy diagnostics').last);
+    await tester.pumpAndSettle();
+
+    expect(copiedText, contains('Selected app source: Remote Source Proxy'));
+    expect(
+      copiedText,
+      contains('Selected playback source: Mock Anime Source'),
+    );
+    expect(copiedText, contains('Active playback source: Sakura Anime'));
   });
 
   testWidgets(
@@ -2775,6 +2824,11 @@ class _HostPage extends StatelessWidget {
       ),
     );
   }
+}
+
+class _RemoteProxyCurrentSourceIdController extends CurrentSourceIdController {
+  @override
+  Future<String> build() async => 'remote-proxy';
 }
 
 class _FakeHistoryRepository implements HistoryRepository {
