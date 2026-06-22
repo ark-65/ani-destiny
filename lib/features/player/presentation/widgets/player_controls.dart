@@ -12,13 +12,17 @@ class PlayerControls extends StatelessWidget {
     required this.onSpeed,
     required this.onNextEpisode,
     required this.onOpenExternalPlayer,
+    this.isNextEpisodeUnavailable = false,
+    this.nextEpisodeTooltip,
     required this.externalPlayerTooltip,
     required this.downloadTooltip,
     required this.onDownload,
     required this.onToggleDanmaku,
     required this.onToggleFullscreen,
+    this.onBlockedFullscreenExit,
     required this.danmakuEnabled,
     required this.isFullscreen,
+    this.isResolvingNextEpisode = false,
     required this.isSwitchingEpisode,
     required this.isOpeningExternalPlayer,
     this.isRetryingPlayback = false,
@@ -32,28 +36,43 @@ class PlayerControls extends StatelessWidget {
   final VoidCallback onSpeed;
   final VoidCallback? onNextEpisode;
   final VoidCallback? onOpenExternalPlayer;
+  final bool isNextEpisodeUnavailable;
+  final String? nextEpisodeTooltip;
   final String externalPlayerTooltip;
   final String downloadTooltip;
   final VoidCallback? onDownload;
   final VoidCallback onToggleDanmaku;
   final VoidCallback? onToggleFullscreen;
+  final VoidCallback? onBlockedFullscreenExit;
   final bool danmakuEnabled;
   final bool isFullscreen;
+  final bool isResolvingNextEpisode;
   final bool isSwitchingEpisode;
   final bool isOpeningExternalPlayer;
   final bool isRetryingPlayback;
 
   @override
   Widget build(BuildContext context) {
-    final durationMs = state.duration.inMilliseconds;
-    final positionMs = state.position.inMilliseconds.clamp(0, durationMs);
-    final isInteractionLocked =
+    final isCommittedRouteTransition =
         isSwitchingEpisode || isOpeningExternalPlayer || isRetryingPlayback;
+    final isInteractionLocked = isResolvingNextEpisode ||
+        isSwitchingEpisode ||
+        isOpeningExternalPlayer ||
+        isRetryingPlayback;
+    final isPreparingNextEpisode = isResolvingNextEpisode || isSwitchingEpisode;
+    final shouldHidePlaybackProgress =
+        isSwitchingEpisode || isOpeningExternalPlayer || isRetryingPlayback;
+    final displayedDuration =
+        shouldHidePlaybackProgress ? Duration.zero : state.duration;
+    final displayedPosition =
+        shouldHidePlaybackProgress ? Duration.zero : state.position;
+    final durationMs = displayedDuration.inMilliseconds;
+    final positionMs = displayedPosition.inMilliseconds.clamp(0, durationMs);
     final playbackActionsEnabled = hasPlayableSource &&
         !isInteractionLocked &&
         state.errorMessage == null &&
         state.isInitialized;
-    final playbackActionTooltip = isSwitchingEpisode
+    final playbackActionTooltip = isPreparingNextEpisode
         ? context.l10n.loadingNextEpisode
         : isOpeningExternalPlayer
             ? context.l10n.openingExternalPlayer
@@ -64,30 +83,56 @@ class PlayerControls extends StatelessWidget {
                     : state.errorMessage != null
                         ? context.l10n.playbackFailedSuggestion
                         : context.l10n.playerPreparingPlayback;
-    final nextEpisodeTooltip = isSwitchingEpisode
+    final nextEpisodeTooltip = isPreparingNextEpisode
         ? context.l10n.loadingNextEpisode
         : isOpeningExternalPlayer
             ? context.l10n.openingExternalPlayer
             : isRetryingPlayback
                 ? context.l10n.retryingPlayback
-                : context.l10n.nextEpisode;
+                : this.nextEpisodeTooltip ?? context.l10n.nextEpisode;
+    final unavailableActionColor =
+        Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.38);
     final resolvedDownloadTooltip = isOpeningExternalPlayer
         ? context.l10n.openingExternalPlayer
         : isRetryingPlayback
             ? context.l10n.retryingPlayback
             : downloadTooltip;
-    final canToggleFullscreen = !isOpeningExternalPlayer &&
-        (!isSwitchingEpisode || isFullscreen) &&
-        (!isRetryingPlayback || isFullscreen);
-    final fullscreenTooltip = isOpeningExternalPlayer
-        ? context.l10n.openingExternalPlayer
-        : isRetryingPlayback && !isFullscreen
-            ? context.l10n.retryingPlayback
-            : isSwitchingEpisode && !isFullscreen
-                ? context.l10n.loadingNextEpisode
+    final danmakuTooltip = isPreparingNextEpisode
+        ? context.l10n.loadingNextEpisode
+        : isOpeningExternalPlayer
+            ? context.l10n.openingExternalPlayer
+            : isRetryingPlayback
+                ? context.l10n.retryingPlayback
+                : danmakuEnabled
+                    ? context.l10n.hideDanmaku
+                    : context.l10n.showDanmaku;
+    final canEnterFullscreen =
+        hasPlayableSource && state.errorMessage == null && state.isInitialized;
+    final canToggleFullscreen = isFullscreen
+        ? !isCommittedRouteTransition
+        : !isInteractionLocked && canEnterFullscreen;
+    final fullscreenAction = canToggleFullscreen
+        ? onToggleFullscreen
+        : isFullscreen && isCommittedRouteTransition
+            ? onBlockedFullscreenExit
+            : null;
+    final fullscreenTooltip = isSwitchingEpisode
+        ? context.l10n.loadingNextEpisode
+        : isOpeningExternalPlayer
+            ? context.l10n.openingExternalPlayer
+            : isRetryingPlayback
+                ? context.l10n.retryingPlayback
                 : isFullscreen
                     ? context.l10n.exitFullscreen
-                    : context.l10n.enterFullscreen;
+                    : isResolvingNextEpisode
+                        ? context.l10n.loadingNextEpisode
+                        : !hasPlayableSource
+                            ? context.l10n.noPlayableSourceFound
+                            : state.errorMessage != null
+                                ? context.l10n.playbackFailedSuggestion
+                                : !state.isInitialized
+                                    ? context.l10n.playerPreparingPlayback
+                                    : context.l10n.enterFullscreen;
 
     return SafeArea(
       top: false,
@@ -120,7 +165,9 @@ class PlayerControls extends StatelessWidget {
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
-                    '${_formatDuration(state.position)} / ${_formatDuration(state.duration)}',
+                    shouldHidePlaybackProgress
+                        ? '--:-- / --:--'
+                        : '${_formatDuration(state.position)} / ${_formatDuration(state.duration)}',
                     style: Theme.of(context).textTheme.bodySmall,
                     overflow: TextOverflow.ellipsis,
                   ),
@@ -145,9 +192,16 @@ class PlayerControls extends StatelessWidget {
                 children: [
                   if (isFullscreen)
                     IconButton(
+                      style: isNextEpisodeUnavailable
+                          ? IconButton.styleFrom(
+                              foregroundColor: unavailableActionColor,
+                            )
+                          : null,
                       tooltip: nextEpisodeTooltip,
-                      onPressed: isInteractionLocked ? null : onNextEpisode,
-                      icon: isSwitchingEpisode
+                      onPressed: isInteractionLocked || isResolvingNextEpisode
+                          ? null
+                          : onNextEpisode,
+                      icon: isPreparingNextEpisode
                           ? const SizedBox.square(
                               dimension: 18,
                               child: CircularProgressIndicator(strokeWidth: 2),
@@ -157,9 +211,8 @@ class PlayerControls extends StatelessWidget {
                   if (isFullscreen)
                     IconButton(
                       tooltip: externalPlayerTooltip,
-                      onPressed: isSwitchingEpisode || isOpeningExternalPlayer
-                          ? null
-                          : onOpenExternalPlayer,
+                      onPressed:
+                          isInteractionLocked ? null : onOpenExternalPlayer,
                       icon: isOpeningExternalPlayer
                           ? const SizedBox.square(
                               dimension: 18,
@@ -168,10 +221,8 @@ class PlayerControls extends StatelessWidget {
                           : const Icon(Icons.open_in_new),
                     ),
                   IconButton(
-                    tooltip: danmakuEnabled
-                        ? context.l10n.hideDanmaku
-                        : context.l10n.showDanmaku,
-                    onPressed: onToggleDanmaku,
+                    tooltip: danmakuTooltip,
+                    onPressed: isInteractionLocked ? null : onToggleDanmaku,
                     icon: Icon(
                       danmakuEnabled
                           ? Icons.subtitles
@@ -185,7 +236,7 @@ class PlayerControls extends StatelessWidget {
                   ),
                   IconButton(
                     tooltip: fullscreenTooltip,
-                    onPressed: canToggleFullscreen ? onToggleFullscreen : null,
+                    onPressed: fullscreenAction,
                     icon: Icon(
                       isFullscreen ? Icons.fullscreen_exit : Icons.fullscreen,
                     ),

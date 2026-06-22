@@ -76,7 +76,7 @@ void main() {
   });
 
   testWidgets(
-      'fullscreen switching state keeps exit fullscreen available while other controls stay busy',
+      'fullscreen switching state locks fullscreen exit with the shared busy copy',
       (tester) async {
     await tester.pumpWidget(
       _buildApp(
@@ -104,7 +104,6 @@ void main() {
     await tester.pump();
 
     expect(find.byType(CircularProgressIndicator), findsOneWidget);
-    expect(find.byTooltip('Loading next episode...'), findsNWidgets(4));
     final playButton = tester.widget<IconButton>(
       find.byType(IconButton).first,
     );
@@ -119,6 +118,9 @@ void main() {
 
     final slider = tester.widget<Slider>(find.byType(Slider));
     expect(slider.onChanged, isNull);
+    expect(slider.value, 0);
+    expect(find.text('--:-- / --:--'), findsOneWidget);
+    expect(find.text('03:00 / 24:00'), findsNothing);
 
     final externalPlayerButton = tester.widget<IconButton>(
       find.widgetWithIcon(IconButton, Icons.open_in_new),
@@ -128,12 +130,219 @@ void main() {
       find.widgetWithIcon(IconButton, Icons.download_outlined),
     );
     expect(downloadButton.onPressed, isNull);
+    final danmakuButton = tester.widget<IconButton>(
+      find.widgetWithIcon(IconButton, Icons.subtitles),
+    );
+    expect(danmakuButton.onPressed, isNull);
+    expect(danmakuButton.tooltip, 'Loading next episode...');
+
+    final fullscreenButton = tester.widget<IconButton>(
+      find.widgetWithIcon(IconButton, Icons.fullscreen_exit),
+    );
+    expect(fullscreenButton.onPressed, isNull);
+    expect(fullscreenButton.tooltip, 'Loading next episode...');
+  });
+
+  testWidgets(
+      'fullscreen switching state can surface a blocked-exit explanation',
+      (tester) async {
+    var blockedExitTaps = 0;
+
+    await tester.pumpWidget(
+      _buildApp(
+        PlayerControls(
+          state: _state,
+          hasPlayableSource: true,
+          onPlayPause: _noop,
+          onSeek: (_) {},
+          onSpeed: _noop,
+          onNextEpisode: null,
+          onOpenExternalPlayer: _noop,
+          externalPlayerTooltip: 'External player',
+          downloadTooltip: 'Loading next episode...',
+          onDownload: null,
+          onToggleDanmaku: _noop,
+          onToggleFullscreen: _noop,
+          onBlockedFullscreenExit: () => blockedExitTaps += 1,
+          danmakuEnabled: true,
+          isFullscreen: true,
+          isSwitchingEpisode: true,
+          isOpeningExternalPlayer: false,
+        ),
+      ),
+    );
+
+    await tester.pump();
+
+    final fullscreenButton = tester.widget<IconButton>(
+      find.widgetWithIcon(IconButton, Icons.fullscreen_exit),
+    );
+    expect(fullscreenButton.onPressed, isNotNull);
+    expect(fullscreenButton.tooltip, 'Loading next episode...');
+
+    await tester.tap(find.widgetWithIcon(IconButton, Icons.fullscreen_exit));
+    await tester.pump();
+
+    expect(blockedExitTaps, 1);
+  });
+
+  testWidgets(
+      'next episode verification keeps the current progress visible while controls stay locked',
+      (tester) async {
+    await tester.pumpWidget(
+      _buildApp(
+        PlayerControls(
+          state: _state,
+          hasPlayableSource: true,
+          onPlayPause: _noop,
+          onSeek: (_) {},
+          onSpeed: _noop,
+          onNextEpisode: null,
+          onOpenExternalPlayer: _noop,
+          externalPlayerTooltip: 'External player',
+          downloadTooltip: 'Loading next episode...',
+          onDownload: null,
+          onToggleDanmaku: _noop,
+          onToggleFullscreen: _noop,
+          danmakuEnabled: true,
+          isFullscreen: false,
+          isResolvingNextEpisode: true,
+          isSwitchingEpisode: false,
+          isOpeningExternalPlayer: false,
+        ),
+      ),
+    );
+
+    await tester.pump();
+
+    final playButton = tester.widget<IconButton>(find.byType(IconButton).first);
+    expect(playButton.onPressed, isNull);
+    expect(playButton.tooltip, 'Loading next episode...');
+
+    final slider = tester.widget<Slider>(find.byType(Slider));
+    expect(slider.onChanged, isNull);
+    expect(find.text('03:00 / 24:00'), findsOneWidget);
+    expect(find.text('--:-- / --:--'), findsNothing);
+  });
+
+  testWidgets(
+      'fullscreen next episode verification still allows leaving fullscreen',
+      (tester) async {
+    var fullscreenTaps = 0;
+
+    await tester.pumpWidget(
+      _buildApp(
+        PlayerControls(
+          state: _state,
+          hasPlayableSource: true,
+          onPlayPause: _noop,
+          onSeek: (_) {},
+          onSpeed: _noop,
+          onNextEpisode: null,
+          onOpenExternalPlayer: _noop,
+          externalPlayerTooltip: 'Loading next episode...',
+          downloadTooltip: 'Loading next episode...',
+          onDownload: null,
+          onToggleDanmaku: _noop,
+          onToggleFullscreen: () => fullscreenTaps += 1,
+          danmakuEnabled: true,
+          isFullscreen: true,
+          isResolvingNextEpisode: true,
+          isSwitchingEpisode: false,
+          isOpeningExternalPlayer: false,
+        ),
+      ),
+    );
+
+    await tester.pump();
 
     final fullscreenButton = tester.widget<IconButton>(
       find.widgetWithIcon(IconButton, Icons.fullscreen_exit),
     );
     expect(fullscreenButton.onPressed, isNotNull);
     expect(fullscreenButton.tooltip, 'Exit fullscreen');
+
+    await tester.tap(find.widgetWithIcon(IconButton, Icons.fullscreen_exit));
+    await tester.pump();
+
+    expect(fullscreenTaps, 1);
+  });
+
+  testWidgets('retrying playback also disables danmaku changes',
+      (tester) async {
+    await tester.pumpWidget(
+      _buildApp(
+        PlayerControls(
+          state: _state.copyWith(errorMessage: 'Playback temporarily failed.'),
+          hasPlayableSource: true,
+          onPlayPause: _noop,
+          onSeek: (_) {},
+          onSpeed: _noop,
+          onNextEpisode: _noop,
+          onOpenExternalPlayer: _noop,
+          externalPlayerTooltip: 'Retrying playback...',
+          downloadTooltip: 'Retrying playback...',
+          onDownload: null,
+          onToggleDanmaku: _noop,
+          onToggleFullscreen: _noop,
+          danmakuEnabled: true,
+          isFullscreen: false,
+          isSwitchingEpisode: false,
+          isOpeningExternalPlayer: false,
+          isRetryingPlayback: true,
+        ),
+      ),
+    );
+
+    await tester.pump();
+
+    final danmakuButton = tester.widget<IconButton>(
+      find.widgetWithIcon(IconButton, Icons.subtitles),
+    );
+    expect(danmakuButton.onPressed, isNull);
+    expect(danmakuButton.tooltip, 'Retrying playback...');
+
+    final slider = tester.widget<Slider>(find.byType(Slider));
+    expect(slider.onChanged, isNull);
+    expect(slider.value, 0);
+    expect(find.text('--:-- / --:--'), findsOneWidget);
+    expect(find.text('03:00 / 24:00'), findsNothing);
+  });
+
+  testWidgets('fullscreen retrying playback disables external player action', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      _buildApp(
+        PlayerControls(
+          state: _state.copyWith(errorMessage: 'Playback temporarily failed.'),
+          hasPlayableSource: true,
+          onPlayPause: _noop,
+          onSeek: (_) {},
+          onSpeed: _noop,
+          onNextEpisode: _noop,
+          onOpenExternalPlayer: _noop,
+          externalPlayerTooltip: 'Retrying playback...',
+          downloadTooltip: 'Retrying playback...',
+          onDownload: null,
+          onToggleDanmaku: _noop,
+          onToggleFullscreen: _noop,
+          danmakuEnabled: true,
+          isFullscreen: true,
+          isSwitchingEpisode: false,
+          isOpeningExternalPlayer: false,
+          isRetryingPlayback: true,
+        ),
+      ),
+    );
+
+    await tester.pump();
+
+    final externalPlayerButton = tester.widget<IconButton>(
+      find.widgetWithIcon(IconButton, Icons.open_in_new),
+    );
+    expect(externalPlayerButton.onPressed, isNull);
+    expect(externalPlayerButton.tooltip, 'Retrying playback...');
   });
 
   testWidgets('embedded switching state disables entering fullscreen', (
@@ -219,7 +428,7 @@ void main() {
           onNextEpisode: _noop,
           onOpenExternalPlayer: null,
           externalPlayerTooltip:
-              'This stream needs request headers, so it cannot be opened in an external player yet.',
+              'This Sakura Anime playback needs to stay in AniDestiny for now, so it cannot be opened in another player yet.',
           downloadTooltip: 'Download',
           onDownload: _noop,
           onToggleDanmaku: _noop,
@@ -236,7 +445,7 @@ void main() {
 
     expect(
       find.byTooltip(
-        'This stream needs request headers, so it cannot be opened in an external player yet.',
+        'This Sakura Anime playback needs to stay in AniDestiny for now, so it cannot be opened in another player yet.',
       ),
       findsOneWidget,
     );
@@ -314,6 +523,9 @@ void main() {
 
     final slider = tester.widget<Slider>(find.byType(Slider));
     expect(slider.onChanged, isNull);
+    expect(slider.value, 0);
+    expect(find.text('--:-- / --:--'), findsOneWidget);
+    expect(find.text('03:00 / 24:00'), findsNothing);
   });
 
   testWidgets('fullscreen toggle tooltip reflects the current fullscreen state',
@@ -469,6 +681,12 @@ void main() {
 
     final slider = tester.widget<Slider>(find.byType(Slider));
     expect(slider.onChanged, isNull);
+
+    final fullscreenButton = tester.widget<IconButton>(
+      find.widgetWithIcon(IconButton, Icons.fullscreen),
+    );
+    expect(fullscreenButton.onPressed, isNull);
+    expect(fullscreenButton.tooltip, 'Preparing playback...');
   });
 
   testWidgets('controls stay disabled after playback load fails', (
@@ -479,7 +697,7 @@ void main() {
         PlayerControls(
           state: PlayerState.initial().copyWith(
             errorMessage:
-                'Playback temporarily failed. Retry later or try another playback line.',
+                'Playback temporarily failed. Retry now or try another playback line.',
           ),
           hasPlayableSource: true,
           onPlayPause: _noop,
@@ -506,7 +724,7 @@ void main() {
     expect(playButton.onPressed, isNull);
     expect(
       playButton.tooltip,
-      'Playback temporarily failed. Retry later or try another playback line.',
+      'Playback temporarily failed. Retry now or try another playback line.',
     );
 
     final speedButton = tester.widget<IconButton>(
@@ -515,11 +733,58 @@ void main() {
     expect(speedButton.onPressed, isNull);
     expect(
       speedButton.tooltip,
-      'Playback temporarily failed. Retry later or try another playback line.',
+      'Playback temporarily failed. Retry now or try another playback line.',
     );
 
     final slider = tester.widget<Slider>(find.byType(Slider));
     expect(slider.onChanged, isNull);
+
+    final fullscreenButton = tester.widget<IconButton>(
+      find.widgetWithIcon(IconButton, Icons.fullscreen),
+    );
+    expect(fullscreenButton.onPressed, isNull);
+    expect(
+      fullscreenButton.tooltip,
+      'Playback temporarily failed. Retry now or try another playback line.',
+    );
+  });
+
+  testWidgets(
+      'fullscreen exit stays available after playback fails outside busy handoffs',
+      (tester) async {
+    await tester.pumpWidget(
+      _buildApp(
+        PlayerControls(
+          state: PlayerState.initial().copyWith(
+            errorMessage:
+                'Playback temporarily failed. Retry now or try another playback line.',
+          ),
+          hasPlayableSource: true,
+          onPlayPause: _noop,
+          onSeek: (_) {},
+          onSpeed: _noop,
+          onNextEpisode: _noop,
+          onOpenExternalPlayer: _noop,
+          externalPlayerTooltip: 'External player',
+          downloadTooltip: 'Download',
+          onDownload: _noop,
+          onToggleDanmaku: _noop,
+          onToggleFullscreen: _noop,
+          danmakuEnabled: true,
+          isFullscreen: true,
+          isSwitchingEpisode: false,
+          isOpeningExternalPlayer: false,
+        ),
+      ),
+    );
+
+    await tester.pump();
+
+    final fullscreenButton = tester.widget<IconButton>(
+      find.widgetWithIcon(IconButton, Icons.fullscreen_exit),
+    );
+    expect(fullscreenButton.onPressed, isNotNull);
+    expect(fullscreenButton.tooltip, 'Exit fullscreen');
   });
 }
 

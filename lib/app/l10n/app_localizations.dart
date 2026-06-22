@@ -144,12 +144,27 @@ class AppLocalizations {
   String get openingExternalPlayer => _t('openingExternalPlayer');
   String get retryingPlayback => _t('retryingPlayback');
   String get playerExitBusy => _t('playerExitBusy');
+  String get playerExitBusyNextEpisode => _t('playerExitBusyNextEpisode');
+  String get playerExitBusyExternalPlayer => _t('playerExitBusyExternalPlayer');
+  String get playerExitBusyRetryingPlayback =>
+      _t('playerExitBusyRetryingPlayback');
   String get externalPlayerPlaceholder => _t('externalPlayerPlaceholder');
   String get nextEpisodeNotImplemented => _t('nextEpisodeNotImplemented');
   String get nextEpisodeUnavailable => _t('nextEpisodeUnavailable');
-  String get externalPlayerHeadersUnsupported =>
-      _t('externalPlayerHeadersUnsupported');
-  String get externalPlayerUnavailable => _t('externalPlayerUnavailable');
+  String get latestEpisode => _t('latestEpisode');
+  String get nextEpisodeStayedOnCurrent => _t('nextEpisodeStayedOnCurrent');
+  String externalPlayerHeadersUnsupported(String activeSource) =>
+      _t('externalPlayerHeadersUnsupported').replaceFirst(
+        '{activeSource}',
+        activeSource,
+      );
+  String externalPlayerOpened(String activeSource) =>
+      _t('externalPlayerOpened').replaceFirst('{activeSource}', activeSource);
+  String externalPlayerUnavailable(String activeSource) =>
+      _t('externalPlayerUnavailable').replaceFirst(
+        '{activeSource}',
+        activeSource,
+      );
   String get externalPlayerNotImplemented => _t('externalPlayerNotImplemented');
   String get playbackDiagnostics => _t('playbackDiagnostics');
   String get playbackDiagnosticAnime => _t('playbackDiagnosticAnime');
@@ -468,11 +483,19 @@ const _localizedValues = {
     'openingExternalPlayer': '正在打开外部播放器…',
     'retryingPlayback': '正在重试播放…',
     'playerExitBusy': '当前播放操作尚未完成，请稍候后再离开。',
+    'playerExitBusyNextEpisode': '请先等下一集加载完成，再离开当前播放页。',
+    'playerExitBusyExternalPlayer': '请先等外部播放器打开完成，再离开当前播放页。',
+    'playerExitBusyRetryingPlayback': '请先等这次重试播放完成，再离开当前播放页。',
     'externalPlayerPlaceholder': '外部播放器占位',
     'nextEpisodeNotImplemented': '下一集暂未实现。',
     'nextEpisodeUnavailable': '当前已经是最后一集了。',
-    'externalPlayerHeadersUnsupported': '当前播放线路依赖额外请求头，暂时无法直接交给外部播放器打开。',
-    'externalPlayerUnavailable': '暂时无法交给外部播放器打开，请稍后重试。',
+    'latestEpisode': '最后一集',
+    'nextEpisodeStayedOnCurrent': '下一集暂时无法打开，已保留当前这一集。',
+    'externalPlayerHeadersUnsupported':
+        '当前这条 {activeSource} 播放暂时只能留在 AniDestiny 内播放，还不能直接交给外部播放器。',
+    'externalPlayerOpened': '已在外部播放器中打开 {activeSource} 的播放。',
+    'externalPlayerUnavailable':
+        '暂时无法把 {activeSource} 的播放交给外部播放器，当前播放会继续留在 AniDestiny。',
     'externalPlayerNotImplemented': '外部播放器暂未实现。',
     'playbackDiagnostics': '播放诊断',
     'playbackDiagnosticAnime': '番剧',
@@ -595,14 +618,14 @@ const _localizedValues = {
         '这里会显示当前会话最近一次播放快照，方便你在复制诊断信息前先确认番剧、线路、URL 类型和请求头字段。',
     'playbackDiagnosticsEmptyHint': '先在当前会话里播放一次，再回来这里确认最近一次播放快照并复制诊断信息。',
     'sourceFallbackPlayerNotice':
-        '当前所选数据源 {requestedSource} 暂时不可用，播放器正在使用 {activeSource} 的备用播放数据。',
+        '当前所选数据源 {requestedSource} 暂时不可用，已改用 {activeSource} 继续播放。',
     'playbackDiagnosticsDebugHint':
         '这里会显示当前会话最近一次播放快照，方便你在复制诊断信息前先确认番剧、线路、URL 类型和请求头字段。',
     'playbackDiagnosticCapturedAt': '采集时间',
     'sourceTemporarilyUnavailable': '数据源暂时不可用',
     'sourceUnavailableSuggestion': '上游数据源可能已变化或暂时不可用，请稍后重试或切换数据源。',
     'noPlayableSourceFound': '未找到可播放线路，请稍后重试或切换数据源。',
-    'playbackFailedSuggestion': '播放暂时失败，请稍后重试或尝试其他播放线路。',
+    'playbackFailedSuggestion': '播放暂时失败，请重试或尝试其他播放线路。',
     'sources': '数据源',
     'loadingCurrentSource': '正在加载当前数据源',
     'sourceSetTo': '数据源已切换为',
@@ -613,7 +636,7 @@ const _localizedValues = {
     'sourceDiagnosticsSubtitle': '查看最近的数据源请求和解析状态。',
     'sourceDiagnosticsEmpty': '暂无诊断记录',
     'sourceDiagnosticsClear': '清空',
-    'sourceFallbackNotice': '当前数据源暂时不可用，正在显示备用数据。',
+    'sourceFallbackNotice': '当前数据源暂时不可用，AniDestiny 已改为显示其他数据源的内容。',
     'sourceHealth': '数据源健康状态',
     'sourceHealthHealthy': '正常',
     'sourceHealthDegraded': '不稳定',
@@ -729,14 +752,25 @@ const _localizedValues = {
     'retryingPlayback': 'Retrying playback...',
     'playerExitBusy':
         'Please wait for the current playback action to finish before leaving.',
+    'playerExitBusyNextEpisode':
+        'Please wait until the next episode finishes loading before leaving.',
+    'playerExitBusyExternalPlayer':
+        'Please wait until the external player finishes opening before leaving.',
+    'playerExitBusyRetryingPlayback':
+        'Please wait until playback finishes retrying before leaving.',
     'externalPlayerPlaceholder': 'External player placeholder',
     'nextEpisodeNotImplemented': 'Next episode is not implemented yet.',
     'nextEpisodeUnavailable':
         'You are already on the latest available episode.',
+    'latestEpisode': 'Latest episode',
+    'nextEpisodeStayedOnCurrent':
+        "Couldn't open the next episode. Staying on the current one.",
     'externalPlayerHeadersUnsupported':
-        'This stream needs request headers, so it cannot be opened in an external player yet.',
+        'This {activeSource} playback needs to stay in AniDestiny for now, so it cannot be opened in another player yet.',
+    'externalPlayerOpened':
+        'Opened {activeSource} playback in your external player.',
     'externalPlayerUnavailable':
-        'Could not open in an external player. Try again later.',
+        'Could not open {activeSource} playback in your external player. Staying in AniDestiny.',
     'externalPlayerNotImplemented': 'External player is not implemented yet.',
     'playbackDiagnostics': 'Playback diagnostics',
     'playbackDiagnosticAnime': 'Anime',
@@ -868,7 +902,7 @@ const _localizedValues = {
     'playbackDiagnosticsEmptyHint':
         'Start playback once in this session, then come back here to confirm the latest playback snapshot before copying diagnostics.',
     'sourceFallbackPlayerNotice':
-        'The selected source {requestedSource} is temporarily unavailable, so playback is using fallback data from {activeSource}.',
+        '{requestedSource} is temporarily unavailable. AniDestiny is playing from {activeSource} instead.',
     'playbackDiagnosticsDebugHint':
         'The latest playback snapshot captured in this session appears here so you can confirm the anime, line, URL type, and request-header names before copying diagnostics.',
     'playbackDiagnosticCapturedAt': 'Captured at',
@@ -878,7 +912,7 @@ const _localizedValues = {
     'noPlayableSourceFound':
         'No playable source found. Try another source or retry later.',
     'playbackFailedSuggestion':
-        'Playback temporarily failed. Retry later or try another playback line.',
+        'Playback temporarily failed. Retry now or try another playback line.',
     'sources': 'Sources',
     'loadingCurrentSource': 'Loading current source',
     'sourceSetTo': 'Source set to',
@@ -892,7 +926,7 @@ const _localizedValues = {
     'sourceDiagnosticsEmpty': 'No diagnostics yet',
     'sourceDiagnosticsClear': 'Clear',
     'sourceFallbackNotice':
-        'The current source is temporarily unavailable. Showing fallback data.',
+        'The current source is temporarily unavailable. AniDestiny is showing content from another source instead.',
     'sourceHealth': 'Source health',
     'sourceHealthHealthy': 'Healthy',
     'sourceHealthDegraded': 'Degraded',
@@ -1004,12 +1038,19 @@ const _localizedValues = {
     'openingExternalPlayer': '外部プレイヤーを起動中…',
     'retryingPlayback': '再生を再試行しています…',
     'playerExitBusy': '現在の再生操作が終わるまで、しばらく待ってから戻ってください。',
+    'playerExitBusyNextEpisode': '次のエピソードの読み込みが終わってから戻ってください。',
+    'playerExitBusyExternalPlayer': '外部プレイヤーが開き終わってから戻ってください。',
+    'playerExitBusyRetryingPlayback': '再生の再試行が終わってから戻ってください。',
     'externalPlayerPlaceholder': '外部プレイヤー',
     'nextEpisodeNotImplemented': '次のエピソードはまだ実装されていません。',
     'nextEpisodeUnavailable': 'すでに最新の配信済みエピソードです。',
+    'latestEpisode': '最新話',
+    'nextEpisodeStayedOnCurrent': '次のエピソードを開けなかったため、現在のエピソードに留まります。',
     'externalPlayerHeadersUnsupported':
-        'この再生ラインは追加のリクエストヘッダーが必要なため、まだ外部プレイヤーでは開けません。',
-    'externalPlayerUnavailable': '外部プレイヤーで開けませんでした。しばらくしてからもう一度お試しください。',
+        'この {activeSource} の再生は、いまは AniDestiny 内に留める必要があります。まだ外部プレイヤーには渡せません。',
+    'externalPlayerOpened': '外部プレイヤーで {activeSource} の再生を開きました。',
+    'externalPlayerUnavailable':
+        '{activeSource} の再生を外部プレイヤーで開けませんでした。現在の再生は AniDestiny に残ります。',
     'externalPlayerNotImplemented': '外部プレイヤーはまだ実装されていません。',
     'playbackDiagnostics': '再生診断',
     'playbackDiagnosticAnime': '作品',
@@ -1134,7 +1175,7 @@ const _localizedValues = {
     'playbackDiagnosticsEmptyHint':
         'このセッションで一度再生してから戻ると、診断情報をコピーする前に直近の再生スナップショットをここで確認できます。',
     'sourceFallbackPlayerNotice':
-        '選択していたソース {requestedSource} は一時的に利用できないため、現在は {activeSource} の代替データで再生しています。',
+        '選択していたソース {requestedSource} は一時的に利用できないため、現在は {activeSource} に切り替えて再生しています。',
     'playbackDiagnosticsDebugHint':
         'このセッションで直近に取得した再生スナップショットをここへ表示し、診断情報をコピーする前に作品・ライン・URL 種類・リクエストヘッダー項目を確認できます。',
     'playbackDiagnosticCapturedAt': '取得時刻',
@@ -1142,7 +1183,7 @@ const _localizedValues = {
     'sourceUnavailableSuggestion':
         '上流ソースが変更されたか、一時的に利用できません。別のソースを試すか、後で再試行してください。',
     'noPlayableSourceFound': '再生可能なソースが見つかりません。別のソースを試すか、後で再試行してください。',
-    'playbackFailedSuggestion': '再生に一時的に失敗しました。後で再試行するか、別の再生ラインを試してください。',
+    'playbackFailedSuggestion': '再生に一時的に失敗しました。再試行するか、別の再生ラインを試してください。',
     'sources': 'ソース',
     'loadingCurrentSource': '現在のソースを読み込み中',
     'sourceSetTo': 'ソースを切り替えました:',
@@ -1154,7 +1195,7 @@ const _localizedValues = {
     'sourceDiagnosticsSubtitle': '最近のソース要求と解析状態を確認します。',
     'sourceDiagnosticsEmpty': '診断記録はありません',
     'sourceDiagnosticsClear': 'クリア',
-    'sourceFallbackNotice': '現在のソースは一時的に利用できません。代替データを表示しています。',
+    'sourceFallbackNotice': '現在のソースは一時的に利用できません。AniDestiny は別のソースの内容を表示しています。',
     'sourceHealth': 'ソース健康状態',
     'sourceHealthHealthy': '正常',
     'sourceHealthDegraded': '不安定',

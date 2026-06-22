@@ -57,10 +57,178 @@ void main() {
       final l10n = AppLocalizations(locale);
       expect(l10n.externalPlayer.toLowerCase(), isNot(contains('placeholder')));
       expect(
-        l10n.externalPlayerUnavailable.toLowerCase(),
+        l10n.externalPlayerUnavailable('Sakura Anime').toLowerCase(),
         isNot(contains('not implemented')),
       );
+      expect(
+        l10n.externalPlayerHeadersUnsupported('Sakura Anime').toLowerCase(),
+        isNot(contains('request headers')),
+      );
+      expect(
+        l10n.externalPlayerHeadersUnsupported('Sakura Anime'),
+        isNot(contains('请求头')),
+      );
+      expect(
+        l10n.externalPlayerHeadersUnsupported('Sakura Anime'),
+        isNot(contains('ヘッダー')),
+      );
+      expect(
+        l10n.externalPlayerHeadersUnsupported('Sakura Anime'),
+        contains('Sakura Anime'),
+      );
+      expect(
+        l10n.externalPlayerOpened('Sakura Anime').toLowerCase(),
+        isNot(contains('success')),
+      );
+      expect(
+        l10n.externalPlayerOpened('Sakura Anime').toLowerCase(),
+        isNot(contains('placeholder')),
+      );
     }
+  });
+
+  test('external player failure copy explains staying in AniDestiny', () {
+    const zh = AppLocalizations(Locale('zh'));
+    final zhNotice = zh.externalPlayerUnavailable('Sakura Anime');
+    expect(zhNotice, contains('Sakura Anime'));
+    expect(zhNotice, contains('AniDestiny'));
+    expect(zhNotice, contains('留在'));
+
+    const en = AppLocalizations(Locale('en'));
+    final enNotice = en.externalPlayerUnavailable('Sakura Anime');
+    expect(enNotice, contains('Sakura Anime'));
+    expect(enNotice, contains('Staying in AniDestiny'));
+    expect(
+      enNotice.toLowerCase(),
+      isNot(contains('later')),
+    );
+
+    const ja = AppLocalizations(Locale('ja'));
+    final jaNotice = ja.externalPlayerUnavailable('Sakura Anime');
+    expect(jaNotice, contains('Sakura Anime'));
+    expect(jaNotice, contains('AniDestiny'));
+    expect(jaNotice, contains('残ります'));
+  });
+
+  test('external player success copy names the active source', () {
+    const zh = AppLocalizations(Locale('zh'));
+    expect(zh.externalPlayerOpened('Sakura Anime'), contains('Sakura Anime'));
+
+    const en = AppLocalizations(Locale('en'));
+    final enNotice = en.externalPlayerOpened('Sakura Anime');
+    expect(enNotice, contains('Sakura Anime'));
+    expect(enNotice.toLowerCase(), contains('opened'));
+
+    const ja = AppLocalizations(Locale('ja'));
+    expect(ja.externalPlayerOpened('Sakura Anime'), contains('Sakura Anime'));
+  });
+
+  test('next episode recovery copy explains staying on the current episode',
+      () {
+    const zh = AppLocalizations(Locale('zh'));
+    expect(zh.nextEpisodeStayedOnCurrent, contains('当前这一集'));
+    expect(zh.nextEpisodeStayedOnCurrent, isNot(contains('数据源')));
+
+    const en = AppLocalizations(Locale('en'));
+    expect(en.nextEpisodeStayedOnCurrent, contains('current one'));
+    expect(
+      en.nextEpisodeStayedOnCurrent.toLowerCase(),
+      isNot(contains('source')),
+    );
+
+    const ja = AppLocalizations(Locale('ja'));
+    expect(ja.nextEpisodeStayedOnCurrent, contains('現在のエピソード'));
+    expect(ja.nextEpisodeStayedOnCurrent, isNot(contains('ソース')));
+  });
+
+  test('latest episode label stays short and localized', () {
+    const zh = AppLocalizations(Locale('zh'));
+    expect(zh.latestEpisode, '最后一集');
+
+    const en = AppLocalizations(Locale('en'));
+    expect(en.latestEpisode, 'Latest episode');
+
+    const ja = AppLocalizations(Locale('ja'));
+    expect(ja.latestEpisode, '最新話');
+  });
+
+  test('player fallback copy stays calm and avoids fallback jargon', () {
+    const zh = AppLocalizations(Locale('zh'));
+    final zhNotice = zh.sourceFallbackPlayerNotice(
+      'Mock Anime Source',
+      'Sakura Anime',
+    );
+    expect(zhNotice, contains('Mock Anime Source'));
+    expect(zhNotice, contains('Sakura Anime'));
+    expect(zhNotice, isNot(contains('备用播放数据')));
+
+    const en = AppLocalizations(Locale('en'));
+    final enNotice = en.sourceFallbackPlayerNotice(
+      'Mock Anime Source',
+      'Sakura Anime',
+    );
+    expect(enNotice, contains('AniDestiny'));
+    expect(enNotice, contains('Sakura Anime'));
+    expect(enNotice.toLowerCase(), isNot(contains('fallback data')));
+
+    const ja = AppLocalizations(Locale('ja'));
+    final jaNotice = ja.sourceFallbackPlayerNotice(
+      'Mock Anime Source',
+      'Sakura Anime',
+    );
+    expect(jaNotice, contains('Mock Anime Source'));
+    expect(jaNotice, contains('Sakura Anime'));
+    expect(jaNotice, isNot(contains('代替データ')));
+  });
+
+  test('generic fallback copy stays calm and avoids fallback jargon', () {
+    const zh = AppLocalizations(Locale('zh'));
+    expect(zh.sourceFallbackNotice, contains('AniDestiny'));
+    expect(zh.sourceFallbackNotice, contains('其他数据源'));
+    expect(zh.sourceFallbackNotice, isNot(contains('备用数据')));
+
+    const en = AppLocalizations(Locale('en'));
+    expect(en.sourceFallbackNotice, contains('AniDestiny'));
+    expect(en.sourceFallbackNotice, contains('another source'));
+    expect(
+      en.sourceFallbackNotice.toLowerCase(),
+      isNot(contains('fallback data')),
+    );
+
+    const ja = AppLocalizations(Locale('ja'));
+    expect(ja.sourceFallbackNotice, contains('AniDestiny'));
+    expect(ja.sourceFallbackNotice, contains('別のソース'));
+    expect(ja.sourceFallbackNotice, isNot(contains('代替データ')));
+  });
+
+  test('busy player exit copy matches the active handoff', () {
+    const zh = AppLocalizations(Locale('zh'));
+    expect(zh.playerExitBusyNextEpisode, contains('下一集'));
+    expect(zh.playerExitBusyExternalPlayer, contains('外部播放器'));
+    expect(zh.playerExitBusyRetryingPlayback, contains('重试播放'));
+
+    const en = AppLocalizations(Locale('en'));
+    expect(
+      en.playerExitBusyNextEpisode.toLowerCase(),
+      contains('next episode'),
+    );
+    expect(
+      en.playerExitBusyExternalPlayer.toLowerCase(),
+      contains('external player'),
+    );
+    expect(
+      en.playerExitBusyRetryingPlayback.toLowerCase(),
+      contains('retry'),
+    );
+    expect(
+      en.playerExitBusyNextEpisode.toLowerCase(),
+      isNot(contains('current playback action')),
+    );
+
+    const ja = AppLocalizations(Locale('ja'));
+    expect(ja.playerExitBusyNextEpisode, contains('次のエピソード'));
+    expect(ja.playerExitBusyExternalPlayer, contains('外部プレイヤー'));
+    expect(ja.playerExitBusyRetryingPlayback, contains('再試行'));
   });
 
   test('source health labels stay localized in Chinese and Japanese', () {

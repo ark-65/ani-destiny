@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:ani_destiny/app/l10n/app_localizations.dart';
 import 'package:ani_destiny/features/anime/domain/entities/anime_detail.dart';
 import 'package:ani_destiny/features/anime/domain/entities/anime.dart';
+import 'package:ani_destiny/features/anime/domain/entities/episode.dart';
 import 'package:ani_destiny/features/anime/domain/entities/play_source.dart';
 import 'package:ani_destiny/features/anime/domain/entities/schedule_item.dart';
 import 'package:ani_destiny/features/anime/domain/entities/search_result.dart';
@@ -11,6 +12,7 @@ import 'package:ani_destiny/features/anime/presentation/providers/anime_provider
 import 'package:ani_destiny/features/danmaku/domain/entities/danmaku_item.dart';
 import 'package:ani_destiny/features/danmaku/domain/repositories/danmaku_repository.dart';
 import 'package:ani_destiny/features/danmaku/presentation/providers/danmaku_providers.dart';
+import 'package:ani_destiny/features/danmaku/presentation/widgets/danmaku_overlay.dart';
 import 'package:ani_destiny/features/download/data/services/download_task_creator.dart';
 import 'package:ani_destiny/features/download/domain/entities/download_progress.dart';
 import 'package:ani_destiny/features/download/domain/entities/download_source.dart';
@@ -86,7 +88,7 @@ void main() {
     expect(find.byType(AppBar), findsOneWidget);
     expect(find.text('Open player'), findsNothing);
 
-    await tester.pageBack();
+    await tester.binding.handlePopRoute();
     await tester.pumpAndSettle();
 
     expect(find.text('Open player'), findsOneWidget);
@@ -122,6 +124,12 @@ void main() {
 
     final slider = tester.widget<Slider>(find.byType(Slider));
     expect(slider.onChanged, isNull);
+
+    final fullscreenButton = tester.widget<IconButton>(
+      find.widgetWithIcon(IconButton, Icons.fullscreen),
+    );
+    expect(fullscreenButton.onPressed, isNull);
+    expect(fullscreenButton.tooltip, 'Preparing playback...');
 
     repository.completeLoad();
     await tester.pumpAndSettle();
@@ -173,7 +181,7 @@ void main() {
     expect(diagnostics?.headerKeys, ['Referer']);
     expect(
       find.text(
-        'Playback temporarily failed. Retry later or try another playback line.',
+        'Playback temporarily failed. Retry now or try another playback line.',
       ),
       findsOneWidget,
     );
@@ -187,7 +195,7 @@ void main() {
     expect(playButton.onPressed, isNull);
     expect(
       playButton.tooltip,
-      'Playback temporarily failed. Retry later or try another playback line.',
+      'Playback temporarily failed. Retry now or try another playback line.',
     );
 
     final speedButton = tester.widget<IconButton>(
@@ -196,11 +204,20 @@ void main() {
     expect(speedButton.onPressed, isNull);
     expect(
       speedButton.tooltip,
-      'Playback temporarily failed. Retry later or try another playback line.',
+      'Playback temporarily failed. Retry now or try another playback line.',
     );
 
     final slider = tester.widget<Slider>(find.byType(Slider));
     expect(slider.onChanged, isNull);
+
+    final fullscreenButton = tester.widget<IconButton>(
+      find.widgetWithIcon(IconButton, Icons.fullscreen),
+    );
+    expect(fullscreenButton.onPressed, isNull);
+    expect(
+      fullscreenButton.tooltip,
+      'Playback temporarily failed. Retry now or try another playback line.',
+    );
 
     await tester.tap(find.byTooltip('Playback diagnostics'));
     await tester.pumpAndSettle();
@@ -212,6 +229,34 @@ void main() {
     expect(find.text('State'), findsOneWidget);
     expect(find.text('Failed'), findsOneWidget);
     expect(find.text('error'), findsNothing);
+  });
+
+  testWidgets('playback failure hides stale danmaku chrome', (tester) async {
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          playerRepositoryProvider.overrideWithValue(
+            const _ThrowingPlayerRepository(),
+          ),
+          historyRepositoryProvider.overrideWithValue(_FakeHistoryRepository()),
+          danmakuRepositoryProvider.overrideWithValue(
+            _PopulatedDanmakuRepository(),
+          ),
+        ],
+        child: _buildPlayerApp(_args),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(
+      find.text(
+        'Playback temporarily failed. Retry now or try another playback line.',
+      ),
+      findsOneWidget,
+    );
+    expect(find.byType(DanmakuOverlay), findsNothing);
+    expect(find.text('Visible danmaku'), findsNothing);
+    expect(find.text('Danmaku: Dandanplay'), findsNothing);
   });
 
   testWidgets(
@@ -248,7 +293,13 @@ void main() {
     expect(diagnostics?.headerKeys, ['Referer']);
     expect(
       find.text(
-        'Playback temporarily failed. Retry later or try another playback line.',
+        'Playback temporarily failed. Retry now or try another playback line.',
+      ),
+      findsOneWidget,
+    );
+    expect(
+      find.text(
+        'Mock Anime Source is temporarily unavailable. AniDestiny is playing from Sakura Anime instead.',
       ),
       findsOneWidget,
     );
@@ -267,7 +318,7 @@ void main() {
     expect(playButton.onPressed, isNull);
     expect(
       playButton.tooltip,
-      'Playback temporarily failed. Retry later or try another playback line.',
+      'Playback temporarily failed. Retry now or try another playback line.',
     );
 
     final speedButton = tester.widget<IconButton>(
@@ -276,7 +327,7 @@ void main() {
     expect(speedButton.onPressed, isNull);
     expect(
       speedButton.tooltip,
-      'Playback temporarily failed. Retry later or try another playback line.',
+      'Playback temporarily failed. Retry now or try another playback line.',
     );
 
     final slider = tester.widget<Slider>(find.byType(Slider));
@@ -365,9 +416,16 @@ void main() {
 
     expect(
       find.text(
-        'This stream needs request headers, so it cannot be opened in an external player yet.',
+        'This Sakura Anime playback needs to stay in AniDestiny for now, so it cannot be opened in another player yet.',
       ),
       findsOneWidget,
+    );
+    expect(find.text('External player'), findsOneWidget);
+    expect(
+      find.byTooltip(
+        'This Sakura Anime playback needs to stay in AniDestiny for now, so it cannot be opened in another player yet.',
+      ),
+      findsNWidgets(2),
     );
   });
 
@@ -432,7 +490,135 @@ void main() {
 
     expect(
       find.text(
-        'The selected source Mock Anime Source is temporarily unavailable, so playback is using fallback data from Sakura Anime.',
+        'Mock Anime Source is temporarily unavailable. AniDestiny is playing from Sakura Anime instead.',
+      ),
+      findsOneWidget,
+    );
+  });
+
+  testWidgets('next episode verification keeps active fallback context visible',
+      (
+    tester,
+  ) async {
+    final animeRepository = _PendingNextEpisodeAnimeRepository();
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          animeRepositoryProvider.overrideWithValue(animeRepository),
+          playerRepositoryProvider
+              .overrideWithValue(const _FakePlayerRepository()),
+          historyRepositoryProvider.overrideWithValue(_FakeHistoryRepository()),
+          danmakuRepositoryProvider.overrideWithValue(_FakeDanmakuRepository()),
+        ],
+        child: _buildPlayerApp(_fallbackArgs),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(
+      find.text(
+        'Mock Anime Source is temporarily unavailable. AniDestiny is playing from Sakura Anime instead.',
+      ),
+      findsOneWidget,
+    );
+
+    await tester.tap(find.widgetWithIcon(IconButton, Icons.skip_next));
+    await tester.pump();
+
+    expect(
+      find.text(
+        'Mock Anime Source is temporarily unavailable. AniDestiny is playing from Sakura Anime instead.',
+      ),
+      findsOneWidget,
+    );
+  });
+
+  testWidgets('next episode fallback switch names the active playback source', (
+    tester,
+  ) async {
+    final animeRepository = _NextEpisodeFallbackAnimeRepository();
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          animeRepositoryProvider.overrideWithValue(animeRepository),
+          playerRepositoryProvider
+              .overrideWithValue(const _FakePlayerRepository()),
+          historyRepositoryProvider.overrideWithValue(_FakeHistoryRepository()),
+          danmakuRepositoryProvider.overrideWithValue(_FakeDanmakuRepository()),
+        ],
+        child: _buildPlayerApp(_args),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(
+      find.text(
+        'Mock Anime Source is temporarily unavailable. AniDestiny is playing from Sakura Anime instead.',
+      ),
+      findsNothing,
+    );
+
+    await tester.tap(find.widgetWithIcon(IconButton, Icons.skip_next));
+    await tester.pumpAndSettle();
+
+    expect(
+      find.text(
+        'Mock Anime Source is temporarily unavailable. AniDestiny is playing from Sakura Anime instead.',
+      ),
+      findsNWidgets(2),
+    );
+    expect(
+      find.text(
+        'The current source is temporarily unavailable. Showing fallback data.',
+      ),
+      findsNothing,
+    );
+    expect(find.text('Episode 2'), findsOneWidget);
+  });
+
+  testWidgets('retry playback hides fallback context while recovery is busy', (
+    tester,
+  ) async {
+    final repository = _RetryablePlayerRepository();
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          playerRepositoryProvider.overrideWithValue(repository),
+          historyRepositoryProvider.overrideWithValue(_FakeHistoryRepository()),
+          danmakuRepositoryProvider.overrideWithValue(_FakeDanmakuRepository()),
+        ],
+        child: _buildPlayerApp(_fallbackArgs),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(
+      find.text(
+        'Mock Anime Source is temporarily unavailable. AniDestiny is playing from Sakura Anime instead.',
+      ),
+      findsOneWidget,
+    );
+
+    await tester.tap(find.text('Retry'));
+    await tester.pump();
+
+    expect(find.text('Retrying playback...'), findsNWidgets(2));
+    expect(
+      find.text(
+        'Mock Anime Source is temporarily unavailable. AniDestiny is playing from Sakura Anime instead.',
+      ),
+      findsNothing,
+    );
+
+    repository.completeRetry();
+    await tester.pumpAndSettle();
+
+    expect(
+      find.text(
+        'Mock Anime Source is temporarily unavailable. AniDestiny is playing from Sakura Anime instead.',
       ),
       findsOneWidget,
     );
@@ -462,8 +648,23 @@ void main() {
 
     expect(repository.adapter.loadCalls, 2);
     expect(find.text('Retry'), findsNothing);
-    expect(find.byType(CircularProgressIndicator), findsWidgets);
+    expect(find.byType(CircularProgressIndicator), findsOneWidget);
+    expect(find.text('Retrying playback...'), findsNWidgets(2));
     expect(find.byTooltip('Retrying playback...'), findsWidgets);
+    expect(
+      find.descendant(
+        of: find.byType(AppBar),
+        matching: find.text('Episode 1'),
+      ),
+      findsOneWidget,
+    );
+    expect(
+      find.descendant(
+        of: find.byType(AppBar),
+        matching: find.text('Retrying playback...'),
+      ),
+      findsOneWidget,
+    );
 
     final nextEpisodeButton = tester.widget<IconButton>(
       find.widgetWithIcon(IconButton, Icons.skip_next),
@@ -493,6 +694,12 @@ void main() {
     expect(downloadButton.onPressed, isNull);
     expect(downloadButton.tooltip, 'Retrying playback...');
 
+    final danmakuButton = tester.widget<IconButton>(
+      find.widgetWithIcon(IconButton, Icons.subtitles),
+    );
+    expect(danmakuButton.onPressed, isNull);
+    expect(danmakuButton.tooltip, 'Retrying playback...');
+
     final fullscreenButton = tester.widget<IconButton>(
       find.widgetWithIcon(IconButton, Icons.fullscreen),
     );
@@ -501,6 +708,9 @@ void main() {
 
     final slider = tester.widget<Slider>(find.byType(Slider));
     expect(slider.onChanged, isNull);
+    expect(slider.value, 0);
+    expect(find.text('--:-- / --:--'), findsOneWidget);
+    expect(find.text('00:00 / 24:12'), findsNothing);
 
     repository.completeRetry();
     await tester.pumpAndSettle();
@@ -512,7 +722,7 @@ void main() {
     expect(find.text('Retry'), findsNothing);
     expect(
       find.text(
-        'Playback temporarily failed. Retry later or try another playback line.',
+        'Playback temporarily failed. Retry now or try another playback line.',
       ),
       findsNothing,
     );
@@ -548,6 +758,110 @@ void main() {
     expect(find.text('Retry'), findsNothing);
   });
 
+  testWidgets('playback failure immediately saves the interrupted position',
+      (tester) async {
+    final repository = _InterruptedPlayerRepository();
+    final historyRepository = _FakeHistoryRepository();
+    const interruptedPosition = Duration(minutes: 7, seconds: 24);
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          playerRepositoryProvider.overrideWithValue(repository),
+          historyRepositoryProvider.overrideWithValue(historyRepository),
+          danmakuRepositoryProvider.overrideWithValue(_FakeDanmakuRepository()),
+        ],
+        child: _buildPlayerApp(_args),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    repository.emitPlaybackFailure(position: interruptedPosition);
+    await tester.pumpAndSettle();
+
+    final savedHistory = await historyRepository.getByEpisode(_args.episodeId);
+    expect(savedHistory, isNotNull);
+    expect(savedHistory?.position, interruptedPosition);
+  });
+
+  testWidgets(
+      'retry keeps the interrupted playback context after a failed retry attempt',
+      (tester) async {
+    final repository = _InterruptedRetryRecoveryRepository();
+    final historyRepository = _FakeHistoryRepository();
+    const interruptedPosition = Duration(minutes: 7, seconds: 24);
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          playerRepositoryProvider.overrideWithValue(repository),
+          historyRepositoryProvider.overrideWithValue(historyRepository),
+          danmakuRepositoryProvider.overrideWithValue(_FakeDanmakuRepository()),
+        ],
+        child: _buildPlayerApp(_args),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    repository.emitPlaybackFailure(position: interruptedPosition);
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Retry'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Retry'), findsOneWidget);
+    expect(find.text('07:24 / 24:12'), findsOneWidget);
+
+    await historyRepository.clear();
+
+    await tester.tap(find.text('Retry'));
+    await tester.pumpAndSettle();
+
+    expect(repository.adapter.loadCalls, 3);
+    expect(repository.adapter.lastSeekPosition, interruptedPosition);
+    expect(repository.adapter.lastSetSpeed, 1.25);
+    final savedHistory = await historyRepository.getByEpisode(_args.episodeId);
+    expect(savedHistory, isNotNull);
+    expect(savedHistory?.position, interruptedPosition);
+    expect(find.text('Retry'), findsNothing);
+  });
+
+  testWidgets(
+      'successful retry immediately preserves the interrupted history position even if seek state settles later',
+      (tester) async {
+    final repository = _DelayedSeekRetryHistoryRepository();
+    final historyRepository = _FakeHistoryRepository();
+    const interruptedPosition = Duration(minutes: 7, seconds: 24);
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          playerRepositoryProvider.overrideWithValue(repository),
+          historyRepositoryProvider.overrideWithValue(historyRepository),
+          danmakuRepositoryProvider.overrideWithValue(_FakeDanmakuRepository()),
+        ],
+        child: _buildPlayerApp(_args),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    repository.emitPlaybackFailure(position: interruptedPosition);
+    await tester.pumpAndSettle();
+
+    await historyRepository.clear();
+
+    await tester.tap(find.text('Retry'));
+    await tester.pumpAndSettle();
+
+    expect(repository.adapter.loadCalls, 2);
+    expect(repository.adapter.lastSeekPosition, interruptedPosition);
+
+    final savedHistory = await historyRepository.getByEpisode(_args.episodeId);
+    expect(savedHistory, isNotNull);
+    expect(savedHistory?.position, interruptedPosition);
+    expect(savedHistory?.duration, const Duration(minutes: 24, seconds: 12));
+  });
+
   testWidgets(
       'playback failure card offers external player recovery for handoffable streams',
       (tester) async {
@@ -578,6 +892,138 @@ void main() {
     expect(launchedUri?.toString(), 'https://cdn.example.test/video.m3u8');
   });
 
+  testWidgets(
+      'playback failure card clears stale error UI while external handoff is opening',
+      (tester) async {
+    final repository = _RetryablePlayerRepository();
+    final launchCompleter = Completer<bool>();
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          playerRepositoryProvider.overrideWithValue(repository),
+          historyRepositoryProvider.overrideWithValue(_FakeHistoryRepository()),
+          danmakuRepositoryProvider.overrideWithValue(_FakeDanmakuRepository()),
+          externalPlayerLauncherProvider.overrideWithValue(
+            (_) => launchCompleter.future,
+          ),
+        ],
+        child: _buildPlayerApp(_args),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(
+      find.text(
+        'Playback temporarily failed. Retry now or try another playback line.',
+      ),
+      findsOneWidget,
+    );
+
+    await tester.tap(find.text('External player'));
+    await tester.pump();
+
+    expect(find.text('Opening external player...'), findsNWidgets(2));
+    expect(
+      find.text(
+        'Playback temporarily failed. Retry now or try another playback line.',
+      ),
+      findsNothing,
+    );
+    expect(find.text('Retry'), findsNothing);
+    expect(find.text('Copy diagnostics'), findsNothing);
+
+    launchCompleter.complete(true);
+    await tester.pumpAndSettle();
+  });
+
+  testWidgets(
+      'playback failure card is restored if external handoff launch fails',
+      (tester) async {
+    final repository = _RetryablePlayerRepository();
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          playerRepositoryProvider.overrideWithValue(repository),
+          historyRepositoryProvider.overrideWithValue(_FakeHistoryRepository()),
+          danmakuRepositoryProvider.overrideWithValue(_FakeDanmakuRepository()),
+          externalPlayerLauncherProvider.overrideWithValue((_) async => false),
+        ],
+        child: _buildPlayerApp(_args),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(
+      find.text(
+        'Playback temporarily failed. Retry now or try another playback line.',
+      ),
+      findsOneWidget,
+    );
+
+    await tester.tap(find.text('External player'));
+    await tester.pumpAndSettle();
+
+    expect(
+      find.text(
+        'Could not open Sakura Anime playback in your external player. Staying in AniDestiny.',
+      ),
+      findsOneWidget,
+    );
+    expect(
+      find.text(
+        'Playback temporarily failed. Retry now or try another playback line.',
+      ),
+      findsOneWidget,
+    );
+    expect(find.text('Retry'), findsOneWidget);
+    expect(find.text('Copy diagnostics'), findsOneWidget);
+  });
+
+  testWidgets(
+      'playback failure card returns after a successful external handoff',
+      (tester) async {
+    final repository = _RetryablePlayerRepository();
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          playerRepositoryProvider.overrideWithValue(repository),
+          historyRepositoryProvider.overrideWithValue(_FakeHistoryRepository()),
+          danmakuRepositoryProvider.overrideWithValue(_FakeDanmakuRepository()),
+          externalPlayerLauncherProvider.overrideWithValue((_) async => true),
+        ],
+        child: _buildPlayerApp(_args),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(
+      find.text(
+        'Playback temporarily failed. Retry now or try another playback line.',
+      ),
+      findsOneWidget,
+    );
+
+    await tester.tap(find.text('External player'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Opening external player...'), findsNothing);
+    expect(
+      find.text('Opened Sakura Anime playback in your external player.'),
+      findsOneWidget,
+    );
+    expect(
+      find.text(
+        'Playback temporarily failed. Retry now or try another playback line.',
+      ),
+      findsOneWidget,
+    );
+    expect(find.text('Retry'), findsOneWidget);
+    expect(find.text('Copy diagnostics'), findsOneWidget);
+  });
+
   testWidgets('external player action launches the current playback url', (
     tester,
   ) async {
@@ -604,18 +1050,77 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(launchedUri?.toString(), 'https://cdn.example.test/video.m3u8');
+    expect(
+      find.text('Opened Sakura Anime playback in your external player.'),
+      findsOneWidget,
+    );
   });
 
-  testWidgets('fullscreen controls keep the external player action available', (
-    tester,
-  ) async {
-    Uri? launchedUri;
+  testWidgets(
+      'external player handoff hides fallback context while the page is busy',
+      (tester) async {
+    final launchCompleter = Completer<bool>();
 
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
           playerRepositoryProvider
               .overrideWithValue(const _FakePlayerRepository()),
+          historyRepositoryProvider.overrideWithValue(_FakeHistoryRepository()),
+          danmakuRepositoryProvider.overrideWithValue(_FakeDanmakuRepository()),
+          externalPlayerLauncherProvider.overrideWithValue(
+            (_) => launchCompleter.future,
+          ),
+        ],
+        child: _buildPlayerApp(_fallbackArgs),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(
+      find.text(
+        'Mock Anime Source is temporarily unavailable. AniDestiny is playing from Sakura Anime instead.',
+      ),
+      findsOneWidget,
+    );
+
+    await tester.tap(find.byTooltip('External player'));
+    await tester.pump();
+
+    expect(find.text('Opening external player...'), findsNWidgets(2));
+    expect(
+      find.text(
+        'Mock Anime Source is temporarily unavailable. AniDestiny is playing from Sakura Anime instead.',
+      ),
+      findsNothing,
+    );
+
+    launchCompleter.complete(true);
+    await tester.pumpAndSettle();
+
+    expect(
+      find.text('Opened Sakura Anime playback in your external player.'),
+      findsOneWidget,
+    );
+    expect(find.text('Mock Anime Source'), findsNothing);
+    expect(
+      find.text(
+        'Mock Anime Source is temporarily unavailable. AniDestiny is playing from Sakura Anime instead.',
+      ),
+      findsOneWidget,
+    );
+  });
+
+  testWidgets('fullscreen controls keep the external player action available', (
+    tester,
+  ) async {
+    Uri? launchedUri;
+    final repository = _TrackingPlayerRepository();
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          playerRepositoryProvider.overrideWithValue(repository),
           historyRepositoryProvider.overrideWithValue(_FakeHistoryRepository()),
           danmakuRepositoryProvider.overrideWithValue(_FakeDanmakuRepository()),
           externalPlayerLauncherProvider.overrideWithValue((uri) async {
@@ -672,16 +1177,55 @@ void main() {
     expect(launchedUri?.toString(), 'https://cdn.example.test/video.m3u8');
     expect(repository.adapter.pauseCalls, 1);
     expect(find.byType(AppBar), findsOneWidget);
+    expect(
+      find.text('Opened Sakura Anime playback in your external player.'),
+      findsOneWidget,
+    );
+  });
+
+  testWidgets('external handoff pauses playback before launch completes', (
+    tester,
+  ) async {
+    final launchCompleter = Completer<bool>();
+    final repository = _TrackingPlayerRepository();
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          playerRepositoryProvider.overrideWithValue(repository),
+          historyRepositoryProvider.overrideWithValue(_FakeHistoryRepository()),
+          danmakuRepositoryProvider.overrideWithValue(_FakeDanmakuRepository()),
+          externalPlayerLauncherProvider.overrideWithValue(
+            (_) => launchCompleter.future,
+          ),
+        ],
+        child: _buildPlayerApp(_args),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byTooltip('External player'));
+    await tester.pump();
+
+    expect(repository.adapter.pauseCalls, 1);
+    expect(repository.adapter.playCalls, 0);
+    expect(find.text('Opening external player...'), findsNWidgets(2));
+
+    launchCompleter.complete(true);
+    await tester.pumpAndSettle();
+
+    expect(repository.adapter.playCalls, 0);
   });
 
   testWidgets('external player action shows feedback when launch fails', (
     tester,
   ) async {
+    final repository = _TrackingPlayerRepository();
+
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
-          playerRepositoryProvider
-              .overrideWithValue(const _FakePlayerRepository()),
+          playerRepositoryProvider.overrideWithValue(repository),
           historyRepositoryProvider.overrideWithValue(_FakeHistoryRepository()),
           danmakuRepositoryProvider.overrideWithValue(_FakeDanmakuRepository()),
           externalPlayerLauncherProvider.overrideWithValue((_) async => false),
@@ -695,9 +1239,17 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(
-      find.text('Could not open in an external player. Try again later.'),
+      find.text(
+        'Could not open Sakura Anime playback in your external player. Staying in AniDestiny.',
+      ),
       findsOneWidget,
     );
+    expect(repository.adapter.pauseCalls, 1);
+    expect(repository.adapter.playCalls, 1);
+
+    final playButton = tester.widget<IconButton>(find.byType(IconButton).first);
+    expect(playButton.onPressed, isNotNull);
+    expect(playButton.tooltip, 'Pause');
   });
 
   testWidgets('external player action stays busy until handoff completes', (
@@ -727,6 +1279,7 @@ void main() {
     await tester.pump();
 
     expect(launchCalls, 1);
+    expect(find.text('Opening external player...'), findsNWidgets(2));
     expect(find.byTooltip('Opening external player...'), findsWidgets);
     final openingButton =
         tester.widgetList<IconButton>(find.byType(IconButton)).singleWhere(
@@ -767,6 +1320,9 @@ void main() {
 
     final slider = tester.widget<Slider>(find.byType(Slider));
     expect(slider.onChanged, isNull);
+    expect(slider.value, 0);
+    expect(find.text('--:-- / --:--'), findsOneWidget);
+    expect(find.text('00:00 / 24:12'), findsNothing);
 
     expect(launchCalls, 1);
 
@@ -777,8 +1333,93 @@ void main() {
     expect(find.byTooltip('External player'), findsOneWidget);
   });
 
+  testWidgets('fullscreen external handoff keeps the current episode visible',
+      (tester) async {
+    final launchCompleter = Completer<bool>();
+    final repository = _TrackingPlayerRepository();
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          playerRepositoryProvider.overrideWithValue(repository),
+          historyRepositoryProvider.overrideWithValue(_FakeHistoryRepository()),
+          danmakuRepositoryProvider.overrideWithValue(_FakeDanmakuRepository()),
+          externalPlayerLauncherProvider.overrideWithValue(
+            (_) => launchCompleter.future,
+          ),
+        ],
+        child: _buildPlayerApp(_args),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byTooltip('Enter fullscreen'));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byTooltip('External player'));
+    await tester.pump();
+
+    expect(find.byType(AppBar), findsNothing);
+    expect(find.text('Opening external player...'), findsOneWidget);
+    expect(find.text('Episode 1'), findsOneWidget);
+
+    launchCompleter.complete(true);
+    await tester.pumpAndSettle();
+  });
+
   testWidgets(
-      'external player action is disabled when the stream depends on request headers',
+      'embedded external handoff keeps the current episode and opening status visible in the app bar',
+      (tester) async {
+    final launchCompleter = Completer<bool>();
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          playerRepositoryProvider
+              .overrideWithValue(const _FakePlayerRepository()),
+          historyRepositoryProvider.overrideWithValue(_FakeHistoryRepository()),
+          danmakuRepositoryProvider.overrideWithValue(_FakeDanmakuRepository()),
+          externalPlayerLauncherProvider.overrideWithValue(
+            (_) => launchCompleter.future,
+          ),
+        ],
+        child: _buildPlayerApp(_args),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(
+      find.descendant(
+        of: find.byType(AppBar),
+        matching: find.text('Episode 1'),
+      ),
+      findsOneWidget,
+    );
+
+    await tester.tap(find.byTooltip('External player'));
+    await tester.pump();
+
+    expect(
+      find.descendant(
+        of: find.byType(AppBar),
+        matching: find.text('Episode 1'),
+      ),
+      findsOneWidget,
+    );
+    expect(
+      find.descendant(
+        of: find.byType(AppBar),
+        matching: find.text('Opening external player...'),
+      ),
+      findsOneWidget,
+    );
+
+    launchCompleter.complete(true);
+    await tester.pumpAndSettle();
+  });
+
+  testWidgets(
+      'external player action explains why a protected stream stays in AniDestiny',
       (tester) async {
     Uri? launchedUri;
 
@@ -801,7 +1442,7 @@ void main() {
 
     expect(
       find.byTooltip(
-        'This stream needs request headers, so it cannot be opened in an external player yet.',
+        'This Sakura Anime playback needs to stay in AniDestiny for now, so it cannot be opened in another player yet.',
       ),
       findsOneWidget,
     );
@@ -837,9 +1478,10 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    await tester.tap(find.byTooltip('Next episode'));
+    await tester.tap(find.widgetWithIcon(IconButton, Icons.skip_next));
     await tester.pump();
 
+    expect(find.text('Loading next episode...'), findsNothing);
     final playButton = tester.widget<IconButton>(find.byType(IconButton).first);
     expect(playButton.onPressed, isNull);
     expect(playButton.tooltip, 'Loading next episode...');
@@ -858,6 +1500,12 @@ void main() {
     );
     expect(externalPlayerButton.onPressed, isNull);
 
+    final danmakuButton = tester.widget<IconButton>(
+      find.widgetWithIcon(IconButton, Icons.subtitles),
+    );
+    expect(danmakuButton.onPressed, isNull);
+    expect(danmakuButton.tooltip, 'Loading next episode...');
+
     final fullscreenButton = tester.widget<IconButton>(
       find.widgetWithIcon(IconButton, Icons.fullscreen),
     );
@@ -871,7 +1519,848 @@ void main() {
     expect(launchedUri, isNull);
   });
 
-  testWidgets('system back stays on the player while next episode loads', (
+  testWidgets(
+      'next episode transition keeps current playback running until the next episode is playable',
+      (tester) async {
+    final pendingRepository = _PendingNextEpisodeAnimeRepository();
+    final playerRepository = _TrackingPlayerRepository();
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          animeRepositoryProvider.overrideWithValue(pendingRepository),
+          playerRepositoryProvider.overrideWithValue(playerRepository),
+          historyRepositoryProvider.overrideWithValue(_FakeHistoryRepository()),
+          danmakuRepositoryProvider.overrideWithValue(_FakeDanmakuRepository()),
+        ],
+        child: _buildPlayerApp(_args),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(playerRepository.adapter.pauseCalls, 0);
+
+    await tester.tap(find.widgetWithIcon(IconButton, Icons.skip_next));
+    await tester.pump();
+
+    expect(playerRepository.adapter.pauseCalls, 0);
+    final playButton = tester.widget<IconButton>(find.byType(IconButton).first);
+    expect(playButton.onPressed, isNull);
+    expect(playButton.tooltip, 'Loading next episode...');
+    expect(find.text('--:-- / --:--'), findsNothing);
+  });
+
+  testWidgets(
+      'embedded next episode verification keeps the current title quiet until playback can switch',
+      (tester) async {
+    final animeRepository = _PendingPlayableNextEpisodeAnimeRepository();
+    final playerRepository = _TrackingPlayerRepository();
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          animeRepositoryProvider.overrideWithValue(animeRepository),
+          playerRepositoryProvider.overrideWithValue(playerRepository),
+          historyRepositoryProvider.overrideWithValue(_FakeHistoryRepository()),
+          danmakuRepositoryProvider.overrideWithValue(_FakeDanmakuRepository()),
+        ],
+        child: _buildPlayerApp(_args),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byTooltip('Next episode'));
+    await tester.pump();
+    await tester.pump();
+
+    expect(find.text('Loading next episode...'), findsNothing);
+    expect(find.text('Episode 2'), findsNothing);
+    expect(
+      find.descendant(
+        of: find.byType(AppBar),
+        matching: find.text('Episode 1'),
+      ),
+      findsOneWidget,
+    );
+  });
+
+  testWidgets(
+      'fullscreen next episode verification avoids the transition overlay until playback can switch',
+      (tester) async {
+    final animeRepository = _PendingPlayableNextEpisodeAnimeRepository();
+    final playerRepository = _TrackingPlayerRepository();
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          animeRepositoryProvider.overrideWithValue(animeRepository),
+          playerRepositoryProvider.overrideWithValue(playerRepository),
+          historyRepositoryProvider.overrideWithValue(_FakeHistoryRepository()),
+          danmakuRepositoryProvider.overrideWithValue(_FakeDanmakuRepository()),
+        ],
+        child: _buildPlayerApp(_args),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byTooltip('Enter fullscreen'));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byTooltip('Next episode'));
+    await tester.pump();
+    await tester.pump();
+
+    expect(find.byType(AppBar), findsNothing);
+    expect(find.text('Loading next episode...'), findsNothing);
+    expect(find.text('Episode 2'), findsNothing);
+  });
+
+  testWidgets(
+      'fullscreen exit stays available while next episode is unresolved', (
+    tester,
+  ) async {
+    final animeRepository = _PendingPlayableNextEpisodeAnimeRepository();
+    final playerRepository = _TrackingPlayerRepository();
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          animeRepositoryProvider.overrideWithValue(animeRepository),
+          playerRepositoryProvider.overrideWithValue(playerRepository),
+          historyRepositoryProvider.overrideWithValue(_FakeHistoryRepository()),
+          danmakuRepositoryProvider.overrideWithValue(_FakeDanmakuRepository()),
+        ],
+        child: _buildPlayerApp(_args),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byTooltip('Enter fullscreen'));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byTooltip('Next episode'));
+    await tester.pump();
+
+    final fullscreenButton = tester.widget<IconButton>(
+      find.widgetWithIcon(IconButton, Icons.fullscreen_exit),
+    );
+    expect(fullscreenButton.onPressed, isNotNull);
+    expect(fullscreenButton.tooltip, 'Exit fullscreen');
+
+    await tester.tap(find.widgetWithIcon(IconButton, Icons.fullscreen_exit));
+    await tester.pump();
+
+    expect(find.byType(AppBar), findsOneWidget);
+    expect(find.text('Loading next episode...'), findsNothing);
+  });
+
+  testWidgets(
+      'app bar keeps the current episode quiet while the next episode is unresolved',
+      (tester) async {
+    final animeRepository = _PendingNextEpisodeAnimeRepository();
+    final playerRepository = _TrackingPlayerRepository();
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          animeRepositoryProvider.overrideWithValue(animeRepository),
+          playerRepositoryProvider.overrideWithValue(playerRepository),
+          historyRepositoryProvider.overrideWithValue(_FakeHistoryRepository()),
+          danmakuRepositoryProvider.overrideWithValue(_FakeDanmakuRepository()),
+        ],
+        child: _buildPlayerApp(_args),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(
+      find.descendant(
+        of: find.byType(AppBar),
+        matching: find.text('Episode 1'),
+      ),
+      findsOneWidget,
+    );
+
+    await tester.tap(find.byTooltip('Next episode'));
+    await tester.pump();
+
+    expect(
+      find.descendant(
+        of: find.byType(AppBar),
+        matching: find.text('Episode 1'),
+      ),
+      findsOneWidget,
+    );
+    expect(
+      find.descendant(
+        of: find.byType(AppBar),
+        matching: find.text('Loading next episode...'),
+      ),
+      findsNothing,
+    );
+  });
+
+  testWidgets('app bar keeps the current episode until playback can switch',
+      (tester) async {
+    final animeRepository = _PendingPlayableNextEpisodeAnimeRepository();
+    final playerRepository = _TrackingPlayerRepository();
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          animeRepositoryProvider.overrideWithValue(animeRepository),
+          playerRepositoryProvider.overrideWithValue(playerRepository),
+          historyRepositoryProvider.overrideWithValue(_FakeHistoryRepository()),
+          danmakuRepositoryProvider.overrideWithValue(_FakeDanmakuRepository()),
+        ],
+        child: _buildPlayerApp(_args),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byTooltip('Next episode'));
+    await tester.pump();
+    await tester.pump();
+
+    expect(
+      find.descendant(
+        of: find.byType(AppBar),
+        matching: find.text('Episode 1'),
+      ),
+      findsOneWidget,
+    );
+    expect(
+      find.descendant(
+        of: find.byType(AppBar),
+        matching: find.text('Loading next episode...'),
+      ),
+      findsNothing,
+    );
+  });
+
+  testWidgets(
+      'failed playback keeps its current error card visible until the next episode is playable',
+      (tester) async {
+    final animeRepository = _PendingPlayableNextEpisodeAnimeRepository();
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          animeRepositoryProvider.overrideWithValue(animeRepository),
+          playerRepositoryProvider.overrideWithValue(
+            const _ThrowingPlayerRepository(),
+          ),
+          historyRepositoryProvider.overrideWithValue(_FakeHistoryRepository()),
+          danmakuRepositoryProvider.overrideWithValue(_FakeDanmakuRepository()),
+        ],
+        child: _buildPlayerApp(
+          _failingArgs.copyWith(
+            episodeId: 'episode-1',
+            episodeTitle: 'Episode 1',
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(
+      find.text(
+        'Playback temporarily failed. Retry now or try another playback line.',
+      ),
+      findsOneWidget,
+    );
+
+    await tester.tap(find.widgetWithIcon(IconButton, Icons.skip_next));
+    await tester.pump();
+    await tester.pump();
+
+    expect(find.text('Loading next episode...'), findsOneWidget);
+    expect(find.text('Episode 2'), findsNothing);
+    expect(
+      find.text(
+        'Playback temporarily failed. Retry now or try another playback line.',
+      ),
+      findsOneWidget,
+    );
+    expect(find.text('Retry'), findsOneWidget);
+    expect(find.byTooltip('Loading next episode...'), findsWidgets);
+    await tester.tap(find.text('Retry'));
+    await tester.pump();
+    expect(find.text('Retrying playback...'), findsNothing);
+  });
+
+  testWidgets(
+      'failed playback starts the next episode immediately after a successful switch',
+      (tester) async {
+    final animeRepository = _PlayableNextEpisodeAnimeRepository();
+    final playerRepository = _FailingThenPlayablePlayerRepository();
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          animeRepositoryProvider.overrideWithValue(animeRepository),
+          playerRepositoryProvider.overrideWithValue(playerRepository),
+          historyRepositoryProvider.overrideWithValue(_FakeHistoryRepository()),
+          danmakuRepositoryProvider.overrideWithValue(_FakeDanmakuRepository()),
+        ],
+        child: _buildPlayerApp(
+          _failingArgs.copyWith(
+            episodeId: 'episode-1',
+            episodeTitle: 'Episode 1',
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(
+      find.text(
+        'Playback temporarily failed. Retry now or try another playback line.',
+      ),
+      findsOneWidget,
+    );
+    expect(find.text('Next episode'), findsOneWidget);
+
+    await tester.tap(find.text('Next episode'));
+    await tester.pumpAndSettle();
+
+    expect(playerRepository.adapter.playCalls, 1);
+    final playButton = tester.widget<IconButton>(find.byType(IconButton).first);
+    expect(playButton.tooltip, 'Pause');
+    expect(find.text('Episode 2'), findsOneWidget);
+    expect(find.text('Retry'), findsNothing);
+  });
+
+  testWidgets(
+      'next episode starts playing immediately even if the current episode is paused',
+      (tester) async {
+    final animeRepository = _PlayableNextEpisodeAnimeRepository();
+    final playerRepository = _PausedPlaybackPlayerRepository();
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          animeRepositoryProvider.overrideWithValue(animeRepository),
+          playerRepositoryProvider.overrideWithValue(playerRepository),
+          historyRepositoryProvider.overrideWithValue(_FakeHistoryRepository()),
+          danmakuRepositoryProvider.overrideWithValue(_FakeDanmakuRepository()),
+        ],
+        child: _buildPlayerApp(_args),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    final initialPlayButton = tester.widget<IconButton>(
+      find.byType(IconButton).first,
+    );
+    expect(initialPlayButton.tooltip, 'Play');
+
+    await tester.tap(find.byTooltip('Next episode'));
+    await tester.pumpAndSettle();
+
+    expect(playerRepository.adapter.loadCalls, 2);
+    expect(playerRepository.adapter.playCalls, 1);
+    final playButton = tester.widget<IconButton>(find.byType(IconButton).first);
+    expect(playButton.tooltip, 'Pause');
+    expect(find.text('Episode 2'), findsOneWidget);
+  });
+
+  testWidgets(
+      'next episode verification keeps the current danmaku chrome visible', (
+    tester,
+  ) async {
+    final animeRepository = _PendingNextEpisodeAnimeRepository();
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          animeRepositoryProvider.overrideWithValue(animeRepository),
+          playerRepositoryProvider
+              .overrideWithValue(const _FakePlayerRepository()),
+          historyRepositoryProvider.overrideWithValue(_FakeHistoryRepository()),
+          danmakuRepositoryProvider.overrideWithValue(
+            _PopulatedDanmakuRepository(),
+          ),
+        ],
+        child: _buildPlayerApp(_args),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.byType(DanmakuOverlay), findsOneWidget);
+    expect(find.text('Danmaku: Dandanplay'), findsOneWidget);
+
+    await tester.tap(find.byTooltip('Next episode'));
+    await tester.pump();
+
+    expect(find.text('Loading next episode...'), findsNothing);
+    expect(find.byType(DanmakuOverlay), findsOneWidget);
+    expect(find.text('Danmaku: Dandanplay'), findsOneWidget);
+  });
+
+  testWidgets('retry playback keeps danmaku chrome hidden', (tester) async {
+    final repository = _RetryablePlayerRepository();
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          playerRepositoryProvider.overrideWithValue(repository),
+          historyRepositoryProvider.overrideWithValue(_FakeHistoryRepository()),
+          danmakuRepositoryProvider.overrideWithValue(
+            _PopulatedDanmakuRepository(),
+          ),
+        ],
+        child: _buildPlayerApp(_args),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.byType(DanmakuOverlay), findsNothing);
+    expect(find.text('Danmaku: Dandanplay'), findsNothing);
+
+    await tester.tap(find.text('Retry'));
+    await tester.pump();
+
+    expect(find.text('Retrying playback...'), findsNWidgets(2));
+    expect(find.byType(DanmakuOverlay), findsNothing);
+    expect(find.text('Danmaku: Dandanplay'), findsNothing);
+
+    repository.completeRetry();
+    await tester.pumpAndSettle();
+  });
+
+  testWidgets('external handoff hides stale danmaku chrome while opening', (
+    tester,
+  ) async {
+    final launchCompleter = Completer<bool>();
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          playerRepositoryProvider
+              .overrideWithValue(const _FakePlayerRepository()),
+          historyRepositoryProvider.overrideWithValue(_FakeHistoryRepository()),
+          danmakuRepositoryProvider.overrideWithValue(
+            _PopulatedDanmakuRepository(),
+          ),
+          externalPlayerLauncherProvider.overrideWithValue(
+            (_) => launchCompleter.future,
+          ),
+        ],
+        child: _buildPlayerApp(_args),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.byType(DanmakuOverlay), findsOneWidget);
+    expect(find.text('Danmaku: Dandanplay'), findsOneWidget);
+
+    await tester.tap(find.byTooltip('External player'));
+    await tester.pump();
+
+    expect(find.text('Opening external player...'), findsNWidgets(2));
+    expect(find.byType(DanmakuOverlay), findsNothing);
+    expect(find.text('Danmaku: Dandanplay'), findsNothing);
+
+    launchCompleter.complete(true);
+    await tester.pumpAndSettle();
+  });
+
+  testWidgets('next episode action explains when already on the latest episode',
+      (tester) async {
+    final animeRepository = _LastEpisodeAnimeRepository();
+    final playerRepository = _TrackingPlayerRepository();
+    final container = ProviderContainer(
+      overrides: [
+        animeRepositoryProvider.overrideWithValue(animeRepository),
+        playerRepositoryProvider.overrideWithValue(playerRepository),
+        historyRepositoryProvider.overrideWithValue(_FakeHistoryRepository()),
+        danmakuRepositoryProvider.overrideWithValue(_FakeDanmakuRepository()),
+      ],
+    );
+    addTearDown(container.dispose);
+    final animeDetailProvider = animeDetailBySourceProvider(
+      (sourceId: _args.sourceId, animeId: _args.animeId),
+    );
+    final animeDetailSubscription = container.listen(
+      animeDetailProvider,
+      (_, __) {},
+    );
+    addTearDown(animeDetailSubscription.close);
+    await container.read(animeDetailProvider.future);
+
+    await tester.pumpWidget(
+      UncontrolledProviderScope(
+        container: container,
+        child: _buildPlayerApp(_args),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    final nextEpisodeButton = tester.widget<IconButton>(
+      find.widgetWithIcon(IconButton, Icons.skip_next),
+    );
+    expect(nextEpisodeButton.onPressed, isNotNull);
+    expect(
+      nextEpisodeButton.tooltip,
+      'You are already on the latest available episode.',
+    );
+    await tester.tap(
+      find.byTooltip('You are already on the latest available episode.'),
+    );
+    await tester.pumpAndSettle();
+    expect(
+      find.text('You are already on the latest available episode.'),
+      findsOneWidget,
+    );
+    expect(playerRepository.adapter.pauseCalls, 0);
+    expect(playerRepository.adapter.playCalls, 0);
+
+    final playButton = tester.widget<IconButton>(find.byType(IconButton).first);
+    expect(playButton.onPressed, isNotNull);
+    expect(playButton.tooltip, 'Pause');
+  });
+
+  testWidgets('latest-episode playback failure keeps next episode explanatory',
+      (tester) async {
+    final animeRepository = _LastEpisodeAnimeRepository();
+    final container = ProviderContainer(
+      overrides: [
+        animeRepositoryProvider.overrideWithValue(animeRepository),
+        playerRepositoryProvider.overrideWithValue(
+          const _ThrowingPlayerRepository(),
+        ),
+        historyRepositoryProvider.overrideWithValue(_FakeHistoryRepository()),
+        danmakuRepositoryProvider.overrideWithValue(_FakeDanmakuRepository()),
+      ],
+    );
+    addTearDown(container.dispose);
+    final animeDetailProvider = animeDetailBySourceProvider(
+      (sourceId: _failingArgs.sourceId, animeId: _failingArgs.animeId),
+    );
+    final animeDetailSubscription = container.listen(
+      animeDetailProvider,
+      (_, __) {},
+    );
+    addTearDown(animeDetailSubscription.close);
+    await container.read(animeDetailProvider.future);
+
+    await tester.pumpWidget(
+      UncontrolledProviderScope(
+        container: container,
+        child: _buildPlayerApp(
+          _failingArgs.copyWith(
+            episodeId: 'episode-1',
+            episodeTitle: 'Episode 1',
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(
+      find.text(
+        'Playback temporarily failed. Retry now or try another playback line.',
+      ),
+      findsOneWidget,
+    );
+    expect(find.text('Latest episode'), findsOneWidget);
+    expect(find.text('Next episode'), findsNothing);
+    final nextEpisodeButton = tester.widget<IconButton>(
+      find.widgetWithIcon(IconButton, Icons.skip_next),
+    );
+    expect(nextEpisodeButton.onPressed, isNotNull);
+    expect(
+      nextEpisodeButton.tooltip,
+      'You are already on the latest available episode.',
+    );
+    expect(
+      find.byTooltip('You are already on the latest available episode.'),
+      findsNWidgets(2),
+    );
+    await tester.tap(find.text('Latest episode'));
+    await tester.pumpAndSettle();
+    expect(
+      find.text('You are already on the latest available episode.'),
+      findsOneWidget,
+    );
+    expect(find.text('Retry'), findsOneWidget);
+  });
+
+  testWidgets(
+      'fullscreen next episode action explains the latest-episode boundary',
+      (tester) async {
+    final animeRepository = _LastEpisodeAnimeRepository();
+    final playerRepository = _TrackingPlayerRepository();
+    final container = ProviderContainer(
+      overrides: [
+        animeRepositoryProvider.overrideWithValue(animeRepository),
+        playerRepositoryProvider.overrideWithValue(playerRepository),
+        historyRepositoryProvider.overrideWithValue(_FakeHistoryRepository()),
+        danmakuRepositoryProvider.overrideWithValue(_FakeDanmakuRepository()),
+      ],
+    );
+    addTearDown(container.dispose);
+    final animeDetailProvider = animeDetailBySourceProvider(
+      (sourceId: _args.sourceId, animeId: _args.animeId),
+    );
+    final animeDetailSubscription = container.listen(
+      animeDetailProvider,
+      (_, __) {},
+    );
+    addTearDown(animeDetailSubscription.close);
+    await container.read(animeDetailProvider.future);
+
+    await tester.pumpWidget(
+      UncontrolledProviderScope(
+        container: container,
+        child: _buildPlayerApp(_args),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byTooltip('Enter fullscreen'));
+    await tester.pumpAndSettle();
+
+    final nextEpisodeButton = tester.widget<IconButton>(
+      find.widgetWithIcon(IconButton, Icons.skip_next),
+    );
+    expect(nextEpisodeButton.onPressed, isNotNull);
+    expect(
+      nextEpisodeButton.tooltip,
+      'You are already on the latest available episode.',
+    );
+    await tester.tap(
+      find.byTooltip('You are already on the latest available episode.'),
+    );
+    await tester.pumpAndSettle();
+    expect(
+      find.text('You are already on the latest available episode.'),
+      findsOneWidget,
+    );
+    expect(playerRepository.adapter.pauseCalls, 0);
+  });
+
+  testWidgets(
+      'failed playback restores the current error card if the next episode has no playable source',
+      (tester) async {
+    final animeRepository = _NoPlayableNextEpisodeAnimeRepository();
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          animeRepositoryProvider.overrideWithValue(animeRepository),
+          playerRepositoryProvider.overrideWithValue(
+            const _ThrowingPlayerRepository(),
+          ),
+          historyRepositoryProvider.overrideWithValue(_FakeHistoryRepository()),
+          danmakuRepositoryProvider.overrideWithValue(_FakeDanmakuRepository()),
+        ],
+        child: _buildPlayerApp(
+          _failingArgs.copyWith(
+            episodeId: 'episode-1',
+            episodeTitle: 'Episode 1',
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(
+      find.text(
+        'Playback temporarily failed. Retry now or try another playback line.',
+      ),
+      findsOneWidget,
+    );
+
+    await tester.tap(find.widgetWithIcon(IconButton, Icons.skip_next));
+    await tester.pumpAndSettle();
+
+    expect(
+      find.text("Couldn't open the next episode. Staying on the current one."),
+      findsOneWidget,
+    );
+    expect(
+      find.text(
+        'Playback temporarily failed. Retry now or try another playback line.',
+      ),
+      findsOneWidget,
+    );
+    expect(find.text('Retry'), findsOneWidget);
+  });
+
+  testWidgets(
+      'failed playback keeps the current episode explicit if the next episode fails to start',
+      (tester) async {
+    final animeRepository = _PlayableNextEpisodeAnimeRepository();
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          animeRepositoryProvider.overrideWithValue(animeRepository),
+          playerRepositoryProvider.overrideWithValue(
+            const _ThrowingPlayerRepository(),
+          ),
+          historyRepositoryProvider.overrideWithValue(_FakeHistoryRepository()),
+          danmakuRepositoryProvider.overrideWithValue(_FakeDanmakuRepository()),
+        ],
+        child: _buildPlayerApp(
+          _failingArgs.copyWith(
+            episodeId: 'episode-1',
+            episodeTitle: 'Episode 1',
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(
+      find.text(
+        'Playback temporarily failed. Retry now or try another playback line.',
+      ),
+      findsOneWidget,
+    );
+
+    await tester.tap(find.widgetWithIcon(IconButton, Icons.skip_next));
+    await tester.pumpAndSettle();
+
+    expect(
+      find.text("Couldn't open the next episode. Staying on the current one."),
+      findsOneWidget,
+    );
+    expect(
+      find.text(
+        'Playback temporarily failed. Retry now or try another playback line.',
+      ),
+      findsOneWidget,
+    );
+    expect(find.text('Retry'), findsOneWidget);
+  });
+
+  testWidgets(
+      'current playback resumes if next episode has no playable sources',
+      (tester) async {
+    final animeRepository = _NoPlayableNextEpisodeAnimeRepository();
+    final playerRepository = _TrackingPlayerRepository();
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          animeRepositoryProvider.overrideWithValue(animeRepository),
+          playerRepositoryProvider.overrideWithValue(playerRepository),
+          historyRepositoryProvider.overrideWithValue(_FakeHistoryRepository()),
+          danmakuRepositoryProvider.overrideWithValue(_FakeDanmakuRepository()),
+        ],
+        child: _buildPlayerApp(_args),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byTooltip('Next episode'));
+    await tester.pumpAndSettle();
+
+    expect(playerRepository.adapter.pauseCalls, 0);
+    expect(playerRepository.adapter.playCalls, 0);
+    expect(
+      find.text("Couldn't open the next episode. Staying on the current one."),
+      findsOneWidget,
+    );
+
+    final playButton = tester.widget<IconButton>(find.byType(IconButton).first);
+    expect(playButton.onPressed, isNotNull);
+    expect(playButton.tooltip, 'Pause');
+  });
+
+  testWidgets('current playback is restored if the next episode fails to start',
+      (tester) async {
+    final animeRepository = _PlayableNextEpisodeAnimeRepository();
+    final playerRepository = _NextEpisodeLoadFailurePlayerRepository();
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          animeRepositoryProvider.overrideWithValue(animeRepository),
+          playerRepositoryProvider.overrideWithValue(playerRepository),
+          historyRepositoryProvider.overrideWithValue(_FakeHistoryRepository()),
+          danmakuRepositoryProvider.overrideWithValue(_FakeDanmakuRepository()),
+        ],
+        child: _buildPlayerApp(_args),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byTooltip('Next episode'));
+    await tester.pumpAndSettle();
+
+    expect(playerRepository.adapter.pauseCalls, 1);
+    expect(playerRepository.adapter.playCalls, 1);
+    expect(playerRepository.adapter.loadCalls, 3);
+    expect(find.text('Episode 1'), findsOneWidget);
+    expect(
+      find.text("Couldn't open the next episode. Staying on the current one."),
+      findsOneWidget,
+    );
+
+    final playButton = tester.widget<IconButton>(find.byType(IconButton).first);
+    expect(playButton.onPressed, isNotNull);
+    expect(playButton.tooltip, 'Pause');
+  });
+
+  testWidgets('app bar back can leave while next episode is still unresolved', (
+    tester,
+  ) async {
+    final pendingRepository = _PendingNextEpisodeAnimeRepository();
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          animeRepositoryProvider.overrideWithValue(pendingRepository),
+          playerRepositoryProvider
+              .overrideWithValue(const _FakePlayerRepository()),
+          historyRepositoryProvider.overrideWithValue(_FakeHistoryRepository()),
+          danmakuRepositoryProvider.overrideWithValue(_FakeDanmakuRepository()),
+        ],
+        child: _buildApp(_args),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byType(ElevatedButton));
+    await tester.pumpAndSettle();
+
+    final initialBackButton = tester.widget<IconButton>(
+      find
+          .descendant(
+            of: find.byType(AppBar),
+            matching: find.byType(IconButton),
+          )
+          .first,
+    );
+    expect(initialBackButton.onPressed, isNotNull);
+    expect(initialBackButton.tooltip, 'Back');
+
+    await tester.tap(find.byTooltip('Next episode'));
+    await tester.pump();
+
+    final busyBackButton = tester.widget<IconButton>(
+      find
+          .descendant(
+            of: find.byType(AppBar),
+            matching: find.byType(IconButton),
+          )
+          .first,
+    );
+    expect(busyBackButton.onPressed, isNotNull);
+    expect(busyBackButton.tooltip, 'Back');
+
+    await tester.tap(find.byTooltip('Back'));
+    await tester.pumpAndSettle();
+
+    expect(find.byType(PlayerPage), findsNothing);
+    expect(find.text('Open player'), findsOneWidget);
+  });
+
+  testWidgets('system back can leave while next episode is still unresolved', (
     tester,
   ) async {
     final pendingRepository = _PendingNextEpisodeAnimeRepository();
@@ -896,17 +2385,49 @@ void main() {
     await tester.tap(find.byTooltip('Next episode'));
     await tester.pump();
 
-    await tester.pageBack();
+    await tester.binding.handlePopRoute();
+    await tester.pumpAndSettle();
+
+    expect(find.byType(PlayerPage), findsNothing);
+    expect(find.text('Open player'), findsOneWidget);
+  });
+
+  testWidgets(
+      'system back exits fullscreen while next episode is still unresolved', (
+    tester,
+  ) async {
+    final pendingRepository = _PendingNextEpisodeAnimeRepository();
+    final playerRepository = _TrackingPlayerRepository();
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          animeRepositoryProvider.overrideWithValue(pendingRepository),
+          playerRepositoryProvider.overrideWithValue(playerRepository),
+          historyRepositoryProvider.overrideWithValue(_FakeHistoryRepository()),
+          danmakuRepositoryProvider.overrideWithValue(_FakeDanmakuRepository()),
+        ],
+        child: _buildApp(_args),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byType(ElevatedButton));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byTooltip('Enter fullscreen'));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byTooltip('Next episode'));
+    await tester.pump();
+
+    await tester.binding.handlePopRoute();
     await tester.pump();
 
     expect(find.byType(PlayerPage), findsOneWidget);
+    expect(find.byType(AppBar), findsOneWidget);
     expect(find.text('Open player'), findsNothing);
-    expect(
-      find.text(
-        'Please wait for the current playback action to finish before leaving.',
-      ),
-      findsOneWidget,
-    );
+    expect(find.text('Loading next episode...'), findsNothing);
   });
 
   testWidgets('system back stays on the player while external handoff opens', (
@@ -936,14 +2457,14 @@ void main() {
     await tester.tap(find.byTooltip('External player'));
     await tester.pump();
 
-    await tester.pageBack();
+    await tester.binding.handlePopRoute();
     await tester.pump();
 
     expect(find.byType(PlayerPage), findsOneWidget);
     expect(find.text('Open player'), findsNothing);
     expect(
       find.text(
-        'Please wait for the current playback action to finish before leaving.',
+        'Please wait until the external player finishes opening before leaving.',
       ),
       findsOneWidget,
     );
@@ -975,14 +2496,14 @@ void main() {
     await tester.tap(find.text('Retry'));
     await tester.pump();
 
-    await tester.pageBack();
+    await tester.binding.handlePopRoute();
     await tester.pump();
 
     expect(find.byType(PlayerPage), findsOneWidget);
     expect(find.text('Open player'), findsNothing);
     expect(
       find.text(
-        'Please wait for the current playback action to finish before leaving.',
+        'Please wait until playback finishes retrying before leaving.',
       ),
       findsOneWidget,
     );
@@ -1114,7 +2635,7 @@ void main() {
     expect(find.text('No playable source found'), findsOneWidget);
     expect(
       find.text(
-        'Playback temporarily failed. Retry later or try another playback line.',
+        'Playback temporarily failed. Retry now or try another playback line.',
       ),
       findsNothing,
     );
@@ -1228,6 +2749,28 @@ class _FakeDanmakuRepository implements DanmakuRepository {
   }
 }
 
+class _PopulatedDanmakuRepository implements DanmakuRepository {
+  @override
+  Future<List<DanmakuItem>> getDanmaku({
+    required String animeId,
+    required String episodeId,
+    required String animeTitle,
+    required String episodeTitle,
+    int? episodeIndex,
+  }) async {
+    return const [
+      DanmakuItem(
+        id: 'comment-1',
+        text: 'Visible danmaku',
+        time: Duration(seconds: 2),
+        color: 0xFFFFFFFF,
+        type: DanmakuType.scroll,
+        source: 'dandanplay',
+      ),
+    ];
+  }
+}
+
 class _PendingNextEpisodeAnimeRepository implements AnimeRepository {
   @override
   Future<SourceFallbackResult<AnimeDetail>> getAnimeDetail(String animeId) {
@@ -1273,6 +2816,259 @@ class _PendingNextEpisodeAnimeRepository implements AnimeRepository {
     int page = 1,
   }) {
     throw UnimplementedError();
+  }
+}
+
+class _LastEpisodeAnimeRepository implements AnimeRepository {
+  @override
+  Future<SourceFallbackResult<AnimeDetail>> getAnimeDetail(String animeId) {
+    throw UnimplementedError();
+  }
+
+  @override
+  Future<SourceFallbackResult<AnimeDetail>> getAnimeDetailFromSource({
+    required String sourceId,
+    required String animeId,
+  }) async {
+    return SourceFallbackResult(
+      value: AnimeDetail(
+        id: animeId,
+        title: 'Anime 1',
+        sourceId: sourceId,
+        episodes: const [
+          Episode(
+            id: 'episode-1',
+            animeId: 'anime-1',
+            title: 'Episode 1',
+            index: 1,
+          ),
+        ],
+      ),
+      sourceId: sourceId,
+      usedFallback: false,
+    );
+  }
+
+  @override
+  Future<SourceFallbackResult<List<Anime>>> getHomeRecommendations() {
+    throw UnimplementedError();
+  }
+
+  @override
+  Future<SourceFallbackResult<List<PlaySource>>> getPlaySources(
+    String episodeId,
+  ) {
+    throw UnimplementedError();
+  }
+
+  @override
+  Future<SourceFallbackResult<List<PlaySource>>> getPlaySourcesFromSource({
+    required String sourceId,
+    required String episodeId,
+  }) {
+    throw UnimplementedError();
+  }
+
+  @override
+  Future<SourceFallbackResult<List<ScheduleItem>>> getSchedule() {
+    throw UnimplementedError();
+  }
+
+  @override
+  Future<SourceFallbackResult<List<SearchResult>>> search(
+    String keyword, {
+    int page = 1,
+  }) {
+    throw UnimplementedError();
+  }
+}
+
+class _NoPlayableNextEpisodeAnimeRepository implements AnimeRepository {
+  @override
+  Future<SourceFallbackResult<AnimeDetail>> getAnimeDetail(String animeId) {
+    throw UnimplementedError();
+  }
+
+  @override
+  Future<SourceFallbackResult<AnimeDetail>> getAnimeDetailFromSource({
+    required String sourceId,
+    required String animeId,
+  }) async {
+    return SourceFallbackResult(
+      value: AnimeDetail(
+        id: animeId,
+        title: 'Anime 1',
+        sourceId: sourceId,
+        episodes: const [
+          Episode(
+            id: 'episode-1',
+            animeId: 'anime-1',
+            title: 'Episode 1',
+            index: 1,
+          ),
+          Episode(
+            id: 'episode-2',
+            animeId: 'anime-1',
+            title: 'Episode 2',
+            index: 2,
+          ),
+        ],
+      ),
+      sourceId: sourceId,
+      usedFallback: false,
+    );
+  }
+
+  @override
+  Future<SourceFallbackResult<List<Anime>>> getHomeRecommendations() {
+    throw UnimplementedError();
+  }
+
+  @override
+  Future<SourceFallbackResult<List<PlaySource>>> getPlaySources(
+    String episodeId,
+  ) {
+    throw UnimplementedError();
+  }
+
+  @override
+  Future<SourceFallbackResult<List<PlaySource>>> getPlaySourcesFromSource({
+    required String sourceId,
+    required String episodeId,
+  }) async {
+    return SourceFallbackResult(
+      value: const [],
+      sourceId: sourceId,
+      usedFallback: false,
+    );
+  }
+
+  @override
+  Future<SourceFallbackResult<List<ScheduleItem>>> getSchedule() {
+    throw UnimplementedError();
+  }
+
+  @override
+  Future<SourceFallbackResult<List<SearchResult>>> search(
+    String keyword, {
+    int page = 1,
+  }) {
+    throw UnimplementedError();
+  }
+}
+
+class _PlayableNextEpisodeAnimeRepository implements AnimeRepository {
+  @override
+  Future<SourceFallbackResult<AnimeDetail>> getAnimeDetail(String animeId) {
+    throw UnimplementedError();
+  }
+
+  @override
+  Future<SourceFallbackResult<AnimeDetail>> getAnimeDetailFromSource({
+    required String sourceId,
+    required String animeId,
+  }) async {
+    return SourceFallbackResult(
+      value: AnimeDetail(
+        id: animeId,
+        title: 'Anime 1',
+        sourceId: sourceId,
+        episodes: const [
+          Episode(
+            id: 'episode-1',
+            animeId: 'anime-1',
+            title: 'Episode 1',
+            index: 1,
+          ),
+          Episode(
+            id: 'episode-2',
+            animeId: 'anime-1',
+            title: 'Episode 2',
+            index: 2,
+          ),
+        ],
+      ),
+      sourceId: sourceId,
+      usedFallback: false,
+    );
+  }
+
+  @override
+  Future<SourceFallbackResult<List<Anime>>> getHomeRecommendations() {
+    throw UnimplementedError();
+  }
+
+  @override
+  Future<SourceFallbackResult<List<PlaySource>>> getPlaySources(
+    String episodeId,
+  ) {
+    throw UnimplementedError();
+  }
+
+  @override
+  Future<SourceFallbackResult<List<PlaySource>>> getPlaySourcesFromSource({
+    required String sourceId,
+    required String episodeId,
+  }) async {
+    return SourceFallbackResult(
+      value: const [
+        PlaySource(
+          id: 'line-1',
+          episodeId: 'episode-2',
+          title: 'Line 1',
+          url: 'https://cdn.example.test/episode-2.m3u8',
+        ),
+      ],
+      sourceId: sourceId,
+      usedFallback: false,
+    );
+  }
+
+  @override
+  Future<SourceFallbackResult<List<ScheduleItem>>> getSchedule() {
+    throw UnimplementedError();
+  }
+
+  @override
+  Future<SourceFallbackResult<List<SearchResult>>> search(
+    String keyword, {
+    int page = 1,
+  }) {
+    throw UnimplementedError();
+  }
+}
+
+class _NextEpisodeFallbackAnimeRepository
+    extends _PlayableNextEpisodeAnimeRepository {
+  @override
+  Future<SourceFallbackResult<List<PlaySource>>> getPlaySourcesFromSource({
+    required String sourceId,
+    required String episodeId,
+  }) async {
+    return const SourceFallbackResult(
+      value: [
+        PlaySource(
+          id: 'line-1',
+          episodeId: 'episode-2',
+          title: 'Line 1',
+          url: 'https://cdn.example.test/episode-2.m3u8',
+        ),
+      ],
+      sourceId: 'sakura',
+      usedFallback: true,
+      fromSourceId: 'mock',
+    );
+  }
+}
+
+class _PendingPlayableNextEpisodeAnimeRepository
+    extends _PlayableNextEpisodeAnimeRepository {
+  @override
+  Future<SourceFallbackResult<List<PlaySource>>> getPlaySourcesFromSource({
+    required String sourceId,
+    required String episodeId,
+  }) {
+    return Completer<SourceFallbackResult<List<PlaySource>>>().future;
   }
 }
 
@@ -1373,6 +3169,36 @@ class _InterruptedPlayerRepository implements PlayerRepository {
   }
 }
 
+class _InterruptedRetryRecoveryRepository implements PlayerRepository {
+  _InterruptedRetryRecoveryRepository();
+
+  final adapter = _InterruptedRetryRecoveryAdapter();
+
+  @override
+  PlayerControllerAdapter createController() => adapter;
+
+  void emitPlaybackFailure({
+    required Duration position,
+  }) {
+    adapter.emitPlaybackFailure(position: position);
+  }
+}
+
+class _DelayedSeekRetryHistoryRepository implements PlayerRepository {
+  _DelayedSeekRetryHistoryRepository();
+
+  final adapter = _DelayedSeekRetryHistoryAdapter();
+
+  @override
+  PlayerControllerAdapter createController() => adapter;
+
+  void emitPlaybackFailure({
+    required Duration position,
+  }) {
+    adapter.emitPlaybackFailure(position: position);
+  }
+}
+
 class _FakePlayerRepository implements PlayerRepository {
   const _FakePlayerRepository();
 
@@ -1384,6 +3210,33 @@ class _TrackingPlayerRepository implements PlayerRepository {
   _TrackingPlayerRepository();
 
   final adapter = _TrackingPlayerControllerAdapter();
+
+  @override
+  PlayerControllerAdapter createController() => adapter;
+}
+
+class _PausedPlaybackPlayerRepository implements PlayerRepository {
+  _PausedPlaybackPlayerRepository();
+
+  final adapter = _PausedPlaybackPlayerAdapter();
+
+  @override
+  PlayerControllerAdapter createController() => adapter;
+}
+
+class _FailingThenPlayablePlayerRepository implements PlayerRepository {
+  _FailingThenPlayablePlayerRepository();
+
+  final adapter = _FailingThenPlayablePlayerAdapter();
+
+  @override
+  PlayerControllerAdapter createController() => adapter;
+}
+
+class _NextEpisodeLoadFailurePlayerRepository implements PlayerRepository {
+  _NextEpisodeLoadFailurePlayerRepository();
+
+  final adapter = _NextEpisodeLoadFailurePlayerAdapter();
 
   @override
   PlayerControllerAdapter createController() => adapter;
@@ -1448,6 +3301,8 @@ class _TrackingPlayerControllerAdapter implements PlayerControllerAdapter {
 
   final _controller = StreamController<PlayerState>.broadcast();
   int pauseCalls = 0;
+  int playCalls = 0;
+  PlayerState _state = PlayerState.initial();
 
   @override
   Stream<PlayerState> get stateStream => _controller.stream;
@@ -1462,29 +3317,183 @@ class _TrackingPlayerControllerAdapter implements PlayerControllerAdapter {
     String url, {
     Map<String, String> headers = const {},
   }) async {
-    _controller.add(
-      PlayerState.initial().copyWith(
-        isInitialized: true,
-        isPlaying: true,
-        duration: const Duration(minutes: 24, seconds: 12),
-      ),
+    _state = PlayerState.initial().copyWith(
+      isInitialized: true,
+      isPlaying: true,
+      duration: const Duration(minutes: 24, seconds: 12),
     );
+    _controller.add(_state);
   }
 
   @override
   Future<void> pause() async {
     pauseCalls += 1;
-    _controller.add(
-      PlayerState.initial().copyWith(
-        isInitialized: true,
-        isPlaying: false,
-        duration: const Duration(minutes: 24, seconds: 12),
-      ),
-    );
+    _state = _state.copyWith(isPlaying: false);
+    _controller.add(_state);
   }
 
   @override
-  Future<void> play() async {}
+  Future<void> play() async {
+    playCalls += 1;
+    _state = _state.copyWith(isPlaying: true);
+    _controller.add(_state);
+  }
+
+  @override
+  Future<void> seek(Duration position) async {}
+
+  @override
+  Future<void> setSpeed(double speed) async {}
+}
+
+class _PausedPlaybackPlayerAdapter implements PlayerControllerAdapter {
+  _PausedPlaybackPlayerAdapter();
+
+  final _controller = StreamController<PlayerState>.broadcast();
+  int loadCalls = 0;
+  int playCalls = 0;
+  PlayerState _state = PlayerState.initial();
+
+  @override
+  Stream<PlayerState> get stateStream => _controller.stream;
+
+  @override
+  Future<void> dispose() async {
+    await _controller.close();
+  }
+
+  @override
+  Future<void> load(
+    String url, {
+    Map<String, String> headers = const {},
+  }) async {
+    loadCalls += 1;
+    _state = PlayerState.initial().copyWith(
+      isInitialized: true,
+      isPlaying: false,
+      duration: const Duration(minutes: 24, seconds: 12),
+    );
+    _controller.add(_state);
+  }
+
+  @override
+  Future<void> pause() async {
+    _state = _state.copyWith(isPlaying: false);
+    _controller.add(_state);
+  }
+
+  @override
+  Future<void> play() async {
+    playCalls += 1;
+    _state = _state.copyWith(isPlaying: true);
+    _controller.add(_state);
+  }
+
+  @override
+  Future<void> seek(Duration position) async {}
+
+  @override
+  Future<void> setSpeed(double speed) async {}
+}
+
+class _FailingThenPlayablePlayerAdapter implements PlayerControllerAdapter {
+  _FailingThenPlayablePlayerAdapter();
+
+  final _controller = StreamController<PlayerState>.broadcast();
+  int loadCalls = 0;
+  int playCalls = 0;
+  PlayerState _state = PlayerState.initial();
+
+  @override
+  Stream<PlayerState> get stateStream => _controller.stream;
+
+  @override
+  Future<void> dispose() async {
+    await _controller.close();
+  }
+
+  @override
+  Future<void> load(
+    String url, {
+    Map<String, String> headers = const {},
+  }) async {
+    loadCalls += 1;
+    if (loadCalls == 1) {
+      await Future<void>.delayed(Duration.zero);
+      throw StateError('initial load failed');
+    }
+    _state = PlayerState.initial().copyWith(
+      isInitialized: true,
+      isPlaying: false,
+      duration: const Duration(minutes: 24, seconds: 12),
+    );
+    _controller.add(_state);
+  }
+
+  @override
+  Future<void> pause() async {}
+
+  @override
+  Future<void> play() async {
+    playCalls += 1;
+    _state = _state.copyWith(isPlaying: true);
+    _controller.add(_state);
+  }
+
+  @override
+  Future<void> seek(Duration position) async {}
+
+  @override
+  Future<void> setSpeed(double speed) async {}
+}
+
+class _NextEpisodeLoadFailurePlayerAdapter implements PlayerControllerAdapter {
+  _NextEpisodeLoadFailurePlayerAdapter();
+
+  final _controller = StreamController<PlayerState>.broadcast();
+  PlayerState _state = PlayerState.initial();
+  int loadCalls = 0;
+  int pauseCalls = 0;
+  int playCalls = 0;
+
+  @override
+  Stream<PlayerState> get stateStream => _controller.stream;
+
+  @override
+  Future<void> dispose() async {
+    await _controller.close();
+  }
+
+  @override
+  Future<void> load(
+    String url, {
+    Map<String, String> headers = const {},
+  }) async {
+    loadCalls += 1;
+    if (loadCalls == 2) {
+      throw StateError('next episode failed');
+    }
+    _state = PlayerState.initial().copyWith(
+      isInitialized: true,
+      isPlaying: loadCalls == 1,
+      duration: const Duration(minutes: 24, seconds: 12),
+    );
+    _controller.add(_state);
+  }
+
+  @override
+  Future<void> pause() async {
+    pauseCalls += 1;
+    _state = _state.copyWith(isPlaying: false);
+    _controller.add(_state);
+  }
+
+  @override
+  Future<void> play() async {
+    playCalls += 1;
+    _state = _state.copyWith(isPlaying: true);
+    _controller.add(_state);
+  }
 
   @override
   Future<void> seek(Duration position) async {}
@@ -1652,6 +3661,154 @@ class _InterruptedPlayerAdapter implements PlayerControllerAdapter {
       isInitialized: true,
       isPlaying: false,
       position: position,
+      errorMessage: 'stream interrupted',
+    );
+    _controller.add(_state);
+  }
+}
+
+class _InterruptedRetryRecoveryAdapter implements PlayerControllerAdapter {
+  _InterruptedRetryRecoveryAdapter();
+
+  final _controller = StreamController<PlayerState>.broadcast();
+  PlayerState _state = PlayerState.initial();
+  int loadCalls = 0;
+  Duration? lastSeekPosition;
+  double? lastSetSpeed;
+
+  @override
+  Stream<PlayerState> get stateStream => _controller.stream;
+
+  @override
+  Future<void> dispose() async {
+    await _controller.close();
+  }
+
+  @override
+  Future<void> load(
+    String url, {
+    Map<String, String> headers = const {},
+  }) async {
+    loadCalls += 1;
+    if (loadCalls == 2) {
+      await Future<void>.delayed(Duration.zero);
+      throw StateError('retry failed');
+    }
+    _state = PlayerState.initial().copyWith(
+      isInitialized: true,
+      duration: const Duration(minutes: 24, seconds: 12),
+      speed: 1.25,
+      clearErrorMessage: true,
+    );
+    _controller.add(_state);
+  }
+
+  @override
+  Future<void> pause() async {
+    _state = _state.copyWith(isPlaying: false);
+    _controller.add(_state);
+  }
+
+  @override
+  Future<void> play() async {
+    _state = _state.copyWith(isPlaying: true);
+    _controller.add(_state);
+  }
+
+  @override
+  Future<void> seek(Duration position) async {
+    lastSeekPosition = position;
+    _state = _state.copyWith(position: position);
+    _controller.add(_state);
+  }
+
+  @override
+  Future<void> setSpeed(double speed) async {
+    lastSetSpeed = speed;
+    _state = _state.copyWith(speed: speed);
+    _controller.add(_state);
+  }
+
+  void emitPlaybackFailure({
+    required Duration position,
+  }) {
+    _state = _state.copyWith(
+      isInitialized: true,
+      isPlaying: false,
+      position: position,
+      errorMessage: 'stream interrupted',
+    );
+    _controller.add(_state);
+  }
+}
+
+class _DelayedSeekRetryHistoryAdapter implements PlayerControllerAdapter {
+  _DelayedSeekRetryHistoryAdapter();
+
+  final _controller = StreamController<PlayerState>.broadcast();
+  PlayerState _state = PlayerState.initial();
+  int loadCalls = 0;
+  Duration? lastSeekPosition;
+
+  @override
+  Stream<PlayerState> get stateStream => _controller.stream;
+
+  @override
+  Future<void> dispose() async {
+    await _controller.close();
+  }
+
+  @override
+  Future<void> load(
+    String url, {
+    Map<String, String> headers = const {},
+  }) async {
+    loadCalls += 1;
+    _state = PlayerState.initial().copyWith(
+      isInitialized: true,
+      duration: const Duration(minutes: 24, seconds: 12),
+      speed: 1.25,
+      clearErrorMessage: true,
+    );
+    _controller.add(_state);
+  }
+
+  @override
+  Future<void> pause() async {
+    _state = _state.copyWith(isPlaying: false);
+    _controller.add(_state);
+  }
+
+  @override
+  Future<void> play() async {
+    _state = _state.copyWith(isPlaying: true);
+    _controller.add(_state);
+  }
+
+  @override
+  Future<void> seek(Duration position) async {
+    lastSeekPosition = position;
+    _state = _state.copyWith(position: position);
+    Future<void>.delayed(Duration.zero, () {
+      if (_controller.isClosed) return;
+      _controller.add(_state);
+    });
+  }
+
+  @override
+  Future<void> setSpeed(double speed) async {
+    _state = _state.copyWith(speed: speed);
+    _controller.add(_state);
+  }
+
+  void emitPlaybackFailure({
+    required Duration position,
+  }) {
+    _state = _state.copyWith(
+      isInitialized: true,
+      isPlaying: false,
+      position: position,
+      duration: const Duration(minutes: 24, seconds: 12),
       errorMessage: 'stream interrupted',
     );
     _controller.add(_state);

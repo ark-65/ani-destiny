@@ -49,7 +49,9 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
   PlayerState _state = PlayerState.initial();
   bool _isFullscreen = false;
   bool _isDisposed = false;
+  bool _isResolvingNextEpisode = false;
   bool _isSwitchingEpisode = false;
+  String? _switchingEpisodeTitle;
   bool _isOpeningExternalPlayer = false;
   bool _isRetryingPlayback = false;
 
@@ -64,8 +66,10 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
     _controller = ref.read(playerRepositoryProvider).createController();
     _subscription = _controller.stateStream.listen((state) {
       if (!mounted || _isDisposed) return;
+      final enteredFailureState =
+          _state.errorMessage == null && state.errorMessage != null;
       setState(() => _state = state);
-      unawaited(_saveHistory());
+      unawaited(_saveHistory(force: enteredFailureState));
     });
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted || _isDisposed) return;
@@ -98,24 +102,98 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
   @override
   Widget build(BuildContext context) {
     final danmakuSettings = ref.watch(danmakuSettingsProvider);
+    final canLeavePlayer = Navigator.of(context).canPop();
     final hasPlayableSource = _hasPlayableUrl();
+    final animeDetailProvider = animeDetailBySourceProvider(
+      (sourceId: _args.sourceId, animeId: _args.animeId),
+    );
+    final cachedAnimeDetail = ref.exists(animeDetailProvider)
+        ? ref.watch(animeDetailProvider).valueOrNull
+        : null;
+    final knownNextEpisode = cachedAnimeDetail == null
+        ? null
+        : resolveNextEpisode(
+            episodes: cachedAnimeDetail.value.episodes,
+            currentEpisodeId: _args.episodeId,
+            currentEpisodeIndex: _args.episodeIndex,
+            currentEpisodeTitle: _args.episodeTitle,
+          );
+    final knowsNoNextEpisode =
+        cachedAnimeDetail != null && knownNextEpisode == null;
     final isRetryingPlayback = _isRetryingPlayback;
-    final isRouteBusy =
+    final hasCommittedRouteTransition =
         _isSwitchingEpisode || _isOpeningExternalPlayer || isRetryingPlayback;
-    final nextEpisodeTooltip = _isSwitchingEpisode
+    final isRouteBusy = hasCommittedRouteTransition;
+    final isPreparingNextEpisode =
+        _isResolvingNextEpisode || _isSwitchingEpisode;
+    final showRouteTransitionOverlay =
+        hasCommittedRouteTransition && _state.errorMessage == null;
+    final routeTransitionMessage = _isSwitchingEpisode
+        ? context.l10n.loadingNextEpisode
+        : _isOpeningExternalPlayer
+            ? context.l10n.openingExternalPlayer
+            : context.l10n.retryingPlayback;
+    final routeTransitionDetail = _isFullscreen
+        ? (_isSwitchingEpisode
+            ? (_switchingEpisodeTitle ?? _args.episodeTitle)
+            : _args.episodeTitle)
+        : null;
+    final playerExitBusyMessage = _routeBusyExitMessage(context);
+    final showDanmakuChrome =
+        !hasCommittedRouteTransition && _state.errorMessage == null;
+    final appBarEpisodeTitle = _isSwitchingEpisode
+        ? (_switchingEpisodeTitle ?? _args.episodeTitle)
+        : _args.episodeTitle;
+    final appBarStatus =
+        hasCommittedRouteTransition ? routeTransitionMessage : null;
+    final nextEpisodeTooltip = isPreparingNextEpisode
         ? context.l10n.loadingNextEpisode
         : _isOpeningExternalPlayer
             ? context.l10n.openingExternalPlayer
             : isRetryingPlayback
                 ? context.l10n.retryingPlayback
-                : context.l10n.nextEpisode;
+                : knowsNoNextEpisode
+                    ? context.l10n.nextEpisodeUnavailable
+                    : context.l10n.nextEpisode;
+    final canRetryPlayback = _canRetryPlayback();
+    final keepRetryActionVisible = _state.errorMessage != null &&
+        _state.errorMessage != context.l10n.playerNoPlayUrl &&
+        !_isSwitchingEpisode &&
+        !_isOpeningExternalPlayer &&
+        !isRetryingPlayback &&
+        _hasPlayableUrl();
+    final retryActionTooltip = isPreparingNextEpisode
+        ? context.l10n.loadingNextEpisode
+        : _isOpeningExternalPlayer
+            ? context.l10n.openingExternalPlayer
+            : isRetryingPlayback
+                ? context.l10n.retryingPlayback
+                : context.l10n.retry;
+    final canStartNextEpisodeTransition = !_isResolvingNextEpisode &&
+        !_isSwitchingEpisode &&
+        !_isOpeningExternalPlayer &&
+        !_isRetryingPlayback &&
+        !knowsNoNextEpisode;
+    final canExplainUnavailableNextEpisode = !_isResolvingNextEpisode &&
+        !_isSwitchingEpisode &&
+        !_isOpeningExternalPlayer &&
+        !_isRetryingPlayback &&
+        knowsNoNextEpisode;
+    final nextEpisodeAction = canStartNextEpisodeTransition
+        ? () => unawaited(_playNextEpisode())
+        : canExplainUnavailableNextEpisode
+            ? () => _showSnackBar(context.l10n.nextEpisodeUnavailable)
+            : null;
     final externalPlayerTooltip = _externalPlayerTooltip(context);
     final downloadTooltip = _downloadTooltip(context);
+    final unavailableActionColor =
+        Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.38);
     final canCreateDownload = hasPlayableSource &&
+        !_isResolvingNextEpisode &&
         !_isSwitchingEpisode &&
         !_isOpeningExternalPlayer &&
         !isRetryingPlayback;
-    final canOpenExternalPlayer = _canOpenExternalPlayer();
+    final canUseExternalPlayerAction = _canUseExternalPlayerAction();
     final danmakuItems = ref.watch(
       danmakuItemsProvider(
         (
@@ -132,12 +210,13 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
       canPop: !_isFullscreen && !isRouteBusy,
       onPopInvokedWithResult: (didPop, result) {
         if (didPop) return;
+        if (isRouteBusy) {
+          _showSnackBar(playerExitBusyMessage);
+          return;
+        }
         if (_isFullscreen) {
           unawaited(_exitFullscreen());
           return;
-        }
-        if (isRouteBusy) {
-          _showSnackBar(context.l10n.playerExitBusy);
         }
       },
       child: Scaffold(
@@ -145,7 +224,22 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
         appBar: _isFullscreen
             ? null
             : AppBar(
-                title: Text(_args.episodeTitle),
+                automaticallyImplyLeading: false,
+                leading: canLeavePlayer
+                    ? IconButton(
+                        tooltip: isRouteBusy
+                            ? playerExitBusyMessage
+                            : context.l10n.back,
+                        onPressed: isRouteBusy
+                            ? () => _showSnackBar(playerExitBusyMessage)
+                            : () => Navigator.of(context).maybePop(),
+                        icon: const BackButtonIcon(),
+                      )
+                    : null,
+                title: _PlayerAppBarTitle(
+                  title: appBarEpisodeTitle,
+                  status: appBarStatus,
+                ),
                 foregroundColor: Colors.white,
                 backgroundColor: Colors.black,
                 actions: [
@@ -156,13 +250,14 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
                       icon: const Icon(Icons.bug_report_outlined),
                     ),
                   IconButton(
+                    style: canExplainUnavailableNextEpisode
+                        ? IconButton.styleFrom(
+                            foregroundColor: Colors.white54,
+                          )
+                        : null,
                     tooltip: nextEpisodeTooltip,
-                    onPressed: _isSwitchingEpisode ||
-                            _isOpeningExternalPlayer ||
-                            _isRetryingPlayback
-                        ? null
-                        : () => unawaited(_playNextEpisode()),
-                    icon: _isSwitchingEpisode
+                    onPressed: nextEpisodeAction,
+                    icon: isPreparingNextEpisode
                         ? const SizedBox.square(
                             dimension: 18,
                             child: CircularProgressIndicator(strokeWidth: 2),
@@ -171,7 +266,7 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
                   ),
                   IconButton(
                     tooltip: externalPlayerTooltip,
-                    onPressed: canOpenExternalPlayer
+                    onPressed: canUseExternalPlayerAction
                         ? () => unawaited(_openExternalPlayer())
                         : null,
                     icon: _isOpeningExternalPlayer
@@ -186,6 +281,7 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
         body: Column(
           children: [
             if (!_isFullscreen &&
+                !isRouteBusy &&
                 _hasSourceFallbackContext() &&
                 _state.errorMessage == null)
               _SourceFallbackBanner(
@@ -200,7 +296,18 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
                     title: _args.animeTitle,
                     playUrl: _args.playUrl,
                   ),
-                  if (_state.isBuffering)
+                  if (showRouteTransitionOverlay)
+                    Positioned.fill(
+                      child: IgnorePointer(
+                        child: Center(
+                          child: _PlaybackTransitionOverlay(
+                            message: routeTransitionMessage,
+                            detail: routeTransitionDetail,
+                          ),
+                        ),
+                      ),
+                    ),
+                  if (_state.isBuffering && !showRouteTransitionOverlay)
                     const Center(child: CircularProgressIndicator()),
                   if (_state.errorMessage != null)
                     SafeArea(
@@ -220,6 +327,20 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
                                       _playbackErrorMessage(),
                                       textAlign: TextAlign.center,
                                     ),
+                                    if (_hasSourceFallbackContext()) ...[
+                                      const SizedBox(height: 12),
+                                      Text(
+                                        _sourceFallbackNotice(context),
+                                        textAlign: TextAlign.center,
+                                        style: Theme.of(
+                                          context,
+                                        ).textTheme.bodySmall?.copyWith(
+                                              color: Theme.of(context)
+                                                  .colorScheme
+                                                  .onSurfaceVariant,
+                                            ),
+                                      ),
+                                    ],
                                     const SizedBox(height: 12),
                                     _PlaybackIssueContext(
                                       animeTitle: _args.animeTitle,
@@ -242,21 +363,31 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
                                       spacing: 8,
                                       runSpacing: 8,
                                       children: [
-                                        if (_canRetryPlayback())
-                                          TextButton.icon(
-                                            onPressed: () =>
-                                                unawaited(_retryPlayback()),
-                                            icon: const Icon(Icons.refresh),
-                                            label: Text(context.l10n.retry),
+                                        if (keepRetryActionVisible)
+                                          Tooltip(
+                                            message: retryActionTooltip,
+                                            child: TextButton.icon(
+                                              onPressed: canRetryPlayback
+                                                  ? () => unawaited(
+                                                        _retryPlayback(),
+                                                      )
+                                                  : null,
+                                              icon: const Icon(Icons.refresh),
+                                              label: Text(context.l10n.retry),
+                                            ),
                                           ),
-                                        if (_supportsExternalPlayerHandoff())
-                                          TextButton.icon(
-                                            onPressed: canOpenExternalPlayer
-                                                ? () => unawaited(
-                                                      _openExternalPlayer(),
-                                                    )
-                                                : null,
-                                            icon: _isOpeningExternalPlayer
+                                        Tooltip(
+                                          message: nextEpisodeTooltip,
+                                          child: TextButton.icon(
+                                            style:
+                                                canExplainUnavailableNextEpisode
+                                                    ? TextButton.styleFrom(
+                                                        foregroundColor:
+                                                            unavailableActionColor,
+                                                      )
+                                                    : null,
+                                            onPressed: nextEpisodeAction,
+                                            icon: isPreparingNextEpisode
                                                 ? const SizedBox.square(
                                                     dimension: 18,
                                                     child:
@@ -264,12 +395,53 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
                                                       strokeWidth: 2,
                                                     ),
                                                   )
-                                                : const Icon(Icons.open_in_new),
+                                                : const Icon(Icons.skip_next),
                                             label: Text(
-                                              _isOpeningExternalPlayer
-                                                  ? context.l10n
-                                                      .openingExternalPlayer
-                                                  : context.l10n.externalPlayer,
+                                              isPreparingNextEpisode
+                                                  ? context
+                                                      .l10n.loadingNextEpisode
+                                                  : canExplainUnavailableNextEpisode
+                                                      ? context
+                                                          .l10n.latestEpisode
+                                                      : context
+                                                          .l10n.nextEpisode,
+                                            ),
+                                          ),
+                                        ),
+                                        if (_hasPlayableUrl())
+                                          Tooltip(
+                                            message: externalPlayerTooltip,
+                                            child: TextButton.icon(
+                                              style: canUseExternalPlayerAction
+                                                  ? null
+                                                  : TextButton.styleFrom(
+                                                      foregroundColor:
+                                                          unavailableActionColor,
+                                                    ),
+                                              onPressed:
+                                                  canUseExternalPlayerAction
+                                                      ? () => unawaited(
+                                                            _openExternalPlayer(),
+                                                          )
+                                                      : null,
+                                              icon: _isOpeningExternalPlayer
+                                                  ? const SizedBox.square(
+                                                      dimension: 18,
+                                                      child:
+                                                          CircularProgressIndicator(
+                                                        strokeWidth: 2,
+                                                      ),
+                                                    )
+                                                  : const Icon(
+                                                      Icons.open_in_new,
+                                                    ),
+                                              label: Text(
+                                                _isOpeningExternalPlayer
+                                                    ? context.l10n
+                                                        .openingExternalPlayer
+                                                    : context
+                                                        .l10n.externalPlayer,
+                                              ),
                                             ),
                                           ),
                                         TextButton.icon(
@@ -299,7 +471,9 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
                                       const SizedBox(height: 8),
                                       Text(
                                         context.l10n
-                                            .externalPlayerHeadersUnsupported,
+                                            .externalPlayerHeadersUnsupported(
+                                          _activeSourceLabel(context),
+                                        ),
                                         textAlign: TextAlign.center,
                                         style: Theme.of(
                                           context,
@@ -318,16 +492,17 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
                         ),
                       ),
                     ),
-                  danmakuItems.when(
-                    data: (items) => DanmakuOverlay(
-                      items: items,
-                      position: _state.position,
-                      settings: danmakuSettings,
+                  if (showDanmakuChrome)
+                    danmakuItems.when(
+                      data: (items) => DanmakuOverlay(
+                        items: items,
+                        position: _state.position,
+                        settings: danmakuSettings,
+                      ),
+                      loading: () => const SizedBox.shrink(),
+                      error: (_, __) => const SizedBox.shrink(),
                     ),
-                    loading: () => const SizedBox.shrink(),
-                    error: (_, __) => const SizedBox.shrink(),
-                  ),
-                  if (danmakuSettings.enabled)
+                  if (showDanmakuChrome && danmakuSettings.enabled)
                     Positioned(
                       top: 12,
                       left: 12,
@@ -354,8 +529,10 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
                 onSpeed: _showSpeedSheet,
                 onNextEpisode: _isSwitchingEpisode || isRetryingPlayback
                     ? null
-                    : () => unawaited(_playNextEpisode()),
-                onOpenExternalPlayer: canOpenExternalPlayer
+                    : nextEpisodeAction,
+                isNextEpisodeUnavailable: canExplainUnavailableNextEpisode,
+                nextEpisodeTooltip: nextEpisodeTooltip,
+                onOpenExternalPlayer: canUseExternalPlayerAction
                     ? () => unawaited(_openExternalPlayer())
                     : null,
                 externalPlayerTooltip: externalPlayerTooltip,
@@ -363,9 +540,11 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
                 onDownload: canCreateDownload
                     ? () => unawaited(_createDownload())
                     : null,
-                onToggleFullscreen: _isOpeningExternalPlayer
-                    ? null
-                    : () => unawaited(_toggleFullscreen()),
+                onToggleFullscreen:
+                    isRouteBusy ? null : () => unawaited(_toggleFullscreen()),
+                onBlockedFullscreenExit: isRouteBusy && _isFullscreen
+                    ? () => _showSnackBar(playerExitBusyMessage)
+                    : null,
                 onToggleDanmaku: () {
                   ref.read(danmakuSettingsProvider.notifier).state =
                       danmakuSettings.copyWith(
@@ -373,6 +552,7 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
                   );
                 },
                 isFullscreen: _isFullscreen,
+                isResolvingNextEpisode: _isResolvingNextEpisode,
                 isSwitchingEpisode: _isSwitchingEpisode,
                 isOpeningExternalPlayer: _isOpeningExternalPlayer,
                 isRetryingPlayback: isRetryingPlayback,
@@ -384,8 +564,9 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
     );
   }
 
-  bool _canOpenExternalPlayer() {
+  bool _canUseExternalPlayerAction() {
     if (!_supportsExternalPlayerHandoff() ||
+        _isResolvingNextEpisode ||
         _isSwitchingEpisode ||
         _isOpeningExternalPlayer ||
         _isRetryingPlayback) {
@@ -406,7 +587,7 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
     if (_isOpeningExternalPlayer) {
       return context.l10n.openingExternalPlayer;
     }
-    if (_isSwitchingEpisode) {
+    if (_isResolvingNextEpisode || _isSwitchingEpisode) {
       return context.l10n.loadingNextEpisode;
     }
     if (_isRetryingPlayback) {
@@ -416,7 +597,9 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
       return context.l10n.noPlayableSourceFound;
     }
     if (_args.playHeaders.isNotEmpty) {
-      return context.l10n.externalPlayerHeadersUnsupported;
+      return context.l10n.externalPlayerHeadersUnsupported(
+        _activeSourceLabel(context),
+      );
     }
     return context.l10n.externalPlayer;
   }
@@ -425,7 +608,7 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
     if (_isOpeningExternalPlayer) {
       return context.l10n.openingExternalPlayer;
     }
-    if (_isSwitchingEpisode) {
+    if (_isResolvingNextEpisode || _isSwitchingEpisode) {
       return context.l10n.loadingNextEpisode;
     }
     if (_isRetryingPlayback) {
@@ -435,6 +618,19 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
       return context.l10n.noPlayableSourceFound;
     }
     return context.l10n.download;
+  }
+
+  String _routeBusyExitMessage(BuildContext context) {
+    if (_isResolvingNextEpisode || _isSwitchingEpisode) {
+      return context.l10n.playerExitBusyNextEpisode;
+    }
+    if (_isOpeningExternalPlayer) {
+      return context.l10n.playerExitBusyExternalPlayer;
+    }
+    if (_isRetryingPlayback) {
+      return context.l10n.playerExitBusyRetryingPlayback;
+    }
+    return context.l10n.playerExitBusy;
   }
 
   Future<void> _toggleFullscreen() async {
@@ -600,14 +796,31 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
   bool _canRetryPlayback() {
     return _state.errorMessage != null &&
         _state.errorMessage != context.l10n.playerNoPlayUrl &&
+        !_isResolvingNextEpisode &&
         !_isSwitchingEpisode &&
         !_isOpeningExternalPlayer &&
         !_isRetryingPlayback &&
         _hasPlayableUrl();
   }
 
-  Future<void> _saveHistory({bool force = false}) async {
-    if (!_state.isInitialized) return;
+  Future<void> _saveHistory({bool force = false}) {
+    return _saveHistoryWithOverrides(force: force);
+  }
+
+  Future<void> _saveHistoryWithOverrides({
+    bool force = false,
+    PlayerRouteArgs? routeArgs,
+    Duration? positionOverride,
+    Duration? durationOverride,
+  }) async {
+    final historyArgs = routeArgs ?? _args;
+    final historyPosition = positionOverride ?? _state.position;
+    final historyDuration = durationOverride ?? _state.duration;
+    if (!_state.isInitialized &&
+        historyPosition <= Duration.zero &&
+        historyDuration <= Duration.zero) {
+      return;
+    }
     final now = DateTime.now();
     final lastSavedAt = _lastHistorySavedAt;
     if (!force &&
@@ -618,19 +831,19 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
     _lastHistorySavedAt = now;
     await _historyRepository.upsert(
       WatchHistory(
-        id: '${_args.sourceId}:${_args.animeId}:${_args.episodeId}',
-        animeId: _args.animeId,
-        episodeId: _args.episodeId,
-        animeTitle: _args.animeTitle,
-        episodeTitle: _args.episodeTitle,
-        coverUrl: _args.coverUrl,
-        position: _state.position,
-        duration: _state.duration,
-        sourceId: _args.sourceId,
-        playSourceId: _args.playSourceId,
-        playSourceTitle: _args.playSourceTitle,
-        playUrl: _args.playUrl,
-        playHeaders: _args.playHeaders,
+        id: '${historyArgs.sourceId}:${historyArgs.animeId}:${historyArgs.episodeId}',
+        animeId: historyArgs.animeId,
+        episodeId: historyArgs.episodeId,
+        animeTitle: historyArgs.animeTitle,
+        episodeTitle: historyArgs.episodeTitle,
+        coverUrl: historyArgs.coverUrl,
+        position: historyPosition,
+        duration: historyDuration,
+        sourceId: historyArgs.sourceId,
+        playSourceId: historyArgs.playSourceId,
+        playSourceTitle: historyArgs.playSourceTitle,
+        playUrl: historyArgs.playUrl,
+        playHeaders: historyArgs.playHeaders,
         updatedAt: now,
       ),
     );
@@ -665,24 +878,27 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
     }
   }
 
-  Future<void> _loadPlayer({
+  Future<bool> _loadPlayer({
     PlayerRouteArgs? args,
     bool autoplay = false,
     double? playbackSpeed,
+    Duration? historyPositionOverride,
+    Duration? historyDurationOverride,
   }) async {
     final routeArgs = args ?? _args;
     _recordPlaybackDiagnostics(args: routeArgs);
     try {
       if (!_isPlayableUrl(routeArgs.playUrl)) {
         await Future<void>.delayed(Duration.zero);
-        if (!mounted) return;
+        if (!mounted) return false;
         setState(
           () => _state = _state.copyWith(
             isBuffering: false,
             errorMessage: context.l10n.playerNoPlayUrl,
           ),
         );
-        return;
+        unawaited(_saveHistory(force: true));
+        return false;
       }
       await _controller.load(routeArgs.playUrl, headers: routeArgs.playHeaders);
       final initialPosition = routeArgs.initialPosition;
@@ -697,15 +913,29 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
       if (autoplay) {
         await _controller.play();
       }
-      unawaited(_saveHistory(force: true));
+      final resumePosition = historyPositionOverride ??
+          (initialPosition != null && initialPosition > Duration.zero
+              ? initialPosition
+              : null);
+      unawaited(
+        _saveHistoryWithOverrides(
+          force: true,
+          routeArgs: routeArgs,
+          positionOverride: resumePosition,
+          durationOverride: historyDurationOverride,
+        ),
+      );
+      return true;
     } catch (error) {
-      if (!mounted) return;
+      if (!mounted) return false;
       setState(
         () => _state = _state.copyWith(
           isBuffering: false,
           errorMessage: context.l10n.playbackFailedSuggestion,
         ),
       );
+      unawaited(_saveHistory(force: true));
+      return false;
     }
   }
 
@@ -721,13 +951,26 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
   }
 
   Future<void> _playNextEpisode() async {
-    if (_isSwitchingEpisode || _isOpeningExternalPlayer) return;
+    if (_isResolvingNextEpisode ||
+        _isSwitchingEpisode ||
+        _isOpeningExternalPlayer ||
+        _isRetryingPlayback) {
+      return;
+    }
 
     final currentArgs = _args;
+    final previousState = _state;
     final shouldResumePlayback = _state.isPlaying;
+    const shouldAutoplayNextEpisode = true;
     final playbackSpeed = _state.speed;
+    final restorePosition =
+        _state.position > Duration.zero ? _state.position : null;
+    final restoreArgs = currentArgs.copyWith(initialPosition: restorePosition);
+    var shouldRestoreCurrentPlayback = false;
+    var shouldRestorePreviousFailureState = false;
+    var startedEpisodeSwitch = false;
 
-    setState(() => _isSwitchingEpisode = true);
+    setState(() => _isResolvingNextEpisode = true);
     try {
       final detailResult = await ref.read(
         animeDetailBySourceProvider(
@@ -742,9 +985,11 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
         currentEpisodeTitle: currentArgs.episodeTitle,
       );
       if (nextEpisode == null) {
+        shouldRestorePreviousFailureState = previousState.errorMessage != null;
         _showSnackBar(context.l10n.nextEpisodeUnavailable);
         return;
       }
+      setState(() => _switchingEpisodeTitle = nextEpisode.title);
 
       final playSourceResult = await ref.read(
         playSourcesBySourceProvider(
@@ -754,7 +999,8 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
       if (!mounted) return;
       final sources = playSourceResult.value;
       if (sources.isEmpty) {
-        _showSnackBar(context.l10n.noPlayableSourceFound);
+        shouldRestorePreviousFailureState = previousState.errorMessage != null;
+        _showSnackBar(context.l10n.nextEpisodeStayedOnCurrent);
         return;
       }
 
@@ -763,6 +1009,19 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
         preferredSourceId: currentArgs.playSourceId,
         preferredSourceTitle: currentArgs.playSourceTitle,
       );
+      setState(() {
+        _isResolvingNextEpisode = false;
+        _isSwitchingEpisode = true;
+        _switchingEpisodeTitle = nextEpisode.title;
+        if (_state.errorMessage != null) {
+          _state = _state.copyWith(clearErrorMessage: true);
+        }
+      });
+      startedEpisodeSwitch = true;
+      if (shouldResumePlayback) {
+        await _controller.pause();
+        shouldRestoreCurrentPlayback = true;
+      }
       await _saveHistory(force: true);
       if (!mounted) return;
 
@@ -788,28 +1047,71 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
         _state = PlayerState.initial();
         _lastHistorySavedAt = null;
       });
+      shouldRestoreCurrentPlayback = false;
 
-      await _loadPlayer(
+      final switched = await _loadPlayer(
         args: nextArgs,
-        autoplay: shouldResumePlayback,
+        autoplay: shouldAutoplayNextEpisode,
         playbackSpeed: playbackSpeed,
       );
       if (!mounted) return;
+      if (!switched) {
+        setState(() {
+          _currentArgs = currentArgs;
+          _state = PlayerState.initial();
+          _lastHistorySavedAt = null;
+          _switchingEpisodeTitle = null;
+        });
+        await _loadPlayer(
+          args: restoreArgs,
+          autoplay: shouldResumePlayback,
+          playbackSpeed: playbackSpeed,
+          historyPositionOverride: restorePosition,
+          historyDurationOverride: previousState.duration > Duration.zero
+              ? previousState.duration
+              : null,
+        );
+        if (!mounted) return;
+        _showSnackBar(context.l10n.nextEpisodeStayedOnCurrent);
+        return;
+      }
       if (detailResult.usedFallback || playSourceResult.usedFallback) {
-        _showSnackBar(context.l10n.sourceFallbackNotice);
+        _showSnackBar(_sourceFallbackNotice(context));
       }
     } catch (error) {
       if (!mounted) return;
-      _showSnackBar(context.l10n.sourceTemporarilyUnavailable);
+      shouldRestorePreviousFailureState = previousState.errorMessage != null;
+      _showSnackBar(context.l10n.nextEpisodeStayedOnCurrent);
     } finally {
+      if (mounted && shouldRestoreCurrentPlayback) {
+        try {
+          await _controller.play();
+        } catch (_) {}
+      }
       if (mounted) {
-        setState(() => _isSwitchingEpisode = false);
+        setState(() {
+          _isResolvingNextEpisode = false;
+          if (!startedEpisodeSwitch) {
+            _switchingEpisodeTitle = null;
+          }
+          if (startedEpisodeSwitch) {
+            _isSwitchingEpisode = false;
+            _switchingEpisodeTitle = null;
+          }
+          if (shouldRestorePreviousFailureState) {
+            _state = previousState;
+          }
+        });
       }
     }
   }
 
   Future<void> _openExternalPlayer() async {
-    if (_isOpeningExternalPlayer) return;
+    if (_isOpeningExternalPlayer ||
+        _isSwitchingEpisode ||
+        _isRetryingPlayback) {
+      return;
+    }
     final rawUrl = _args.playUrl.trim();
     final uri = Uri.tryParse(rawUrl);
     if (rawUrl.isEmpty || uri == null || !uri.hasScheme) {
@@ -817,33 +1119,73 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
       return;
     }
     if (_args.playHeaders.isNotEmpty) {
-      _showSnackBar(context.l10n.externalPlayerHeadersUnsupported);
+      _showSnackBar(
+        context.l10n.externalPlayerHeadersUnsupported(
+          _activeSourceLabel(context),
+        ),
+      );
       return;
     }
 
-    setState(() => _isOpeningExternalPlayer = true);
+    final previousState = _state;
+    final shouldPauseCurrentPlayback = _state.isPlaying;
+    var shouldResumeCurrentPlayback = false;
+    var shouldRestorePreviousFailureState = false;
+    var didOpenExternalPlayer = false;
+
+    setState(() {
+      _isOpeningExternalPlayer = true;
+      if (_state.errorMessage != null) {
+        _state = _state.copyWith(clearErrorMessage: true);
+      }
+    });
     try {
+      if (shouldPauseCurrentPlayback) {
+        await _controller.pause();
+        shouldResumeCurrentPlayback = true;
+      }
       final launched = await ref.read(externalPlayerLauncherProvider)(uri);
       if (!mounted) return;
       if (!launched) {
-        _showSnackBar(context.l10n.externalPlayerUnavailable);
+        shouldRestorePreviousFailureState = previousState.errorMessage != null;
+        _showSnackBar(
+          context.l10n.externalPlayerUnavailable(_activeSourceLabel(context)),
+        );
         return;
       }
 
+      didOpenExternalPlayer = true;
+      shouldResumeCurrentPlayback = false;
+      shouldRestorePreviousFailureState = previousState.errorMessage != null;
       await _saveHistory(force: true);
-      if (_state.isPlaying) {
-        await _controller.pause();
-      }
       if (_isFullscreen) {
         await _exitFullscreen();
       }
     } catch (_) {
       if (!mounted) return;
-      _showSnackBar(context.l10n.externalPlayerUnavailable);
+      shouldRestorePreviousFailureState = previousState.errorMessage != null;
+      _showSnackBar(
+        context.l10n.externalPlayerUnavailable(_activeSourceLabel(context)),
+      );
     } finally {
-      if (mounted) {
-        setState(() => _isOpeningExternalPlayer = false);
+      if (mounted && shouldResumeCurrentPlayback) {
+        try {
+          await _controller.play();
+        } catch (_) {}
       }
+      if (mounted) {
+        setState(() {
+          _isOpeningExternalPlayer = false;
+          if (shouldRestorePreviousFailureState) {
+            _state = previousState;
+          }
+        });
+      }
+    }
+    if (mounted && didOpenExternalPlayer) {
+      _showSnackBar(
+        context.l10n.externalPlayerOpened(_activeSourceLabel(context)),
+      );
     }
   }
 
@@ -917,21 +1259,28 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
         requestedSourceId != _args.sourceId;
   }
 
+  String _activeSourceLabel(BuildContext context) {
+    return context.l10n.sourceDisplayLabel(_args.sourceId);
+  }
+
   String _sourceFallbackNotice(BuildContext context) {
     final requestedSourceId = _args.requestedSourceId!;
     return context.l10n.sourceFallbackPlayerNotice(
       context.l10n.sourceDisplayLabel(requestedSourceId),
-      context.l10n.sourceDisplayLabel(_args.sourceId),
+      _activeSourceLabel(context),
     );
   }
 
   Future<void> _retryPlayback() async {
     if (!_canRetryPlayback() || _isRetryingPlayback) return;
 
+    final previousState = _state;
     final playbackSpeed = _state.speed;
     final resumePosition =
         _state.position > Duration.zero ? _state.position : null;
     final retryArgs = _args.copyWith(initialPosition: resumePosition);
+    var shouldRestoreRetryContext = false;
+    String? retryFailureMessage;
     setState(() {
       _isRetryingPlayback = true;
       _state = PlayerState.initial().copyWith(
@@ -939,14 +1288,33 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
       );
     });
     try {
-      await _loadPlayer(
+      final retried = await _loadPlayer(
         args: retryArgs,
         autoplay: true,
         playbackSpeed: playbackSpeed,
+        historyPositionOverride: resumePosition,
+        historyDurationOverride: previousState.duration > Duration.zero
+            ? previousState.duration
+            : null,
       );
+      if (!mounted) return;
+      shouldRestoreRetryContext = !retried;
+      retryFailureMessage = _state.errorMessage;
     } finally {
       if (mounted) {
-        setState(() => _isRetryingPlayback = false);
+        setState(() {
+          _isRetryingPlayback = false;
+          if (shouldRestoreRetryContext) {
+            _state = previousState.copyWith(
+              isPlaying: false,
+              isBuffering: false,
+              errorMessage: retryFailureMessage ?? previousState.errorMessage,
+            );
+          }
+        });
+        if (shouldRestoreRetryContext) {
+          unawaited(_saveHistory(force: true));
+        }
       }
     }
   }
@@ -1021,6 +1389,102 @@ class _SourceFallbackBanner extends StatelessWidget {
                       ),
                 ),
               ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _PlayerAppBarTitle extends StatelessWidget {
+  const _PlayerAppBarTitle({
+    required this.title,
+    this.status,
+  });
+
+  final String title;
+  final String? status;
+
+  @override
+  Widget build(BuildContext context) {
+    final titleText = title.trim().isEmpty ? '-' : title.trim();
+    final statusText = status?.trim();
+    final textTheme = Theme.of(context).textTheme;
+
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          titleText,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+        ),
+        if (statusText != null && statusText.isNotEmpty)
+          Text(
+            statusText,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: textTheme.labelSmall?.copyWith(
+              color: Colors.white70,
+            ),
+          ),
+      ],
+    );
+  }
+}
+
+class _PlaybackTransitionOverlay extends StatelessWidget {
+  const _PlaybackTransitionOverlay({
+    required this.message,
+    this.detail,
+  });
+
+  final String message;
+  final String? detail;
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final detailText = detail?.trim();
+
+    return ConstrainedBox(
+      constraints: const BoxConstraints(maxWidth: 280),
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          color: Colors.black.withValues(alpha: 0.72),
+          borderRadius: BorderRadius.circular(16),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const SizedBox.square(
+                dimension: 28,
+                child: CircularProgressIndicator(strokeWidth: 3),
+              ),
+              const SizedBox(height: 12),
+              Text(
+                message,
+                textAlign: TextAlign.center,
+                style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                      color: colorScheme.onInverseSurface,
+                    ),
+              ),
+              if (detailText != null && detailText.isNotEmpty) ...[
+                const SizedBox(height: 6),
+                Text(
+                  detailText,
+                  textAlign: TextAlign.center,
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: colorScheme.onInverseSurface.withValues(
+                          alpha: 0.84,
+                        ),
+                      ),
+                ),
+              ],
             ],
           ),
         ),
