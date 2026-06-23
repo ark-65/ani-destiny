@@ -109,20 +109,7 @@ class RuntimeDiagnosticsPage extends ConsumerWidget {
                   leading: const Icon(Icons.play_circle_outline),
                   title: Text(context.l10n.playbackDiagnosticsSummary),
                   subtitle: Text(
-                    playbackDiagnostics == null
-                        ? context.l10n.playbackDiagnosticsEmptyHint
-                        : context.l10n.playbackDiagnosticsSnapshotPreview(
-                            _diagnosticContextValue(
-                              playbackDiagnostics.animeTitle,
-                            ),
-                            _diagnosticContextValue(
-                              playbackDiagnostics.episodeTitle,
-                            ),
-                            _formatCapturedAt(
-                              context,
-                              playbackDiagnostics.capturedAt,
-                            ),
-                          ),
+                    _playbackSnapshotSubtitle(context, playbackDiagnostics),
                   ),
                 ),
                 ListTile(
@@ -298,6 +285,21 @@ String _diagnosticContextValue(String? value) {
     return '-';
   }
   return trimmed;
+}
+
+String _playbackSnapshotSubtitle(
+  BuildContext context,
+  PlaybackDiagnostics? diagnostics,
+) {
+  if (diagnostics == null) {
+    return context.l10n.playbackDiagnosticsEmptyHint;
+  }
+  final preview = context.l10n.playbackDiagnosticsSnapshotPreview(
+    _diagnosticContextValue(diagnostics.animeTitle),
+    _diagnosticContextValue(diagnostics.episodeTitle),
+    _formatCapturedAt(context, diagnostics.capturedAt),
+  );
+  return '${context.l10n.playbackDiagnosticsSummaryHint}\n\n$preview';
 }
 
 String _formatCapturedAt(BuildContext context, DateTime capturedAt) {

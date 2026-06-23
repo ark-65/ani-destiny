@@ -285,7 +285,13 @@ void main() {
     expect(find.text('Anime 1'), findsOneWidget);
     expect(find.text('Episode 2'), findsOneWidget);
     expect(find.text('Selected playback source'), findsOneWidget);
-    expect(find.text(preview), findsOneWidget);
+    expect(
+      find.text(
+        'The latest playback snapshot captured in this session appears here so you can confirm the anime, line, URL type, and request-header names before copying diagnostics.\n\n$preview',
+      ),
+      findsOneWidget,
+    );
+    expect(find.textContaining(preview), findsOneWidget);
     expect(find.text('Captured at'), findsOneWidget);
     expect(find.text('Sakura Anime'), findsWidgets);
     expect(find.text('Mock Anime Source'), findsWidgets);
