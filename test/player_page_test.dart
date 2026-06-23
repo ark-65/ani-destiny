@@ -31,6 +31,7 @@ import 'package:ani_destiny/features/player/presentation/pages/player_page.dart'
 import 'package:ani_destiny/features/player/presentation/providers/player_providers.dart';
 import 'package:ani_destiny/features/source/domain/entities/source_fallback_result.dart';
 import 'package:ani_destiny/features/source/presentation/providers/source_providers.dart';
+import 'package:ani_destiny/core/diagnostics/playback_diagnostic_time_formatter.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -41,16 +42,25 @@ String _formatCapturedAtForDisplay(
   WidgetTester tester,
   DateTime capturedAt,
 ) {
-  final localizations = MaterialLocalizations.of(
-    tester.element(find.byType(PlayerPage)),
+  return formatPlaybackDiagnosticCapturedAt(
+    capturedAt,
+    localeName: Localizations.localeOf(
+      tester.element(find.byType(PlayerPage)),
+    ).toLanguageTag(),
   );
-  final localCapturedAt = capturedAt.toLocal();
-  final date = localizations.formatMediumDate(localCapturedAt);
-  final time = localizations.formatTimeOfDay(
-    TimeOfDay.fromDateTime(localCapturedAt),
-    alwaysUse24HourFormat: true,
+}
+
+String _formatCapturedAtForSupport(
+  WidgetTester tester,
+  DateTime capturedAt,
+) {
+  return formatPlaybackDiagnosticCapturedAt(
+    capturedAt,
+    localeName: Localizations.localeOf(
+      tester.element(find.byType(PlayerPage)),
+    ).toLanguageTag(),
+    includeExactIso: true,
   );
-  return '$date $time';
 }
 
 void main() {
@@ -465,7 +475,10 @@ void main() {
 
     final initialDiagnostics = container.read(lastPlaybackDiagnosticsProvider);
     expect(initialDiagnostics, isNotNull);
-    final capturedAt = initialDiagnostics!.capturedAt.toIso8601String();
+    final capturedAt = _formatCapturedAtForSupport(
+      tester,
+      initialDiagnostics!.capturedAt,
+    );
 
     await tester.pump(const Duration(seconds: 2));
     final copyDiagnosticsButton = find.text('Copy playback diagnostics');

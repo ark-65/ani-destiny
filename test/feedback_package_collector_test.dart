@@ -1,6 +1,7 @@
 import 'package:ani_destiny/app/l10n/app_localizations.dart';
 import 'package:ani_destiny/core/diagnostics/feedback_package_collector.dart';
 import 'package:ani_destiny/core/diagnostics/feedback_package_formatter.dart';
+import 'package:ani_destiny/core/diagnostics/playback_diagnostic_time_formatter.dart';
 import 'package:ani_destiny/features/download/domain/entities/download_failure_reason.dart';
 import 'package:ani_destiny/features/download/domain/entities/download_kind.dart';
 import 'package:ani_destiny/features/download/domain/entities/download_task.dart';
@@ -89,7 +90,12 @@ void main() {
     final lower = markdown.toLowerCase();
 
     expect(markdown, contains('- Total tasks: 1'));
-    expect(markdown, contains('- Captured at: 2026-05-30T02:03:04.000Z'));
+    expect(
+      markdown,
+      contains(
+        '- Captured at: ${formatPlaybackDiagnosticCapturedAt(now, localeName: l10n.locale.toLanguageTag(), includeExactIso: true)}',
+      ),
+    );
     expect(markdown, contains('- Selected app source: sakura'));
     expect(markdown, contains('- Selected playback source: mock'));
     expect(
@@ -170,7 +176,12 @@ void main() {
     expect(markdown, contains('Sakura Anime · 正常'));
     expect(markdown, contains('失败次数: 0'));
     expect(markdown, contains('详情: Sakura Anime -> Mock 动漫数据源'));
-    expect(markdown, contains('- 采集时间: 2026-06-08T01:02:03.000Z'));
+    expect(
+      markdown,
+      contains(
+        '- 采集时间: ${formatPlaybackDiagnosticCapturedAt(now, localeName: l10n.locale.toLanguageTag(), includeExactIso: true)}',
+      ),
+    );
     expect(markdown, contains('- 线路: Line 1'));
     expect(markdown, contains('- 状态: 就绪'));
     expect(markdown, contains('- 启用: 是'));
@@ -326,7 +337,9 @@ void main() {
     expect(markdown, contains('- Selected app source: Sakura Anime'));
     expect(
       markdown,
-      contains('## Playback\n- Captured at: 2026-06-08T01:02:03.000Z'),
+      contains(
+        '## Playback\n- Captured at: ${formatPlaybackDiagnosticCapturedAt(now, localeName: l10n.locale.toLanguageTag(), includeExactIso: true)}',
+      ),
     );
     expect(
       markdown,

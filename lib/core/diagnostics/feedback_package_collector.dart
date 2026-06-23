@@ -8,6 +8,7 @@ import '../../features/source/domain/entities/source_fallback_event.dart';
 import '../../features/source/domain/entities/source_health.dart';
 import 'diagnostic_sanitizer.dart';
 import 'feedback_package.dart';
+import 'playback_diagnostic_time_formatter.dart';
 
 class FeedbackPackageCollector {
   const FeedbackPackageCollector({
@@ -138,7 +139,11 @@ class FeedbackPackageCollector {
 
     final lines = <String>[
       '- ${l10n.playbackDiagnosticCapturedAt}: '
-          '${diagnostics.capturedAt.toIso8601String()}',
+          '${formatPlaybackDiagnosticCapturedAt(
+        diagnostics.capturedAt,
+        localeName: l10n.locale.toLanguageTag(),
+        includeExactIso: true,
+      )}',
       '- ${l10n.playbackDiagnosticAnime}: ${diagnostics.animeTitle}',
       '- ${l10n.playbackDiagnosticEpisode}: ${diagnostics.episodeTitle}',
       if (selectedAppSourceId != null)

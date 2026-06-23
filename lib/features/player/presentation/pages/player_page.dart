@@ -7,6 +7,7 @@ import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../app/l10n/app_localizations.dart';
+import '../../../../core/diagnostics/playback_diagnostic_time_formatter.dart';
 import '../../../anime/presentation/providers/anime_providers.dart';
 import '../../../danmaku/domain/entities/danmaku_item.dart';
 import '../../../danmaku/presentation/providers/danmaku_providers.dart';
@@ -917,14 +918,10 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
     BuildContext context,
     DateTime capturedAt,
   ) {
-    final localizations = MaterialLocalizations.of(context);
-    final localCapturedAt = capturedAt.toLocal();
-    final date = localizations.formatMediumDate(localCapturedAt);
-    final time = localizations.formatTimeOfDay(
-      TimeOfDay.fromDateTime(localCapturedAt),
-      alwaysUse24HourFormat: true,
+    return formatPlaybackDiagnosticCapturedAt(
+      capturedAt,
+      localeName: Localizations.localeOf(context).toLanguageTag(),
     );
-    return '$date $time';
   }
 
   String _playbackErrorMessage() {
@@ -1396,7 +1393,11 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
     }
     summary.addAll([
       '${context.l10n.playbackDiagnosticCapturedAt}: '
-          '${diagnostics.capturedAt.toIso8601String()}',
+          '${formatPlaybackDiagnosticCapturedAt(
+        diagnostics.capturedAt,
+        localeName: Localizations.localeOf(context).toLanguageTag(),
+        includeExactIso: true,
+      )}',
       '${context.l10n.playbackDiagnosticSource}: '
           '${context.l10n.sourceDisplayLabel(diagnostics.sourceId)}',
       '${context.l10n.playbackDiagnosticLine}: '

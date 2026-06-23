@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../app/l10n/app_localizations.dart';
 import '../../../../core/diagnostics/diagnostic_sanitizer.dart';
+import '../../../../core/diagnostics/playback_diagnostic_time_formatter.dart';
 import '../../../../core/utils/url_sanitizer.dart';
 import '../../../../shared/widgets/adaptive_page.dart';
 import '../../../danmaku/presentation/providers/danmaku_providers.dart';
@@ -285,14 +286,10 @@ String _diagnosticContextValue(String? value) {
 }
 
 String _formatCapturedAt(BuildContext context, DateTime capturedAt) {
-  final localizations = MaterialLocalizations.of(context);
-  final localCapturedAt = capturedAt.toLocal();
-  final date = localizations.formatMediumDate(localCapturedAt);
-  final time = localizations.formatTimeOfDay(
-    TimeOfDay.fromDateTime(localCapturedAt),
-    alwaysUse24HourFormat: true,
+  return formatPlaybackDiagnosticCapturedAt(
+    capturedAt,
+    localeName: Localizations.localeOf(context).toLanguageTag(),
   );
-  return '$date $time';
 }
 
 class _SourceHealthTile extends StatelessWidget {
