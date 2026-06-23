@@ -349,12 +349,6 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
                                     _PlaybackIssueContext(
                                       animeTitle: _args.animeTitle,
                                       episodeTitle: _args.episodeTitle,
-                                      requestedSourceLabel:
-                                          _hasSourceFallbackContext()
-                                              ? context.l10n.sourceDisplayLabel(
-                                                  _args.requestedSourceId!,
-                                                )
-                                              : null,
                                       sourceLabel:
                                           context.l10n.sourceDisplayLabel(
                                         _args.sourceId,
@@ -1680,14 +1674,12 @@ class _PlaybackIssueContext extends StatelessWidget {
   const _PlaybackIssueContext({
     required this.animeTitle,
     required this.episodeTitle,
-    required this.requestedSourceLabel,
     required this.sourceLabel,
     required this.playSourceTitle,
   });
 
   final String animeTitle;
   final String episodeTitle;
-  final String? requestedSourceLabel;
   final String sourceLabel;
   final String? playSourceTitle;
 
@@ -1705,12 +1697,6 @@ class _PlaybackIssueContext extends StatelessWidget {
     final episodeLabel =
         episodeTitle.trim().isEmpty ? '-' : episodeTitle.trim();
     final animeLabel = animeTitle.trim().isEmpty ? '-' : animeTitle.trim();
-    final requestedSource = requestedSourceLabel?.trim();
-    final sourceContextLabel = requestedSource == null ||
-            requestedSource.isEmpty
-        ? sourceLabel
-        : '$sourceLabel (${context.l10n.playbackDiagnosticRequestedSource}: '
-            '$requestedSource)';
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -1727,7 +1713,7 @@ class _PlaybackIssueContext extends StatelessWidget {
         ),
         const SizedBox(height: 8),
         Text(
-          '${context.l10n.playbackDiagnosticSource}: $sourceContextLabel',
+          '${context.l10n.playbackDiagnosticSource}: $sourceLabel',
           textAlign: TextAlign.center,
           style: sourceTextStyle,
         ),

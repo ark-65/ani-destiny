@@ -380,10 +380,12 @@ void main() {
     expect(find.text('Anime: Anime 1'), findsOneWidget);
     expect(find.text('Episode: Episode 2'), findsOneWidget);
     expect(
-      find.text(
-        'Active playback source: Sakura Anime (Selected playback source: Mock Anime Source)',
-      ),
+      find.text('Active playback source: Sakura Anime'),
       findsOneWidget,
+    );
+    expect(
+      find.textContaining('Selected playback source: Mock Anime Source'),
+      findsNothing,
     );
     expect(find.text('Line: Broken Line'), findsOneWidget);
     expect(find.text('Playback diagnostics'), findsOneWidget);
