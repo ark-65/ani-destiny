@@ -23,6 +23,7 @@ List<String> _playbackContextLines(
 ) {
   final lines = <String>[
     '${l10n.playbackDiagnosticSource}: ${_playbackSourceValue(l10n, diagnostics)}',
+    '${l10n.playbackDiagnosticState}: ${_playbackDiagnosticStateLabel(l10n, diagnostics.state)}',
   ];
 
   if (diagnostics.usedSourceFallback && diagnostics.requestedSourceId != null) {
@@ -42,6 +43,19 @@ List<String> _playbackContextLines(
   }
 
   return lines;
+}
+
+String _playbackDiagnosticStateLabel(
+  AppLocalizations l10n,
+  PlaybackDiagnosticState state,
+) {
+  return switch (state) {
+    PlaybackDiagnosticState.loading => l10n.playbackDiagnosticStateLoading,
+    PlaybackDiagnosticState.ready => l10n.playbackDiagnosticStateReady,
+    PlaybackDiagnosticState.playing => l10n.playbackDiagnosticStatePlaying,
+    PlaybackDiagnosticState.buffering => l10n.playbackDiagnosticStateBuffering,
+    PlaybackDiagnosticState.error => l10n.playbackDiagnosticStateError,
+  };
 }
 
 String _playbackSourceValue(

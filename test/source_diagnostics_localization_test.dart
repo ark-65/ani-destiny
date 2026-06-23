@@ -362,6 +362,7 @@ void main() {
       diagnostics: container.read(lastPlaybackDiagnosticsProvider)!,
     );
 
+    expect(preview, contains('State: Buffering'));
     expect(find.text('Anime 1'), findsOneWidget);
     expect(find.text('Episode 2'), findsOneWidget);
     expect(find.text('Selected playback source'), findsOneWidget);
