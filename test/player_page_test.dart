@@ -263,6 +263,10 @@ void main() {
       ),
       findsOneWidget,
     );
+    expect(
+      find.text('Latest playback: Anime 1 · Episode 2 · $capturedAt'),
+      findsOneWidget,
+    );
     expect(find.text('Anime'), findsOneWidget);
     expect(find.text('Anime 1'), findsAtLeastNWidgets(1));
     expect(find.text('Episode'), findsWidgets);
