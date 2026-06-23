@@ -7,6 +7,7 @@
 ## [Unreleased]
 
 ### 🐛 Fixed
+- Fixed Runtime diagnostics, in-player Playback diagnostics, and copied support summaries still labeling a sanitized list of header keys as generic `Request headers`, which made that support field sound like it might expose full request contents; the support flow now explicitly says `Request header names` so users can immediately tell they are only seeing safe-to-share field names.
 - Fixed the fallback playback failure card explaining the source switch in plain language and then immediately repeating the same `Selected playback source` detail again inside the lower playback context; that recovery state now keeps one clear fallback explanation and a calmer `Active playback source` line so users can read the outcome once instead of parsing duplicate source copy on the same screen.
 - Fixed the in-player Playback diagnostics sheet still using the same generic `Copy diagnostics` action name and success feedback as the Settings page even though it only copies the playback snapshot summary; the player sheet now explicitly says `Copy playback diagnostics` so the support action matches the content it actually exports.
 - Fixed the in-player `Playback diagnostics` sheet still dropping users directly into raw support fields without first saying that the panel is the latest playback snapshot from this session; it now leads with the same confirm-before-copy hint as Runtime diagnostics so both support surfaces explain the snapshot in one consistent, user-facing way.

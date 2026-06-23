@@ -99,6 +99,7 @@ void main() {
       ),
     );
     expect(markdown, contains('- Active playback source: sakura'));
+    expect(markdown, contains('- Request header names: Referer'));
     expect(markdown, contains('- State: Failed'));
     expect(markdown, contains('- Failed: 1'));
     expect(markdown, contains('Reason: Network error'));

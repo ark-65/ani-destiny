@@ -513,7 +513,7 @@ const _localizedValues = {
     'playbackDiagnosticLine': '线路',
     'playbackDiagnosticUrlType': 'URL 类型',
     'playbackDiagnosticUrl': 'URL',
-    'playbackDiagnosticHeaders': '请求头',
+    'playbackDiagnosticHeaders': '请求头名称',
     'playbackDiagnosticState': '状态',
     'playbackDiagnosticStateLoading': '加载中',
     'playbackDiagnosticStateReady': '就绪',
@@ -627,12 +627,12 @@ const _localizedValues = {
     'latestSourceDiagnostics': '最近数据源诊断',
     'playbackDiagnosticsSummary': '播放诊断摘要',
     'playbackDiagnosticsSummaryHint':
-        '这里会显示当前会话最近一次播放快照，方便你在复制诊断信息前先确认番剧、线路、URL 类型和请求头字段。',
+        '这里会显示当前会话最近一次播放快照，方便你在复制诊断信息前先确认番剧、线路、URL 类型和请求头名称。',
     'playbackDiagnosticsEmptyHint': '先在当前会话里播放一次，再回来这里确认最近一次播放快照并复制诊断信息。',
     'sourceFallbackPlayerNotice':
         '当前所选数据源 {requestedSource} 暂时不可用，已改用 {activeSource} 继续播放。',
     'playbackDiagnosticsDebugHint':
-        '这里会显示当前会话最近一次播放快照，方便你在复制诊断信息前先确认番剧、线路、URL 类型和请求头字段。',
+        '这里会显示当前会话最近一次播放快照，方便你在复制诊断信息前先确认番剧、线路、URL 类型和请求头名称。',
     'playbackDiagnosticCapturedAt': '采集时间',
     'sourceTemporarilyUnavailable': '数据源暂时不可用',
     'sourceUnavailableSuggestion': '上游数据源可能已变化或暂时不可用，请稍后重试或切换数据源。',
@@ -793,7 +793,7 @@ const _localizedValues = {
     'playbackDiagnosticLine': 'Line',
     'playbackDiagnosticUrlType': 'URL type',
     'playbackDiagnosticUrl': 'URL',
-    'playbackDiagnosticHeaders': 'Request headers',
+    'playbackDiagnosticHeaders': 'Request header names',
     'playbackDiagnosticState': 'State',
     'playbackDiagnosticStateLoading': 'Loading',
     'playbackDiagnosticStateReady': 'Ready',
@@ -1078,7 +1078,7 @@ const _localizedValues = {
     'playbackDiagnosticLine': 'ライン',
     'playbackDiagnosticUrlType': 'URL 種類',
     'playbackDiagnosticUrl': 'URL',
-    'playbackDiagnosticHeaders': 'リクエストヘッダー',
+    'playbackDiagnosticHeaders': 'リクエストヘッダー名',
     'playbackDiagnosticState': '状態',
     'playbackDiagnosticStateLoading': '読み込み中',
     'playbackDiagnosticStateReady': '準備完了',
@@ -1193,13 +1193,13 @@ const _localizedValues = {
     'latestSourceDiagnostics': '最近のソース診断',
     'playbackDiagnosticsSummary': '再生診断の概要',
     'playbackDiagnosticsSummaryHint':
-        'このセッションで直近に取得した再生スナップショットをここへ表示し、診断情報をコピーする前に作品・ライン・URL 種類・リクエストヘッダー項目を確認できます。',
+        'このセッションで直近に取得した再生スナップショットをここへ表示し、診断情報をコピーする前に作品・ライン・URL 種類・リクエストヘッダー名を確認できます。',
     'playbackDiagnosticsEmptyHint':
         'このセッションで一度再生してから戻ると、診断情報をコピーする前に直近の再生スナップショットをここで確認できます。',
     'sourceFallbackPlayerNotice':
         '選択していたソース {requestedSource} は一時的に利用できないため、現在は {activeSource} に切り替えて再生しています。',
     'playbackDiagnosticsDebugHint':
-        'このセッションで直近に取得した再生スナップショットをここへ表示し、診断情報をコピーする前に作品・ライン・URL 種類・リクエストヘッダー項目を確認できます。',
+        'このセッションで直近に取得した再生スナップショットをここへ表示し、診断情報をコピーする前に作品・ライン・URL 種類・リクエストヘッダー名を確認できます。',
     'playbackDiagnosticCapturedAt': '取得時刻',
     'sourceTemporarilyUnavailable': 'ソースが一時的に利用できません',
     'sourceUnavailableSuggestion':

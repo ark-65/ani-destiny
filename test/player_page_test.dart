@@ -495,7 +495,7 @@ void main() {
       copiedText,
       contains('URL: https://cdn.example.test/.../broken.m3u8'),
     );
-    expect(copiedText, contains('Request headers: Referer'));
+    expect(copiedText, contains('Request header names: Referer'));
     expect(copiedText, contains('State: Failed'));
   });
 

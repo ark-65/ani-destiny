@@ -262,7 +262,7 @@ void main() {
     expect(zh.playbackDiagnosticSourceStatus, '播放源状态');
     expect(zh.sourceFallbackEvents, isNot(contains('fallback')));
     expect(zh.sourceFallbackEventsEmpty, isNot(contains('fallback')));
-    expect(zh.playbackDiagnosticHeaders, '请求头');
+    expect(zh.playbackDiagnosticHeaders, '请求头名称');
     expect(zh.yesNo(true), '是');
     expect(zh.yesNo(false), '否');
     expect(zh.platformDisplayName('android'), 'Android');
@@ -270,7 +270,7 @@ void main() {
 
     const en = AppLocalizations(Locale('en'));
     expect(en.playbackDiagnosticsSummaryHint, isNot(contains('player page')));
-    expect(en.playbackDiagnosticHeaders, 'Request headers');
+    expect(en.playbackDiagnosticHeaders, 'Request header names');
     expect(en.playbackDiagnosticCapturedAt, 'Captured at');
     expect(en.selectedAppSource, 'Selected app source');
     expect(en.copyPlaybackDiagnostics, 'Copy playback diagnostics');
@@ -302,7 +302,7 @@ void main() {
     expect(ja.playbackDiagnosticSourceStatus, '再生ソース状態');
     expect(ja.sourceFallbackEvents, isNot(contains('fallback')));
     expect(ja.sourceFallbackEventsEmpty, isNot(contains('fallback')));
-    expect(ja.playbackDiagnosticHeaders, 'リクエストヘッダー');
+    expect(ja.playbackDiagnosticHeaders, 'リクエストヘッダー名');
     expect(ja.yesNo(true), 'はい');
     expect(ja.yesNo(false), 'いいえ');
     expect(ja.platformDisplayName('windows'), 'Windows');
