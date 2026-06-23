@@ -8,6 +8,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../app/l10n/app_localizations.dart';
 import '../../../../core/diagnostics/playback_diagnostic_snapshot_preview.dart';
+import '../../../../core/diagnostics/playback_diagnostic_summary.dart';
 import '../../../../core/diagnostics/playback_diagnostic_time_formatter.dart';
 import '../../../anime/presentation/providers/anime_providers.dart';
 import '../../../danmaku/domain/entities/danmaku_item.dart';
@@ -1351,12 +1352,10 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
     PlaybackDiagnostics? diagnostics,
   }) async {
     final snapshot = diagnostics ?? _recordPlaybackDiagnostics();
-    final summary = _playbackDiagnosticsSummary(
-      snapshot,
-      selectedAppSourceLabel: _selectedAppSourceLabelForDiagnostics(
-        context,
-        snapshot,
-      ),
+    final summary = buildPlaybackDiagnosticSummary(
+      l10n: context.l10n,
+      localeName: Localizations.localeOf(context).toLanguageTag(),
+      diagnostics: snapshot,
     );
 
     try {
@@ -1367,60 +1366,6 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
       if (!mounted) return;
       _showSnackBar(context.l10n.diagnosticsCopyFailed);
     }
-  }
-
-  String _playbackDiagnosticsSummary(
-    PlaybackDiagnostics diagnostics, {
-    String? selectedAppSourceLabel,
-  }) {
-    final lineTitle = diagnostics.playSourceTitle?.trim();
-    final headers = diagnostics.headerKeys.isEmpty
-        ? '-'
-        : diagnostics.headerKeys.join(', ');
-    final summary = <String>[
-      context.l10n.playbackDiagnosticsSummary,
-      '${context.l10n.playbackDiagnosticAnime}: '
-          '${_diagnosticContextValue(diagnostics.animeTitle)}',
-      '${context.l10n.playbackDiagnosticEpisode}: '
-          '${_diagnosticContextValue(diagnostics.episodeTitle)}',
-    ];
-    if (selectedAppSourceLabel != null) {
-      summary.add(
-        '${context.l10n.playbackDiagnosticSelectedAppSource}: '
-        '$selectedAppSourceLabel',
-      );
-    }
-    if (diagnostics.usedSourceFallback) {
-      summary.add(
-        '${context.l10n.playbackDiagnosticRequestedSource}: '
-        '${context.l10n.sourceDisplayLabel(diagnostics.requestedSourceId!)}',
-      );
-      summary.add(
-        '${context.l10n.playbackDiagnosticSourceStatus}: '
-        '${context.l10n.sourceFallbackPlayerNotice(
-          context.l10n.sourceDisplayLabel(diagnostics.requestedSourceId!),
-          context.l10n.sourceDisplayLabel(diagnostics.sourceId),
-        )}',
-      );
-    }
-    summary.addAll([
-      '${context.l10n.playbackDiagnosticCapturedAt}: '
-          '${formatPlaybackDiagnosticCapturedAt(
-        diagnostics.capturedAt,
-        localeName: Localizations.localeOf(context).toLanguageTag(),
-        includeExactIso: true,
-      )}',
-      '${context.l10n.playbackDiagnosticSource}: '
-          '${context.l10n.sourceDisplayLabel(diagnostics.sourceId)}',
-      '${context.l10n.playbackDiagnosticLine}: '
-          '${lineTitle == null || lineTitle.isEmpty ? '-' : lineTitle}',
-      '${context.l10n.playbackDiagnosticUrlType}: ${diagnostics.urlType}',
-      '${context.l10n.playbackDiagnosticUrl}: ${diagnostics.sanitizedUrl}',
-      '${context.l10n.playbackDiagnosticHeaders}: $headers',
-      '${context.l10n.playbackDiagnosticState}: '
-          '${_diagnosticStateLabel(diagnostics.state)}',
-    ]);
-    return summary.join('\n');
   }
 
   String? _selectedAppSourceLabelForDiagnostics(

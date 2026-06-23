@@ -7,6 +7,7 @@ import 'package:go_router/go_router.dart';
 import '../../../../app/l10n/app_localizations.dart';
 import '../../../../core/diagnostics/diagnostic_sanitizer.dart';
 import '../../../../core/diagnostics/playback_diagnostic_snapshot_preview.dart';
+import '../../../../core/diagnostics/playback_diagnostic_summary.dart';
 import '../../../../core/diagnostics/playback_diagnostic_time_formatter.dart';
 import '../../../../core/utils/url_sanitizer.dart';
 import '../../../../shared/widgets/adaptive_page.dart';
@@ -114,12 +115,23 @@ class RuntimeDiagnosticsPage extends ConsumerWidget {
                   ),
                 ),
                 ListTile(
+                  leading: const Icon(Icons.playlist_add_check_circle_outlined),
+                  title: Text(context.l10n.copyPlaybackDiagnostics),
+                  subtitle: Text(context.l10n.diagnosticsPrivacyNote),
+                  onTap: playbackDiagnostics == null
+                      ? null
+                      : () => _copyPlaybackDiagnostics(
+                            context,
+                            playbackDiagnostics,
+                          ),
+                ),
+                ListTile(
                   leading: const Icon(Icons.content_copy_outlined),
                   title: Text(context.l10n.copyDiagnostics),
                   subtitle: Text(
                     playbackDiagnostics == null
                         ? context.l10n.copyDiagnosticsPlaybackPendingHint
-                        : context.l10n.diagnosticsPrivacyNote,
+                        : context.l10n.runtimeDiagnosticsSubtitle,
                   ),
                   onTap: () => _copyDiagnostics(context, ref),
                 ),
@@ -437,6 +449,30 @@ Future<void> _copyDiagnostics(BuildContext context, WidgetRef ref) async {
     ScaffoldMessenger.of(
       context,
     ).showSnackBar(SnackBar(content: Text(context.l10n.diagnosticsCopied)));
+  } catch (error) {
+    if (!context.mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(context.l10n.diagnosticsCopyFailed)),
+    );
+  }
+}
+
+Future<void> _copyPlaybackDiagnostics(
+  BuildContext context,
+  PlaybackDiagnostics diagnostics,
+) async {
+  final summary = buildPlaybackDiagnosticSummary(
+    l10n: context.l10n,
+    localeName: Localizations.localeOf(context).toLanguageTag(),
+    diagnostics: diagnostics,
+  );
+
+  try {
+    await Clipboard.setData(ClipboardData(text: summary));
+    if (!context.mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(context.l10n.playbackDiagnosticsCopied)),
+    );
   } catch (error) {
     if (!context.mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(

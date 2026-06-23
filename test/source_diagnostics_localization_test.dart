@@ -1,5 +1,6 @@
 import 'package:ani_destiny/app/l10n/app_localizations.dart';
 import 'package:ani_destiny/core/diagnostics/playback_diagnostic_snapshot_preview.dart';
+import 'package:ani_destiny/core/diagnostics/playback_diagnostic_summary.dart';
 import 'package:ani_destiny/features/danmaku/domain/entities/danmaku_settings.dart';
 import 'package:ani_destiny/features/danmaku/presentation/providers/danmaku_providers.dart';
 import 'package:ani_destiny/features/player/domain/services/playback_diagnostics.dart';
@@ -156,6 +157,90 @@ void main() {
 
     expect(find.text('Diagnostics copied'), findsOneWidget);
     expect(copiedText, 'Runtime diagnostics summary');
+  });
+
+  testWidgets(
+      'runtime diagnostics can copy the latest playback snapshot in place', (
+    tester,
+  ) async {
+    tester.view.devicePixelRatio = 1;
+    tester.view.physicalSize = const Size(800, 1400);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    addTearDown(tester.view.resetPhysicalSize);
+
+    String? copiedText;
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMethodCallHandler(SystemChannels.platform, (call) async {
+      if (call.method == 'Clipboard.setData') {
+        copiedText =
+            (call.arguments as Map<Object?, Object?>)['text'] as String?;
+      }
+      return null;
+    });
+    addTearDown(() {
+      TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+          .setMockMethodCallHandler(SystemChannels.platform, null);
+    });
+
+    final container = ProviderContainer(overrides: _providerOverrides);
+    addTearDown(container.dispose);
+    container.read(lastPlaybackDiagnosticsProvider.notifier).state =
+        PlaybackDiagnostics(
+      capturedAt: DateTime(2026, 6, 17, 1, 2, 3),
+      animeTitle: 'Anime 1',
+      episodeTitle: 'Episode 2',
+      selectedAppSourceId: 'remote-proxy',
+      sourceId: 'mock',
+      requestedSourceId: 'sakura',
+      playSourceTitle: 'Line 1',
+      urlType: 'm3u8',
+      sanitizedUrl: 'https://cdn.example.test/.../episode-2.m3u8',
+      headerKeys: const ['Referer', 'User-Agent'],
+      state: PlaybackDiagnosticState.buffering,
+    );
+
+    await tester.pumpWidget(
+      UncontrolledProviderScope(
+        container: container,
+        child: const MaterialApp(
+          locale: Locale('en'),
+          supportedLocales: AppLocalizations.supportedLocales,
+          localizationsDelegates: [
+            AppLocalizations.delegate,
+            GlobalMaterialLocalizations.delegate,
+            GlobalWidgetsLocalizations.delegate,
+            GlobalCupertinoLocalizations.delegate,
+          ],
+          home: Scaffold(body: RuntimeDiagnosticsPage()),
+        ),
+      ),
+    );
+
+    await tester.pumpAndSettle();
+    final copyPlaybackDiagnostics = find.text('Copy playback diagnostics');
+    await tester.ensureVisible(copyPlaybackDiagnostics);
+    await tester.tap(copyPlaybackDiagnostics);
+    await tester.pumpAndSettle();
+
+    const l10n = AppLocalizations(Locale('en'));
+    final expected = buildPlaybackDiagnosticSummary(
+      l10n: l10n,
+      localeName: 'en',
+      diagnostics: container.read(lastPlaybackDiagnosticsProvider)!,
+    );
+
+    expect(find.text('Playback diagnostics copied'), findsOneWidget);
+    expect(copiedText, expected);
+    expect(
+      copiedText,
+      contains('Selected app source at playback: Remote Source Proxy'),
+    );
+    expect(
+      copiedText,
+      contains(
+        'Playback source status: Sakura Anime is temporarily unavailable. AniDestiny is playing from Mock Anime Source instead.',
+      ),
+    );
   });
 
   testWidgets('source diagnostics sheet can copy diagnostics in place', (
