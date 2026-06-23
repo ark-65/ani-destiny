@@ -265,7 +265,7 @@ void main() {
     );
     expect(
       find.text(
-        'Latest playback: Anime 1 · Episode 2\nSakura Anime · Broken Line · $capturedAt',
+        'Latest playback: Anime 1 · Episode 2\nActive playback source: Sakura Anime · Broken Line\nCaptured at: $capturedAt',
       ),
       findsOneWidget,
     );
@@ -553,6 +553,18 @@ void main() {
 
     expect(find.text('Selected app source at playback'), findsOneWidget);
     expect(find.text('Remote Source Proxy'), findsOneWidget);
+    expect(
+      find.textContaining(
+        'Playback source status: Mock Anime Source is temporarily unavailable. AniDestiny is playing from Sakura Anime instead.',
+      ),
+      findsOneWidget,
+    );
+    expect(
+      find.textContaining(
+        'Selected app source at playback: Remote Source Proxy',
+      ),
+      findsOneWidget,
+    );
 
     await tester.ensureVisible(find.text('Copy playback diagnostics').last);
     await tester.tap(find.text('Copy playback diagnostics').last);
@@ -617,6 +629,12 @@ void main() {
 
     expect(find.text('Selected app source at playback'), findsOneWidget);
     expect(find.text('Remote Source Proxy'), findsOneWidget);
+    expect(
+      find.textContaining(
+        'Selected app source at playback: Remote Source Proxy',
+      ),
+      findsOneWidget,
+    );
 
     await tester.ensureVisible(find.text('Copy playback diagnostics').last);
     await tester.tap(find.text('Copy playback diagnostics').last);

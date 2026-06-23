@@ -647,7 +647,7 @@ const _localizedValues = {
     'playbackDiagnosticsSummaryHint': '这里会显示当前会话最近一次播放快照，方便你先确认作品、播放源、线路和采集时间。',
     'playbackDiagnosticsEmptyHint': '当前会话还没有播放快照；先播放一次后，这里会显示最近一次播放现场。',
     'playbackDiagnosticsSnapshotPreview':
-        '最近一次播放：{animeTitle} · {episodeTitle}\n{playbackContext} · {capturedAt}',
+        '最近一次播放：{animeTitle} · {episodeTitle}\n{playbackContext}\n{capturedAt}',
     'sourceFallbackPlayerNotice':
         '当前所选数据源 {requestedSource} 暂时不可用，已改用 {activeSource} 继续播放。',
     'playbackDiagnosticsDebugHint': '这里会显示当前会话最近一次播放快照，方便你先确认作品、播放源、线路和采集时间。',
@@ -939,7 +939,7 @@ const _localizedValues = {
     'playbackDiagnosticsEmptyHint':
         'No playback snapshot has been captured in this session yet. Start playback once and the latest playback moment will appear here.',
     'playbackDiagnosticsSnapshotPreview':
-        'Latest playback: {animeTitle} · {episodeTitle}\n{playbackContext} · {capturedAt}',
+        'Latest playback: {animeTitle} · {episodeTitle}\n{playbackContext}\n{capturedAt}',
     'sourceFallbackPlayerNotice':
         '{requestedSource} is temporarily unavailable. AniDestiny is playing from {activeSource} instead.',
     'playbackDiagnosticsDebugHint':
@@ -1221,7 +1221,7 @@ const _localizedValues = {
     'playbackDiagnosticsEmptyHint':
         'このセッションではまだ再生スナップショットがありません。一度再生すると、ここに最新の再生状況が表示されます。',
     'playbackDiagnosticsSnapshotPreview':
-        '最新の再生: {animeTitle} · {episodeTitle}\n{playbackContext} · {capturedAt}',
+        '最新の再生: {animeTitle} · {episodeTitle}\n{playbackContext}\n{capturedAt}',
     'sourceFallbackPlayerNotice':
         '選択していたソース {requestedSource} は一時的に利用できないため、現在は {activeSource} に切り替えて再生しています。',
     'playbackDiagnosticsDebugHint':

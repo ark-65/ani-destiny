@@ -1,5 +1,5 @@
 import 'package:ani_destiny/app/l10n/app_localizations.dart';
-import 'package:ani_destiny/core/diagnostics/playback_diagnostic_time_formatter.dart';
+import 'package:ani_destiny/core/diagnostics/playback_diagnostic_snapshot_preview.dart';
 import 'package:ani_destiny/features/danmaku/domain/entities/danmaku_settings.dart';
 import 'package:ani_destiny/features/danmaku/presentation/providers/danmaku_providers.dart';
 import 'package:ani_destiny/features/player/domain/services/playback_diagnostics.dart';
@@ -271,16 +271,10 @@ void main() {
 
     await tester.pumpAndSettle();
 
-    final preview = const AppLocalizations(
-      Locale('en'),
-    ).playbackDiagnosticsSnapshotPreview(
-      'Anime 1',
-      'Episode 2',
-      'Mock Anime Source · Line 1',
-      formatPlaybackDiagnosticCapturedAt(
-        DateTime(2026, 6, 17, 1, 2, 3),
-        localeName: 'en',
-      ),
+    final preview = buildPlaybackDiagnosticSnapshotPreview(
+      l10n: const AppLocalizations(Locale('en')),
+      localeName: 'en',
+      diagnostics: container.read(lastPlaybackDiagnosticsProvider)!,
     );
 
     expect(find.text('Anime 1'), findsOneWidget);
@@ -358,6 +352,18 @@ void main() {
     expect(find.text('Sakura Anime'), findsWidgets);
     expect(find.text('Selected playback source'), findsOneWidget);
     expect(find.text('Mock Anime Source'), findsWidgets);
+    expect(
+      find.textContaining(
+        'Playback source status: Sakura Anime is temporarily unavailable. AniDestiny is playing from Mock Anime Source instead.',
+      ),
+      findsOneWidget,
+    );
+    expect(
+      find.textContaining(
+        'Selected app source at playback: Remote Source Proxy',
+      ),
+      findsOneWidget,
+    );
   });
 
   testWidgets(
@@ -402,6 +408,12 @@ void main() {
     expect(find.text('Selected app source at playback'), findsOneWidget);
     expect(find.text('Remote Source Proxy'), findsOneWidget);
     expect(find.text('Sakura Anime'), findsWidgets);
+    expect(
+      find.textContaining(
+        'Selected app source at playback: Remote Source Proxy',
+      ),
+      findsOneWidget,
+    );
   });
 
   testWidgets('source diagnostics sheet sanitizes inline support details', (

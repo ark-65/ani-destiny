@@ -7,6 +7,7 @@ import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../app/l10n/app_localizations.dart';
+import '../../../../core/diagnostics/playback_diagnostic_snapshot_preview.dart';
 import '../../../../core/diagnostics/playback_diagnostic_time_formatter.dart';
 import '../../../anime/presentation/providers/anime_providers.dart';
 import '../../../danmaku/domain/entities/danmaku_item.dart';
@@ -692,14 +693,12 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
                   ),
                   const SizedBox(height: 12),
                   Text(
-                    context.l10n.playbackDiagnosticsSnapshotPreview(
-                      _diagnosticContextValue(diagnostics.animeTitle),
-                      _diagnosticContextValue(diagnostics.episodeTitle),
-                      _playbackSnapshotContext(context, diagnostics),
-                      _formatPlaybackDiagnosticCapturedAt(
+                    buildPlaybackDiagnosticSnapshotPreview(
+                      l10n: context.l10n,
+                      localeName: Localizations.localeOf(
                         context,
-                        diagnostics.capturedAt,
-                      ),
+                      ).toLanguageTag(),
+                      diagnostics: diagnostics,
                     ),
                     style: Theme.of(context).textTheme.bodyMedium,
                   ),
@@ -1441,18 +1440,6 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
       return '-';
     }
     return trimmed;
-  }
-
-  String _playbackSnapshotContext(
-    BuildContext context,
-    PlaybackDiagnostics diagnostics,
-  ) {
-    final lineTitle = diagnostics.playSourceTitle?.trim();
-    final parts = <String>[
-      context.l10n.sourceDisplayLabel(diagnostics.sourceId),
-      if (lineTitle != null && lineTitle.isNotEmpty) lineTitle,
-    ];
-    return parts.join(' · ');
   }
 
   bool _hasSourceFallbackContext() {

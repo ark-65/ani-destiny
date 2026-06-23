@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../app/l10n/app_localizations.dart';
 import '../../../../core/diagnostics/diagnostic_sanitizer.dart';
+import '../../../../core/diagnostics/playback_diagnostic_snapshot_preview.dart';
 import '../../../../core/diagnostics/playback_diagnostic_time_formatter.dart';
 import '../../../../core/utils/url_sanitizer.dart';
 import '../../../../shared/widgets/adaptive_page.dart';
@@ -294,25 +295,12 @@ String _playbackSnapshotSubtitle(
   if (diagnostics == null) {
     return context.l10n.playbackDiagnosticsEmptyHint;
   }
-  final preview = context.l10n.playbackDiagnosticsSnapshotPreview(
-    _diagnosticContextValue(diagnostics.animeTitle),
-    _diagnosticContextValue(diagnostics.episodeTitle),
-    _playbackSnapshotContext(context, diagnostics),
-    _formatCapturedAt(context, diagnostics.capturedAt),
+  final preview = buildPlaybackDiagnosticSnapshotPreview(
+    l10n: context.l10n,
+    localeName: Localizations.localeOf(context).toLanguageTag(),
+    diagnostics: diagnostics,
   );
   return '${context.l10n.playbackDiagnosticsSummaryHint}\n\n$preview';
-}
-
-String _playbackSnapshotContext(
-  BuildContext context,
-  PlaybackDiagnostics diagnostics,
-) {
-  final lineTitle = diagnostics.playSourceTitle?.trim();
-  final parts = <String>[
-    context.l10n.sourceDisplayLabel(diagnostics.sourceId),
-    if (lineTitle != null && lineTitle.isNotEmpty) lineTitle,
-  ];
-  return parts.join(' · ');
 }
 
 String _formatCapturedAt(BuildContext context, DateTime capturedAt) {
