@@ -321,12 +321,14 @@ class AppLocalizations {
   String playbackDiagnosticsSnapshotPreview(
     String animeTitle,
     String episodeTitle,
+    String playbackContext,
     String capturedAt,
   ) {
     final template = _t('playbackDiagnosticsSnapshotPreview');
     return template
         .replaceFirst('{animeTitle}', animeTitle)
         .replaceFirst('{episodeTitle}', episodeTitle)
+        .replaceFirst('{playbackContext}', playbackContext)
         .replaceFirst('{capturedAt}', capturedAt);
   }
 
@@ -642,15 +644,13 @@ const _localizedValues = {
     'currentSourceId': '当前数据源 ID',
     'latestSourceDiagnostics': '最近数据源诊断',
     'playbackDiagnosticsSummary': '播放诊断摘要',
-    'playbackDiagnosticsSummaryHint':
-        '这里会显示当前会话最近一次播放快照，方便你在复制诊断信息前先确认番剧、线路、URL 类型和请求头名称。',
+    'playbackDiagnosticsSummaryHint': '这里会显示当前会话最近一次播放快照，方便你先确认作品、播放源、线路和采集时间。',
     'playbackDiagnosticsEmptyHint': '当前会话还没有播放快照；先播放一次后，这里会显示最近一次播放现场。',
     'playbackDiagnosticsSnapshotPreview':
-        '最近一次播放：{animeTitle} · {episodeTitle} · {capturedAt}',
+        '最近一次播放：{animeTitle} · {episodeTitle}\n{playbackContext} · {capturedAt}',
     'sourceFallbackPlayerNotice':
         '当前所选数据源 {requestedSource} 暂时不可用，已改用 {activeSource} 继续播放。',
-    'playbackDiagnosticsDebugHint':
-        '这里会显示当前会话最近一次播放快照，方便你在复制诊断信息前先确认番剧、线路、URL 类型和请求头名称。',
+    'playbackDiagnosticsDebugHint': '这里会显示当前会话最近一次播放快照，方便你先确认作品、播放源、线路和采集时间。',
     'playbackDiagnosticCapturedAt': '采集时间',
     'sourceTemporarilyUnavailable': '数据源暂时不可用',
     'sourceUnavailableSuggestion': '上游数据源可能已变化或暂时不可用，请稍后重试或切换数据源。',
@@ -935,15 +935,15 @@ const _localizedValues = {
     'latestSourceDiagnostics': 'Latest source diagnostics',
     'playbackDiagnosticsSummary': 'Playback diagnostics summary',
     'playbackDiagnosticsSummaryHint':
-        'The latest playback snapshot captured in this session appears here so you can confirm the anime, line, URL type, and request-header names before copying diagnostics.',
+        'The latest playback snapshot captured in this session appears here so you can confirm the title, playback source, line, and capture time first.',
     'playbackDiagnosticsEmptyHint':
         'No playback snapshot has been captured in this session yet. Start playback once and the latest playback moment will appear here.',
     'playbackDiagnosticsSnapshotPreview':
-        'Latest playback: {animeTitle} · {episodeTitle} · {capturedAt}',
+        'Latest playback: {animeTitle} · {episodeTitle}\n{playbackContext} · {capturedAt}',
     'sourceFallbackPlayerNotice':
         '{requestedSource} is temporarily unavailable. AniDestiny is playing from {activeSource} instead.',
     'playbackDiagnosticsDebugHint':
-        'The latest playback snapshot captured in this session appears here so you can confirm the anime, line, URL type, and request-header names before copying diagnostics.',
+        'The latest playback snapshot captured in this session appears here so you can confirm the title, playback source, line, and capture time first.',
     'playbackDiagnosticCapturedAt': 'Captured at',
     'sourceTemporarilyUnavailable': 'Source temporarily unavailable',
     'sourceUnavailableSuggestion':
@@ -1217,15 +1217,15 @@ const _localizedValues = {
     'latestSourceDiagnostics': '最近のソース診断',
     'playbackDiagnosticsSummary': '再生診断の概要',
     'playbackDiagnosticsSummaryHint':
-        'このセッションで直近に取得した再生スナップショットをここへ表示し、診断情報をコピーする前に作品・ライン・URL 種類・リクエストヘッダー名を確認できます。',
+        'このセッションで直近に取得した再生スナップショットをここへ表示し、作品・再生ソース・ライン・取得時刻を先に確認できます。',
     'playbackDiagnosticsEmptyHint':
         'このセッションではまだ再生スナップショットがありません。一度再生すると、ここに最新の再生状況が表示されます。',
     'playbackDiagnosticsSnapshotPreview':
-        '最新の再生: {animeTitle} · {episodeTitle} · {capturedAt}',
+        '最新の再生: {animeTitle} · {episodeTitle}\n{playbackContext} · {capturedAt}',
     'sourceFallbackPlayerNotice':
         '選択していたソース {requestedSource} は一時的に利用できないため、現在は {activeSource} に切り替えて再生しています。',
     'playbackDiagnosticsDebugHint':
-        'このセッションで直近に取得した再生スナップショットをここへ表示し、診断情報をコピーする前に作品・ライン・URL 種類・リクエストヘッダー名を確認できます。',
+        'このセッションで直近に取得した再生スナップショットをここへ表示し、作品・再生ソース・ライン・取得時刻を先に確認できます。',
     'playbackDiagnosticCapturedAt': '取得時刻',
     'sourceTemporarilyUnavailable': 'ソースが一時的に利用できません',
     'sourceUnavailableSuggestion':

@@ -695,6 +695,7 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
                     context.l10n.playbackDiagnosticsSnapshotPreview(
                       _diagnosticContextValue(diagnostics.animeTitle),
                       _diagnosticContextValue(diagnostics.episodeTitle),
+                      _playbackSnapshotContext(context, diagnostics),
                       _formatPlaybackDiagnosticCapturedAt(
                         context,
                         diagnostics.capturedAt,
@@ -1440,6 +1441,18 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
       return '-';
     }
     return trimmed;
+  }
+
+  String _playbackSnapshotContext(
+    BuildContext context,
+    PlaybackDiagnostics diagnostics,
+  ) {
+    final lineTitle = diagnostics.playSourceTitle?.trim();
+    final parts = <String>[
+      context.l10n.sourceDisplayLabel(diagnostics.sourceId),
+      if (lineTitle != null && lineTitle.isNotEmpty) lineTitle,
+    ];
+    return parts.join(' · ');
   }
 
   bool _hasSourceFallbackContext() {

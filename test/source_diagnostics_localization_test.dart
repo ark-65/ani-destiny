@@ -276,6 +276,7 @@ void main() {
     ).playbackDiagnosticsSnapshotPreview(
       'Anime 1',
       'Episode 2',
+      'Mock Anime Source · Line 1',
       formatPlaybackDiagnosticCapturedAt(
         DateTime(2026, 6, 17, 1, 2, 3),
         localeName: 'en',
@@ -287,7 +288,7 @@ void main() {
     expect(find.text('Selected playback source'), findsOneWidget);
     expect(
       find.text(
-        'The latest playback snapshot captured in this session appears here so you can confirm the anime, line, URL type, and request-header names before copying diagnostics.\n\n$preview',
+        'The latest playback snapshot captured in this session appears here so you can confirm the title, playback source, line, and capture time first.\n\n$preview',
       ),
       findsOneWidget,
     );

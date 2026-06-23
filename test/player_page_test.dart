@@ -259,12 +259,14 @@ void main() {
     expect(find.text(capturedAt), findsOneWidget);
     expect(
       find.text(
-        'The latest playback snapshot captured in this session appears here so you can confirm the anime, line, URL type, and request-header names before copying diagnostics.',
+        'The latest playback snapshot captured in this session appears here so you can confirm the title, playback source, line, and capture time first.',
       ),
       findsOneWidget,
     );
     expect(
-      find.text('Latest playback: Anime 1 · Episode 2 · $capturedAt'),
+      find.text(
+        'Latest playback: Anime 1 · Episode 2\nSakura Anime · Broken Line · $capturedAt',
+      ),
       findsOneWidget,
     );
     expect(find.text('Anime'), findsOneWidget);

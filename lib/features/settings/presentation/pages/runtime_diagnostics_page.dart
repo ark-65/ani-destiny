@@ -297,9 +297,22 @@ String _playbackSnapshotSubtitle(
   final preview = context.l10n.playbackDiagnosticsSnapshotPreview(
     _diagnosticContextValue(diagnostics.animeTitle),
     _diagnosticContextValue(diagnostics.episodeTitle),
+    _playbackSnapshotContext(context, diagnostics),
     _formatCapturedAt(context, diagnostics.capturedAt),
   );
   return '${context.l10n.playbackDiagnosticsSummaryHint}\n\n$preview';
+}
+
+String _playbackSnapshotContext(
+  BuildContext context,
+  PlaybackDiagnostics diagnostics,
+) {
+  final lineTitle = diagnostics.playSourceTitle?.trim();
+  final parts = <String>[
+    context.l10n.sourceDisplayLabel(diagnostics.sourceId),
+    if (lineTitle != null && lineTitle.isNotEmpty) lineTitle,
+  ];
+  return parts.join(' · ');
 }
 
 String _formatCapturedAt(BuildContext context, DateTime capturedAt) {
