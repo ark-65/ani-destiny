@@ -251,6 +251,8 @@ class AppLocalizations {
   String get playbackDiagnosticsCopied => _t('playbackDiagnosticsCopied');
   String get diagnosticsCopyFailed => _t('diagnosticsCopyFailed');
   String get diagnosticsPrivacyNote => _t('diagnosticsPrivacyNote');
+  String get copyDiagnosticsPlaybackPendingHint =>
+      _t('copyDiagnosticsPlaybackPendingHint');
   String get reportIssue => _t('reportIssue');
   String get githubRepository => _t('githubRepository');
   String get openSource => _t('openSource');
@@ -579,6 +581,8 @@ const _localizedValues = {
     'playbackDiagnosticsCopied': '播放诊断已复制',
     'diagnosticsCopyFailed': '复制诊断信息失败',
     'diagnosticsPrivacyNote': '将生成已脱敏的反馈摘要，不包含敏感值。',
+    'copyDiagnosticsPlaybackPendingHint':
+        '将生成已脱敏的反馈摘要；当前还没有播放快照，播放部分会在当前会话先播放一次后补上。',
     'reportIssue': '反馈问题',
     'githubRepository': 'GitHub 仓库',
     'openSource': '开源地址',
@@ -628,7 +632,7 @@ const _localizedValues = {
     'playbackDiagnosticsSummary': '播放诊断摘要',
     'playbackDiagnosticsSummaryHint':
         '这里会显示当前会话最近一次播放快照，方便你在复制诊断信息前先确认番剧、线路、URL 类型和请求头名称。',
-    'playbackDiagnosticsEmptyHint': '先在当前会话里播放一次，再回来这里确认最近一次播放快照并复制诊断信息。',
+    'playbackDiagnosticsEmptyHint': '当前会话还没有播放快照；先播放一次后，这里会显示最近一次播放现场。',
     'sourceFallbackPlayerNotice':
         '当前所选数据源 {requestedSource} 暂时不可用，已改用 {activeSource} 继续播放。',
     'playbackDiagnosticsDebugHint':
@@ -864,6 +868,8 @@ const _localizedValues = {
     'diagnosticsCopyFailed': 'Failed to copy diagnostics',
     'diagnosticsPrivacyNote':
         'Generates a sanitized feedback summary without sensitive values.',
+    'copyDiagnosticsPlaybackPendingHint':
+        'A sanitized feedback summary will be copied. The playback section stays unavailable until playback runs once in this session.',
     'reportIssue': 'Report issue',
     'githubRepository': 'GitHub repository',
     'openSource': 'Open source',
@@ -917,7 +923,7 @@ const _localizedValues = {
     'playbackDiagnosticsSummaryHint':
         'The latest playback snapshot captured in this session appears here so you can confirm the anime, line, URL type, and request-header names before copying diagnostics.',
     'playbackDiagnosticsEmptyHint':
-        'Start playback once in this session, then come back here to confirm the latest playback snapshot before copying diagnostics.',
+        'No playback snapshot has been captured in this session yet. Start playback once and the latest playback moment will appear here.',
     'sourceFallbackPlayerNotice':
         '{requestedSource} is temporarily unavailable. AniDestiny is playing from {activeSource} instead.',
     'playbackDiagnosticsDebugHint':
@@ -1145,6 +1151,8 @@ const _localizedValues = {
     'playbackDiagnosticsCopied': '再生診断をコピーしました',
     'diagnosticsCopyFailed': '診断情報のコピーに失敗しました',
     'diagnosticsPrivacyNote': '機密値を含まないフィードバック概要を生成します。',
+    'copyDiagnosticsPlaybackPendingHint':
+        '機密値を含まないフィードバック概要をコピーします。このセッションで一度再生するまでは再生欄は利用できません。',
     'reportIssue': '問題を報告',
     'githubRepository': 'GitHub リポジトリ',
     'openSource': 'オープンソース',
@@ -1195,7 +1203,7 @@ const _localizedValues = {
     'playbackDiagnosticsSummaryHint':
         'このセッションで直近に取得した再生スナップショットをここへ表示し、診断情報をコピーする前に作品・ライン・URL 種類・リクエストヘッダー名を確認できます。',
     'playbackDiagnosticsEmptyHint':
-        'このセッションで一度再生してから戻ると、診断情報をコピーする前に直近の再生スナップショットをここで確認できます。',
+        'このセッションではまだ再生スナップショットがありません。一度再生すると、ここに最新の再生状況が表示されます。',
     'sourceFallbackPlayerNotice':
         '選択していたソース {requestedSource} は一時的に利用できないため、現在は {activeSource} に切り替えて再生しています。',
     'playbackDiagnosticsDebugHint':

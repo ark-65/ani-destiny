@@ -117,7 +117,11 @@ class RuntimeDiagnosticsPage extends ConsumerWidget {
                 ListTile(
                   leading: const Icon(Icons.content_copy_outlined),
                   title: Text(context.l10n.copyDiagnostics),
-                  subtitle: Text(context.l10n.diagnosticsPrivacyNote),
+                  subtitle: Text(
+                    playbackDiagnostics == null
+                        ? context.l10n.copyDiagnosticsPlaybackPendingHint
+                        : context.l10n.diagnosticsPrivacyNote,
+                  ),
                   onTap: () => _copyDiagnostics(context, ref),
                 ),
                 if (playbackDiagnostics == null)

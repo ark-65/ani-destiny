@@ -254,6 +254,7 @@ void main() {
     expect(zh.playbackDiagnosticsEmptyHint, isNot(contains('Debug')));
     expect(zh.playbackDiagnosticsDebugHint, isNot(contains('Debug')));
     expect(zh.playbackDiagnosticsDebugHint, isNot(contains('header keys')));
+    expect(zh.copyDiagnosticsPlaybackPendingHint, isNot(contains('Debug')));
     expect(zh.playbackDiagnosticCapturedAt, '采集时间');
     expect(zh.selectedAppSource, '应用所选数据源');
     expect(zh.playbackDiagnosticSelectedAppSource, '播放时应用所选数据源');
@@ -282,6 +283,10 @@ void main() {
     expect(en.playbackDiagnosticRequestedSource, 'Selected playback source');
     expect(en.playbackDiagnosticSource, 'Active playback source');
     expect(en.playbackDiagnosticSourceStatus, 'Playback source status');
+    expect(
+      en.copyDiagnosticsPlaybackPendingHint,
+      contains('playback section stays unavailable'),
+    );
     expect(en.sourceOperationLabel('play_sources'), 'Playback lines');
     expect(en.yesNo(true), 'Yes');
     expect(en.yesNo(false), 'No');
@@ -292,6 +297,7 @@ void main() {
     expect(ja.playbackDiagnosticsEmptyHint, isNot(contains('Debug')));
     expect(ja.playbackDiagnosticsDebugHint, isNot(contains('Debug')));
     expect(ja.playbackDiagnosticsDebugHint, isNot(contains('header keys')));
+    expect(ja.copyDiagnosticsPlaybackPendingHint, isNot(contains('Debug')));
     expect(ja.playbackDiagnosticCapturedAt, '取得時刻');
     expect(ja.selectedAppSource, '選択中のアプリソース');
     expect(ja.copyPlaybackDiagnostics, '再生診断をコピー');

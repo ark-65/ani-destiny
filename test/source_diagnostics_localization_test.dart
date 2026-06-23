@@ -52,7 +52,13 @@ void main() {
     );
     expect(
       find.text(
-        'Start playback once in this session, then come back here to confirm the latest playback snapshot before copying diagnostics.',
+        'No playback snapshot has been captured in this session yet. Start playback once and the latest playback moment will appear here.',
+      ),
+      findsOneWidget,
+    );
+    expect(
+      find.text(
+        'A sanitized feedback summary will be copied. The playback section stays unavailable until playback runs once in this session.',
       ),
       findsOneWidget,
     );
