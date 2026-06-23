@@ -111,7 +111,18 @@ class RuntimeDiagnosticsPage extends ConsumerWidget {
                   subtitle: Text(
                     playbackDiagnostics == null
                         ? context.l10n.playbackDiagnosticsEmptyHint
-                        : context.l10n.playbackDiagnosticsSummaryHint,
+                        : context.l10n.playbackDiagnosticsSnapshotPreview(
+                            _diagnosticContextValue(
+                              playbackDiagnostics.animeTitle,
+                            ),
+                            _diagnosticContextValue(
+                              playbackDiagnostics.episodeTitle,
+                            ),
+                            _formatCapturedAt(
+                              context,
+                              playbackDiagnostics.capturedAt,
+                            ),
+                          ),
                   ),
                 ),
                 ListTile(

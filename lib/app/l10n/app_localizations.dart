@@ -318,6 +318,18 @@ class AppLocalizations {
   String get playbackDiagnosticsSummaryHint =>
       _t('playbackDiagnosticsSummaryHint');
   String get playbackDiagnosticsEmptyHint => _t('playbackDiagnosticsEmptyHint');
+  String playbackDiagnosticsSnapshotPreview(
+    String animeTitle,
+    String episodeTitle,
+    String capturedAt,
+  ) {
+    final template = _t('playbackDiagnosticsSnapshotPreview');
+    return template
+        .replaceFirst('{animeTitle}', animeTitle)
+        .replaceFirst('{episodeTitle}', episodeTitle)
+        .replaceFirst('{capturedAt}', capturedAt);
+  }
+
   String sourceFallbackPlayerNotice(
     String requestedSource,
     String activeSource,
@@ -633,6 +645,8 @@ const _localizedValues = {
     'playbackDiagnosticsSummaryHint':
         '这里会显示当前会话最近一次播放快照，方便你在复制诊断信息前先确认番剧、线路、URL 类型和请求头名称。',
     'playbackDiagnosticsEmptyHint': '当前会话还没有播放快照；先播放一次后，这里会显示最近一次播放现场。',
+    'playbackDiagnosticsSnapshotPreview':
+        '最近一次播放：{animeTitle} · {episodeTitle} · {capturedAt}',
     'sourceFallbackPlayerNotice':
         '当前所选数据源 {requestedSource} 暂时不可用，已改用 {activeSource} 继续播放。',
     'playbackDiagnosticsDebugHint':
@@ -924,6 +938,8 @@ const _localizedValues = {
         'The latest playback snapshot captured in this session appears here so you can confirm the anime, line, URL type, and request-header names before copying diagnostics.',
     'playbackDiagnosticsEmptyHint':
         'No playback snapshot has been captured in this session yet. Start playback once and the latest playback moment will appear here.',
+    'playbackDiagnosticsSnapshotPreview':
+        'Latest playback: {animeTitle} · {episodeTitle} · {capturedAt}',
     'sourceFallbackPlayerNotice':
         '{requestedSource} is temporarily unavailable. AniDestiny is playing from {activeSource} instead.',
     'playbackDiagnosticsDebugHint':
@@ -1204,6 +1220,8 @@ const _localizedValues = {
         'このセッションで直近に取得した再生スナップショットをここへ表示し、診断情報をコピーする前に作品・ライン・URL 種類・リクエストヘッダー名を確認できます。',
     'playbackDiagnosticsEmptyHint':
         'このセッションではまだ再生スナップショットがありません。一度再生すると、ここに最新の再生状況が表示されます。',
+    'playbackDiagnosticsSnapshotPreview':
+        '最新の再生: {animeTitle} · {episodeTitle} · {capturedAt}',
     'sourceFallbackPlayerNotice':
         '選択していたソース {requestedSource} は一時的に利用できないため、現在は {activeSource} に切り替えて再生しています。',
     'playbackDiagnosticsDebugHint':

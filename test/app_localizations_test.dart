@@ -252,6 +252,10 @@ void main() {
     expect(zh.runtimeDiagnosticsSubtitle, isNot(contains('Debug')));
     expect(zh.playbackDiagnosticsSummaryHint, isNot(contains('Debug')));
     expect(zh.playbackDiagnosticsEmptyHint, isNot(contains('Debug')));
+    expect(
+      zh.playbackDiagnosticsSnapshotPreview('番剧 A', '第 2 集', '2026/6/17 09:02'),
+      '最近一次播放：番剧 A · 第 2 集 · 2026/6/17 09:02',
+    );
     expect(zh.playbackDiagnosticsDebugHint, isNot(contains('Debug')));
     expect(zh.playbackDiagnosticsDebugHint, isNot(contains('header keys')));
     expect(zh.copyDiagnosticsPlaybackPendingHint, isNot(contains('Debug')));
@@ -271,6 +275,14 @@ void main() {
 
     const en = AppLocalizations(Locale('en'));
     expect(en.playbackDiagnosticsSummaryHint, isNot(contains('player page')));
+    expect(
+      en.playbackDiagnosticsSnapshotPreview(
+        'Anime 1',
+        'Episode 2',
+        'Jun 17, 2026 1:02 AM',
+      ),
+      'Latest playback: Anime 1 · Episode 2 · Jun 17, 2026 1:02 AM',
+    );
     expect(en.playbackDiagnosticHeaders, 'Request header names');
     expect(en.playbackDiagnosticCapturedAt, 'Captured at');
     expect(en.selectedAppSource, 'Selected app source');
@@ -295,6 +307,14 @@ void main() {
     expect(ja.runtimeDiagnosticsSubtitle, isNot(contains('Debug')));
     expect(ja.playbackDiagnosticsSummaryHint, isNot(contains('Debug')));
     expect(ja.playbackDiagnosticsEmptyHint, isNot(contains('Debug')));
+    expect(
+      ja.playbackDiagnosticsSnapshotPreview(
+        'アニメ 1',
+        '第 2 話',
+        '2026/6/17 1:02',
+      ),
+      '最新の再生: アニメ 1 · 第 2 話 · 2026/6/17 1:02',
+    );
     expect(ja.playbackDiagnosticsDebugHint, isNot(contains('Debug')));
     expect(ja.playbackDiagnosticsDebugHint, isNot(contains('header keys')));
     expect(ja.copyDiagnosticsPlaybackPendingHint, isNot(contains('Debug')));

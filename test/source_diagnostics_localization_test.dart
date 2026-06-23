@@ -1,4 +1,5 @@
 import 'package:ani_destiny/app/l10n/app_localizations.dart';
+import 'package:ani_destiny/core/diagnostics/playback_diagnostic_time_formatter.dart';
 import 'package:ani_destiny/features/danmaku/domain/entities/danmaku_settings.dart';
 import 'package:ani_destiny/features/danmaku/presentation/providers/danmaku_providers.dart';
 import 'package:ani_destiny/features/player/domain/services/playback_diagnostics.dart';
@@ -270,15 +271,21 @@ void main() {
 
     await tester.pumpAndSettle();
 
+    final preview = const AppLocalizations(
+      Locale('en'),
+    ).playbackDiagnosticsSnapshotPreview(
+      'Anime 1',
+      'Episode 2',
+      formatPlaybackDiagnosticCapturedAt(
+        DateTime(2026, 6, 17, 1, 2, 3),
+        localeName: 'en',
+      ),
+    );
+
     expect(find.text('Anime 1'), findsOneWidget);
     expect(find.text('Episode 2'), findsOneWidget);
     expect(find.text('Selected playback source'), findsOneWidget);
-    expect(
-      find.text(
-        'The latest playback snapshot captured in this session appears here so you can confirm the anime, line, URL type, and request-header names before copying diagnostics.',
-      ),
-      findsOneWidget,
-    );
+    expect(find.text(preview), findsOneWidget);
     expect(find.text('Captured at'), findsOneWidget);
     expect(find.text('Sakura Anime'), findsWidgets);
     expect(find.text('Mock Anime Source'), findsWidgets);
