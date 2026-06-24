@@ -8,7 +8,7 @@ import '../../features/source/domain/entities/source_fallback_event.dart';
 import '../../features/source/domain/entities/source_health.dart';
 import 'diagnostic_sanitizer.dart';
 import 'feedback_package.dart';
-import 'playback_diagnostic_time_formatter.dart';
+import 'playback_diagnostic_summary.dart';
 
 class FeedbackPackageCollector {
   const FeedbackPackageCollector({
@@ -135,43 +135,14 @@ class FeedbackPackageCollector {
       return '${l10n.feedbackPackageUnavailable}: '
           '${l10n.feedbackPackagePlaybackUnavailable}';
     }
-    final selectedAppSourceId = diagnostics.divergentSelectedAppSourceId();
 
-    final lines = <String>[
-      '- ${l10n.playbackDiagnosticCapturedAt}: '
-          '${formatPlaybackDiagnosticCapturedAt(
-        diagnostics.capturedAt,
-        localeName: l10n.locale.toLanguageTag(),
-        includeExactIso: true,
-      )}',
-      '- ${l10n.playbackDiagnosticAnime}: ${diagnostics.animeTitle}',
-      '- ${l10n.playbackDiagnosticEpisode}: ${diagnostics.episodeTitle}',
-      if (selectedAppSourceId != null)
-        '- ${l10n.playbackDiagnosticSelectedAppSource}: '
-            '${_sourceLabel(selectedAppSourceId)}',
-      if (diagnostics.usedSourceFallback &&
-          diagnostics.requestedSourceId != null)
-        '- ${l10n.playbackDiagnosticRequestedSource}: '
-            '${_sourceLabel(diagnostics.requestedSourceId!)}',
-      if (diagnostics.usedSourceFallback &&
-          diagnostics.requestedSourceId != null)
-        '- ${l10n.playbackDiagnosticSourceStatus}: '
-            '${l10n.sourceFallbackPlayerNotice(
-          _sourceLabel(diagnostics.requestedSourceId!),
-          _sourceLabel(diagnostics.sourceId),
-        )}',
-      '- ${l10n.playbackDiagnosticSource}: ${_sourceLabel(diagnostics.sourceId)}',
-      '- ${l10n.playbackDiagnosticLine}: '
-          '${diagnostics.playSourceTitle ?? l10n.feedbackPackageUnavailable}',
-      '- ${l10n.playbackDiagnosticUrlType}: ${diagnostics.urlType}',
-      '- ${l10n.playbackDiagnosticUrl}: ${diagnostics.sanitizedUrl}',
-      '- ${l10n.playbackDiagnosticHeaders}: '
-          '${diagnostics.headerKeys.isEmpty ? l10n.feedbackPackageNone : diagnostics.headerKeys.join(', ')}',
-      '- ${l10n.playbackDiagnosticState}: '
-          '${_playbackDiagnosticStateLabel(diagnostics.state)}',
-    ];
-
-    return lines.join('\n');
+    return buildPlaybackDiagnosticDetailLines(
+      l10n: l10n,
+      localeName: l10n.locale.toLanguageTag(),
+      diagnostics: diagnostics,
+      sourceLabelForId: _sourceLabel,
+      includeExactIso: true,
+    ).map((line) => '- $line').join('\n');
   }
 
   String _danmakuSummary() {
@@ -187,17 +158,6 @@ class FeedbackPackageCollector {
   }
 
   String _sourceLabel(String sourceId) => _sourceLabelForId(sourceId);
-
-  String _playbackDiagnosticStateLabel(PlaybackDiagnosticState state) {
-    return switch (state) {
-      PlaybackDiagnosticState.loading => l10n.playbackDiagnosticStateLoading,
-      PlaybackDiagnosticState.ready => l10n.playbackDiagnosticStateReady,
-      PlaybackDiagnosticState.playing => l10n.playbackDiagnosticStatePlaying,
-      PlaybackDiagnosticState.buffering =>
-        l10n.playbackDiagnosticStateBuffering,
-      PlaybackDiagnosticState.error => l10n.playbackDiagnosticStateError,
-    };
-  }
 
   String _sourceLabelOrUnavailable(String? sourceId) {
     if (sourceId == null) return l10n.feedbackPackageUnavailable;

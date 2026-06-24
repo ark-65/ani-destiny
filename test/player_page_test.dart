@@ -497,30 +497,40 @@ void main() {
     await tester.tap(copyDiagnosticsButton);
     await tester.pumpAndSettle();
 
+    final copied = copiedText!;
+
     expect(find.text('Playback diagnostics copied'), findsOneWidget);
-    expect(copiedText, startsWith('Playback diagnostics summary\n'));
-    expect(copiedText, contains('Captured at: $capturedAt'));
-    expect(copiedText, contains('Anime: Anime 1'));
-    expect(copiedText, contains('Episode: Episode 2'));
+    expect(copied, startsWith('Playback diagnostics summary\n'));
+    expect(copied, contains('Anime: Anime 1'));
+    expect(copied, contains('Episode: Episode 2'));
+    expect(copied, contains('Active playback source: Sakura Anime'));
+    expect(copied, contains('Line: Broken Line'));
+    expect(copied, contains('State: Failed'));
+    expect(copied, contains('Captured at: $capturedAt'));
     expect(
-      copiedText,
+      copied,
       contains('Selected playback source: Mock Anime Source'),
     );
     expect(
-      copiedText,
+      copied,
       contains(
         'Playback source status: Mock Anime Source is temporarily unavailable. AniDestiny is playing from Sakura Anime instead.',
       ),
     );
-    expect(copiedText, contains('Active playback source: Sakura Anime'));
-    expect(copiedText, contains('Line: Broken Line'));
-    expect(copiedText, contains('URL type: m3u8'));
+    expect(copied, contains('URL type: m3u8'));
     expect(
-      copiedText,
+      copied,
       contains('URL: https://cdn.example.test/.../broken.m3u8'),
     );
-    expect(copiedText, contains('Request header names: Referer'));
-    expect(copiedText, contains('State: Failed'));
+    expect(copied, contains('Request header names: Referer'));
+    expect(
+      copied.indexOf('Active playback source: Sakura Anime'),
+      lessThan(copied.indexOf('State: Failed')),
+    );
+    expect(
+      copied.indexOf('State: Failed'),
+      lessThan(copied.indexOf('Captured at: $capturedAt')),
+    );
   });
 
   testWidgets(

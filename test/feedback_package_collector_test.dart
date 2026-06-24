@@ -92,11 +92,16 @@ void main() {
     expect(markdown, contains('- Total tasks: 1'));
     expect(
       markdown,
+      contains('- Selected app source: sakura'),
+    );
+    expect(markdown, contains('- Active playback source: sakura'));
+    expect(markdown, contains('- State: Failed'));
+    expect(
+      markdown,
       contains(
         '- Captured at: ${formatPlaybackDiagnosticCapturedAt(now, localeName: l10n.locale.toLanguageTag(), includeExactIso: true)}',
       ),
     );
-    expect(markdown, contains('- Selected app source: sakura'));
     expect(markdown, contains('- Selected playback source: mock'));
     expect(
       markdown,
@@ -104,15 +109,25 @@ void main() {
         '- Playback source status: mock is temporarily unavailable. AniDestiny is playing from sakura instead.',
       ),
     );
-    expect(markdown, contains('- Active playback source: sakura'));
     expect(markdown, contains('- Request header names: Referer'));
-    expect(markdown, contains('- State: Failed'));
     expect(markdown, contains('- Failed: 1'));
     expect(markdown, contains('Reason: Network error'));
     expect(markdown, contains('https://example.test/.../detail.html'));
     expect(markdown, isNot(contains('https://cdn.example.test/video.mp4')));
     expect(lower, isNot(contains('token')));
     expect(lower, isNot(contains('secret')));
+    expect(
+      markdown.indexOf('- Active playback source: sakura'),
+      lessThan(markdown.indexOf('- State: Failed')),
+    );
+    expect(
+      markdown.indexOf('- State: Failed'),
+      lessThan(
+        markdown.indexOf(
+          '- Captured at: ${formatPlaybackDiagnosticCapturedAt(now, localeName: l10n.locale.toLanguageTag(), includeExactIso: true)}',
+        ),
+      ),
+    );
   });
 
   test('collector localizes copied feedback summary for Chinese support copy',
@@ -338,7 +353,7 @@ void main() {
     expect(
       markdown,
       contains(
-        '## Playback\n- Captured at: ${formatPlaybackDiagnosticCapturedAt(now, localeName: l10n.locale.toLanguageTag(), includeExactIso: true)}',
+        '## Playback\n- Anime: Anime\n- Episode: Episode 1\n- Active playback source: Sakura Anime\n- Line: Line 1\n- State: Playing\n- Captured at: ${formatPlaybackDiagnosticCapturedAt(now, localeName: l10n.locale.toLanguageTag(), includeExactIso: true)}',
       ),
     );
     expect(

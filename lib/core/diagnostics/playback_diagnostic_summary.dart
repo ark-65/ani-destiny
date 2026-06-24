@@ -7,58 +7,76 @@ String buildPlaybackDiagnosticSummary({
   required String localeName,
   required PlaybackDiagnostics diagnostics,
 }) {
+  return [
+    l10n.playbackDiagnosticsSummary,
+    ...buildPlaybackDiagnosticDetailLines(
+      l10n: l10n,
+      localeName: localeName,
+      diagnostics: diagnostics,
+      sourceLabelForId: l10n.sourceDisplayLabel,
+      includeExactIso: true,
+    ),
+  ].join('\n');
+}
+
+List<String> buildPlaybackDiagnosticDetailLines({
+  required AppLocalizations l10n,
+  required String localeName,
+  required PlaybackDiagnostics diagnostics,
+  required String Function(String sourceId) sourceLabelForId,
+  bool includeExactIso = false,
+}) {
   final lineTitle = diagnostics.playSourceTitle?.trim();
   final headers =
       diagnostics.headerKeys.isEmpty ? '-' : diagnostics.headerKeys.join(', ');
-  final summary = <String>[
-    l10n.playbackDiagnosticsSummary,
+  final lines = <String>[
     '${l10n.playbackDiagnosticAnime}: '
         '${_diagnosticContextValue(diagnostics.animeTitle)}',
     '${l10n.playbackDiagnosticEpisode}: '
         '${_diagnosticContextValue(diagnostics.episodeTitle)}',
-  ];
-
-  if (diagnostics.divergentSelectedAppSourceId()
-      case final selectedAppSourceId?) {
-    summary.add(
-      '${l10n.playbackDiagnosticSelectedAppSource}: '
-      '${l10n.sourceDisplayLabel(selectedAppSourceId)}',
-    );
-  }
-
-  if (diagnostics.usedSourceFallback && diagnostics.requestedSourceId != null) {
-    summary.add(
-      '${l10n.playbackDiagnosticRequestedSource}: '
-      '${l10n.sourceDisplayLabel(diagnostics.requestedSourceId!)}',
-    );
-    summary.add(
-      '${l10n.playbackDiagnosticSourceStatus}: '
-      '${l10n.sourceFallbackPlayerNotice(
-        l10n.sourceDisplayLabel(diagnostics.requestedSourceId!),
-        l10n.sourceDisplayLabel(diagnostics.sourceId),
-      )}',
-    );
-  }
-
-  summary.addAll([
+    '${l10n.playbackDiagnosticSource}: '
+        '${sourceLabelForId(diagnostics.sourceId)}',
+    '${l10n.playbackDiagnosticLine}: '
+        '${lineTitle == null || lineTitle.isEmpty ? '-' : lineTitle}',
+    '${l10n.playbackDiagnosticState}: '
+        '${_playbackDiagnosticStateLabel(l10n, diagnostics.state)}',
     '${l10n.playbackDiagnosticCapturedAt}: '
         '${formatPlaybackDiagnosticCapturedAt(
       diagnostics.capturedAt,
       localeName: localeName,
-      includeExactIso: true,
+      includeExactIso: includeExactIso,
     )}',
-    '${l10n.playbackDiagnosticSource}: '
-        '${l10n.sourceDisplayLabel(diagnostics.sourceId)}',
-    '${l10n.playbackDiagnosticLine}: '
-        '${lineTitle == null || lineTitle.isEmpty ? '-' : lineTitle}',
+  ];
+
+  if (diagnostics.usedSourceFallback && diagnostics.requestedSourceId != null) {
+    lines.add(
+      '${l10n.playbackDiagnosticRequestedSource}: '
+      '${sourceLabelForId(diagnostics.requestedSourceId!)}',
+    );
+    lines.add(
+      '${l10n.playbackDiagnosticSourceStatus}: '
+      '${l10n.sourceFallbackPlayerNotice(
+        sourceLabelForId(diagnostics.requestedSourceId!),
+        sourceLabelForId(diagnostics.sourceId),
+      )}',
+    );
+  }
+
+  if (diagnostics.divergentSelectedAppSourceId()
+      case final selectedAppSourceId?) {
+    lines.add(
+      '${l10n.playbackDiagnosticSelectedAppSource}: '
+      '${sourceLabelForId(selectedAppSourceId)}',
+    );
+  }
+
+  lines.addAll([
     '${l10n.playbackDiagnosticUrlType}: ${diagnostics.urlType}',
     '${l10n.playbackDiagnosticUrl}: ${diagnostics.sanitizedUrl}',
     '${l10n.playbackDiagnosticHeaders}: $headers',
-    '${l10n.playbackDiagnosticState}: '
-        '${_playbackDiagnosticStateLabel(l10n, diagnostics.state)}',
   ]);
 
-  return summary.join('\n');
+  return lines;
 }
 
 String _playbackDiagnosticStateLabel(
