@@ -368,7 +368,7 @@ void main() {
     expect(find.text('Selected playback source'), findsOneWidget);
     expect(
       find.text(
-        'The latest playback snapshot captured in this session appears here so you can confirm the title, playback source, line, and capture time first.\n\n$preview',
+        'The latest playback snapshot captured in this session appears here so you can confirm the title, playback source, playback state, line, and capture time first.\n\n$preview',
       ),
       findsOneWidget,
     );

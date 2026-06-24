@@ -7,6 +7,7 @@
 ## [Unreleased]
 
 ### 🐛 Fixed
+- Fixed Runtime diagnostics and the in-player Playback diagnostics sheet already previewing playback state while their lead-in copy still only told users to confirm the title, playback source, line, and capture time; both support surfaces now explicitly name playback state too, so the confirm-before-copy hint matches the snapshot users actually read.
 - Fixed the latest playback snapshot preview in Runtime diagnostics and the in-player Playback diagnostics sheet already showing the title, playback source, line, and capture time without also saying whether that captured moment was playing, buffering, or failed; both previews now include the playback state up front so users can judge the playback moment before copying support details.
 - Fixed Runtime diagnostics already showing the latest playback snapshot from the current session while still forcing users back to the player if they wanted to copy that same playback-only support summary; Settings can now copy the exact same playback diagnostics snapshot as the player sheet, keeping the playback moment users inspect aligned with the one they share.
 - Fixed the latest-playback preview in Runtime diagnostics and the in-player Playback diagnostics sheet still only showing the outcome when fallback or app-source drift had happened, without directly explaining why that playback landed on this source; the preview now leads with the active playback source and adds the playback source status plus `Selected app source at playback` when they are what actually explain the snapshot.

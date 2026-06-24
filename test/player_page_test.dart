@@ -31,6 +31,7 @@ import 'package:ani_destiny/features/player/presentation/pages/player_page.dart'
 import 'package:ani_destiny/features/player/presentation/providers/player_providers.dart';
 import 'package:ani_destiny/features/source/domain/entities/source_fallback_result.dart';
 import 'package:ani_destiny/features/source/presentation/providers/source_providers.dart';
+import 'package:ani_destiny/core/diagnostics/playback_diagnostic_snapshot_preview.dart';
 import 'package:ani_destiny/core/diagnostics/playback_diagnostic_time_formatter.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
@@ -259,16 +260,20 @@ void main() {
     expect(find.text(capturedAt), findsOneWidget);
     expect(
       find.text(
-        'The latest playback snapshot captured in this session appears here so you can confirm the title, playback source, line, and capture time first.',
+        'The latest playback snapshot captured in this session appears here so you can confirm the title, playback source, playback state, line, and capture time first.',
       ),
       findsOneWidget,
+    );
+    final preview = buildPlaybackDiagnosticSnapshotPreview(
+      l10n: const AppLocalizations(Locale('en')),
+      localeName: 'en',
+      diagnostics: diagnostics,
     );
     expect(
-      find.text(
-        'Latest playback: Anime 1 · Episode 2\nActive playback source: Sakura Anime · Broken Line\nCaptured at: $capturedAt',
-      ),
+      find.text(preview),
       findsOneWidget,
     );
+    expect(preview, contains('State: Failed'));
     expect(find.text('Anime'), findsOneWidget);
     expect(find.text('Anime 1'), findsAtLeastNWidgets(1));
     expect(find.text('Episode'), findsWidgets);

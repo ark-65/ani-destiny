@@ -251,6 +251,7 @@ void main() {
     const zh = AppLocalizations(Locale('zh'));
     expect(zh.runtimeDiagnosticsSubtitle, isNot(contains('Debug')));
     expect(zh.playbackDiagnosticsSummaryHint, isNot(contains('Debug')));
+    expect(zh.playbackDiagnosticsSummaryHint, contains('播放状态'));
     expect(zh.playbackDiagnosticsEmptyHint, isNot(contains('Debug')));
     expect(
       zh.playbackDiagnosticsSnapshotPreview(
@@ -263,6 +264,7 @@ void main() {
     );
     expect(zh.playbackDiagnosticsDebugHint, isNot(contains('Debug')));
     expect(zh.playbackDiagnosticsDebugHint, isNot(contains('header keys')));
+    expect(zh.playbackDiagnosticsDebugHint, contains('播放状态'));
     expect(zh.copyDiagnosticsPlaybackPendingHint, isNot(contains('Debug')));
     expect(zh.playbackDiagnosticCapturedAt, '采集时间');
     expect(zh.selectedAppSource, '应用所选数据源');
@@ -280,6 +282,7 @@ void main() {
 
     const en = AppLocalizations(Locale('en'));
     expect(en.playbackDiagnosticsSummaryHint, isNot(contains('player page')));
+    expect(en.playbackDiagnosticsSummaryHint, contains('playback state'));
     expect(
       en.playbackDiagnosticsSnapshotPreview(
         'Anime 1',
@@ -305,6 +308,7 @@ void main() {
       en.copyDiagnosticsPlaybackPendingHint,
       contains('playback section stays unavailable'),
     );
+    expect(en.playbackDiagnosticsDebugHint, contains('playback state'));
     expect(en.sourceOperationLabel('play_sources'), 'Playback lines');
     expect(en.yesNo(true), 'Yes');
     expect(en.yesNo(false), 'No');
@@ -312,6 +316,7 @@ void main() {
     const ja = AppLocalizations(Locale('ja'));
     expect(ja.runtimeDiagnosticsSubtitle, isNot(contains('Debug')));
     expect(ja.playbackDiagnosticsSummaryHint, isNot(contains('Debug')));
+    expect(ja.playbackDiagnosticsSummaryHint, contains('再生状態'));
     expect(ja.playbackDiagnosticsEmptyHint, isNot(contains('Debug')));
     expect(
       ja.playbackDiagnosticsSnapshotPreview(
@@ -324,6 +329,7 @@ void main() {
     );
     expect(ja.playbackDiagnosticsDebugHint, isNot(contains('Debug')));
     expect(ja.playbackDiagnosticsDebugHint, isNot(contains('header keys')));
+    expect(ja.playbackDiagnosticsDebugHint, contains('再生状態'));
     expect(ja.copyDiagnosticsPlaybackPendingHint, isNot(contains('Debug')));
     expect(ja.playbackDiagnosticCapturedAt, '取得時刻');
     expect(ja.selectedAppSource, '選択中のアプリソース');
