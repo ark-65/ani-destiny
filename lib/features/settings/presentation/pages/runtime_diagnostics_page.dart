@@ -146,11 +146,19 @@ class RuntimeDiagnosticsPage extends ConsumerWidget {
                       context.l10n.feedbackPackagePlaybackUnavailable,
                     ),
                   )
-                else
+                else ...[
+                  ListTile(
+                    leading: const Icon(Icons.link_outlined),
+                    title: Text(context.l10n.playbackDiagnosticsRequestDetails),
+                    subtitle: Text(
+                      context.l10n.playbackDiagnosticsRequestDetailsHint,
+                    ),
+                  ),
                   ..._playbackDiagnosticTiles(
                     context,
                     playbackDiagnostics,
                   ),
+                ],
               ],
             ),
             SettingsSection(
@@ -203,7 +211,7 @@ List<Widget> _playbackDiagnosticTiles(
   BuildContext context,
   PlaybackDiagnostics diagnostics,
 ) {
-  return buildPlaybackDiagnosticSurfaceDetailEntries(
+  return buildPlaybackDiagnosticRequestDetailEntries(
     l10n: context.l10n,
     localeName: Localizations.localeOf(context).toLanguageTag(),
     diagnostics: diagnostics,

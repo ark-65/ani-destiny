@@ -120,7 +120,7 @@ void main() {
   test('surface detail entries keep only transport details below the preview',
       () {
     const l10n = AppLocalizations(Locale('en'));
-    final entries = buildPlaybackDiagnosticSurfaceDetailEntries(
+    final entries = buildPlaybackDiagnosticRequestDetailEntries(
       l10n: l10n,
       localeName: 'en',
       diagnostics: PlaybackDiagnostics(

@@ -399,6 +399,13 @@ void main() {
     );
     expect(find.text('Selected playback source'), findsNothing);
     expect(find.text('Line 1'), findsNothing);
+    expect(find.text('Playback request details'), findsOneWidget);
+    expect(
+      find.text(
+        'These sanitized request details help confirm how the latest playback was requested.',
+      ),
+      findsOneWidget,
+    );
     expect(find.text('URL type'), findsOneWidget);
     expect(
       find.text('https://cdn.example.test/.../episode-2.m3u8'),

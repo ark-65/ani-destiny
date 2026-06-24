@@ -282,6 +282,13 @@ void main() {
     expect(find.text('URL type'), findsOneWidget);
     expect(find.text('URL'), findsOneWidget);
     expect(find.text('Request header names'), findsOneWidget);
+    expect(find.text('Playback request details'), findsOneWidget);
+    expect(
+      find.text(
+        'These sanitized request details help confirm how the latest playback was requested.',
+      ),
+      findsOneWidget,
+    );
     expect(
       find.text(
         'Copies a sanitized summary of the latest playback without sensitive values.',
@@ -453,6 +460,7 @@ void main() {
     );
     expect(find.text('State'), findsNothing);
     expect(find.text('Failed'), findsNothing);
+    expect(find.text('Playback request details'), findsOneWidget);
     expect(find.text('URL type'), findsOneWidget);
     expect(find.text('Request header names'), findsOneWidget);
     expect(find.text('error'), findsNothing);

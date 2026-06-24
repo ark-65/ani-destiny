@@ -321,6 +321,10 @@ class AppLocalizations {
   String get playbackDiagnosticsLatestPlayback =>
       _t('playbackDiagnosticsLatestPlayback');
   String get playbackDiagnosticsSummary => _t('playbackDiagnosticsSummary');
+  String get playbackDiagnosticsRequestDetails =>
+      _t('playbackDiagnosticsRequestDetails');
+  String get playbackDiagnosticsRequestDetailsHint =>
+      _t('playbackDiagnosticsRequestDetailsHint');
   String get playbackDiagnosticsEmptyHint => _t('playbackDiagnosticsEmptyHint');
   String get playbackDiagnosticsSnapshotHint =>
       _t('playbackDiagnosticsSnapshotHint');
@@ -652,6 +656,9 @@ const _localizedValues = {
     'latestSourceDiagnostics': '最近数据源诊断',
     'playbackDiagnosticsLatestPlayback': '最近一次播放',
     'playbackDiagnosticsSummary': '播放诊断摘要',
+    'playbackDiagnosticsRequestDetails': '播放请求细节',
+    'playbackDiagnosticsRequestDetailsHint':
+        '下面这些是最近一次播放的已脱敏请求细节，主要用于确认线路和请求是否正常。',
     'playbackDiagnosticsEmptyHint': '当前会话还没有播放快照；先播放一次后，这里会显示最近一次播放现场。',
     'playbackDiagnosticsSnapshotHint':
         '这里展示的是当前会话里捕获的最近一次播放现场；先确认作品、播放源、状态、线路和采集时间。',
@@ -947,6 +954,9 @@ const _localizedValues = {
     'latestSourceDiagnostics': 'Latest source diagnostics',
     'playbackDiagnosticsLatestPlayback': 'Latest playback',
     'playbackDiagnosticsSummary': 'Playback diagnostics summary',
+    'playbackDiagnosticsRequestDetails': 'Playback request details',
+    'playbackDiagnosticsRequestDetailsHint':
+        'These sanitized request details help confirm how the latest playback was requested.',
     'playbackDiagnosticsEmptyHint':
         'No playback snapshot has been captured in this session yet. Start playback once and the latest playback moment will appear here.',
     'playbackDiagnosticsSnapshotHint':
@@ -1230,6 +1240,9 @@ const _localizedValues = {
     'latestSourceDiagnostics': '最近のソース診断',
     'playbackDiagnosticsLatestPlayback': '最新の再生',
     'playbackDiagnosticsSummary': '再生診断の概要',
+    'playbackDiagnosticsRequestDetails': '再生リクエストの詳細',
+    'playbackDiagnosticsRequestDetailsHint':
+        '以下は最新の再生で使われた、機密値を除いたリクエスト詳細です。ラインやリクエストの状態確認に使えます。',
     'playbackDiagnosticsEmptyHint':
         'このセッションではまだ再生スナップショットがありません。一度再生すると、ここに最新の再生状況が表示されます。',
     'playbackDiagnosticsSnapshotHint':

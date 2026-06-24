@@ -252,6 +252,11 @@ void main() {
     expect(zh.runtimeDiagnosticsSubtitle, isNot(contains('Debug')));
     expect(zh.playbackDiagnosticsEmptyHint, isNot(contains('Debug')));
     expect(zh.playbackDiagnosticsLatestPlayback, '最近一次播放');
+    expect(zh.playbackDiagnosticsRequestDetails, '播放请求细节');
+    expect(
+      zh.playbackDiagnosticsRequestDetailsHint,
+      '下面这些是最近一次播放的已脱敏请求细节，主要用于确认线路和请求是否正常。',
+    );
     expect(
       zh.playbackDiagnosticsSnapshotHint,
       '这里展示的是当前会话里捕获的最近一次播放现场；先确认作品、播放源、状态、线路和采集时间。',
@@ -284,6 +289,11 @@ void main() {
 
     const en = AppLocalizations(Locale('en'));
     expect(en.playbackDiagnosticsLatestPlayback, 'Latest playback');
+    expect(en.playbackDiagnosticsRequestDetails, 'Playback request details');
+    expect(
+      en.playbackDiagnosticsRequestDetailsHint,
+      'These sanitized request details help confirm how the latest playback was requested.',
+    );
     expect(
       en.playbackDiagnosticsSnapshotHint,
       'This is the latest playback snapshot captured in this session. Confirm the title, playback source, state, line, and capture time first.',
@@ -329,6 +339,11 @@ void main() {
     expect(ja.runtimeDiagnosticsSubtitle, isNot(contains('Debug')));
     expect(ja.playbackDiagnosticsEmptyHint, isNot(contains('Debug')));
     expect(ja.playbackDiagnosticsLatestPlayback, '最新の再生');
+    expect(ja.playbackDiagnosticsRequestDetails, '再生リクエストの詳細');
+    expect(
+      ja.playbackDiagnosticsRequestDetailsHint,
+      '以下は最新の再生で使われた、機密値を除いたリクエスト詳細です。ラインやリクエストの状態確認に使えます。',
+    );
     expect(
       ja.playbackDiagnosticsSnapshotHint,
       'ここには、このセッションで取得した最新の再生状況を表示します。作品名、再生ソース、状態、ライン、取得時刻を先に確認できます。',

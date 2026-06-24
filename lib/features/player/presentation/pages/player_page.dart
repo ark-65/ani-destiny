@@ -667,7 +667,7 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
 
   void _showPlaybackDiagnostics() {
     final diagnostics = _recordPlaybackDiagnostics();
-    final detailEntries = buildPlaybackDiagnosticSurfaceDetailEntries(
+    final detailEntries = buildPlaybackDiagnosticRequestDetailEntries(
       l10n: context.l10n,
       localeName: Localizations.localeOf(context).toLanguageTag(),
       diagnostics: diagnostics,
@@ -711,13 +711,27 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
                     ),
                     style: Theme.of(context).textTheme.bodyMedium,
                   ),
-                  const SizedBox(height: 12),
-                  ...detailEntries.map(
-                    (entry) => _DiagnosticRow(
-                      label: entry.label,
-                      value: entry.value,
+                  if (detailEntries.isNotEmpty) ...[
+                    const SizedBox(height: 16),
+                    const Divider(),
+                    const SizedBox(height: 12),
+                    Text(
+                      context.l10n.playbackDiagnosticsRequestDetails,
+                      style: Theme.of(context).textTheme.titleMedium,
                     ),
-                  ),
+                    const SizedBox(height: 8),
+                    Text(
+                      context.l10n.playbackDiagnosticsRequestDetailsHint,
+                      style: Theme.of(context).textTheme.bodySmall,
+                    ),
+                    const SizedBox(height: 8),
+                    ...detailEntries.map(
+                      (entry) => _DiagnosticRow(
+                        label: entry.label,
+                        value: entry.value,
+                      ),
+                    ),
+                  ],
                   const SizedBox(height: 12),
                   Text(
                     context.l10n.playbackDiagnosticsPrivacyNote,

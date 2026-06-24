@@ -29,7 +29,7 @@ class PlaybackDiagnosticDetailEntry {
   final String value;
 }
 
-const _surfaceDetailFields = {
+const _requestDetailFields = {
   PlaybackDiagnosticDetailField.urlType,
   PlaybackDiagnosticDetailField.url,
   PlaybackDiagnosticDetailField.headers,
@@ -156,7 +156,7 @@ List<String> buildPlaybackDiagnosticDetailLines({
 }
 
 List<PlaybackDiagnosticDetailEntry>
-    buildPlaybackDiagnosticSurfaceDetailEntries({
+    buildPlaybackDiagnosticRequestDetailEntries({
   required AppLocalizations l10n,
   required String localeName,
   required PlaybackDiagnostics diagnostics,
@@ -167,7 +167,7 @@ List<PlaybackDiagnosticDetailEntry>
     localeName: localeName,
     diagnostics: diagnostics,
     sourceLabelForId: sourceLabelForId,
-  ).where((entry) => _surfaceDetailFields.contains(entry.field)).toList(
+  ).where((entry) => _requestDetailFields.contains(entry.field)).toList(
         growable: false,
       );
 }
