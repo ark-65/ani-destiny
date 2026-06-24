@@ -365,12 +365,8 @@ void main() {
     expect(preview, contains('State: Buffering'));
     expect(preview, contains('Anime 1'));
     expect(preview, contains('Episode 2'));
-    expect(
-      find.text(
-        'The latest playback snapshot captured in this session appears here so you can confirm the title, playback source, playback state, line, and capture time first.\n\n$preview',
-      ),
-      findsOneWidget,
-    );
+    expect(find.text('Playback diagnostics'), findsOneWidget);
+    expect(find.text('Latest playback'), findsOneWidget);
     expect(find.textContaining(preview), findsOneWidget);
     expect(find.text('Anime'), findsNothing);
     expect(find.text('Episode'), findsNothing);

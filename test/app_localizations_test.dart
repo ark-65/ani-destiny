@@ -250,9 +250,8 @@ void main() {
   test('runtime diagnostics helpers keep support copy localized', () {
     const zh = AppLocalizations(Locale('zh'));
     expect(zh.runtimeDiagnosticsSubtitle, isNot(contains('Debug')));
-    expect(zh.playbackDiagnosticsSummaryHint, isNot(contains('Debug')));
-    expect(zh.playbackDiagnosticsSummaryHint, contains('播放状态'));
     expect(zh.playbackDiagnosticsEmptyHint, isNot(contains('Debug')));
+    expect(zh.playbackDiagnosticsLatestPlayback, '最近一次播放');
     expect(
       zh.playbackDiagnosticsSnapshotPreview(
         '番剧 A',
@@ -262,9 +261,6 @@ void main() {
       ),
       '最近一次播放：番剧 A · 第 2 集\n当前播放源：Sakura Anime · 线路 1\n状态：缓冲中\n采集时间：2026/6/17 09:02',
     );
-    expect(zh.playbackDiagnosticsDebugHint, isNot(contains('Debug')));
-    expect(zh.playbackDiagnosticsDebugHint, isNot(contains('header keys')));
-    expect(zh.playbackDiagnosticsDebugHint, contains('播放状态'));
     expect(zh.copyDiagnosticsPlaybackPendingHint, isNot(contains('Debug')));
     expect(zh.playbackDiagnosticCapturedAt, '采集时间');
     expect(zh.selectedAppSource, '应用所选数据源');
@@ -281,8 +277,7 @@ void main() {
     expect(zh.sourceOperationLabel('detail'), '详情');
 
     const en = AppLocalizations(Locale('en'));
-    expect(en.playbackDiagnosticsSummaryHint, isNot(contains('player page')));
-    expect(en.playbackDiagnosticsSummaryHint, contains('playback state'));
+    expect(en.playbackDiagnosticsLatestPlayback, 'Latest playback');
     expect(
       en.playbackDiagnosticsSnapshotPreview(
         'Anime 1',
@@ -308,16 +303,14 @@ void main() {
       en.copyDiagnosticsPlaybackPendingHint,
       contains('playback section stays unavailable'),
     );
-    expect(en.playbackDiagnosticsDebugHint, contains('playback state'));
     expect(en.sourceOperationLabel('play_sources'), 'Playback lines');
     expect(en.yesNo(true), 'Yes');
     expect(en.yesNo(false), 'No');
 
     const ja = AppLocalizations(Locale('ja'));
     expect(ja.runtimeDiagnosticsSubtitle, isNot(contains('Debug')));
-    expect(ja.playbackDiagnosticsSummaryHint, isNot(contains('Debug')));
-    expect(ja.playbackDiagnosticsSummaryHint, contains('再生状態'));
     expect(ja.playbackDiagnosticsEmptyHint, isNot(contains('Debug')));
+    expect(ja.playbackDiagnosticsLatestPlayback, '最新の再生');
     expect(
       ja.playbackDiagnosticsSnapshotPreview(
         'アニメ 1',
@@ -327,9 +320,6 @@ void main() {
       ),
       '最新の再生: アニメ 1 · 第 2 話\n現在の再生ソース: Sakura Anime · ライン 1\n状態: バッファ中\n取得時刻: 2026/6/17 1:02',
     );
-    expect(ja.playbackDiagnosticsDebugHint, isNot(contains('Debug')));
-    expect(ja.playbackDiagnosticsDebugHint, isNot(contains('header keys')));
-    expect(ja.playbackDiagnosticsDebugHint, contains('再生状態'));
     expect(ja.copyDiagnosticsPlaybackPendingHint, isNot(contains('Debug')));
     expect(ja.playbackDiagnosticCapturedAt, '取得時刻');
     expect(ja.selectedAppSource, '選択中のアプリソース');

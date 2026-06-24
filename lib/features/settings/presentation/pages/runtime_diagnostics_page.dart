@@ -104,11 +104,11 @@ class RuntimeDiagnosticsPage extends ConsumerWidget {
               ],
             ),
             SettingsSection(
-              title: context.l10n.playbackDiagnosticsSummary,
+              title: context.l10n.playbackDiagnostics,
               children: [
                 ListTile(
                   leading: const Icon(Icons.play_circle_outline),
-                  title: Text(context.l10n.playbackDiagnosticsSummary),
+                  title: Text(context.l10n.playbackDiagnosticsLatestPlayback),
                   subtitle: Text(
                     _playbackSnapshotSubtitle(context, playbackDiagnostics),
                   ),
@@ -243,7 +243,7 @@ String _playbackSnapshotSubtitle(
     localeName: Localizations.localeOf(context).toLanguageTag(),
     diagnostics: diagnostics,
   );
-  return '${context.l10n.playbackDiagnosticsSummaryHint}\n\n$preview';
+  return preview;
 }
 
 class _SourceHealthTile extends StatelessWidget {

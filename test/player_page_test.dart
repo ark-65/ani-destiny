@@ -256,12 +256,7 @@ void main() {
       diagnostics!.capturedAt,
     );
 
-    expect(
-      find.text(
-        'The latest playback snapshot captured in this session appears here so you can confirm the title, playback source, playback state, line, and capture time first.',
-      ),
-      findsOneWidget,
-    );
+    expect(find.text('Latest playback'), findsOneWidget);
     final preview = buildPlaybackDiagnosticSnapshotPreview(
       l10n: const AppLocalizations(Locale('en')),
       localeName: 'en',

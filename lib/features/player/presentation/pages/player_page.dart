@@ -692,10 +692,10 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
                   ),
                   const SizedBox(height: 12),
                   Text(
-                    context.l10n.playbackDiagnosticsDebugHint,
-                    style: Theme.of(context).textTheme.bodyMedium,
+                    context.l10n.playbackDiagnosticsLatestPlayback,
+                    style: Theme.of(context).textTheme.titleMedium,
                   ),
-                  const SizedBox(height: 12),
+                  const SizedBox(height: 8),
                   Text(
                     buildPlaybackDiagnosticSnapshotPreview(
                       l10n: context.l10n,
