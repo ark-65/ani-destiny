@@ -247,7 +247,7 @@ String _playbackSnapshotSubtitle(
     localeName: Localizations.localeOf(context).toLanguageTag(),
     diagnostics: diagnostics,
   );
-  return preview;
+  return '${context.l10n.playbackDiagnosticsSnapshotHint}\n\n$preview';
 }
 
 class _SourceHealthTile extends StatelessWidget {

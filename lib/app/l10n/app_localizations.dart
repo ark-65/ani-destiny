@@ -322,6 +322,8 @@ class AppLocalizations {
       _t('playbackDiagnosticsLatestPlayback');
   String get playbackDiagnosticsSummary => _t('playbackDiagnosticsSummary');
   String get playbackDiagnosticsEmptyHint => _t('playbackDiagnosticsEmptyHint');
+  String get playbackDiagnosticsSnapshotHint =>
+      _t('playbackDiagnosticsSnapshotHint');
   String playbackDiagnosticsSnapshotPreview(
     String animeTitle,
     String episodeTitle,
@@ -651,6 +653,8 @@ const _localizedValues = {
     'playbackDiagnosticsLatestPlayback': '最近一次播放',
     'playbackDiagnosticsSummary': '播放诊断摘要',
     'playbackDiagnosticsEmptyHint': '当前会话还没有播放快照；先播放一次后，这里会显示最近一次播放现场。',
+    'playbackDiagnosticsSnapshotHint':
+        '这里展示的是当前会话里捕获的最近一次播放现场；先确认作品、播放源、状态、线路和采集时间。',
     'playbackDiagnosticsSnapshotPreview':
         '{animeTitle} · {episodeTitle}\n{playbackContext}\n{capturedAt}',
     'sourceFallbackPlayerNotice':
@@ -945,6 +949,8 @@ const _localizedValues = {
     'playbackDiagnosticsSummary': 'Playback diagnostics summary',
     'playbackDiagnosticsEmptyHint':
         'No playback snapshot has been captured in this session yet. Start playback once and the latest playback moment will appear here.',
+    'playbackDiagnosticsSnapshotHint':
+        'This is the latest playback snapshot captured in this session. Confirm the title, playback source, state, line, and capture time first.',
     'playbackDiagnosticsSnapshotPreview':
         '{animeTitle} · {episodeTitle}\n{playbackContext}\n{capturedAt}',
     'sourceFallbackPlayerNotice':
@@ -1226,6 +1232,8 @@ const _localizedValues = {
     'playbackDiagnosticsSummary': '再生診断の概要',
     'playbackDiagnosticsEmptyHint':
         'このセッションではまだ再生スナップショットがありません。一度再生すると、ここに最新の再生状況が表示されます。',
+    'playbackDiagnosticsSnapshotHint':
+        'ここには、このセッションで取得した最新の再生状況を表示します。作品名、再生ソース、状態、ライン、取得時刻を先に確認できます。',
     'playbackDiagnosticsSnapshotPreview':
         '{animeTitle} · {episodeTitle}\n{playbackContext}\n{capturedAt}',
     'sourceFallbackPlayerNotice':

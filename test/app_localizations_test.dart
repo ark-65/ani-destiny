@@ -253,6 +253,10 @@ void main() {
     expect(zh.playbackDiagnosticsEmptyHint, isNot(contains('Debug')));
     expect(zh.playbackDiagnosticsLatestPlayback, '最近一次播放');
     expect(
+      zh.playbackDiagnosticsSnapshotHint,
+      '这里展示的是当前会话里捕获的最近一次播放现场；先确认作品、播放源、状态、线路和采集时间。',
+    );
+    expect(
       zh.playbackDiagnosticsSnapshotPreview(
         '番剧 A',
         '第 2 集',
@@ -280,6 +284,10 @@ void main() {
 
     const en = AppLocalizations(Locale('en'));
     expect(en.playbackDiagnosticsLatestPlayback, 'Latest playback');
+    expect(
+      en.playbackDiagnosticsSnapshotHint,
+      'This is the latest playback snapshot captured in this session. Confirm the title, playback source, state, line, and capture time first.',
+    );
     expect(
       en.playbackDiagnosticsSnapshotPreview(
         'Anime 1',
@@ -321,6 +329,10 @@ void main() {
     expect(ja.runtimeDiagnosticsSubtitle, isNot(contains('Debug')));
     expect(ja.playbackDiagnosticsEmptyHint, isNot(contains('Debug')));
     expect(ja.playbackDiagnosticsLatestPlayback, '最新の再生');
+    expect(
+      ja.playbackDiagnosticsSnapshotHint,
+      'ここには、このセッションで取得した最新の再生状況を表示します。作品名、再生ソース、状態、ライン、取得時刻を先に確認できます。',
+    );
     expect(
       ja.copyPlaybackDiagnosticsPendingHint,
       'このセッションで一度再生すると、最新の再生診断をコピーできます。',

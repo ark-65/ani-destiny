@@ -379,6 +379,12 @@ void main() {
     expect(preview, contains('Episode 2'));
     expect(find.text('Playback diagnostics'), findsOneWidget);
     expect(find.text('Latest playback'), findsOneWidget);
+    expect(
+      find.textContaining(
+        'This is the latest playback snapshot captured in this session.',
+      ),
+      findsOneWidget,
+    );
     expect(find.textContaining(preview), findsOneWidget);
     expect(find.textContaining('Latest playback:'), findsNothing);
     expect(find.text('Anime'), findsNothing);
@@ -451,6 +457,12 @@ void main() {
     expect(find.text('Selected app source'), findsOneWidget);
     expect(find.text('Selected app source at playback'), findsNothing);
     expect(find.text('Remote Source Proxy'), findsOneWidget);
+    expect(
+      find.textContaining(
+        'This is the latest playback snapshot captured in this session.',
+      ),
+      findsOneWidget,
+    );
     expect(find.text('Selected playback source'), findsNothing);
     expect(
       find.textContaining(

@@ -7,6 +7,7 @@
 ## [Unreleased]
 
 ### 🐛 Fixed
+- Fixed Runtime diagnostics and the in-player Playback diagnostics sheet already surfacing the latest playback snapshot without first plainly saying that it was the captured playback moment from the current session; both surfaces now add the same calm session-snapshot hint before the title, source, state, line, and capture time so users can confirm they are looking at the playback they just experienced.
 - Fixed Runtime diagnostics and the in-player Playback diagnostics sheet already using `Latest playback` as the section title while the preview body repeated the same label again before the captured anime and episode; the snapshot now starts directly with the playback facts so both diagnostics surfaces feel calmer before the support details.
 - Fixed the in-player Playback diagnostics sheet and the Settings Runtime diagnostics action still describing `Copy playback diagnostics` like a full feedback summary even though that action only exports the latest playback snapshot; both support surfaces now say plainly that they copy a sanitized summary of the latest playback so users know exactly what they are about to share.
 - Fixed `Copy playback diagnostics` in Settings `Runtime diagnostics` still turning disabled when the current session had no playback snapshot while keeping only the generic sanitization note, which left users guessing why copying was unavailable; the disabled action now says plainly that users need one playback in the current session before the latest playback diagnostics can be copied.

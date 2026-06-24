@@ -257,6 +257,12 @@ void main() {
     );
 
     expect(find.text('Latest playback'), findsOneWidget);
+    expect(
+      find.text(
+        'This is the latest playback snapshot captured in this session. Confirm the title, playback source, state, line, and capture time first.',
+      ),
+      findsOneWidget,
+    );
     final preview = buildPlaybackDiagnosticSnapshotPreview(
       l10n: const AppLocalizations(Locale('en')),
       localeName: 'en',

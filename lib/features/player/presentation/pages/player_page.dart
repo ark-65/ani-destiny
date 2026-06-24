@@ -697,6 +697,11 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
                   ),
                   const SizedBox(height: 8),
                   Text(
+                    context.l10n.playbackDiagnosticsSnapshotHint,
+                    style: Theme.of(context).textTheme.bodySmall,
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
                     buildPlaybackDiagnosticSnapshotPreview(
                       l10n: context.l10n,
                       localeName: Localizations.localeOf(
