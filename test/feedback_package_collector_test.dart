@@ -353,7 +353,7 @@ void main() {
     expect(
       markdown,
       contains(
-        '## Playback\n- Anime: Anime\n- Episode: Episode 1\n- Active playback source: Sakura Anime\n- Line: Line 1\n- State: Playing\n- Captured at: ${formatPlaybackDiagnosticCapturedAt(now, localeName: l10n.locale.toLanguageTag(), includeExactIso: true)}',
+        '## Playback\n- Anime: Anime\n- Episode: Episode 1\n- Selected app source at playback: Remote Source Proxy\n- Selected playback source: Mock Anime Source\n- Active playback source: Sakura Anime\n- Playback source status: Mock Anime Source is temporarily unavailable. AniDestiny is playing from Sakura Anime instead.\n- Line: Line 1\n- State: Playing\n- Captured at: ${formatPlaybackDiagnosticCapturedAt(now, localeName: l10n.locale.toLanguageTag(), includeExactIso: true)}',
       ),
     );
     expect(

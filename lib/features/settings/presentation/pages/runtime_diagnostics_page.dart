@@ -8,7 +8,6 @@ import '../../../../app/l10n/app_localizations.dart';
 import '../../../../core/diagnostics/diagnostic_sanitizer.dart';
 import '../../../../core/diagnostics/playback_diagnostic_snapshot_preview.dart';
 import '../../../../core/diagnostics/playback_diagnostic_summary.dart';
-import '../../../../core/diagnostics/playback_diagnostic_time_formatter.dart';
 import '../../../../core/utils/url_sanitizer.dart';
 import '../../../../shared/widgets/adaptive_page.dart';
 import '../../../danmaku/presentation/providers/danmaku_providers.dart';
@@ -200,104 +199,36 @@ List<Widget> _playbackDiagnosticTiles(
   BuildContext context,
   PlaybackDiagnostics diagnostics,
 ) {
-  final lineTitle = diagnostics.playSourceTitle?.trim();
-  final lineValue = lineTitle == null || lineTitle.isEmpty ? '-' : lineTitle;
-  final headers =
-      diagnostics.headerKeys.isEmpty ? '-' : diagnostics.headerKeys.join(', ');
-  final selectedAppSourceId = diagnostics.divergentSelectedAppSourceId();
-
-  return [
-    _DiagnosticTile(
-      label: context.l10n.playbackDiagnosticCapturedAt,
-      value: _formatCapturedAt(context, diagnostics.capturedAt),
-      icon: Icons.schedule_outlined,
-    ),
-    _DiagnosticTile(
-      label: context.l10n.playbackDiagnosticAnime,
-      value: _diagnosticContextValue(diagnostics.animeTitle),
-      icon: Icons.movie_outlined,
-    ),
-    _DiagnosticTile(
-      label: context.l10n.playbackDiagnosticEpisode,
-      value: _diagnosticContextValue(diagnostics.episodeTitle),
-      icon: Icons.live_tv_outlined,
-    ),
-    if (selectedAppSourceId != null)
-      _DiagnosticTile(
-        label: context.l10n.playbackDiagnosticSelectedAppSource,
-        value: context.l10n.sourceDisplayLabel(selectedAppSourceId),
-        icon: Icons.route_outlined,
-      ),
-    if (diagnostics.usedSourceFallback && diagnostics.requestedSourceId != null)
-      _DiagnosticTile(
-        label: context.l10n.playbackDiagnosticRequestedSource,
-        value: context.l10n.sourceDisplayLabel(diagnostics.requestedSourceId!),
-        icon: Icons.compare_arrows_outlined,
-      ),
-    if (diagnostics.usedSourceFallback && diagnostics.requestedSourceId != null)
-      _DiagnosticTile(
-        label: context.l10n.playbackDiagnosticSourceStatus,
-        value: context.l10n.sourceFallbackPlayerNotice(
-          context.l10n.sourceDisplayLabel(diagnostics.requestedSourceId!),
-          context.l10n.sourceDisplayLabel(diagnostics.sourceId),
-        ),
-        icon: Icons.swap_horiz_outlined,
-      ),
-    _DiagnosticTile(
-      label: context.l10n.playbackDiagnosticSource,
-      value: context.l10n.sourceDisplayLabel(diagnostics.sourceId),
-      icon: Icons.source_outlined,
-    ),
-    _DiagnosticTile(
-      label: context.l10n.playbackDiagnosticLine,
-      value: lineValue,
-      icon: Icons.playlist_play_outlined,
-    ),
-    _DiagnosticTile(
-      label: context.l10n.playbackDiagnosticUrlType,
-      value: diagnostics.urlType,
-      icon: Icons.link_outlined,
-    ),
-    _DiagnosticTile(
-      label: context.l10n.playbackDiagnosticUrl,
-      value: diagnostics.sanitizedUrl,
-      icon: Icons.language_outlined,
-    ),
-    _DiagnosticTile(
-      label: context.l10n.playbackDiagnosticHeaders,
-      value: headers,
-      icon: Icons.key_outlined,
-    ),
-    _DiagnosticTile(
-      label: context.l10n.playbackDiagnosticState,
-      value: _playbackDiagnosticStateLabel(context, diagnostics.state),
-      icon: Icons.monitor_heart_outlined,
-    ),
-  ];
+  return buildPlaybackDiagnosticDetailEntries(
+    l10n: context.l10n,
+    localeName: Localizations.localeOf(context).toLanguageTag(),
+    diagnostics: diagnostics,
+    sourceLabelForId: context.l10n.sourceDisplayLabel,
+  ).map((entry) {
+    return _DiagnosticTile(
+      label: entry.label,
+      value: entry.value,
+      icon: _playbackDiagnosticIcon(entry.field),
+    );
+  }).toList(growable: false);
 }
 
-String _playbackDiagnosticStateLabel(
-  BuildContext context,
-  PlaybackDiagnosticState state,
-) {
-  return switch (state) {
-    PlaybackDiagnosticState.loading =>
-      context.l10n.playbackDiagnosticStateLoading,
-    PlaybackDiagnosticState.ready => context.l10n.playbackDiagnosticStateReady,
-    PlaybackDiagnosticState.playing =>
-      context.l10n.playbackDiagnosticStatePlaying,
-    PlaybackDiagnosticState.buffering =>
-      context.l10n.playbackDiagnosticStateBuffering,
-    PlaybackDiagnosticState.error => context.l10n.playbackDiagnosticStateError,
+IconData _playbackDiagnosticIcon(PlaybackDiagnosticDetailField field) {
+  return switch (field) {
+    PlaybackDiagnosticDetailField.anime => Icons.movie_outlined,
+    PlaybackDiagnosticDetailField.episode => Icons.live_tv_outlined,
+    PlaybackDiagnosticDetailField.selectedAppSource => Icons.route_outlined,
+    PlaybackDiagnosticDetailField.requestedSource =>
+      Icons.compare_arrows_outlined,
+    PlaybackDiagnosticDetailField.source => Icons.source_outlined,
+    PlaybackDiagnosticDetailField.sourceStatus => Icons.swap_horiz_outlined,
+    PlaybackDiagnosticDetailField.line => Icons.playlist_play_outlined,
+    PlaybackDiagnosticDetailField.state => Icons.monitor_heart_outlined,
+    PlaybackDiagnosticDetailField.capturedAt => Icons.schedule_outlined,
+    PlaybackDiagnosticDetailField.urlType => Icons.link_outlined,
+    PlaybackDiagnosticDetailField.url => Icons.language_outlined,
+    PlaybackDiagnosticDetailField.headers => Icons.key_outlined,
   };
-}
-
-String _diagnosticContextValue(String? value) {
-  final trimmed = value?.trim();
-  if (trimmed == null || trimmed.isEmpty) {
-    return '-';
-  }
-  return trimmed;
 }
 
 String _playbackSnapshotSubtitle(
@@ -313,13 +244,6 @@ String _playbackSnapshotSubtitle(
     diagnostics: diagnostics,
   );
   return '${context.l10n.playbackDiagnosticsSummaryHint}\n\n$preview';
-}
-
-String _formatCapturedAt(BuildContext context, DateTime capturedAt) {
-  return formatPlaybackDiagnosticCapturedAt(
-    capturedAt,
-    localeName: Localizations.localeOf(context).toLanguageTag(),
-  );
 }
 
 class _SourceHealthTile extends StatelessWidget {

@@ -2,6 +2,33 @@ import '../../app/l10n/app_localizations.dart';
 import '../../features/player/domain/services/playback_diagnostics.dart';
 import 'playback_diagnostic_time_formatter.dart';
 
+enum PlaybackDiagnosticDetailField {
+  anime,
+  episode,
+  selectedAppSource,
+  requestedSource,
+  source,
+  sourceStatus,
+  line,
+  state,
+  capturedAt,
+  urlType,
+  url,
+  headers,
+}
+
+class PlaybackDiagnosticDetailEntry {
+  const PlaybackDiagnosticDetailEntry({
+    required this.field,
+    required this.label,
+    required this.value,
+  });
+
+  final PlaybackDiagnosticDetailField field;
+  final String label;
+  final String value;
+}
+
 String buildPlaybackDiagnosticSummary({
   required AppLocalizations l10n,
   required String localeName,
@@ -9,17 +36,17 @@ String buildPlaybackDiagnosticSummary({
 }) {
   return [
     l10n.playbackDiagnosticsSummary,
-    ...buildPlaybackDiagnosticDetailLines(
+    ...buildPlaybackDiagnosticDetailEntries(
       l10n: l10n,
       localeName: localeName,
       diagnostics: diagnostics,
       sourceLabelForId: l10n.sourceDisplayLabel,
       includeExactIso: true,
-    ),
+    ).map((entry) => '${entry.label}: ${entry.value}'),
   ].join('\n');
 }
 
-List<String> buildPlaybackDiagnosticDetailLines({
+List<PlaybackDiagnosticDetailEntry> buildPlaybackDiagnosticDetailEntries({
   required AppLocalizations l10n,
   required String localeName,
   required PlaybackDiagnostics diagnostics,
@@ -29,54 +56,97 @@ List<String> buildPlaybackDiagnosticDetailLines({
   final lineTitle = diagnostics.playSourceTitle?.trim();
   final headers =
       diagnostics.headerKeys.isEmpty ? '-' : diagnostics.headerKeys.join(', ');
-  final lines = <String>[
-    '${l10n.playbackDiagnosticAnime}: '
-        '${_diagnosticContextValue(diagnostics.animeTitle)}',
-    '${l10n.playbackDiagnosticEpisode}: '
-        '${_diagnosticContextValue(diagnostics.episodeTitle)}',
-    '${l10n.playbackDiagnosticSource}: '
-        '${sourceLabelForId(diagnostics.sourceId)}',
-    '${l10n.playbackDiagnosticLine}: '
-        '${lineTitle == null || lineTitle.isEmpty ? '-' : lineTitle}',
-    '${l10n.playbackDiagnosticState}: '
-        '${_playbackDiagnosticStateLabel(l10n, diagnostics.state)}',
-    '${l10n.playbackDiagnosticCapturedAt}: '
-        '${formatPlaybackDiagnosticCapturedAt(
-      diagnostics.capturedAt,
-      localeName: localeName,
-      includeExactIso: includeExactIso,
-    )}',
+  final selectedAppSourceId = diagnostics.divergentSelectedAppSourceId();
+  final lines = <PlaybackDiagnosticDetailEntry>[
+    PlaybackDiagnosticDetailEntry(
+      field: PlaybackDiagnosticDetailField.anime,
+      label: l10n.playbackDiagnosticAnime,
+      value: _diagnosticContextValue(diagnostics.animeTitle),
+    ),
+    PlaybackDiagnosticDetailEntry(
+      field: PlaybackDiagnosticDetailField.episode,
+      label: l10n.playbackDiagnosticEpisode,
+      value: _diagnosticContextValue(diagnostics.episodeTitle),
+    ),
+    if (selectedAppSourceId != null)
+      PlaybackDiagnosticDetailEntry(
+        field: PlaybackDiagnosticDetailField.selectedAppSource,
+        label: l10n.playbackDiagnosticSelectedAppSource,
+        value: sourceLabelForId(selectedAppSourceId),
+      ),
+    if (diagnostics.usedSourceFallback && diagnostics.requestedSourceId != null)
+      PlaybackDiagnosticDetailEntry(
+        field: PlaybackDiagnosticDetailField.requestedSource,
+        label: l10n.playbackDiagnosticRequestedSource,
+        value: sourceLabelForId(diagnostics.requestedSourceId!),
+      ),
+    PlaybackDiagnosticDetailEntry(
+      field: PlaybackDiagnosticDetailField.source,
+      label: l10n.playbackDiagnosticSource,
+      value: sourceLabelForId(diagnostics.sourceId),
+    ),
+    if (diagnostics.usedSourceFallback && diagnostics.requestedSourceId != null)
+      PlaybackDiagnosticDetailEntry(
+        field: PlaybackDiagnosticDetailField.sourceStatus,
+        label: l10n.playbackDiagnosticSourceStatus,
+        value: l10n.sourceFallbackPlayerNotice(
+          sourceLabelForId(diagnostics.requestedSourceId!),
+          sourceLabelForId(diagnostics.sourceId),
+        ),
+      ),
+    PlaybackDiagnosticDetailEntry(
+      field: PlaybackDiagnosticDetailField.line,
+      label: l10n.playbackDiagnosticLine,
+      value: lineTitle == null || lineTitle.isEmpty ? '-' : lineTitle,
+    ),
+    PlaybackDiagnosticDetailEntry(
+      field: PlaybackDiagnosticDetailField.state,
+      label: l10n.playbackDiagnosticState,
+      value: _playbackDiagnosticStateLabel(l10n, diagnostics.state),
+    ),
+    PlaybackDiagnosticDetailEntry(
+      field: PlaybackDiagnosticDetailField.capturedAt,
+      label: l10n.playbackDiagnosticCapturedAt,
+      value: formatPlaybackDiagnosticCapturedAt(
+        diagnostics.capturedAt,
+        localeName: localeName,
+        includeExactIso: includeExactIso,
+      ),
+    ),
+    PlaybackDiagnosticDetailEntry(
+      field: PlaybackDiagnosticDetailField.urlType,
+      label: l10n.playbackDiagnosticUrlType,
+      value: diagnostics.urlType,
+    ),
+    PlaybackDiagnosticDetailEntry(
+      field: PlaybackDiagnosticDetailField.url,
+      label: l10n.playbackDiagnosticUrl,
+      value: diagnostics.sanitizedUrl,
+    ),
+    PlaybackDiagnosticDetailEntry(
+      field: PlaybackDiagnosticDetailField.headers,
+      label: l10n.playbackDiagnosticHeaders,
+      value: headers,
+    ),
   ];
 
-  if (diagnostics.usedSourceFallback && diagnostics.requestedSourceId != null) {
-    lines.add(
-      '${l10n.playbackDiagnosticRequestedSource}: '
-      '${sourceLabelForId(diagnostics.requestedSourceId!)}',
-    );
-    lines.add(
-      '${l10n.playbackDiagnosticSourceStatus}: '
-      '${l10n.sourceFallbackPlayerNotice(
-        sourceLabelForId(diagnostics.requestedSourceId!),
-        sourceLabelForId(diagnostics.sourceId),
-      )}',
-    );
-  }
-
-  if (diagnostics.divergentSelectedAppSourceId()
-      case final selectedAppSourceId?) {
-    lines.add(
-      '${l10n.playbackDiagnosticSelectedAppSource}: '
-      '${sourceLabelForId(selectedAppSourceId)}',
-    );
-  }
-
-  lines.addAll([
-    '${l10n.playbackDiagnosticUrlType}: ${diagnostics.urlType}',
-    '${l10n.playbackDiagnosticUrl}: ${diagnostics.sanitizedUrl}',
-    '${l10n.playbackDiagnosticHeaders}: $headers',
-  ]);
-
   return lines;
+}
+
+List<String> buildPlaybackDiagnosticDetailLines({
+  required AppLocalizations l10n,
+  required String localeName,
+  required PlaybackDiagnostics diagnostics,
+  required String Function(String sourceId) sourceLabelForId,
+  bool includeExactIso = false,
+}) {
+  return buildPlaybackDiagnosticDetailEntries(
+    l10n: l10n,
+    localeName: localeName,
+    diagnostics: diagnostics,
+    sourceLabelForId: sourceLabelForId,
+    includeExactIso: includeExactIso,
+  ).map((entry) => '${entry.label}: ${entry.value}').toList(growable: false);
 }
 
 String _playbackDiagnosticStateLabel(

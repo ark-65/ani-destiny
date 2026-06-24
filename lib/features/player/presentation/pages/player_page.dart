@@ -9,7 +9,6 @@ import 'package:go_router/go_router.dart';
 import '../../../../app/l10n/app_localizations.dart';
 import '../../../../core/diagnostics/playback_diagnostic_snapshot_preview.dart';
 import '../../../../core/diagnostics/playback_diagnostic_summary.dart';
-import '../../../../core/diagnostics/playback_diagnostic_time_formatter.dart';
 import '../../../anime/presentation/providers/anime_providers.dart';
 import '../../../danmaku/domain/entities/danmaku_item.dart';
 import '../../../danmaku/presentation/providers/danmaku_providers.dart';
@@ -668,8 +667,12 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
 
   void _showPlaybackDiagnostics() {
     final diagnostics = _recordPlaybackDiagnostics();
-    final selectedAppSourceLabel =
-        _selectedAppSourceLabelForDiagnostics(context, diagnostics);
+    final detailEntries = buildPlaybackDiagnosticDetailEntries(
+      l10n: context.l10n,
+      localeName: Localizations.localeOf(context).toLanguageTag(),
+      diagnostics: diagnostics,
+      sourceLabelForId: context.l10n.sourceDisplayLabel,
+    );
 
     showModalBottomSheet<void>(
       context: context,
@@ -704,69 +707,11 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
                     style: Theme.of(context).textTheme.bodyMedium,
                   ),
                   const SizedBox(height: 12),
-                  _DiagnosticRow(
-                    label: context.l10n.playbackDiagnosticCapturedAt,
-                    value: _formatPlaybackDiagnosticCapturedAt(
-                      context,
-                      diagnostics.capturedAt,
+                  ...detailEntries.map(
+                    (entry) => _DiagnosticRow(
+                      label: entry.label,
+                      value: entry.value,
                     ),
-                  ),
-                  _DiagnosticRow(
-                    label: context.l10n.playbackDiagnosticAnime,
-                    value: _diagnosticContextValue(diagnostics.animeTitle),
-                  ),
-                  _DiagnosticRow(
-                    label: context.l10n.playbackDiagnosticEpisode,
-                    value: _diagnosticContextValue(diagnostics.episodeTitle),
-                  ),
-                  if (selectedAppSourceLabel != null)
-                    _DiagnosticRow(
-                      label: context.l10n.playbackDiagnosticSelectedAppSource,
-                      value: selectedAppSourceLabel,
-                    ),
-                  if (diagnostics.usedSourceFallback)
-                    _DiagnosticRow(
-                      label: context.l10n.playbackDiagnosticRequestedSource,
-                      value: context.l10n.sourceDisplayLabel(
-                        diagnostics.requestedSourceId!,
-                      ),
-                    ),
-                  if (diagnostics.usedSourceFallback)
-                    _DiagnosticRow(
-                      label: context.l10n.playbackDiagnosticSourceStatus,
-                      value: context.l10n.sourceFallbackPlayerNotice(
-                        context.l10n.sourceDisplayLabel(
-                          diagnostics.requestedSourceId!,
-                        ),
-                        context.l10n.sourceDisplayLabel(diagnostics.sourceId),
-                      ),
-                    ),
-                  _DiagnosticRow(
-                    label: context.l10n.playbackDiagnosticSource,
-                    value:
-                        context.l10n.sourceDisplayLabel(diagnostics.sourceId),
-                  ),
-                  _DiagnosticRow(
-                    label: context.l10n.playbackDiagnosticLine,
-                    value: diagnostics.playSourceTitle ?? '-',
-                  ),
-                  _DiagnosticRow(
-                    label: context.l10n.playbackDiagnosticUrlType,
-                    value: diagnostics.urlType,
-                  ),
-                  _DiagnosticRow(
-                    label: context.l10n.playbackDiagnosticUrl,
-                    value: diagnostics.sanitizedUrl,
-                  ),
-                  _DiagnosticRow(
-                    label: context.l10n.playbackDiagnosticHeaders,
-                    value: diagnostics.headerKeys.isEmpty
-                        ? '-'
-                        : diagnostics.headerKeys.join(', '),
-                  ),
-                  _DiagnosticRow(
-                    label: context.l10n.playbackDiagnosticState,
-                    value: _diagnosticStateLabel(diagnostics.state),
                   ),
                   const SizedBox(height: 12),
                   Text(
@@ -910,31 +855,6 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
       return PlaybackDiagnosticState.ready;
     }
     return PlaybackDiagnosticState.loading;
-  }
-
-  String _diagnosticStateLabel(PlaybackDiagnosticState state) {
-    return switch (state) {
-      PlaybackDiagnosticState.loading =>
-        context.l10n.playbackDiagnosticStateLoading,
-      PlaybackDiagnosticState.ready =>
-        context.l10n.playbackDiagnosticStateReady,
-      PlaybackDiagnosticState.playing =>
-        context.l10n.playbackDiagnosticStatePlaying,
-      PlaybackDiagnosticState.buffering =>
-        context.l10n.playbackDiagnosticStateBuffering,
-      PlaybackDiagnosticState.error =>
-        context.l10n.playbackDiagnosticStateError,
-    };
-  }
-
-  String _formatPlaybackDiagnosticCapturedAt(
-    BuildContext context,
-    DateTime capturedAt,
-  ) {
-    return formatPlaybackDiagnosticCapturedAt(
-      capturedAt,
-      localeName: Localizations.localeOf(context).toLanguageTag(),
-    );
   }
 
   String _playbackErrorMessage() {
@@ -1366,25 +1286,6 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
       if (!mounted) return;
       _showSnackBar(context.l10n.diagnosticsCopyFailed);
     }
-  }
-
-  String? _selectedAppSourceLabelForDiagnostics(
-    BuildContext context,
-    PlaybackDiagnostics diagnostics,
-  ) {
-    final selectedAppSourceId = diagnostics.divergentSelectedAppSourceId();
-    if (selectedAppSourceId == null) {
-      return null;
-    }
-    return context.l10n.sourceDisplayLabel(selectedAppSourceId);
-  }
-
-  String _diagnosticContextValue(String? value) {
-    final trimmed = value?.trim();
-    if (trimmed == null || trimmed.isEmpty) {
-      return '-';
-    }
-    return trimmed;
   }
 
   bool _hasSourceFallbackContext() {
