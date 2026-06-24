@@ -42,6 +42,14 @@ class RuntimeDiagnosticsPage extends ConsumerWidget {
         .toList(growable: false);
     final danmakuSettings = ref.watch(danmakuSettingsProvider);
     final playbackDiagnostics = ref.watch(lastPlaybackDiagnosticsProvider);
+    final playbackRequestDetails = playbackDiagnostics == null
+        ? const <PlaybackDiagnosticDetailEntry>[]
+        : buildPlaybackDiagnosticRequestDetailEntries(
+            l10n: context.l10n,
+            localeName: Localizations.localeOf(context).toLanguageTag(),
+            diagnostics: playbackDiagnostics,
+            sourceLabelForId: context.l10n.sourceDisplayLabel,
+          );
 
     return SafeArea(
       child: AdaptivePage(
@@ -147,17 +155,18 @@ class RuntimeDiagnosticsPage extends ConsumerWidget {
                     ),
                   )
                 else ...[
-                  ListTile(
-                    leading: const Icon(Icons.link_outlined),
-                    title: Text(context.l10n.playbackDiagnosticsRequestDetails),
-                    subtitle: Text(
-                      context.l10n.playbackDiagnosticsRequestDetailsHint,
+                  if (playbackRequestDetails.isNotEmpty) ...[
+                    ListTile(
+                      leading: const Icon(Icons.link_outlined),
+                      title: Text(
+                        context.l10n.playbackDiagnosticsRequestDetails,
+                      ),
+                      subtitle: Text(
+                        context.l10n.playbackDiagnosticsRequestDetailsHint,
+                      ),
                     ),
-                  ),
-                  ..._playbackDiagnosticTiles(
-                    context,
-                    playbackDiagnostics,
-                  ),
+                    ..._playbackDiagnosticTiles(playbackRequestDetails),
+                  ],
                 ],
               ],
             ),
@@ -208,15 +217,9 @@ class RuntimeDiagnosticsPage extends ConsumerWidget {
 }
 
 List<Widget> _playbackDiagnosticTiles(
-  BuildContext context,
-  PlaybackDiagnostics diagnostics,
+  List<PlaybackDiagnosticDetailEntry> entries,
 ) {
-  return buildPlaybackDiagnosticRequestDetailEntries(
-    l10n: context.l10n,
-    localeName: Localizations.localeOf(context).toLanguageTag(),
-    diagnostics: diagnostics,
-    sourceLabelForId: context.l10n.sourceDisplayLabel,
-  ).map((entry) {
+  return entries.map((entry) {
     return _DiagnosticTile(
       label: entry.label,
       value: entry.value,

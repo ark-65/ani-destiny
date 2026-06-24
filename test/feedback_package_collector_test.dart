@@ -199,6 +199,7 @@ void main() {
     );
     expect(markdown, contains('- 线路: Line 1'));
     expect(markdown, contains('- 状态: 就绪'));
+    expect(markdown, isNot(contains('请求头名称')));
     expect(markdown, contains('- 启用: 是'));
     expect(markdown, contains('Dandanplay App ID 已配置: 否'));
     expect(markdown, isNot(contains('- 当前数据源: sakura')));

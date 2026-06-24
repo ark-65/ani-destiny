@@ -341,6 +341,36 @@ void main() {
     );
   });
 
+  testWidgets('playback diagnostics hide empty request detail rows', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          playerRepositoryProvider
+              .overrideWithValue(const PlayerRepositoryImpl()),
+          historyRepositoryProvider.overrideWithValue(_FakeHistoryRepository()),
+          danmakuRepositoryProvider.overrideWithValue(_FakeDanmakuRepository()),
+        ],
+        child: _buildPlayerApp(
+          _args.copyWith(
+            playUrl: 'https://cdn.example.test/episode-1',
+            playHeaders: const {},
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byTooltip('Playback diagnostics'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Playback request details'), findsOneWidget);
+    expect(find.text('https://cdn.example.test/.../episode-1'), findsOneWidget);
+    expect(find.text('URL type'), findsNothing);
+    expect(find.text('Request header names'), findsNothing);
+  });
+
   testWidgets('playback failure hides stale danmaku chrome', (tester) async {
     await tester.pumpWidget(
       ProviderScope(

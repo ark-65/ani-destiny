@@ -136,7 +136,9 @@ List<PlaybackDiagnosticDetailEntry> buildPlaybackDiagnosticDetailEntries({
     ),
   ];
 
-  return lines;
+  return lines
+      .where(_shouldIncludePlaybackDiagnosticDetailEntry)
+      .toList(growable: false);
 }
 
 List<String> buildPlaybackDiagnosticDetailLines({
@@ -170,6 +172,22 @@ List<PlaybackDiagnosticDetailEntry>
   ).where((entry) => _requestDetailFields.contains(entry.field)).toList(
         growable: false,
       );
+}
+
+bool _shouldIncludePlaybackDiagnosticDetailEntry(
+  PlaybackDiagnosticDetailEntry entry,
+) {
+  if (!_requestDetailFields.contains(entry.field)) {
+    return true;
+  }
+
+  return switch (entry.field) {
+    PlaybackDiagnosticDetailField.urlType => entry.value != 'unknown',
+    PlaybackDiagnosticDetailField.url =>
+      entry.value.trim().isNotEmpty && entry.value != '-',
+    PlaybackDiagnosticDetailField.headers => entry.value != '-',
+    _ => true,
+  };
 }
 
 String _playbackDiagnosticStateLabel(

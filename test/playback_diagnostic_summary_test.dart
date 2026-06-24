@@ -148,6 +148,44 @@ void main() {
       ],
     );
   });
+
+  test('request detail outputs drop low-signal transport placeholders', () {
+    const l10n = AppLocalizations(Locale('en'));
+    const url = 'https://cdn.example.test/.../episode-2';
+    final diagnostics = PlaybackDiagnostics(
+      capturedAt: DateTime.utc(2026, 6, 24, 12, 0),
+      animeTitle: 'Anime 1',
+      episodeTitle: 'Episode 2',
+      selectedAppSourceId: 'mock',
+      sourceId: 'mock',
+      requestedSourceId: null,
+      playSourceTitle: 'Line 1',
+      urlType: 'unknown',
+      sanitizedUrl: url,
+      headerKeys: const [],
+      state: PlaybackDiagnosticState.ready,
+    );
+
+    final entries = buildPlaybackDiagnosticRequestDetailEntries(
+      l10n: l10n,
+      localeName: 'en',
+      diagnostics: diagnostics,
+      sourceLabelForId: _sourceLabelForId,
+    );
+    final summary = buildPlaybackDiagnosticSummary(
+      l10n: l10n,
+      localeName: 'en',
+      diagnostics: diagnostics,
+    );
+
+    expect(
+      entries.map((entry) => entry.field).toList(growable: false),
+      [PlaybackDiagnosticDetailField.url],
+    );
+    expect(summary, contains('URL: $url'));
+    expect(summary, isNot(contains('URL type: unknown')));
+    expect(summary, isNot(contains('Request header names')));
+  });
 }
 
 String _sourceLabelForId(String sourceId) {

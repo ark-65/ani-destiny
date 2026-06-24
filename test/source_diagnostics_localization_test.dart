@@ -485,6 +485,51 @@ void main() {
     );
   });
 
+  testWidgets('runtime diagnostics hide empty request detail rows', (
+    tester,
+  ) async {
+    final container = ProviderContainer(overrides: _providerOverrides);
+    addTearDown(container.dispose);
+    container.read(lastPlaybackDiagnosticsProvider.notifier).state =
+        PlaybackDiagnostics(
+      capturedAt: DateTime(2026, 6, 17, 1, 2, 3),
+      animeTitle: 'Anime 1',
+      episodeTitle: 'Episode 2',
+      selectedAppSourceId: 'mock',
+      sourceId: 'mock',
+      requestedSourceId: null,
+      playSourceTitle: 'Line 1',
+      urlType: 'unknown',
+      sanitizedUrl: 'https://cdn.example.test/.../episode-2',
+      headerKeys: const [],
+      state: PlaybackDiagnosticState.ready,
+    );
+
+    await tester.pumpWidget(
+      UncontrolledProviderScope(
+        container: container,
+        child: const MaterialApp(
+          locale: Locale('en'),
+          supportedLocales: AppLocalizations.supportedLocales,
+          localizationsDelegates: [
+            AppLocalizations.delegate,
+            GlobalMaterialLocalizations.delegate,
+            GlobalWidgetsLocalizations.delegate,
+            GlobalCupertinoLocalizations.delegate,
+          ],
+          home: Scaffold(body: RuntimeDiagnosticsPage()),
+        ),
+      ),
+    );
+
+    await tester.pumpAndSettle();
+
+    expect(find.text('Playback request details'), findsOneWidget);
+    expect(find.text('https://cdn.example.test/.../episode-2'), findsOneWidget);
+    expect(find.text('URL type'), findsNothing);
+    expect(find.text('Request header names'), findsNothing);
+  });
+
   testWidgets(
       'runtime diagnostics keeps the captured app source after the live source changes',
       (tester) async {
