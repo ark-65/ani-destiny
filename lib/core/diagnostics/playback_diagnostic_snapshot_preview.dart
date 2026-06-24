@@ -1,5 +1,6 @@
 import '../../app/l10n/app_localizations.dart';
 import '../../features/player/domain/services/playback_diagnostics.dart';
+import 'playback_diagnostic_summary.dart';
 import 'playback_diagnostic_time_formatter.dart';
 
 String buildPlaybackDiagnosticSnapshotPreview({
@@ -21,53 +22,29 @@ List<String> _playbackContextLines(
   AppLocalizations l10n,
   PlaybackDiagnostics diagnostics,
 ) {
-  final lines = <String>[
-    '${l10n.playbackDiagnosticSource}: ${_playbackSourceValue(l10n, diagnostics)}',
-    '${l10n.playbackDiagnosticState}: ${_playbackDiagnosticStateLabel(l10n, diagnostics.state)}',
-  ];
-
-  if (diagnostics.usedSourceFallback && diagnostics.requestedSourceId != null) {
-    lines.add(
-      '${l10n.playbackDiagnosticSourceStatus}: ${l10n.sourceFallbackPlayerNotice(
-        l10n.sourceDisplayLabel(diagnostics.requestedSourceId!),
-        l10n.sourceDisplayLabel(diagnostics.sourceId),
-      )}',
-    );
-  }
-
-  if (diagnostics.divergentSelectedAppSourceId()
-      case final selectedAppSourceId?) {
-    lines.add(
-      '${l10n.playbackDiagnosticSelectedAppSource}: ${l10n.sourceDisplayLabel(selectedAppSourceId)}',
-    );
-  }
-
-  return lines;
-}
-
-String _playbackDiagnosticStateLabel(
-  AppLocalizations l10n,
-  PlaybackDiagnosticState state,
-) {
-  return switch (state) {
-    PlaybackDiagnosticState.loading => l10n.playbackDiagnosticStateLoading,
-    PlaybackDiagnosticState.ready => l10n.playbackDiagnosticStateReady,
-    PlaybackDiagnosticState.playing => l10n.playbackDiagnosticStatePlaying,
-    PlaybackDiagnosticState.buffering => l10n.playbackDiagnosticStateBuffering,
-    PlaybackDiagnosticState.error => l10n.playbackDiagnosticStateError,
+  const previewFields = {
+    PlaybackDiagnosticDetailField.source,
+    PlaybackDiagnosticDetailField.sourceStatus,
+    PlaybackDiagnosticDetailField.selectedAppSource,
+    PlaybackDiagnosticDetailField.line,
+    PlaybackDiagnosticDetailField.state,
   };
-}
 
-String _playbackSourceValue(
-  AppLocalizations l10n,
-  PlaybackDiagnostics diagnostics,
-) {
-  final lineTitle = diagnostics.playSourceTitle?.trim();
-  final parts = <String>[
-    l10n.sourceDisplayLabel(diagnostics.sourceId),
-    if (lineTitle != null && lineTitle.isNotEmpty) lineTitle,
-  ];
-  return parts.join(' · ');
+  return buildPlaybackDiagnosticDetailEntries(
+    l10n: l10n,
+    localeName: l10n.locale.toLanguageTag(),
+    diagnostics: diagnostics,
+    sourceLabelForId: l10n.sourceDisplayLabel,
+  )
+      .where((entry) {
+        if (!previewFields.contains(entry.field)) {
+          return false;
+        }
+        return entry.field != PlaybackDiagnosticDetailField.line ||
+            entry.value != '-';
+      })
+      .map((entry) => '${entry.label}: ${entry.value}')
+      .toList(growable: false);
 }
 
 String _diagnosticContextValue(String? value) {

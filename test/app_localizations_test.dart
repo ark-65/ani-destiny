@@ -287,10 +287,10 @@ void main() {
       en.playbackDiagnosticsSnapshotPreview(
         'Anime 1',
         'Episode 2',
-        'Active playback source: Mock Anime Source · Line 1\nState: Buffering',
+        'Active playback source: Mock Anime Source\nLine: Line 1\nState: Buffering',
         'Captured at: Jun 17, 2026 1:02 AM',
       ),
-      'Latest playback: Anime 1 · Episode 2\nActive playback source: Mock Anime Source · Line 1\nState: Buffering\nCaptured at: Jun 17, 2026 1:02 AM',
+      'Latest playback: Anime 1 · Episode 2\nActive playback source: Mock Anime Source\nLine: Line 1\nState: Buffering\nCaptured at: Jun 17, 2026 1:02 AM',
     );
     expect(en.playbackDiagnosticHeaders, 'Request header names');
     expect(en.playbackDiagnosticCapturedAt, 'Captured at');
