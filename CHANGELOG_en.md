@@ -7,6 +7,7 @@
 ## [Unreleased]
 
 ### 🐛 Fixed
+- Fixed Runtime diagnostics, the in-player Playback diagnostics sheet, and copied playback summaries still showing empty `Line: -` placeholders when that playback had no real line value; AniDestiny now drops those low-signal line rows so users see the real playback moment before they decide to share support details.
 - Fixed Runtime diagnostics, the in-player Playback diagnostics sheet, and copied playback summaries still showing low-signal placeholders like an `unknown` URL type or empty request-header rows; AniDestiny now keeps only the request details that actually help confirm how that playback was made, so support copy stays calmer and more useful.
 - Fixed Runtime diagnostics and the in-player Playback diagnostics sheet still dropping users straight from the latest playback snapshot into raw `URL type / URL / Request header names` rows without clearly saying those were sanitized request details from that playback; both surfaces now group those fields under `Playback request details` with a short explanation so users can confirm the playback moment first and only then read the support-facing request details.
 - Fixed Runtime diagnostics and the in-player Playback diagnostics sheet already surfacing the latest playback snapshot without first plainly saying that it was the captured playback moment from the current session; both surfaces now add the same calm session-snapshot hint before the title, source, state, line, and capture time so users can confirm they are looking at the playback they just experienced.

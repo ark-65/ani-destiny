@@ -35,6 +35,10 @@ const _requestDetailFields = {
   PlaybackDiagnosticDetailField.headers,
 };
 
+const _optionalPlaceholderFields = {
+  PlaybackDiagnosticDetailField.line,
+};
+
 String buildPlaybackDiagnosticSummary({
   required AppLocalizations l10n,
   required String localeName,
@@ -177,6 +181,10 @@ List<PlaybackDiagnosticDetailEntry>
 bool _shouldIncludePlaybackDiagnosticDetailEntry(
   PlaybackDiagnosticDetailEntry entry,
 ) {
+  if (_optionalPlaceholderFields.contains(entry.field) && entry.value == '-') {
+    return false;
+  }
+
   if (!_requestDetailFields.contains(entry.field)) {
     return true;
   }

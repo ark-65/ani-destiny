@@ -186,6 +186,47 @@ void main() {
     expect(summary, isNot(contains('URL type: unknown')));
     expect(summary, isNot(contains('Request header names')));
   });
+
+  test('shared playback diagnostics drop empty line placeholders', () {
+    const l10n = AppLocalizations(Locale('en'));
+    final diagnostics = PlaybackDiagnostics(
+      capturedAt: DateTime.utc(2026, 6, 24, 12, 0),
+      animeTitle: 'Anime 1',
+      episodeTitle: 'Episode 2',
+      selectedAppSourceId: 'mock',
+      sourceId: 'mock',
+      requestedSourceId: null,
+      playSourceTitle: '   ',
+      urlType: 'm3u8',
+      sanitizedUrl: 'https://cdn.example.test/.../episode-2.m3u8',
+      headerKeys: const ['Referer'],
+      state: PlaybackDiagnosticState.ready,
+    );
+
+    final entries = buildPlaybackDiagnosticDetailEntries(
+      l10n: l10n,
+      localeName: 'en',
+      diagnostics: diagnostics,
+      sourceLabelForId: _sourceLabelForId,
+    );
+    final summary = buildPlaybackDiagnosticSummary(
+      l10n: l10n,
+      localeName: 'en',
+      diagnostics: diagnostics,
+    );
+    final preview = buildPlaybackDiagnosticSnapshotPreview(
+      l10n: l10n,
+      localeName: 'en',
+      diagnostics: diagnostics,
+    );
+
+    expect(
+      entries.any((entry) => entry.field == PlaybackDiagnosticDetailField.line),
+      isFalse,
+    );
+    expect(summary, isNot(contains('Line:')));
+    expect(preview, isNot(contains('Line:')));
+  });
 }
 
 String _sourceLabelForId(String sourceId) {

@@ -371,6 +371,51 @@ void main() {
     expect(find.text('Request header names'), findsNothing);
   });
 
+  testWidgets('playback diagnostics hide empty line placeholders', (
+    tester,
+  ) async {
+    String? copiedText;
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMethodCallHandler(SystemChannels.platform, (call) async {
+      if (call.method == 'Clipboard.setData') {
+        copiedText =
+            (call.arguments as Map<Object?, Object?>)['text'] as String?;
+      }
+      return null;
+    });
+    addTearDown(() {
+      TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+          .setMockMethodCallHandler(SystemChannels.platform, null);
+    });
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          playerRepositoryProvider
+              .overrideWithValue(const PlayerRepositoryImpl()),
+          historyRepositoryProvider.overrideWithValue(_FakeHistoryRepository()),
+          danmakuRepositoryProvider.overrideWithValue(_FakeDanmakuRepository()),
+        ],
+        child: _buildPlayerApp(
+          _args.copyWith(playSourceTitle: '   '),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byTooltip('Playback diagnostics'));
+    await tester.pumpAndSettle();
+
+    expect(find.textContaining('Line:'), findsNothing);
+
+    await tester.ensureVisible(find.text('Copy playback diagnostics'));
+    await tester.tap(find.text('Copy playback diagnostics'));
+    await tester.pumpAndSettle();
+
+    expect(copiedText, isNotNull);
+    expect(copiedText, isNot(contains('Line:')));
+  });
+
   testWidgets('playback failure hides stale danmaku chrome', (tester) async {
     await tester.pumpWidget(
       ProviderScope(
