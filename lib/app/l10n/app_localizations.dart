@@ -251,6 +251,8 @@ class AppLocalizations {
   String get playbackDiagnosticsCopied => _t('playbackDiagnosticsCopied');
   String get diagnosticsCopyFailed => _t('diagnosticsCopyFailed');
   String get diagnosticsPrivacyNote => _t('diagnosticsPrivacyNote');
+  String get copyPlaybackDiagnosticsPendingHint =>
+      _t('copyPlaybackDiagnosticsPendingHint');
   String get copyDiagnosticsPlaybackPendingHint =>
       _t('copyDiagnosticsPlaybackPendingHint');
   String get reportIssue => _t('reportIssue');
@@ -594,6 +596,7 @@ const _localizedValues = {
     'playbackDiagnosticsCopied': '播放诊断已复制',
     'diagnosticsCopyFailed': '复制诊断信息失败',
     'diagnosticsPrivacyNote': '将生成已脱敏的反馈摘要，不包含敏感值。',
+    'copyPlaybackDiagnosticsPendingHint': '先在当前会话里播放一次后，才能复制最近一次播放诊断。',
     'copyDiagnosticsPlaybackPendingHint':
         '将生成已脱敏的反馈摘要；当前还没有播放快照，播放部分会在当前会话先播放一次后补上。',
     'reportIssue': '反馈问题',
@@ -880,6 +883,8 @@ const _localizedValues = {
     'diagnosticsCopyFailed': 'Failed to copy diagnostics',
     'diagnosticsPrivacyNote':
         'Generates a sanitized feedback summary without sensitive values.',
+    'copyPlaybackDiagnosticsPendingHint':
+        'Start playback once in this session to copy the latest playback diagnostics.',
     'copyDiagnosticsPlaybackPendingHint':
         'A sanitized feedback summary will be copied. The playback section stays unavailable until playback runs once in this session.',
     'reportIssue': 'Report issue',
@@ -1162,6 +1167,7 @@ const _localizedValues = {
     'playbackDiagnosticsCopied': '再生診断をコピーしました',
     'diagnosticsCopyFailed': '診断情報のコピーに失敗しました',
     'diagnosticsPrivacyNote': '機密値を含まないフィードバック概要を生成します。',
+    'copyPlaybackDiagnosticsPendingHint': 'このセッションで一度再生すると、最新の再生診断をコピーできます。',
     'copyDiagnosticsPlaybackPendingHint':
         '機密値を含まないフィードバック概要をコピーします。このセッションで一度再生するまでは再生欄は利用できません。',
     'reportIssue': '問題を報告',

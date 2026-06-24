@@ -60,6 +60,12 @@ void main() {
     );
     expect(
       find.text(
+        'Start playback once in this session to copy the latest playback diagnostics.',
+      ),
+      findsOneWidget,
+    );
+    expect(
+      find.text(
         'A sanitized feedback summary will be copied. The playback section stays unavailable until playback runs once in this session.',
       ),
       findsOneWidget,
@@ -231,6 +237,12 @@ void main() {
 
     expect(find.text('Playback diagnostics copied'), findsOneWidget);
     expect(copiedText, expected);
+    expect(
+      find.text(
+        'Generates a sanitized feedback summary without sensitive values.',
+      ),
+      findsOneWidget,
+    );
     expect(
       copiedText,
       contains('Selected app source at playback: Remote Source Proxy'),

@@ -271,6 +271,7 @@ void main() {
     expect(zh.sourceFallbackEvents, isNot(contains('fallback')));
     expect(zh.sourceFallbackEventsEmpty, isNot(contains('fallback')));
     expect(zh.playbackDiagnosticHeaders, '请求头名称');
+    expect(zh.copyPlaybackDiagnosticsPendingHint, '先在当前会话里播放一次后，才能复制最近一次播放诊断。');
     expect(zh.yesNo(true), '是');
     expect(zh.yesNo(false), '否');
     expect(zh.platformDisplayName('android'), 'Android');
@@ -291,6 +292,10 @@ void main() {
     expect(en.playbackDiagnosticCapturedAt, 'Captured at');
     expect(en.selectedAppSource, 'Selected app source');
     expect(en.copyPlaybackDiagnostics, 'Copy playback diagnostics');
+    expect(
+      en.copyPlaybackDiagnosticsPendingHint,
+      'Start playback once in this session to copy the latest playback diagnostics.',
+    );
     expect(en.playbackDiagnosticsCopied, 'Playback diagnostics copied');
     expect(
       en.playbackDiagnosticSelectedAppSource,
@@ -311,6 +316,10 @@ void main() {
     expect(ja.runtimeDiagnosticsSubtitle, isNot(contains('Debug')));
     expect(ja.playbackDiagnosticsEmptyHint, isNot(contains('Debug')));
     expect(ja.playbackDiagnosticsLatestPlayback, '最新の再生');
+    expect(
+      ja.copyPlaybackDiagnosticsPendingHint,
+      'このセッションで一度再生すると、最新の再生診断をコピーできます。',
+    );
     expect(
       ja.playbackDiagnosticsSnapshotPreview(
         'アニメ 1',
