@@ -259,7 +259,7 @@ void main() {
         '当前播放源：Sakura Anime · 线路 1\n状态：缓冲中',
         '采集时间：2026/6/17 09:02',
       ),
-      '最近一次播放：番剧 A · 第 2 集\n当前播放源：Sakura Anime · 线路 1\n状态：缓冲中\n采集时间：2026/6/17 09:02',
+      '番剧 A · 第 2 集\n当前播放源：Sakura Anime · 线路 1\n状态：缓冲中\n采集时间：2026/6/17 09:02',
     );
     expect(zh.copyDiagnosticsPlaybackPendingHint, isNot(contains('Debug')));
     expect(zh.playbackDiagnosticCapturedAt, '采集时间');
@@ -287,7 +287,7 @@ void main() {
         'Active playback source: Mock Anime Source\nLine: Line 1\nState: Buffering',
         'Captured at: Jun 17, 2026 1:02 AM',
       ),
-      'Latest playback: Anime 1 · Episode 2\nActive playback source: Mock Anime Source\nLine: Line 1\nState: Buffering\nCaptured at: Jun 17, 2026 1:02 AM',
+      'Anime 1 · Episode 2\nActive playback source: Mock Anime Source\nLine: Line 1\nState: Buffering\nCaptured at: Jun 17, 2026 1:02 AM',
     );
     expect(en.playbackDiagnosticHeaders, 'Request header names');
     expect(en.playbackDiagnosticCapturedAt, 'Captured at');
@@ -336,7 +336,7 @@ void main() {
         '現在の再生ソース: Sakura Anime · ライン 1\n状態: バッファ中',
         '取得時刻: 2026/6/17 1:02',
       ),
-      '最新の再生: アニメ 1 · 第 2 話\n現在の再生ソース: Sakura Anime · ライン 1\n状態: バッファ中\n取得時刻: 2026/6/17 1:02',
+      'アニメ 1 · 第 2 話\n現在の再生ソース: Sakura Anime · ライン 1\n状態: バッファ中\n取得時刻: 2026/6/17 1:02',
     );
     expect(ja.copyDiagnosticsPlaybackPendingHint, isNot(contains('Debug')));
     expect(ja.playbackDiagnosticCapturedAt, '取得時刻');

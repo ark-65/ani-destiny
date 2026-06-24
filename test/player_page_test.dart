@@ -266,6 +266,7 @@ void main() {
       find.text(preview),
       findsOneWidget,
     );
+    expect(find.textContaining('Latest playback:'), findsNothing);
     expect(preview, contains('State: Failed'));
     expect(preview, contains('Captured at: $capturedAt'));
     expect(find.text('Anime'), findsNothing);

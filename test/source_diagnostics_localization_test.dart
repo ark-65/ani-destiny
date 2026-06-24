@@ -380,6 +380,7 @@ void main() {
     expect(find.text('Playback diagnostics'), findsOneWidget);
     expect(find.text('Latest playback'), findsOneWidget);
     expect(find.textContaining(preview), findsOneWidget);
+    expect(find.textContaining('Latest playback:'), findsNothing);
     expect(find.text('Anime'), findsNothing);
     expect(find.text('Episode'), findsNothing);
     expect(find.text('State'), findsNothing);
