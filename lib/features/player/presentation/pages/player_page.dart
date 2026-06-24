@@ -715,7 +715,7 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
                   ),
                   const SizedBox(height: 12),
                   Text(
-                    context.l10n.diagnosticsPrivacyNote,
+                    context.l10n.playbackDiagnosticsPrivacyNote,
                     style: Theme.of(context).textTheme.bodySmall,
                   ),
                   const SizedBox(height: 12),

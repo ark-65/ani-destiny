@@ -239,7 +239,7 @@ void main() {
     expect(copiedText, expected);
     expect(
       find.text(
-        'Generates a sanitized feedback summary without sensitive values.',
+        'Copies a sanitized summary of the latest playback without sensitive values.',
       ),
       findsOneWidget,
     );

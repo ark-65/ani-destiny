@@ -119,7 +119,7 @@ class RuntimeDiagnosticsPage extends ConsumerWidget {
                   subtitle: Text(
                     playbackDiagnostics == null
                         ? context.l10n.copyPlaybackDiagnosticsPendingHint
-                        : context.l10n.diagnosticsPrivacyNote,
+                        : context.l10n.playbackDiagnosticsPrivacyNote,
                   ),
                   onTap: playbackDiagnostics == null
                       ? null

@@ -271,6 +271,7 @@ void main() {
     expect(zh.sourceFallbackEvents, isNot(contains('fallback')));
     expect(zh.sourceFallbackEventsEmpty, isNot(contains('fallback')));
     expect(zh.playbackDiagnosticHeaders, '请求头名称');
+    expect(zh.playbackDiagnosticsPrivacyNote, '将复制最近一次播放的已脱敏摘要，不包含敏感值。');
     expect(zh.copyPlaybackDiagnosticsPendingHint, '先在当前会话里播放一次后，才能复制最近一次播放诊断。');
     expect(zh.yesNo(true), '是');
     expect(zh.yesNo(false), '否');
@@ -292,6 +293,10 @@ void main() {
     expect(en.playbackDiagnosticCapturedAt, 'Captured at');
     expect(en.selectedAppSource, 'Selected app source');
     expect(en.copyPlaybackDiagnostics, 'Copy playback diagnostics');
+    expect(
+      en.playbackDiagnosticsPrivacyNote,
+      'Copies a sanitized summary of the latest playback without sensitive values.',
+    );
     expect(
       en.copyPlaybackDiagnosticsPendingHint,
       'Start playback once in this session to copy the latest playback diagnostics.',
@@ -319,6 +324,10 @@ void main() {
     expect(
       ja.copyPlaybackDiagnosticsPendingHint,
       'このセッションで一度再生すると、最新の再生診断をコピーできます。',
+    );
+    expect(
+      ja.playbackDiagnosticsPrivacyNote,
+      '最新の再生を機密値なしで要約した内容をコピーします。',
     );
     expect(
       ja.playbackDiagnosticsSnapshotPreview(

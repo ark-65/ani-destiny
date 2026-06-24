@@ -275,6 +275,12 @@ void main() {
     expect(find.text('URL type'), findsOneWidget);
     expect(find.text('URL'), findsOneWidget);
     expect(find.text('Request header names'), findsOneWidget);
+    expect(
+      find.text(
+        'Copies a sanitized summary of the latest playback without sensitive values.',
+      ),
+      findsOneWidget,
+    );
     expect(find.text('error'), findsNothing);
   });
 
