@@ -256,8 +256,6 @@ void main() {
       diagnostics!.capturedAt,
     );
 
-    expect(find.text('Captured at'), findsOneWidget);
-    expect(find.text(capturedAt), findsOneWidget);
     expect(
       find.text(
         'The latest playback snapshot captured in this session appears here so you can confirm the title, playback source, playback state, line, and capture time first.',
@@ -274,12 +272,14 @@ void main() {
       findsOneWidget,
     );
     expect(preview, contains('State: Failed'));
-    expect(find.text('Anime'), findsOneWidget);
-    expect(find.text('Anime 1'), findsAtLeastNWidgets(1));
-    expect(find.text('Episode'), findsWidgets);
-    expect(find.text('Episode 2'), findsAtLeastNWidgets(1));
-    expect(find.text('State'), findsOneWidget);
-    expect(find.text('Failed'), findsOneWidget);
+    expect(preview, contains('Captured at: $capturedAt'));
+    expect(find.text('Anime'), findsNothing);
+    expect(find.text('Episode'), findsNothing);
+    expect(find.text('State'), findsNothing);
+    expect(find.text('Captured at'), findsNothing);
+    expect(find.text('URL type'), findsOneWidget);
+    expect(find.text('URL'), findsOneWidget);
+    expect(find.text('Request header names'), findsOneWidget);
     expect(find.text('error'), findsNothing);
   });
 
@@ -433,21 +433,20 @@ void main() {
     await tester.tap(find.byTooltip('Playback diagnostics'));
     await tester.pumpAndSettle();
 
-    expect(find.text('Anime'), findsOneWidget);
-    expect(find.text('Anime 1'), findsAtLeastNWidgets(1));
-    expect(find.text('Episode'), findsWidgets);
-    expect(find.text('Episode 2'), findsAtLeastNWidgets(1));
-    expect(find.text('Selected playback source'), findsOneWidget);
-    expect(find.text('Mock Anime Source'), findsAtLeastNWidgets(1));
-    expect(find.text('Playback source status'), findsOneWidget);
+    expect(find.text('Anime'), findsNothing);
+    expect(find.text('Episode'), findsNothing);
+    expect(find.text('Selected playback source'), findsNothing);
+    expect(find.text('Playback source status'), findsNothing);
     expect(
       find.text(
         'Mock Anime Source is temporarily unavailable. AniDestiny is playing from Sakura Anime instead.',
       ),
-      findsNWidgets(2),
+      findsOneWidget,
     );
-    expect(find.text('State'), findsOneWidget);
-    expect(find.text('Failed'), findsOneWidget);
+    expect(find.text('State'), findsNothing);
+    expect(find.text('Failed'), findsNothing);
+    expect(find.text('URL type'), findsOneWidget);
+    expect(find.text('Request header names'), findsOneWidget);
     expect(find.text('error'), findsNothing);
   });
 
@@ -566,8 +565,8 @@ void main() {
     await tester.tap(find.byIcon(Icons.bug_report_outlined).last);
     await tester.pumpAndSettle();
 
-    expect(find.text('Selected app source at playback'), findsOneWidget);
-    expect(find.text('Remote Source Proxy'), findsOneWidget);
+    expect(find.text('Selected app source at playback'), findsNothing);
+    expect(find.text('Remote Source Proxy'), findsNothing);
     expect(
       find.textContaining(
         'Playback source status: Mock Anime Source is temporarily unavailable. AniDestiny is playing from Sakura Anime instead.',
@@ -642,8 +641,8 @@ void main() {
     await tester.tap(find.byIcon(Icons.bug_report_outlined).last);
     await tester.pumpAndSettle();
 
-    expect(find.text('Selected app source at playback'), findsOneWidget);
-    expect(find.text('Remote Source Proxy'), findsOneWidget);
+    expect(find.text('Selected app source at playback'), findsNothing);
+    expect(find.text('Remote Source Proxy'), findsNothing);
     expect(
       find.textContaining(
         'Selected app source at playback: Remote Source Proxy',

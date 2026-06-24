@@ -116,6 +116,38 @@ void main() {
       isNot(contains('Active playback source: Mock Anime Source · Line 1')),
     );
   });
+
+  test('surface detail entries keep only transport details below the preview',
+      () {
+    const l10n = AppLocalizations(Locale('en'));
+    final entries = buildPlaybackDiagnosticSurfaceDetailEntries(
+      l10n: l10n,
+      localeName: 'en',
+      diagnostics: PlaybackDiagnostics(
+        capturedAt: DateTime.utc(2026, 6, 24, 12, 0),
+        animeTitle: 'Anime 1',
+        episodeTitle: 'Episode 2',
+        selectedAppSourceId: 'remote-proxy',
+        sourceId: 'mock',
+        requestedSourceId: 'sakura',
+        playSourceTitle: 'Line 1',
+        urlType: 'm3u8',
+        sanitizedUrl: 'https://cdn.example.test/.../episode-2.m3u8',
+        headerKeys: const ['Referer', 'User-Agent'],
+        state: PlaybackDiagnosticState.buffering,
+      ),
+      sourceLabelForId: _sourceLabelForId,
+    );
+
+    expect(
+      entries.map((entry) => entry.field).toList(growable: false),
+      [
+        PlaybackDiagnosticDetailField.urlType,
+        PlaybackDiagnosticDetailField.url,
+        PlaybackDiagnosticDetailField.headers,
+      ],
+    );
+  });
 }
 
 String _sourceLabelForId(String sourceId) {

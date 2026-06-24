@@ -363,9 +363,8 @@ void main() {
     );
 
     expect(preview, contains('State: Buffering'));
-    expect(find.text('Anime 1'), findsOneWidget);
-    expect(find.text('Episode 2'), findsOneWidget);
-    expect(find.text('Selected playback source'), findsOneWidget);
+    expect(preview, contains('Anime 1'));
+    expect(preview, contains('Episode 2'));
     expect(
       find.text(
         'The latest playback snapshot captured in this session appears here so you can confirm the title, playback source, playback state, line, and capture time first.\n\n$preview',
@@ -373,17 +372,25 @@ void main() {
       findsOneWidget,
     );
     expect(find.textContaining(preview), findsOneWidget);
-    expect(find.text('Captured at'), findsOneWidget);
-    expect(find.text('Sakura Anime'), findsWidgets);
-    expect(find.text('Mock Anime Source'), findsWidgets);
-    expect(find.text('Line 1'), findsOneWidget);
+    expect(find.text('Anime'), findsNothing);
+    expect(find.text('Episode'), findsNothing);
+    expect(find.text('State'), findsNothing);
+    expect(find.text('Captured at'), findsNothing);
+    expect(
+      find.textContaining(
+        'Playback source status: Sakura Anime is temporarily unavailable. AniDestiny is playing from Mock Anime Source instead.',
+      ),
+      findsOneWidget,
+    );
+    expect(find.text('Selected playback source'), findsNothing);
+    expect(find.text('Line 1'), findsNothing);
+    expect(find.text('URL type'), findsOneWidget);
     expect(
       find.text('https://cdn.example.test/.../episode-2.m3u8'),
       findsOneWidget,
     );
     expect(find.text('Referer, User-Agent'), findsOneWidget);
-    expect(find.text('State'), findsOneWidget);
-    expect(find.text('Buffering'), findsOneWidget);
+    expect(find.text('Request header names'), findsOneWidget);
   });
 
   testWidgets(
@@ -433,11 +440,9 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Selected app source'), findsOneWidget);
-    expect(find.text('Selected app source at playback'), findsOneWidget);
-    expect(find.text('Remote Source Proxy'), findsNWidgets(2));
-    expect(find.text('Sakura Anime'), findsWidgets);
-    expect(find.text('Selected playback source'), findsOneWidget);
-    expect(find.text('Mock Anime Source'), findsWidgets);
+    expect(find.text('Selected app source at playback'), findsNothing);
+    expect(find.text('Remote Source Proxy'), findsOneWidget);
+    expect(find.text('Selected playback source'), findsNothing);
     expect(
       find.textContaining(
         'Playback source status: Sakura Anime is temporarily unavailable. AniDestiny is playing from Mock Anime Source instead.',
@@ -491,9 +496,8 @@ void main() {
 
     await tester.pumpAndSettle();
 
-    expect(find.text('Selected app source at playback'), findsOneWidget);
-    expect(find.text('Remote Source Proxy'), findsOneWidget);
-    expect(find.text('Sakura Anime'), findsWidgets);
+    expect(find.text('Selected app source at playback'), findsNothing);
+    expect(find.text('Remote Source Proxy'), findsNothing);
     expect(
       find.textContaining(
         'Selected app source at playback: Remote Source Proxy',

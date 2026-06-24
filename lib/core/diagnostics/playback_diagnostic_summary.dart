@@ -29,6 +29,12 @@ class PlaybackDiagnosticDetailEntry {
   final String value;
 }
 
+const _surfaceDetailFields = {
+  PlaybackDiagnosticDetailField.urlType,
+  PlaybackDiagnosticDetailField.url,
+  PlaybackDiagnosticDetailField.headers,
+};
+
 String buildPlaybackDiagnosticSummary({
   required AppLocalizations l10n,
   required String localeName,
@@ -147,6 +153,23 @@ List<String> buildPlaybackDiagnosticDetailLines({
     sourceLabelForId: sourceLabelForId,
     includeExactIso: includeExactIso,
   ).map((entry) => '${entry.label}: ${entry.value}').toList(growable: false);
+}
+
+List<PlaybackDiagnosticDetailEntry>
+    buildPlaybackDiagnosticSurfaceDetailEntries({
+  required AppLocalizations l10n,
+  required String localeName,
+  required PlaybackDiagnostics diagnostics,
+  required String Function(String sourceId) sourceLabelForId,
+}) {
+  return buildPlaybackDiagnosticDetailEntries(
+    l10n: l10n,
+    localeName: localeName,
+    diagnostics: diagnostics,
+    sourceLabelForId: sourceLabelForId,
+  ).where((entry) => _surfaceDetailFields.contains(entry.field)).toList(
+        growable: false,
+      );
 }
 
 String _playbackDiagnosticStateLabel(

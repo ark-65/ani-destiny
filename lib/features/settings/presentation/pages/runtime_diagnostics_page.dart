@@ -199,7 +199,7 @@ List<Widget> _playbackDiagnosticTiles(
   BuildContext context,
   PlaybackDiagnostics diagnostics,
 ) {
-  return buildPlaybackDiagnosticDetailEntries(
+  return buildPlaybackDiagnosticSurfaceDetailEntries(
     l10n: context.l10n,
     localeName: Localizations.localeOf(context).toLanguageTag(),
     diagnostics: diagnostics,

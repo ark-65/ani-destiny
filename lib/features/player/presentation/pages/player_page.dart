@@ -667,7 +667,7 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
 
   void _showPlaybackDiagnostics() {
     final diagnostics = _recordPlaybackDiagnostics();
-    final detailEntries = buildPlaybackDiagnosticDetailEntries(
+    final detailEntries = buildPlaybackDiagnosticSurfaceDetailEntries(
       l10n: context.l10n,
       localeName: Localizations.localeOf(context).toLanguageTag(),
       diagnostics: diagnostics,
