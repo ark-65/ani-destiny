@@ -207,11 +207,13 @@ class AppLocalizations {
   String get start => _t('start');
   String get stopForNow => _t('stopForNow');
   String get cancel => _t('cancel');
+  String get removeFromList => _t('removeFromList');
   String get remove => _t('remove');
   String get downloadProgress => _t('downloadProgress');
   String get downloadLocalPath => _t('downloadLocalPath');
   String get downloadStopMayRestartNote => _t('downloadStopMayRestartNote');
   String get downloadPausedRetryNote => _t('downloadPausedRetryNote');
+  String get downloadRemoveKeepsFileNote => _t('downloadRemoveKeepsFileNote');
   String get downloadStoppedStatus => _t('downloadStoppedStatus');
   String get downloadKindDirectFile => _t('downloadKindDirectFile');
   String get downloadKindHls => _t('downloadKindHls');
@@ -557,10 +559,10 @@ const _localizedValues = {
     'deleteHistory': '删除历史',
     'loadingDownloads': '正在加载下载',
     'downloadsEmpty': '下载任务会显示在这里',
-    'clearEndedDownloads': '清理已结束任务',
-    'clearEndedDownloadsResultPrefix': '已清理 ',
+    'clearEndedDownloads': '从列表清理已结束任务',
+    'clearEndedDownloadsResultPrefix': '已从列表清理 ',
     'clearEndedDownloadsResultSuffix': ' 个已结束任务。',
-    'clearEndedDownloadsPartialResultPrefix': '已清理 ',
+    'clearEndedDownloadsPartialResultPrefix': '已从列表清理 ',
     'clearEndedDownloadsPartialResultMiddle': ' 个已结束任务，',
     'clearEndedDownloadsPartialResultSuffix': ' 个清理失败。',
     'mock': 'Mock',
@@ -568,11 +570,13 @@ const _localizedValues = {
     'start': '开始',
     'stopForNow': '先停一下',
     'cancel': '取消',
+    'removeFromList': '从列表移除',
     'remove': '移除',
     'downloadProgress': '进度',
     'downloadLocalPath': '本地路径',
     'downloadStopMayRestartNote': '当前下载只能先停下；下次重试时可能会从头开始。',
     'downloadPausedRetryNote': '这个下载已先停下；再次开始会按重试处理，可能从头开始。',
+    'downloadRemoveKeepsFileNote': '从列表移除这个任务不会删除已下载文件；文件会继续保留在设备上。',
     'downloadStoppedStatus': '已停下',
     'downloadKindDirectFile': '直链文件',
     'downloadKindHls': 'HLS / m3u8',
@@ -848,17 +852,18 @@ const _localizedValues = {
     'deleteHistory': 'Delete history',
     'loadingDownloads': 'Loading downloads',
     'downloadsEmpty': 'Download tasks will appear here',
-    'clearEndedDownloads': 'Clear ended tasks',
+    'clearEndedDownloads': 'Clear ended tasks from list',
     'clearEndedDownloadsResultPrefix': 'Cleared ',
-    'clearEndedDownloadsResultSuffix': ' ended tasks.',
+    'clearEndedDownloadsResultSuffix': ' ended tasks from the list.',
     'clearEndedDownloadsPartialResultPrefix': 'Cleared ',
-    'clearEndedDownloadsPartialResultMiddle': ' ended tasks, ',
+    'clearEndedDownloadsPartialResultMiddle': ' ended tasks from the list, ',
     'clearEndedDownloadsPartialResultSuffix': ' failed.',
     'mock': 'Mock',
     'mockDownloadTaskCreated': 'Mock download task created',
     'start': 'Start',
     'stopForNow': 'Stop for now',
     'cancel': 'Cancel',
+    'removeFromList': 'Remove from list',
     'remove': 'Remove',
     'downloadProgress': 'Progress',
     'downloadLocalPath': 'Local path',
@@ -866,6 +871,8 @@ const _localizedValues = {
         'Stopping this download keeps the task, but the next retry may restart from the beginning.',
     'downloadPausedRetryNote':
         'This download is stopped for now. Retrying may restart it from the beginning.',
+    'downloadRemoveKeepsFileNote':
+        'Removing this task only clears it from the list. The downloaded file stays on your device.',
     'downloadStoppedStatus': 'Stopped',
     'downloadKindDirectFile': 'Direct file',
     'downloadKindHls': 'HLS / m3u8',
@@ -1147,10 +1154,10 @@ const _localizedValues = {
     'deleteHistory': '履歴を削除',
     'loadingDownloads': 'ダウンロードを読み込み中',
     'downloadsEmpty': 'ダウンロードタスクがここに表示されます',
-    'clearEndedDownloads': '終了済みタスクを整理',
-    'clearEndedDownloadsResultPrefix': '終了済みタスクを ',
+    'clearEndedDownloads': '一覧から終了済みタスクを整理',
+    'clearEndedDownloadsResultPrefix': '一覧から終了済みタスクを ',
     'clearEndedDownloadsResultSuffix': ' 件整理しました。',
-    'clearEndedDownloadsPartialResultPrefix': '終了済みタスクを ',
+    'clearEndedDownloadsPartialResultPrefix': '一覧から終了済みタスクを ',
     'clearEndedDownloadsPartialResultMiddle': ' 件整理し、',
     'clearEndedDownloadsPartialResultSuffix': ' 件は失敗しました。',
     'mock': 'Mock',
@@ -1158,11 +1165,13 @@ const _localizedValues = {
     'start': '開始',
     'stopForNow': 'いったん止める',
     'cancel': 'キャンセル',
+    'removeFromList': '一覧から削除',
     'remove': '削除',
     'downloadProgress': '進捗',
     'downloadLocalPath': 'ローカルパス',
     'downloadStopMayRestartNote': 'いったん止めることはできますが、次の再試行では最初からやり直す場合があります。',
     'downloadPausedRetryNote': 'このダウンロードはいったん停止しています。再試行時は最初からやり直す場合があります。',
+    'downloadRemoveKeepsFileNote': 'このタスクを一覧から削除しても、ダウンロード済みファイルは端末に残ります。',
     'downloadStoppedStatus': '停止中',
     'downloadKindDirectFile': '直接ファイル',
     'downloadKindHls': 'HLS / m3u8',

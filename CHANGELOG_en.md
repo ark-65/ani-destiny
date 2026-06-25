@@ -7,6 +7,7 @@
 ## [Unreleased]
 
 ### 🐛 Fixed
+- Fixed the downloads page still describing `Remove` and `Clear ended tasks` like they might delete the local file even though those actions only clear the task record from the list; AniDestiny now says plainly that the cleanup is list-only and that downloaded files stay on the device, so this download-management path tells the truth before users tap it.
 - Fixed stale `Stop for now` or `Cancel` actions still being able to overwrite a direct download back out of `Completed` if the task happened to finish right as that action landed; AniDestiny now only allows download tasks to move through sensible state transitions, so a real offline result cannot be rewritten into a half-finished story by a race, and service-level regression coverage now locks that guard in place.
 - Fixed unfinished direct-file downloads still exposing a `Local path` early, which made stopped, failed, or still-preparing tasks look like they had already produced a usable offline file; AniDestiny now shows the local file path only after the download really completes, so those in-between states stay honest about what is actually available.
 - Fixed direct-file downloads still reading like a true resumable `Pause` flow even though AniDestiny can currently only stop the current attempt and retry later; active tasks now say `Stop for now`, stopped tasks show an honest `Stopped` state with `Retry`, both states explain that the next attempt may restart from the beginning, and the tile-level regression coverage now locks that wording in place.

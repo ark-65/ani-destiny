@@ -32,6 +32,13 @@ void main() {
     final removeButton =
         find.byKey(const ValueKey('download-task-remove-task-1'));
     expect(removeButton, findsOneWidget);
+    expect(find.byTooltip('Remove from list'), findsOneWidget);
+    expect(
+      find.text(
+        'Removing this task only clears it from the list. The downloaded file stays on your device.',
+      ),
+      findsOneWidget,
+    );
 
     await tester.tap(removeButton);
     await tester.pump();
@@ -71,6 +78,7 @@ void main() {
     expect(retryButton, findsOneWidget);
     expect(removeButton, findsOneWidget);
     expect(find.byTooltip('Cancel'), findsNothing);
+    expect(find.byTooltip('Remove from list'), findsOneWidget);
     expect(find.byIcon(Icons.refresh), findsOneWidget);
     expect(
       find.text(
@@ -119,6 +127,7 @@ void main() {
     expect(removeButton, findsOneWidget);
     expect(find.byIcon(Icons.error_outline), findsNothing);
     expect(find.text('Download canceled.'), findsNothing);
+    expect(find.byTooltip('Remove from list'), findsOneWidget);
 
     await tester.tap(removeButton);
     await tester.pump();
@@ -244,6 +253,12 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Local path: /tmp/video.mp4'), findsOneWidget);
+    expect(
+      find.text(
+        'Removing this task only clears it from the list. The downloaded file stays on your device.',
+      ),
+      findsOneWidget,
+    );
   });
 
   testWidgets('busy download tasks disable actions and show inline progress', (

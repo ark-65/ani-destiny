@@ -50,7 +50,7 @@ void main() {
 
     await _pumpDownloadPage(tester, repository);
 
-    expect(find.text('Clear ended tasks'), findsNothing);
+    expect(find.text('Clear ended tasks from list'), findsNothing);
     expect(repository.deletedTaskIds, isEmpty);
   });
 
@@ -87,6 +87,24 @@ void main() {
     expect(find.byTooltip('Pause'), findsNothing);
   });
 
+  testWidgets('completed downloads explain that list cleanup keeps the file', (
+    tester,
+  ) async {
+    final repository = _FakeDownloadRepository([
+      _task('completed', DownloadStatus.completed),
+    ]);
+
+    await _pumpDownloadPage(tester, repository);
+
+    expect(find.byTooltip('Remove from list'), findsOneWidget);
+    expect(
+      find.text(
+        'Removing this task only clears it from the list. The downloaded file stays on your device.',
+      ),
+      findsOneWidget,
+    );
+  });
+
   testWidgets(
     'clear ended tasks continues after one deletion fails and shows summary',
     (tester) async {
@@ -115,7 +133,10 @@ void main() {
         repository.deletedTaskIds,
         ['completed', 'canceled', 'unsupported'],
       );
-      expect(find.text('Cleared 3 ended tasks, 1 failed.'), findsOneWidget);
+      expect(
+        find.text('Cleared 3 ended tasks from the list, 1 failed.'),
+        findsOneWidget,
+      );
     },
   );
 
@@ -398,6 +419,7 @@ DownloadTask _task(String id, DownloadStatus status) {
     progress: 0.5,
     downloadedBytes: 512,
     totalBytes: 1024,
+    localPath: status == DownloadStatus.completed ? '/tmp/video.mp4' : null,
     createdAt: now,
     updatedAt: now,
   );

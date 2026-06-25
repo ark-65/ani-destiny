@@ -25,7 +25,7 @@ class DownloadTaskTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final pauseNote = _pauseNote(context);
+    final supportNote = _supportNote(context);
 
     return Card(
       child: Padding(
@@ -90,10 +90,10 @@ class DownloadTaskTile extends StatelessWidget {
             const SizedBox(height: 8),
             Row(
               children: [
-                if (pauseNote != null)
+                if (supportNote != null)
                   Expanded(
                     child: Text(
-                      pauseNote,
+                      supportNote,
                       style: Theme.of(context).textTheme.bodySmall,
                     ),
                   )
@@ -118,19 +118,22 @@ class DownloadTaskTile extends StatelessWidget {
     );
   }
 
-  String? _pauseNote(BuildContext context) {
-    if (task.kind != DownloadKind.directFile) {
-      return null;
-    }
+  String? _supportNote(BuildContext context) {
     return switch (task.status) {
-      DownloadStatus.downloading => context.l10n.downloadStopMayRestartNote,
-      DownloadStatus.paused => context.l10n.downloadPausedRetryNote,
+      DownloadStatus.downloading when task.kind == DownloadKind.directFile =>
+        context.l10n.downloadStopMayRestartNote,
+      DownloadStatus.paused when task.kind == DownloadKind.directFile =>
+        context.l10n.downloadPausedRetryNote,
+      DownloadStatus.completed when _showLocalPath(task) =>
+        context.l10n.downloadRemoveKeepsFileNote,
       DownloadStatus.pending ||
       DownloadStatus.preparing ||
       DownloadStatus.failed ||
-      DownloadStatus.completed ||
       DownloadStatus.canceled ||
-      DownloadStatus.unsupported =>
+      DownloadStatus.unsupported ||
+      DownloadStatus.downloading ||
+      DownloadStatus.paused ||
+      DownloadStatus.completed =>
         null,
     };
   }
@@ -210,7 +213,7 @@ class DownloadTaskTile extends StatelessWidget {
           ),
           IconButton(
             key: ValueKey('download-task-remove-${task.id}'),
-            tooltip: context.l10n.remove,
+            tooltip: context.l10n.removeFromList,
             onPressed: isBusy ? null : onRemove,
             icon: const Icon(Icons.delete_outline),
           ),
@@ -221,7 +224,7 @@ class DownloadTaskTile extends StatelessWidget {
         [
           IconButton(
             key: ValueKey('download-task-remove-${task.id}'),
-            tooltip: context.l10n.remove,
+            tooltip: context.l10n.removeFromList,
             onPressed: isBusy ? null : onRemove,
             icon: const Icon(Icons.delete_outline),
           ),
