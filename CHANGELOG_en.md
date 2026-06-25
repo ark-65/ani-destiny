@@ -7,6 +7,7 @@
 ## [Unreleased]
 
 ### 🐛 Fixed
+- Fixed stale `Stop for now` or `Cancel` actions still being able to overwrite a direct download back out of `Completed` if the task happened to finish right as that action landed; AniDestiny now only allows download tasks to move through sensible state transitions, so a real offline result cannot be rewritten into a half-finished story by a race, and service-level regression coverage now locks that guard in place.
 - Fixed unfinished direct-file downloads still exposing a `Local path` early, which made stopped, failed, or still-preparing tasks look like they had already produced a usable offline file; AniDestiny now shows the local file path only after the download really completes, so those in-between states stay honest about what is actually available.
 - Fixed direct-file downloads still reading like a true resumable `Pause` flow even though AniDestiny can currently only stop the current attempt and retry later; active tasks now say `Stop for now`, stopped tasks show an honest `Stopped` state with `Retry`, both states explain that the next attempt may restart from the beginning, and the tile-level regression coverage now locks that wording in place.
 - Fixed stopped direct-download tasks reusing the old progress bar when users tapped `Retry`, which made the flow look resumable before a new request had even restarted; each retry now resets the task into a fresh preparing state and starts again from `0%`, with service-level regression coverage to keep that honesty intact.

@@ -214,6 +214,7 @@ class HttpDownloadService implements DownloadService {
     _tokens[taskId]?.cancel('paused');
     final task = await _repository.getTask(taskId);
     if (task == null) return;
+    if (!_canPause(task.status)) return;
     final updated = task.copyWith(
       status: DownloadStatus.paused,
       updatedAt: DateTime.now(),
@@ -227,6 +228,7 @@ class HttpDownloadService implements DownloadService {
     _tokens[taskId]?.cancel('canceled');
     final task = await _repository.getTask(taskId);
     if (task == null) return;
+    if (!_canCancel(task.status)) return;
     final updated = task.copyWith(
       status: DownloadStatus.canceled,
       failureReason: DownloadFailureReason.canceled,
@@ -284,6 +286,34 @@ class HttpDownloadService implements DownloadService {
     final path = Uri.tryParse(task.url)?.path ?? '';
     final extension = p.extension(path).isEmpty ? '.mp4' : p.extension(path);
     return '${task.title}-${task.episodeTitle}$extension';
+  }
+
+  bool _canPause(DownloadStatus status) {
+    return switch (status) {
+      DownloadStatus.preparing || DownloadStatus.downloading => true,
+      DownloadStatus.pending ||
+      DownloadStatus.paused ||
+      DownloadStatus.completed ||
+      DownloadStatus.failed ||
+      DownloadStatus.canceled ||
+      DownloadStatus.unsupported =>
+        false,
+    };
+  }
+
+  bool _canCancel(DownloadStatus status) {
+    return switch (status) {
+      DownloadStatus.pending ||
+      DownloadStatus.preparing ||
+      DownloadStatus.downloading ||
+      DownloadStatus.paused =>
+        true,
+      DownloadStatus.completed ||
+      DownloadStatus.failed ||
+      DownloadStatus.canceled ||
+      DownloadStatus.unsupported =>
+        false,
+    };
   }
 
   String _safeFileName(String value) {

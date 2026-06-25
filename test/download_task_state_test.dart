@@ -100,6 +100,92 @@ void main() {
     expect(task.failureMessage, isNull);
   });
 
+  test('stale stop does not overwrite a completed direct download', () async {
+    final database = AppDatabase(NativeDatabase.memory());
+    addTearDown(database.close);
+
+    final repository = DownloadRepositoryImpl(database);
+    final service = HttpDownloadService(
+      dio: Dio(),
+      repository: repository,
+    );
+    final now = DateTime(2026, 6, 26, 0, 0);
+
+    await repository.upsertTask(
+      DownloadTask(
+        id: 'task-completed-stop',
+        animeId: 'anime-1',
+        episodeId: 'episode-1',
+        sourceId: 'sakura',
+        title: 'Direct Test',
+        episodeTitle: 'Episode 1',
+        url: 'https://cdn.example.test/video.mp4',
+        kind: DownloadKind.directFile,
+        status: DownloadStatus.completed,
+        failureReason: DownloadFailureReason.none,
+        progress: 1,
+        totalBytes: 1000,
+        downloadedBytes: 1000,
+        localPath: '/tmp/video.mp4',
+        createdAt: now,
+        updatedAt: now,
+      ),
+    );
+
+    await service.pause('task-completed-stop');
+
+    final task = await repository.getTask('task-completed-stop');
+    expect(task, isNotNull);
+    expect(task!.status, DownloadStatus.completed);
+    expect(task.failureReason, DownloadFailureReason.none);
+    expect(task.failureMessage, isNull);
+    expect(task.progress, 1);
+    expect(task.localPath, '/tmp/video.mp4');
+  });
+
+  test('stale cancel does not overwrite a completed direct download', () async {
+    final database = AppDatabase(NativeDatabase.memory());
+    addTearDown(database.close);
+
+    final repository = DownloadRepositoryImpl(database);
+    final service = HttpDownloadService(
+      dio: Dio(),
+      repository: repository,
+    );
+    final now = DateTime(2026, 6, 26, 0, 0);
+
+    await repository.upsertTask(
+      DownloadTask(
+        id: 'task-completed-cancel',
+        animeId: 'anime-1',
+        episodeId: 'episode-1',
+        sourceId: 'sakura',
+        title: 'Direct Test',
+        episodeTitle: 'Episode 1',
+        url: 'https://cdn.example.test/video.mp4',
+        kind: DownloadKind.directFile,
+        status: DownloadStatus.completed,
+        failureReason: DownloadFailureReason.none,
+        progress: 1,
+        totalBytes: 1000,
+        downloadedBytes: 1000,
+        localPath: '/tmp/video.mp4',
+        createdAt: now,
+        updatedAt: now,
+      ),
+    );
+
+    await service.cancel('task-completed-cancel');
+
+    final task = await repository.getTask('task-completed-cancel');
+    expect(task, isNotNull);
+    expect(task!.status, DownloadStatus.completed);
+    expect(task.failureReason, DownloadFailureReason.none);
+    expect(task.failureMessage, isNull);
+    expect(task.progress, 1);
+    expect(task.localPath, '/tmp/video.mp4');
+  });
+
   test(
       'retrying a stopped direct download resets stale progress before restart',
       () async {
