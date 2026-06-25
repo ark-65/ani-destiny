@@ -13,6 +13,7 @@ import 'package:dio/dio.dart';
 import 'package:drift/native.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:path/path.dart' as p;
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -174,7 +175,9 @@ void main() {
     expect(task.progress, 0);
     expect(task.totalBytes, isNull);
     expect(task.downloadedBytes, 0);
-    expect(task.localPath, endsWith('downloads/Direct Test-Episode 1.mp4'));
+    expect(task.localPath, isNotNull);
+    expect(p.basename(task.localPath!), 'Direct Test-Episode 1.mp4');
+    expect(p.basename(p.dirname(task.localPath!)), 'downloads');
     expect(task.failureReason, DownloadFailureReason.networkError);
     expect(task.failureMessage, 'offline');
   });
