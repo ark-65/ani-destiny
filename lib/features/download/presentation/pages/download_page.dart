@@ -82,6 +82,9 @@ class _DownloadPageState extends ConsumerState<DownloadPage> {
                   final hasBusyRemovableTask = removableTaskIds.any(
                     _busyTaskIds.contains,
                   );
+                  final hasCompletedTasks = items.any(
+                    (task) => task.status == DownloadStatus.completed,
+                  );
                   if (items.isEmpty) {
                     return AppEmptyView(
                       message: context.l10n.downloadsEmpty,
@@ -113,6 +116,14 @@ class _DownloadPageState extends ConsumerState<DownloadPage> {
                               : const Icon(Icons.clear_all),
                           label: Text(context.l10n.clearEndedDownloads),
                         ),
+                        if (hasCompletedTasks) ...[
+                          const SizedBox(height: 8),
+                          Text(
+                            context.l10n.clearEndedDownloadsKeepsFilesNote,
+                            style: Theme.of(context).textTheme.bodySmall,
+                            textAlign: TextAlign.right,
+                          ),
+                        ],
                         const SizedBox(height: 12),
                       ],
                       Expanded(

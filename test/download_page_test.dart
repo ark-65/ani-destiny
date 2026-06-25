@@ -54,6 +54,43 @@ void main() {
     expect(repository.deletedTaskIds, isEmpty);
   });
 
+  testWidgets('clear ended tasks explains completed files stay on device', (
+    tester,
+  ) async {
+    final repository = _FakeDownloadRepository([
+      _task('completed', DownloadStatus.completed),
+      _task('failed', DownloadStatus.failed),
+    ]);
+
+    await _pumpDownloadPage(tester, repository);
+
+    expect(
+      find.text(
+        'This only clears ended tasks from the list. Completed files stay on your device.',
+      ),
+      findsOneWidget,
+    );
+  });
+
+  testWidgets(
+    'clear ended tasks note stays hidden without completed downloads',
+    (tester) async {
+      final repository = _FakeDownloadRepository([
+        _task('failed', DownloadStatus.failed),
+        _task('canceled', DownloadStatus.canceled),
+      ]);
+
+      await _pumpDownloadPage(tester, repository);
+
+      expect(
+        find.text(
+          'This only clears ended tasks from the list. Completed files stay on your device.',
+        ),
+        findsNothing,
+      );
+    },
+  );
+
   testWidgets('direct downloads use honest stop and retry wording', (
     tester,
   ) async {

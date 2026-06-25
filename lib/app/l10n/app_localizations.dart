@@ -214,6 +214,8 @@ class AppLocalizations {
   String get downloadStopMayRestartNote => _t('downloadStopMayRestartNote');
   String get downloadPausedRetryNote => _t('downloadPausedRetryNote');
   String get downloadRemoveKeepsFileNote => _t('downloadRemoveKeepsFileNote');
+  String get clearEndedDownloadsKeepsFilesNote =>
+      _t('clearEndedDownloadsKeepsFilesNote');
   String get downloadStoppedStatus => _t('downloadStoppedStatus');
   String get downloadKindDirectFile => _t('downloadKindDirectFile');
   String get downloadKindHls => _t('downloadKindHls');
@@ -565,6 +567,7 @@ const _localizedValues = {
     'clearEndedDownloadsPartialResultPrefix': '已从列表清理 ',
     'clearEndedDownloadsPartialResultMiddle': ' 个已结束任务，',
     'clearEndedDownloadsPartialResultSuffix': ' 个清理失败。',
+    'clearEndedDownloadsKeepsFilesNote': '这里只会清掉列表里的已结束任务；已经下载完成的文件会继续保留在设备上。',
     'mock': 'Mock',
     'mockDownloadTaskCreated': '已创建 Mock 下载任务',
     'start': '开始',
@@ -858,6 +861,8 @@ const _localizedValues = {
     'clearEndedDownloadsPartialResultPrefix': 'Cleared ',
     'clearEndedDownloadsPartialResultMiddle': ' ended tasks from the list, ',
     'clearEndedDownloadsPartialResultSuffix': ' failed.',
+    'clearEndedDownloadsKeepsFilesNote':
+        'This only clears ended tasks from the list. Completed files stay on your device.',
     'mock': 'Mock',
     'mockDownloadTaskCreated': 'Mock download task created',
     'start': 'Start',
@@ -1160,6 +1165,8 @@ const _localizedValues = {
     'clearEndedDownloadsPartialResultPrefix': '一覧から終了済みタスクを ',
     'clearEndedDownloadsPartialResultMiddle': ' 件整理し、',
     'clearEndedDownloadsPartialResultSuffix': ' 件は失敗しました。',
+    'clearEndedDownloadsKeepsFilesNote':
+        'ここでは一覧上の終了済みタスクだけを整理します。ダウンロード済みのファイルは端末に残ります。',
     'mock': 'Mock',
     'mockDownloadTaskCreated': 'Mock ダウンロードタスクを作成しました',
     'start': '開始',
