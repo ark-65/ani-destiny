@@ -3491,6 +3491,9 @@ class _FakeDownloadService implements DownloadService {
   Future<void> pause(String taskId) async {}
 
   @override
+  Future<void> removeEndedTask(String taskId) async {}
+
+  @override
   Future<void> start(String taskId) async {}
 
   @override

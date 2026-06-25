@@ -263,6 +263,44 @@ class HttpDownloadService implements DownloadService {
   }
 
   @override
+  Future<void> removeEndedTask(String taskId) async {
+    final task = await _repository.getTask(taskId);
+    if (task == null) return;
+    if (!_canRemove(task.status)) {
+      throw const AppException(
+        'This download is still active.',
+        code: 'download_remove_not_allowed',
+      );
+    }
+
+    if (_requiresManualCleanupBeforeRemoval(task)) {
+      final clearedLocalPath = await _clearDiscardedDownload(
+        localPath: task.localPath,
+        clearNow: true,
+      );
+      if (clearedLocalPath != null) {
+        final updated = task.copyWith(
+          localPath: clearedLocalPath,
+          updatedAt: DateTime.now(),
+        );
+        await _repository.upsertTask(updated);
+        _emitTask(updated);
+        throw const AppException(
+          'The leftover partial file still needs manual cleanup.',
+          code: 'download_manual_cleanup_required',
+        );
+      }
+    }
+
+    await _repository.deleteTask(taskId);
+    _tokens.remove(taskId);
+    final controller = _controllers.remove(taskId);
+    if (controller != null) {
+      unawaited(controller.close());
+    }
+  }
+
+  @override
   Stream<DownloadProgress> watchProgress(String taskId) {
     return _controllerFor(taskId).stream;
   }
@@ -337,6 +375,25 @@ class HttpDownloadService implements DownloadService {
       DownloadStatus.unsupported =>
         false,
     };
+  }
+
+  bool _canRemove(DownloadStatus status) {
+    return switch (status) {
+      DownloadStatus.completed ||
+      DownloadStatus.failed ||
+      DownloadStatus.canceled ||
+      DownloadStatus.unsupported =>
+        true,
+      DownloadStatus.pending ||
+      DownloadStatus.preparing ||
+      DownloadStatus.downloading ||
+      DownloadStatus.paused =>
+        false,
+    };
+  }
+
+  bool _requiresManualCleanupBeforeRemoval(DownloadTask task) {
+    return task.status == DownloadStatus.canceled && task.localPath != null;
   }
 
   String _safeFileName(String value) {

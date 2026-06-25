@@ -7,6 +7,7 @@
 ## [Unreleased]
 
 ### 🐛 Fixed
+- Fixed `Remove from list` and `Clear ended tasks from list` still being able to erase the only leftover-file clue after a discarded download could not delete its partial file; AniDestiny now retries that cleanup first and keeps the task visible with a direct manual-cleanup explanation until the leftover file is actually gone.
 - Fixed discarded download tasks falling into a silent `Canceled` end state that never said whether AniDestiny had actually cleared the unfinished file; discarded tasks now explain the cleanup result directly, and if automatic cleanup fails they keep the leftover local path visible so users can finish removing that partial file themselves.
 - Fixed direct-download tiles putting `Stop for now` and `Cancel` side by side while only explaining the stop path and never saying plainly that the other action discards the unfinished attempt; AniDestiny now explains both outcomes together for active and stopped direct downloads, and labels that second action as discarding the download so users can tell the difference between stopping, retrying, and throwing the unfinished file away.
 - Fixed the downloads page already offering `Clear ended tasks from list` while still leaving the batch action itself without a page-level reminder that it only clears task records, not finished files; whenever completed downloads are present, AniDestiny now adds that note directly under the cleanup action so users know the offline file stays on the device before they clear the list.

@@ -1,10 +1,14 @@
 import 'dart:async';
 
 import 'package:ani_destiny/app/l10n/app_localizations.dart';
+import 'package:ani_destiny/core/error/app_exception.dart';
 import 'package:ani_destiny/features/download/domain/entities/download_failure_reason.dart';
 import 'package:ani_destiny/features/download/domain/entities/download_kind.dart';
+import 'package:ani_destiny/features/download/domain/entities/download_progress.dart';
+import 'package:ani_destiny/features/download/domain/entities/download_source.dart';
 import 'package:ani_destiny/features/download/domain/entities/download_task.dart';
 import 'package:ani_destiny/features/download/domain/repositories/download_repository.dart';
+import 'package:ani_destiny/features/download/domain/services/download_service.dart';
 import 'package:ani_destiny/features/download/presentation/pages/download_page.dart';
 import 'package:ani_destiny/features/download/presentation/providers/download_providers.dart';
 import 'package:flutter/material.dart';
@@ -88,6 +92,35 @@ void main() {
         ),
         findsNothing,
       );
+    },
+  );
+
+  testWidgets(
+    'clear ended tasks keeps discarded leftovers visible for manual cleanup',
+    (tester) async {
+      final repository = _FakeDownloadRepository([
+        _task('completed', DownloadStatus.completed),
+        _task('canceled', DownloadStatus.canceled).copyWith(
+          localPath: '/tmp/partial-video.mp4',
+          failureReason: DownloadFailureReason.canceled,
+        ),
+      ]);
+
+      await _pumpDownloadPage(tester, repository);
+
+      expect(
+        find.text(
+          'Discarded tasks that still show a leftover file path stay in the list until that partial file is gone.',
+        ),
+        findsOneWidget,
+      );
+
+      await tester
+          .tap(find.byKey(const ValueKey('downloads-clear-ended-tasks')));
+      await tester.pump();
+
+      expect(repository.deleteAttempts, ['completed']);
+      expect(repository.deletedTaskIds, ['completed']);
     },
   );
 
@@ -264,6 +297,46 @@ void main() {
     expect(find.text('Bad state: delete failed for completed'), findsOneWidget);
   });
 
+  testWidgets(
+    'remove keeps discarded leftovers in the list until manual cleanup succeeds',
+    (tester) async {
+      final repository = _FakeDownloadRepository([
+        _task('canceled', DownloadStatus.canceled).copyWith(
+          localPath: '/tmp/partial-video.mp4',
+          failureReason: DownloadFailureReason.canceled,
+        ),
+      ]);
+      final downloadService = _FakeDownloadService(
+        repository,
+        removeErrors: const {
+          'canceled': AppException(
+            'The leftover partial file still needs manual cleanup.',
+            code: 'download_manual_cleanup_required',
+          ),
+        },
+      );
+
+      await _pumpDownloadPage(
+        tester,
+        repository,
+        downloadService: downloadService,
+      );
+
+      await tester
+          .tap(find.byKey(const ValueKey('download-task-remove-canceled')));
+      await tester.pump();
+
+      expect(downloadService.removeAttempts, ['canceled']);
+      expect(repository.deleteAttempts, isEmpty);
+      expect(
+        find.text(
+          'AniDestiny still could not clear that leftover partial file. Remove it from your device first, then clear this task from the list.',
+        ),
+        findsOneWidget,
+      );
+    },
+  );
+
   testWidgets('remove action stays disabled while deletion is still running', (
     tester,
   ) async {
@@ -369,11 +442,13 @@ Future<void> _pumpDownloadPage(
   WidgetTester tester,
   DownloadRepository repository, {
   bool showDebugMockAction = true,
+  DownloadService? downloadService,
 }) async {
   await tester.pumpWidget(
     _TestApp(
       repository: repository,
       showDebugMockAction: showDebugMockAction,
+      downloadService: downloadService,
     ),
   );
   await tester.pumpAndSettle();
@@ -383,16 +458,21 @@ class _TestApp extends StatelessWidget {
   const _TestApp({
     required this.repository,
     required this.showDebugMockAction,
+    this.downloadService,
   });
 
   final DownloadRepository repository;
   final bool showDebugMockAction;
+  final DownloadService? downloadService;
 
   @override
   Widget build(BuildContext context) {
+    final effectiveDownloadService =
+        downloadService ?? _FakeDownloadService(repository);
     return ProviderScope(
       overrides: [
         downloadRepositoryProvider.overrideWithValue(repository),
+        httpDownloadServiceProvider.overrideWithValue(effectiveDownloadService),
       ],
       child: MaterialApp(
         locale: const Locale('en'),
@@ -408,6 +488,53 @@ class _TestApp extends StatelessWidget {
         ),
       ),
     );
+  }
+}
+
+class _FakeDownloadService implements DownloadService {
+  _FakeDownloadService(
+    this.repository, {
+    this.removeErrors = const {},
+  });
+
+  final DownloadRepository repository;
+  final Map<String, Object> removeErrors;
+  final List<String> removeAttempts = [];
+
+  @override
+  Future<void> cancel(String taskId) async {}
+
+  @override
+  Future<String> createTask({
+    required String animeId,
+    required String episodeId,
+    required String sourceId,
+    required DownloadSource source,
+    required String title,
+    required String episodeTitle,
+  }) async {
+    return 'mock-task';
+  }
+
+  @override
+  Future<void> pause(String taskId) async {}
+
+  @override
+  Future<void> removeEndedTask(String taskId) async {
+    removeAttempts.add(taskId);
+    final error = removeErrors[taskId];
+    if (error != null) {
+      throw error;
+    }
+    await repository.deleteTask(taskId);
+  }
+
+  @override
+  Future<void> start(String taskId) async {}
+
+  @override
+  Stream<DownloadProgress> watchProgress(String taskId) {
+    return const Stream<DownloadProgress>.empty();
   }
 }
 

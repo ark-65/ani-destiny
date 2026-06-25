@@ -298,6 +298,55 @@ void main() {
     expect(partialFile.existsSync(), isFalse);
   });
 
+  test('removing a discarded task clears any leftover partial file first',
+      () async {
+    final database = AppDatabase(NativeDatabase.memory());
+    addTearDown(database.close);
+    final tempDir =
+        await Directory.systemTemp.createTemp('ani-destiny-remove-discarded');
+    addTearDown(() async {
+      if (tempDir.existsSync()) {
+        await tempDir.delete(recursive: true);
+      }
+    });
+
+    final repository = DownloadRepositoryImpl(database);
+    final service = HttpDownloadService(
+      dio: Dio(),
+      repository: repository,
+    );
+    final partialFile = File(p.join(tempDir.path, 'partial-remove.mp4'));
+    await partialFile.writeAsString('partial');
+    final now = DateTime(2026, 6, 26, 0, 0);
+
+    await repository.upsertTask(
+      DownloadTask(
+        id: 'task-remove-discarded',
+        animeId: 'anime-1',
+        episodeId: 'episode-1',
+        sourceId: 'sakura',
+        title: 'Direct Test',
+        episodeTitle: 'Episode 1',
+        url: 'https://cdn.example.test/video.mp4',
+        kind: DownloadKind.directFile,
+        status: DownloadStatus.canceled,
+        failureReason: DownloadFailureReason.canceled,
+        progress: 0,
+        downloadedBytes: 0,
+        totalBytes: null,
+        localPath: partialFile.path,
+        createdAt: now,
+        updatedAt: now,
+      ),
+    );
+
+    await service.removeEndedTask('task-remove-discarded');
+
+    final task = await repository.getTask('task-remove-discarded');
+    expect(task, isNull);
+    expect(partialFile.existsSync(), isFalse);
+  });
+
   test(
       'retrying a stopped direct download resets stale progress before restart',
       () async {

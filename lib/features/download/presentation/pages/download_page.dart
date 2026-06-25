@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../app/l10n/app_localizations.dart';
+import '../../../../core/error/app_exception.dart';
 import '../../../../core/widgets/app_empty_view.dart';
 import '../../../../core/widgets/app_error_view.dart';
 import '../../../../core/widgets/app_loading_view.dart';
@@ -78,12 +79,15 @@ class _DownloadPageState extends ConsumerState<DownloadPage> {
                 ),
                 data: (items) {
                   final removableTaskIds = _removableTaskIds(items);
-                  final clearableTaskIds = _clearableTaskIds(removableTaskIds);
+                  final clearableTaskIds = _clearableTaskIds(items);
                   final hasBusyRemovableTask = removableTaskIds.any(
                     _busyTaskIds.contains,
                   );
                   final hasCompletedTasks = items.any(
                     (task) => task.status == DownloadStatus.completed,
+                  );
+                  final hasDiscardedTasksAwaitingCleanup = items.any(
+                    _requiresManualCleanupBeforeRemoval,
                   );
                   if (items.isEmpty) {
                     return AppEmptyView(
@@ -120,6 +124,15 @@ class _DownloadPageState extends ConsumerState<DownloadPage> {
                           const SizedBox(height: 8),
                           Text(
                             context.l10n.clearEndedDownloadsKeepsFilesNote,
+                            style: Theme.of(context).textTheme.bodySmall,
+                            textAlign: TextAlign.right,
+                          ),
+                        ],
+                        if (hasDiscardedTasksAwaitingCleanup) ...[
+                          const SizedBox(height: 8),
+                          Text(
+                            context
+                                .l10n.clearEndedDownloadsRetainedDiscardedNote,
                             style: Theme.of(context).textTheme.bodySmall,
                             textAlign: TextAlign.right,
                           ),
@@ -169,8 +182,8 @@ class _DownloadPageState extends ConsumerState<DownloadPage> {
                                   context,
                                   task.id,
                                   () => ref
-                                      .read(downloadRepositoryProvider)
-                                      .deleteTask(task.id),
+                                      .read(httpDownloadServiceProvider)
+                                      .removeEndedTask(task.id),
                                 ),
                               ),
                             );
@@ -217,7 +230,7 @@ class _DownloadPageState extends ConsumerState<DownloadPage> {
     } catch (error) {
       if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(error.toString())),
+        SnackBar(content: Text(_actionErrorMessage(context, error))),
       );
     } finally {
       if (mounted) {
@@ -235,12 +248,12 @@ class _DownloadPageState extends ConsumerState<DownloadPage> {
     WidgetRef ref,
     List<String> taskIds,
   ) async {
-    final repository = ref.read(downloadRepositoryProvider);
+    final service = ref.read(httpDownloadServiceProvider);
     var clearedCount = 0;
     var failedCount = 0;
     for (final taskId in taskIds) {
       try {
-        await repository.deleteTask(taskId);
+        await service.removeEndedTask(taskId);
         clearedCount += 1;
       } catch (_) {
         failedCount += 1;
@@ -281,8 +294,11 @@ class _DownloadPageState extends ConsumerState<DownloadPage> {
         .toList(growable: false);
   }
 
-  List<String> _clearableTaskIds(List<String> removableTaskIds) {
-    return removableTaskIds
+  List<String> _clearableTaskIds(List<DownloadTask> items) {
+    return items
+        .where(_isRemovableTask)
+        .where((task) => !_requiresManualCleanupBeforeRemoval(task))
+        .map((task) => task.id)
         .where((taskId) => !_busyTaskIds.contains(taskId))
         .toList(growable: false);
   }
@@ -300,5 +316,20 @@ class _DownloadPageState extends ConsumerState<DownloadPage> {
       DownloadStatus.paused =>
         false,
     };
+  }
+
+  bool _requiresManualCleanupBeforeRemoval(DownloadTask task) {
+    return task.status == DownloadStatus.canceled && task.localPath != null;
+  }
+
+  String _actionErrorMessage(BuildContext context, Object error) {
+    if (error is AppException &&
+        error.code == 'download_manual_cleanup_required') {
+      return context.l10n.downloadManualCleanupRequiredError;
+    }
+    if (error is AppException) {
+      return error.message;
+    }
+    return error.toString();
   }
 }

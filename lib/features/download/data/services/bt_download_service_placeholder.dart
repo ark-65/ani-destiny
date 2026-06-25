@@ -35,6 +35,11 @@ class BtDownloadServicePlaceholder implements DownloadService {
   }
 
   @override
+  Future<void> removeEndedTask(String taskId) {
+    throw UnimplementedError('BT download is not implemented yet.');
+  }
+
+  @override
   Stream<DownloadProgress> watchProgress(String taskId) {
     throw UnimplementedError('BT download is not implemented yet.');
   }
