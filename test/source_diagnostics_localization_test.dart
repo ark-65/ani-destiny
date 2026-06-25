@@ -1,4 +1,6 @@
 import 'package:ani_destiny/app/l10n/app_localizations.dart';
+import 'package:ani_destiny/core/diagnostics/playback_diagnostic_snapshot_preview.dart';
+import 'package:ani_destiny/core/diagnostics/playback_diagnostic_summary.dart';
 import 'package:ani_destiny/features/danmaku/domain/entities/danmaku_settings.dart';
 import 'package:ani_destiny/features/danmaku/presentation/providers/danmaku_providers.dart';
 import 'package:ani_destiny/features/player/domain/services/playback_diagnostics.dart';
@@ -32,7 +34,7 @@ void main() {
 
     await tester.pumpAndSettle();
 
-    expect(find.text('Current source'), findsOneWidget);
+    expect(find.text('Selected app source'), findsOneWidget);
     expect(find.textContaining('Sakura Anime'), findsWidgets);
     await tester.scrollUntilVisible(
       find.textContaining('Mock Anime Source'),
@@ -52,7 +54,19 @@ void main() {
     );
     expect(
       find.text(
-        'Start playback once in this session, then come back here to confirm the latest playback snapshot before copying diagnostics.',
+        'No playback snapshot has been captured in this session yet. Start playback once and the latest playback moment will appear here.',
+      ),
+      findsOneWidget,
+    );
+    expect(
+      find.text(
+        'Start playback once in this session to copy the latest playback diagnostics.',
+      ),
+      findsOneWidget,
+    );
+    expect(
+      find.text(
+        'A sanitized feedback summary will be copied. The playback section stays unavailable until playback runs once in this session.',
       ),
       findsOneWidget,
     );
@@ -151,6 +165,96 @@ void main() {
     expect(copiedText, 'Runtime diagnostics summary');
   });
 
+  testWidgets(
+      'runtime diagnostics can copy the latest playback snapshot in place', (
+    tester,
+  ) async {
+    tester.view.devicePixelRatio = 1;
+    tester.view.physicalSize = const Size(800, 1400);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    addTearDown(tester.view.resetPhysicalSize);
+
+    String? copiedText;
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMethodCallHandler(SystemChannels.platform, (call) async {
+      if (call.method == 'Clipboard.setData') {
+        copiedText =
+            (call.arguments as Map<Object?, Object?>)['text'] as String?;
+      }
+      return null;
+    });
+    addTearDown(() {
+      TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+          .setMockMethodCallHandler(SystemChannels.platform, null);
+    });
+
+    final container = ProviderContainer(overrides: _providerOverrides);
+    addTearDown(container.dispose);
+    container.read(lastPlaybackDiagnosticsProvider.notifier).state =
+        PlaybackDiagnostics(
+      capturedAt: DateTime(2026, 6, 17, 1, 2, 3),
+      animeTitle: 'Anime 1',
+      episodeTitle: 'Episode 2',
+      selectedAppSourceId: 'remote-proxy',
+      sourceId: 'mock',
+      requestedSourceId: 'sakura',
+      playSourceTitle: 'Line 1',
+      urlType: 'm3u8',
+      sanitizedUrl: 'https://cdn.example.test/.../episode-2.m3u8',
+      headerKeys: const ['Referer', 'User-Agent'],
+      state: PlaybackDiagnosticState.buffering,
+    );
+
+    await tester.pumpWidget(
+      UncontrolledProviderScope(
+        container: container,
+        child: const MaterialApp(
+          locale: Locale('en'),
+          supportedLocales: AppLocalizations.supportedLocales,
+          localizationsDelegates: [
+            AppLocalizations.delegate,
+            GlobalMaterialLocalizations.delegate,
+            GlobalWidgetsLocalizations.delegate,
+            GlobalCupertinoLocalizations.delegate,
+          ],
+          home: Scaffold(body: RuntimeDiagnosticsPage()),
+        ),
+      ),
+    );
+
+    await tester.pumpAndSettle();
+    final copyPlaybackDiagnostics = find.text('Copy playback diagnostics');
+    await tester.ensureVisible(copyPlaybackDiagnostics);
+    await tester.tap(copyPlaybackDiagnostics);
+    await tester.pumpAndSettle();
+
+    const l10n = AppLocalizations(Locale('en'));
+    final expected = buildPlaybackDiagnosticSummary(
+      l10n: l10n,
+      localeName: 'en',
+      diagnostics: container.read(lastPlaybackDiagnosticsProvider)!,
+    );
+
+    expect(find.text('Playback diagnostics copied'), findsOneWidget);
+    expect(copiedText, expected);
+    expect(
+      find.text(
+        'Copies a sanitized summary of the latest playback without sensitive values.',
+      ),
+      findsOneWidget,
+    );
+    expect(
+      copiedText,
+      contains('Selected app source at playback: Remote Source Proxy'),
+    );
+    expect(
+      copiedText,
+      contains(
+        'Playback source status: Sakura Anime is temporarily unavailable. AniDestiny is playing from Mock Anime Source instead.',
+      ),
+    );
+  });
+
   testWidgets('source diagnostics sheet can copy diagnostics in place', (
     tester,
   ) async {
@@ -235,12 +339,14 @@ void main() {
       capturedAt: DateTime(2026, 6, 17, 1, 2, 3),
       animeTitle: 'Anime 1',
       episodeTitle: 'Episode 2',
+      selectedAppSourceId: null,
       sourceId: 'mock',
       requestedSourceId: 'sakura',
       playSourceTitle: 'Line 1',
       urlType: 'm3u8',
       sanitizedUrl: 'https://cdn.example.test/.../episode-2.m3u8',
       headerKeys: ['Referer', 'User-Agent'],
+      state: PlaybackDiagnosticState.buffering,
     );
 
     await tester.pumpWidget(
@@ -262,24 +368,215 @@ void main() {
 
     await tester.pumpAndSettle();
 
-    expect(find.text('Anime 1'), findsOneWidget);
-    expect(find.text('Episode 2'), findsOneWidget);
-    expect(find.text('Requested source'), findsOneWidget);
+    final preview = buildPlaybackDiagnosticSnapshotPreview(
+      l10n: const AppLocalizations(Locale('en')),
+      localeName: 'en',
+      diagnostics: container.read(lastPlaybackDiagnosticsProvider)!,
+    );
+
+    expect(preview, contains('State: Buffering'));
+    expect(preview, contains('Anime 1'));
+    expect(preview, contains('Episode 2'));
+    expect(find.text('Playback diagnostics'), findsOneWidget);
+    expect(find.text('Latest playback'), findsOneWidget);
     expect(
-      find.text(
-        'The latest playback snapshot captured in this session appears here so you can confirm the anime, line, URL type, and request-header names before copying diagnostics.',
+      find.textContaining(
+        'This is the latest playback snapshot captured in this session.',
       ),
       findsOneWidget,
     );
-    expect(find.text('Captured at'), findsOneWidget);
-    expect(find.text('Sakura Anime'), findsWidgets);
-    expect(find.text('Mock Anime Source'), findsWidgets);
-    expect(find.text('Line 1'), findsOneWidget);
+    expect(find.textContaining(preview), findsOneWidget);
+    expect(find.textContaining('Latest playback:'), findsNothing);
+    expect(find.text('Anime'), findsNothing);
+    expect(find.text('Episode'), findsNothing);
+    expect(find.text('State'), findsNothing);
+    expect(find.text('Captured at'), findsNothing);
+    expect(
+      find.textContaining(
+        'Playback source status: Sakura Anime is temporarily unavailable. AniDestiny is playing from Mock Anime Source instead.',
+      ),
+      findsOneWidget,
+    );
+    expect(find.text('Selected playback source'), findsNothing);
+    expect(find.text('Line 1'), findsNothing);
+    expect(find.text('Playback request details'), findsOneWidget);
+    expect(
+      find.text(
+        'These sanitized request details help confirm how the latest playback was requested.',
+      ),
+      findsOneWidget,
+    );
+    expect(find.text('URL type'), findsOneWidget);
     expect(
       find.text('https://cdn.example.test/.../episode-2.m3u8'),
       findsOneWidget,
     );
     expect(find.text('Referer, User-Agent'), findsOneWidget);
+    expect(find.text('Request header names'), findsOneWidget);
+  });
+
+  testWidgets(
+      'runtime diagnostics playback snapshot adds app source only when it explains a mismatch',
+      (tester) async {
+    final container = ProviderContainer(
+      overrides: [
+        ..._providerOverrides,
+        currentSourceIdProvider.overrideWith(
+          () => _RemoteProxyCurrentSourceIdController(),
+        ),
+      ],
+    );
+    addTearDown(container.dispose);
+    container.read(lastPlaybackDiagnosticsProvider.notifier).state =
+        PlaybackDiagnostics(
+      capturedAt: DateTime(2026, 6, 17, 1, 2, 3),
+      animeTitle: 'Anime 1',
+      episodeTitle: 'Episode 2',
+      selectedAppSourceId: 'remote-proxy',
+      sourceId: 'mock',
+      requestedSourceId: 'sakura',
+      playSourceTitle: 'Line 1',
+      urlType: 'm3u8',
+      sanitizedUrl: 'https://cdn.example.test/.../episode-2.m3u8',
+      headerKeys: const ['Referer'],
+      state: PlaybackDiagnosticState.buffering,
+    );
+
+    await tester.pumpWidget(
+      UncontrolledProviderScope(
+        container: container,
+        child: const MaterialApp(
+          locale: Locale('en'),
+          supportedLocales: AppLocalizations.supportedLocales,
+          localizationsDelegates: [
+            AppLocalizations.delegate,
+            GlobalMaterialLocalizations.delegate,
+            GlobalWidgetsLocalizations.delegate,
+            GlobalCupertinoLocalizations.delegate,
+          ],
+          home: Scaffold(body: RuntimeDiagnosticsPage()),
+        ),
+      ),
+    );
+
+    await tester.pumpAndSettle();
+
+    expect(find.text('Selected app source'), findsOneWidget);
+    expect(find.text('Selected app source at playback'), findsNothing);
+    expect(find.text('Remote Source Proxy'), findsOneWidget);
+    expect(
+      find.textContaining(
+        'This is the latest playback snapshot captured in this session.',
+      ),
+      findsOneWidget,
+    );
+    expect(find.text('Selected playback source'), findsNothing);
+    expect(
+      find.textContaining(
+        'Playback source status: Sakura Anime is temporarily unavailable. AniDestiny is playing from Mock Anime Source instead.',
+      ),
+      findsOneWidget,
+    );
+    expect(
+      find.textContaining(
+        'Selected app source at playback: Remote Source Proxy',
+      ),
+      findsOneWidget,
+    );
+  });
+
+  testWidgets('runtime diagnostics hide empty request detail rows', (
+    tester,
+  ) async {
+    final container = ProviderContainer(overrides: _providerOverrides);
+    addTearDown(container.dispose);
+    container.read(lastPlaybackDiagnosticsProvider.notifier).state =
+        PlaybackDiagnostics(
+      capturedAt: DateTime(2026, 6, 17, 1, 2, 3),
+      animeTitle: 'Anime 1',
+      episodeTitle: 'Episode 2',
+      selectedAppSourceId: 'mock',
+      sourceId: 'mock',
+      requestedSourceId: null,
+      playSourceTitle: 'Line 1',
+      urlType: 'unknown',
+      sanitizedUrl: 'https://cdn.example.test/.../episode-2',
+      headerKeys: const [],
+      state: PlaybackDiagnosticState.ready,
+    );
+
+    await tester.pumpWidget(
+      UncontrolledProviderScope(
+        container: container,
+        child: const MaterialApp(
+          locale: Locale('en'),
+          supportedLocales: AppLocalizations.supportedLocales,
+          localizationsDelegates: [
+            AppLocalizations.delegate,
+            GlobalMaterialLocalizations.delegate,
+            GlobalWidgetsLocalizations.delegate,
+            GlobalCupertinoLocalizations.delegate,
+          ],
+          home: Scaffold(body: RuntimeDiagnosticsPage()),
+        ),
+      ),
+    );
+
+    await tester.pumpAndSettle();
+
+    expect(find.text('Playback request details'), findsOneWidget);
+    expect(find.text('https://cdn.example.test/.../episode-2'), findsOneWidget);
+    expect(find.text('URL type'), findsNothing);
+    expect(find.text('Request header names'), findsNothing);
+  });
+
+  testWidgets(
+      'runtime diagnostics keeps the captured app source after the live source changes',
+      (tester) async {
+    final container = ProviderContainer(overrides: _providerOverrides);
+    addTearDown(container.dispose);
+    container.read(lastPlaybackDiagnosticsProvider.notifier).state =
+        PlaybackDiagnostics(
+      capturedAt: DateTime(2026, 6, 17, 1, 2, 3),
+      animeTitle: 'Anime 1',
+      episodeTitle: 'Episode 2',
+      selectedAppSourceId: 'remote-proxy',
+      sourceId: 'mock',
+      requestedSourceId: 'sakura',
+      playSourceTitle: 'Line 1',
+      urlType: 'm3u8',
+      sanitizedUrl: 'https://cdn.example.test/.../episode-2.m3u8',
+      headerKeys: const ['Referer'],
+      state: PlaybackDiagnosticState.buffering,
+    );
+
+    await tester.pumpWidget(
+      UncontrolledProviderScope(
+        container: container,
+        child: const MaterialApp(
+          locale: Locale('en'),
+          supportedLocales: AppLocalizations.supportedLocales,
+          localizationsDelegates: [
+            AppLocalizations.delegate,
+            GlobalMaterialLocalizations.delegate,
+            GlobalWidgetsLocalizations.delegate,
+            GlobalCupertinoLocalizations.delegate,
+          ],
+          home: Scaffold(body: RuntimeDiagnosticsPage()),
+        ),
+      ),
+    );
+
+    await tester.pumpAndSettle();
+
+    expect(find.text('Selected app source at playback'), findsNothing);
+    expect(find.text('Remote Source Proxy'), findsNothing);
+    expect(
+      find.textContaining(
+        'Selected app source at playback: Remote Source Proxy',
+      ),
+      findsOneWidget,
+    );
   });
 
   testWidgets('source diagnostics sheet sanitizes inline support details', (
@@ -377,6 +674,11 @@ final _providerOverrides = <Override>[
 class _FakeCurrentSourceIdController extends CurrentSourceIdController {
   @override
   Future<String> build() async => 'sakura';
+}
+
+class _RemoteProxyCurrentSourceIdController extends CurrentSourceIdController {
+  @override
+  Future<String> build() async => 'remote-proxy';
 }
 
 class _FakeSourceHealthController extends SourceHealthController {

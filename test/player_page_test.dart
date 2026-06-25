@@ -22,6 +22,7 @@ import 'package:ani_destiny/features/history/domain/entities/watch_history.dart'
 import 'package:ani_destiny/features/history/domain/repositories/history_repository.dart';
 import 'package:ani_destiny/features/history/presentation/providers/history_providers.dart';
 import 'package:ani_destiny/features/player/domain/adapters/player_controller_adapter.dart';
+import 'package:ani_destiny/features/player/domain/services/playback_diagnostics.dart';
 import 'package:ani_destiny/features/player/domain/entities/player_state.dart';
 import 'package:ani_destiny/features/player/domain/repositories/player_repository.dart';
 import 'package:ani_destiny/features/player/data/repositories/player_repository_impl.dart';
@@ -29,11 +30,39 @@ import 'package:ani_destiny/features/player/domain/entities/player_route_args.da
 import 'package:ani_destiny/features/player/presentation/pages/player_page.dart';
 import 'package:ani_destiny/features/player/presentation/providers/player_providers.dart';
 import 'package:ani_destiny/features/source/domain/entities/source_fallback_result.dart';
+import 'package:ani_destiny/features/source/presentation/providers/source_providers.dart';
+import 'package:ani_destiny/core/diagnostics/playback_diagnostic_snapshot_preview.dart';
+import 'package:ani_destiny/core/diagnostics/playback_diagnostic_time_formatter.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
+
+String _formatCapturedAtForDisplay(
+  WidgetTester tester,
+  DateTime capturedAt,
+) {
+  return formatPlaybackDiagnosticCapturedAt(
+    capturedAt,
+    localeName: Localizations.localeOf(
+      tester.element(find.byType(PlayerPage)),
+    ).toLanguageTag(),
+  );
+}
+
+String _formatCapturedAtForSupport(
+  WidgetTester tester,
+  DateTime capturedAt,
+) {
+  return formatPlaybackDiagnosticCapturedAt(
+    capturedAt,
+    localeName: Localizations.localeOf(
+      tester.element(find.byType(PlayerPage)),
+    ).toLanguageTag(),
+    includeExactIso: true,
+  );
+}
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -187,7 +216,7 @@ void main() {
     );
     expect(find.text('Anime: Anime 1'), findsOneWidget);
     expect(find.text('Episode: Episode 2'), findsOneWidget);
-    expect(find.text('Source: Sakura Anime'), findsOneWidget);
+    expect(find.text('Active playback source: Sakura Anime'), findsOneWidget);
     expect(find.text('Line: Broken Line'), findsOneWidget);
     expect(find.text('Playback diagnostics'), findsOneWidget);
 
@@ -222,13 +251,169 @@ void main() {
     await tester.tap(find.byTooltip('Playback diagnostics'));
     await tester.pumpAndSettle();
 
-    expect(find.text('Anime'), findsOneWidget);
-    expect(find.text('Anime 1'), findsAtLeastNWidgets(1));
-    expect(find.text('Episode'), findsWidgets);
-    expect(find.text('Episode 2'), findsAtLeastNWidgets(1));
-    expect(find.text('State'), findsOneWidget);
-    expect(find.text('Failed'), findsOneWidget);
+    final capturedAt = _formatCapturedAtForDisplay(
+      tester,
+      diagnostics!.capturedAt,
+    );
+
+    expect(find.text('Latest playback'), findsOneWidget);
+    expect(
+      find.text(
+        'This is the latest playback snapshot captured in this session. Confirm the title, playback source, state, line, and capture time first.',
+      ),
+      findsOneWidget,
+    );
+    final preview = buildPlaybackDiagnosticSnapshotPreview(
+      l10n: const AppLocalizations(Locale('en')),
+      localeName: 'en',
+      diagnostics: diagnostics,
+    );
+    expect(
+      find.text(preview),
+      findsOneWidget,
+    );
+    expect(find.textContaining('Latest playback:'), findsNothing);
+    expect(preview, contains('State: Failed'));
+    expect(preview, contains('Captured at: $capturedAt'));
+    expect(find.text('Anime'), findsNothing);
+    expect(find.text('Episode'), findsNothing);
+    expect(find.text('State'), findsNothing);
+    expect(find.text('Captured at'), findsNothing);
+    expect(find.text('URL type'), findsOneWidget);
+    expect(find.text('URL'), findsOneWidget);
+    expect(find.text('Request header names'), findsOneWidget);
+    expect(find.text('Playback request details'), findsOneWidget);
+    expect(
+      find.text(
+        'These sanitized request details help confirm how the latest playback was requested.',
+      ),
+      findsOneWidget,
+    );
+    expect(
+      find.text(
+        'Copies a sanitized summary of the latest playback without sensitive values.',
+      ),
+      findsOneWidget,
+    );
     expect(find.text('error'), findsNothing);
+  });
+
+  testWidgets('runtime playback snapshot follows player state changes', (
+    tester,
+  ) async {
+    final repository = _TrackingPlayerRepository();
+    final container = ProviderContainer(
+      overrides: [
+        playerRepositoryProvider.overrideWithValue(repository),
+        historyRepositoryProvider.overrideWithValue(_FakeHistoryRepository()),
+        danmakuRepositoryProvider.overrideWithValue(_FakeDanmakuRepository()),
+      ],
+    );
+    addTearDown(container.dispose);
+
+    await tester.pumpWidget(
+      UncontrolledProviderScope(
+        container: container,
+        child: _buildPlayerApp(_args),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(
+      container.read(lastPlaybackDiagnosticsProvider)?.state,
+      PlaybackDiagnosticState.playing,
+    );
+
+    await repository.adapter.pause();
+    await tester.pumpAndSettle();
+
+    expect(
+      container.read(lastPlaybackDiagnosticsProvider)?.state,
+      PlaybackDiagnosticState.ready,
+    );
+
+    await repository.adapter.play();
+    await tester.pumpAndSettle();
+
+    expect(
+      container.read(lastPlaybackDiagnosticsProvider)?.state,
+      PlaybackDiagnosticState.playing,
+    );
+  });
+
+  testWidgets('playback diagnostics hide empty request detail rows', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          playerRepositoryProvider
+              .overrideWithValue(const PlayerRepositoryImpl()),
+          historyRepositoryProvider.overrideWithValue(_FakeHistoryRepository()),
+          danmakuRepositoryProvider.overrideWithValue(_FakeDanmakuRepository()),
+        ],
+        child: _buildPlayerApp(
+          _args.copyWith(
+            playUrl: 'https://cdn.example.test/episode-1',
+            playHeaders: const {},
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byTooltip('Playback diagnostics'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Playback request details'), findsOneWidget);
+    expect(find.text('https://cdn.example.test/.../episode-1'), findsOneWidget);
+    expect(find.text('URL type'), findsNothing);
+    expect(find.text('Request header names'), findsNothing);
+  });
+
+  testWidgets('playback diagnostics hide empty line placeholders', (
+    tester,
+  ) async {
+    String? copiedText;
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMethodCallHandler(SystemChannels.platform, (call) async {
+      if (call.method == 'Clipboard.setData') {
+        copiedText =
+            (call.arguments as Map<Object?, Object?>)['text'] as String?;
+      }
+      return null;
+    });
+    addTearDown(() {
+      TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+          .setMockMethodCallHandler(SystemChannels.platform, null);
+    });
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          playerRepositoryProvider
+              .overrideWithValue(const PlayerRepositoryImpl()),
+          historyRepositoryProvider.overrideWithValue(_FakeHistoryRepository()),
+          danmakuRepositoryProvider.overrideWithValue(_FakeDanmakuRepository()),
+        ],
+        child: _buildPlayerApp(
+          _args.copyWith(playSourceTitle: '   '),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byTooltip('Playback diagnostics'));
+    await tester.pumpAndSettle();
+
+    expect(find.textContaining('Line:'), findsNothing);
+
+    await tester.ensureVisible(find.text('Copy playback diagnostics'));
+    await tester.tap(find.text('Copy playback diagnostics'));
+    await tester.pumpAndSettle();
+
+    expect(copiedText, isNotNull);
+    expect(copiedText, isNot(contains('Line:')));
   });
 
   testWidgets('playback failure hides stale danmaku chrome', (tester) async {
@@ -306,10 +491,12 @@ void main() {
     expect(find.text('Anime: Anime 1'), findsOneWidget);
     expect(find.text('Episode: Episode 2'), findsOneWidget);
     expect(
-      find.text(
-        'Source: Sakura Anime (Requested source: Mock Anime Source)',
-      ),
+      find.text('Active playback source: Sakura Anime'),
       findsOneWidget,
+    );
+    expect(
+      find.textContaining('Selected playback source: Mock Anime Source'),
+      findsNothing,
     );
     expect(find.text('Line: Broken Line'), findsOneWidget);
     expect(find.text('Playback diagnostics'), findsOneWidget);
@@ -336,14 +523,21 @@ void main() {
     await tester.tap(find.byTooltip('Playback diagnostics'));
     await tester.pumpAndSettle();
 
-    expect(find.text('Anime'), findsOneWidget);
-    expect(find.text('Anime 1'), findsAtLeastNWidgets(1));
-    expect(find.text('Episode'), findsWidgets);
-    expect(find.text('Episode 2'), findsAtLeastNWidgets(1));
-    expect(find.text('Requested source'), findsOneWidget);
-    expect(find.text('Mock Anime Source'), findsAtLeastNWidgets(1));
-    expect(find.text('State'), findsOneWidget);
-    expect(find.text('Failed'), findsOneWidget);
+    expect(find.text('Anime'), findsNothing);
+    expect(find.text('Episode'), findsNothing);
+    expect(find.text('Selected playback source'), findsNothing);
+    expect(find.text('Playback source status'), findsNothing);
+    expect(
+      find.text(
+        'Mock Anime Source is temporarily unavailable. AniDestiny is playing from Sakura Anime instead.',
+      ),
+      findsOneWidget,
+    );
+    expect(find.text('State'), findsNothing);
+    expect(find.text('Failed'), findsNothing);
+    expect(find.text('Playback request details'), findsOneWidget);
+    expect(find.text('URL type'), findsOneWidget);
+    expect(find.text('Request header names'), findsOneWidget);
     expect(find.text('error'), findsNothing);
   });
 
@@ -351,6 +545,87 @@ void main() {
       (
     tester,
   ) async {
+    String? copiedText;
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMethodCallHandler(SystemChannels.platform, (call) async {
+      if (call.method == 'Clipboard.setData') {
+        copiedText =
+            (call.arguments as Map<Object?, Object?>)['text'] as String?;
+      }
+      return null;
+    });
+
+    final container = ProviderContainer(
+      overrides: [
+        playerRepositoryProvider.overrideWithValue(
+          const _ThrowingPlayerRepository(),
+        ),
+        historyRepositoryProvider.overrideWithValue(_FakeHistoryRepository()),
+        danmakuRepositoryProvider.overrideWithValue(_FakeDanmakuRepository()),
+      ],
+    );
+    addTearDown(container.dispose);
+
+    await tester.pumpWidget(
+      UncontrolledProviderScope(
+        container: container,
+        child: _buildPlayerApp(_fallbackFailingArgs),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    final initialDiagnostics = container.read(lastPlaybackDiagnosticsProvider);
+    expect(initialDiagnostics, isNotNull);
+    final capturedAt = _formatCapturedAtForSupport(
+      tester,
+      initialDiagnostics!.capturedAt,
+    );
+
+    await tester.pump(const Duration(seconds: 2));
+    final copyDiagnosticsButton = find.text('Copy playback diagnostics');
+    await tester.ensureVisible(copyDiagnosticsButton);
+    await tester.tap(copyDiagnosticsButton);
+    await tester.pumpAndSettle();
+
+    final copied = copiedText!;
+
+    expect(find.text('Playback diagnostics copied'), findsOneWidget);
+    expect(copied, startsWith('Playback diagnostics summary\n'));
+    expect(copied, contains('Anime: Anime 1'));
+    expect(copied, contains('Episode: Episode 2'));
+    expect(copied, contains('Active playback source: Sakura Anime'));
+    expect(copied, contains('Line: Broken Line'));
+    expect(copied, contains('State: Failed'));
+    expect(copied, contains('Captured at: $capturedAt'));
+    expect(
+      copied,
+      contains('Selected playback source: Mock Anime Source'),
+    );
+    expect(
+      copied,
+      contains(
+        'Playback source status: Mock Anime Source is temporarily unavailable. AniDestiny is playing from Sakura Anime instead.',
+      ),
+    );
+    expect(copied, contains('URL type: m3u8'));
+    expect(
+      copied,
+      contains('URL: https://cdn.example.test/.../broken.m3u8'),
+    );
+    expect(copied, contains('Request header names: Referer'));
+    expect(
+      copied.indexOf('Active playback source: Sakura Anime'),
+      lessThan(copied.indexOf('State: Failed')),
+    );
+    expect(
+      copied.indexOf('State: Failed'),
+      lessThan(copied.indexOf('Captured at: $capturedAt')),
+    );
+  });
+
+  testWidgets(
+      'playback diagnostics surface app source only when it differs from playback context',
+      (tester) async {
     String? copiedText;
     TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
         .setMockMethodCallHandler(SystemChannels.platform, (call) async {
@@ -369,32 +644,115 @@ void main() {
           ),
           historyRepositoryProvider.overrideWithValue(_FakeHistoryRepository()),
           danmakuRepositoryProvider.overrideWithValue(_FakeDanmakuRepository()),
+          currentSourceIdProvider.overrideWith(
+            () => _RemoteProxyCurrentSourceIdController(),
+          ),
         ],
         child: _buildPlayerApp(_fallbackFailingArgs),
       ),
     );
     await tester.pumpAndSettle();
 
-    final copyDiagnosticsButton = find.text('Copy diagnostics');
-    await tester.ensureVisible(copyDiagnosticsButton);
-    await tester.tap(copyDiagnosticsButton);
+    await tester.tap(find.byIcon(Icons.bug_report_outlined).last);
     await tester.pumpAndSettle();
 
-    expect(find.text('Diagnostics copied'), findsOneWidget);
-    expect(copiedText, startsWith('Playback diagnostics summary\n'));
-    expect(copiedText, contains('Captured at: '));
-    expect(copiedText, contains('Anime: Anime 1'));
-    expect(copiedText, contains('Episode: Episode 2'));
-    expect(copiedText, contains('Requested source: Mock Anime Source'));
-    expect(copiedText, contains('Source: Sakura Anime'));
-    expect(copiedText, contains('Line: Broken Line'));
-    expect(copiedText, contains('URL type: m3u8'));
+    expect(find.text('Selected app source at playback'), findsNothing);
+    expect(find.text('Remote Source Proxy'), findsNothing);
+    expect(
+      find.textContaining(
+        'Playback source status: Mock Anime Source is temporarily unavailable. AniDestiny is playing from Sakura Anime instead.',
+      ),
+      findsOneWidget,
+    );
+    expect(
+      find.textContaining(
+        'Selected app source at playback: Remote Source Proxy',
+      ),
+      findsOneWidget,
+    );
+
+    await tester.ensureVisible(find.text('Copy playback diagnostics').last);
+    await tester.tap(find.text('Copy playback diagnostics').last);
+    await tester.pumpAndSettle();
+
     expect(
       copiedText,
-      contains('URL: https://cdn.example.test/.../broken.m3u8'),
+      contains('Selected app source at playback: Remote Source Proxy'),
     );
-    expect(copiedText, contains('Request headers: Referer'));
-    expect(copiedText, contains('State: Failed'));
+    expect(
+      copiedText,
+      contains('Selected playback source: Mock Anime Source'),
+    );
+    expect(copiedText, contains('Active playback source: Sakura Anime'));
+  });
+
+  testWidgets(
+      'playback diagnostics keep the captured app source after the live source changes',
+      (tester) async {
+    String? copiedText;
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMethodCallHandler(SystemChannels.platform, (call) async {
+      if (call.method == 'Clipboard.setData') {
+        copiedText =
+            (call.arguments as Map<Object?, Object?>)['text'] as String?;
+      }
+      return null;
+    });
+
+    final container = ProviderContainer(
+      overrides: [
+        playerRepositoryProvider.overrideWithValue(
+          const _ThrowingPlayerRepository(),
+        ),
+        historyRepositoryProvider.overrideWithValue(_FakeHistoryRepository()),
+        danmakuRepositoryProvider.overrideWithValue(_FakeDanmakuRepository()),
+        currentSourceIdProvider.overrideWith(
+          () => _MutableCurrentSourceIdController('remote-proxy'),
+        ),
+      ],
+    );
+    addTearDown(container.dispose);
+
+    await tester.pumpWidget(
+      UncontrolledProviderScope(
+        container: container,
+        child: _buildPlayerApp(_fallbackFailingArgs),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    final diagnostics = container.read(lastPlaybackDiagnosticsProvider);
+    expect(diagnostics?.selectedAppSourceId, 'remote-proxy');
+
+    final sourceController = container.read(currentSourceIdProvider.notifier)
+        as _MutableCurrentSourceIdController;
+    sourceController.setTestSource('sakura');
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byIcon(Icons.bug_report_outlined).last);
+    await tester.pumpAndSettle();
+
+    expect(find.text('Selected app source at playback'), findsNothing);
+    expect(find.text('Remote Source Proxy'), findsNothing);
+    expect(
+      find.textContaining(
+        'Selected app source at playback: Remote Source Proxy',
+      ),
+      findsOneWidget,
+    );
+
+    await tester.ensureVisible(find.text('Copy playback diagnostics').last);
+    await tester.tap(find.text('Copy playback diagnostics').last);
+    await tester.pumpAndSettle();
+
+    expect(
+      copiedText,
+      contains('Selected app source at playback: Remote Source Proxy'),
+    );
+    expect(
+      copiedText,
+      isNot(contains('Selected app source at playback: Sakura Anime')),
+    );
   });
 
   testWidgets(
@@ -467,7 +825,7 @@ void main() {
     await tester.tap(copyButton);
     await tester.pumpAndSettle();
 
-    expect(find.text('Diagnostics copied'), findsOneWidget);
+    expect(find.text('Playback diagnostics copied'), findsOneWidget);
     expect(copiedText, isNotNull);
     expect(find.text('Playback diagnostics'), findsOneWidget);
   });
@@ -931,7 +1289,7 @@ void main() {
       findsNothing,
     );
     expect(find.text('Retry'), findsNothing);
-    expect(find.text('Copy diagnostics'), findsNothing);
+    expect(find.text('Copy playback diagnostics'), findsNothing);
 
     launchCompleter.complete(true);
     await tester.pumpAndSettle();
@@ -978,7 +1336,7 @@ void main() {
       findsOneWidget,
     );
     expect(find.text('Retry'), findsOneWidget);
-    expect(find.text('Copy diagnostics'), findsOneWidget);
+    expect(find.text('Copy playback diagnostics'), findsOneWidget);
   });
 
   testWidgets(
@@ -1021,7 +1379,7 @@ void main() {
       findsOneWidget,
     );
     expect(find.text('Retry'), findsOneWidget);
-    expect(find.text('Copy diagnostics'), findsOneWidget);
+    expect(find.text('Copy playback diagnostics'), findsOneWidget);
   });
 
   testWidgets('external player action launches the current playback url', (
@@ -2578,7 +2936,7 @@ void main() {
     expect(find.text('No playable source found'), findsOneWidget);
     expect(find.text('Anime: Anime 1'), findsOneWidget);
     expect(find.text('Episode: Episode 3'), findsOneWidget);
-    expect(find.text('Source: Sakura Anime'), findsOneWidget);
+    expect(find.text('Active playback source: Sakura Anime'), findsOneWidget);
     expect(find.text('Line: Missing Line'), findsOneWidget);
     expect(find.text('Playback diagnostics'), findsOneWidget);
     final downloadButton = tester.widget<IconButton>(
@@ -2700,6 +3058,24 @@ class _HostPage extends StatelessWidget {
         ),
       ),
     );
+  }
+}
+
+class _RemoteProxyCurrentSourceIdController extends CurrentSourceIdController {
+  @override
+  Future<String> build() async => 'remote-proxy';
+}
+
+class _MutableCurrentSourceIdController extends CurrentSourceIdController {
+  _MutableCurrentSourceIdController(this._initialSourceId);
+
+  final String _initialSourceId;
+
+  @override
+  Future<String> build() async => _initialSourceId;
+
+  void setTestSource(String sourceId) {
+    state = AsyncValue.data(sourceId);
   }
 }
 

@@ -284,6 +284,7 @@ void main() {
     final diagnostics = const PlaybackDiagnosticsBuilder().build(
       animeTitle: 'Anime 1',
       episodeTitle: 'Episode 1',
+      selectedAppSourceId: null,
       sourceId: 'sakura',
       requestedSourceId: 'mock',
       playSourceTitle: 'Line 1',
@@ -292,6 +293,7 @@ void main() {
         'User-Agent': 'AniDestinyTest',
         'Referer': 'https://example.test/player?token=secret',
       },
+      state: PlaybackDiagnosticState.playing,
     );
 
     expect(diagnostics.urlType, 'm3u8');
@@ -301,6 +303,7 @@ void main() {
     );
     expect(diagnostics.sanitizedUrl, isNot(contains('token')));
     expect(diagnostics.headerKeys, ['Referer', 'User-Agent']);
+    expect(diagnostics.state, PlaybackDiagnosticState.playing);
     expect(diagnostics.usedSourceFallback, isTrue);
   });
 }

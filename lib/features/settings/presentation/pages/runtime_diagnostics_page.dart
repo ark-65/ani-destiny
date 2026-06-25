@@ -6,6 +6,8 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../app/l10n/app_localizations.dart';
 import '../../../../core/diagnostics/diagnostic_sanitizer.dart';
+import '../../../../core/diagnostics/playback_diagnostic_snapshot_preview.dart';
+import '../../../../core/diagnostics/playback_diagnostic_summary.dart';
 import '../../../../core/utils/url_sanitizer.dart';
 import '../../../../shared/widgets/adaptive_page.dart';
 import '../../../danmaku/presentation/providers/danmaku_providers.dart';
@@ -40,6 +42,14 @@ class RuntimeDiagnosticsPage extends ConsumerWidget {
         .toList(growable: false);
     final danmakuSettings = ref.watch(danmakuSettingsProvider);
     final playbackDiagnostics = ref.watch(lastPlaybackDiagnosticsProvider);
+    final playbackRequestDetails = playbackDiagnostics == null
+        ? const <PlaybackDiagnosticDetailEntry>[]
+        : buildPlaybackDiagnosticRequestDetailEntries(
+            l10n: context.l10n,
+            localeName: Localizations.localeOf(context).toLanguageTag(),
+            diagnostics: playbackDiagnostics,
+            sourceLabelForId: context.l10n.sourceDisplayLabel,
+          );
 
     return SafeArea(
       child: AdaptivePage(
@@ -78,7 +88,7 @@ class RuntimeDiagnosticsPage extends ConsumerWidget {
                   icon: Icons.devices_outlined,
                 ),
                 _DiagnosticTile(
-                  label: context.l10n.currentSource,
+                  label: context.l10n.selectedAppSource,
                   value: currentSourceId == null
                       ? '-'
                       : context.l10n.sourceDisplayLabel(currentSourceId),
@@ -102,21 +112,38 @@ class RuntimeDiagnosticsPage extends ConsumerWidget {
               ],
             ),
             SettingsSection(
-              title: context.l10n.playbackDiagnosticsSummary,
+              title: context.l10n.playbackDiagnostics,
               children: [
                 ListTile(
                   leading: const Icon(Icons.play_circle_outline),
-                  title: Text(context.l10n.playbackDiagnosticsSummary),
+                  title: Text(context.l10n.playbackDiagnosticsLatestPlayback),
+                  subtitle: Text(
+                    _playbackSnapshotSubtitle(context, playbackDiagnostics),
+                  ),
+                ),
+                ListTile(
+                  leading: const Icon(Icons.playlist_add_check_circle_outlined),
+                  title: Text(context.l10n.copyPlaybackDiagnostics),
                   subtitle: Text(
                     playbackDiagnostics == null
-                        ? context.l10n.playbackDiagnosticsEmptyHint
-                        : context.l10n.playbackDiagnosticsSummaryHint,
+                        ? context.l10n.copyPlaybackDiagnosticsPendingHint
+                        : context.l10n.playbackDiagnosticsPrivacyNote,
                   ),
+                  onTap: playbackDiagnostics == null
+                      ? null
+                      : () => _copyPlaybackDiagnostics(
+                            context,
+                            playbackDiagnostics,
+                          ),
                 ),
                 ListTile(
                   leading: const Icon(Icons.content_copy_outlined),
                   title: Text(context.l10n.copyDiagnostics),
-                  subtitle: Text(context.l10n.diagnosticsPrivacyNote),
+                  subtitle: Text(
+                    playbackDiagnostics == null
+                        ? context.l10n.copyDiagnosticsPlaybackPendingHint
+                        : context.l10n.runtimeDiagnosticsSubtitle,
+                  ),
                   onTap: () => _copyDiagnostics(context, ref),
                 ),
                 if (playbackDiagnostics == null)
@@ -127,11 +154,20 @@ class RuntimeDiagnosticsPage extends ConsumerWidget {
                       context.l10n.feedbackPackagePlaybackUnavailable,
                     ),
                   )
-                else
-                  ..._playbackDiagnosticTiles(
-                    context,
-                    playbackDiagnostics,
-                  ),
+                else ...[
+                  if (playbackRequestDetails.isNotEmpty) ...[
+                    ListTile(
+                      leading: const Icon(Icons.link_outlined),
+                      title: Text(
+                        context.l10n.playbackDiagnosticsRequestDetails,
+                      ),
+                      subtitle: Text(
+                        context.l10n.playbackDiagnosticsRequestDetailsHint,
+                      ),
+                    ),
+                    ..._playbackDiagnosticTiles(playbackRequestDetails),
+                  ],
+                ],
               ],
             ),
             SettingsSection(
@@ -181,81 +217,48 @@ class RuntimeDiagnosticsPage extends ConsumerWidget {
 }
 
 List<Widget> _playbackDiagnosticTiles(
-  BuildContext context,
-  PlaybackDiagnostics diagnostics,
+  List<PlaybackDiagnosticDetailEntry> entries,
 ) {
-  final lineTitle = diagnostics.playSourceTitle?.trim();
-  final lineValue = lineTitle == null || lineTitle.isEmpty ? '-' : lineTitle;
-  final headers =
-      diagnostics.headerKeys.isEmpty ? '-' : diagnostics.headerKeys.join(', ');
-
-  return [
-    _DiagnosticTile(
-      label: context.l10n.playbackDiagnosticCapturedAt,
-      value: _formatCapturedAt(context, diagnostics.capturedAt),
-      icon: Icons.schedule_outlined,
-    ),
-    _DiagnosticTile(
-      label: context.l10n.playbackDiagnosticAnime,
-      value: _diagnosticContextValue(diagnostics.animeTitle),
-      icon: Icons.movie_outlined,
-    ),
-    _DiagnosticTile(
-      label: context.l10n.playbackDiagnosticEpisode,
-      value: _diagnosticContextValue(diagnostics.episodeTitle),
-      icon: Icons.live_tv_outlined,
-    ),
-    if (diagnostics.usedSourceFallback && diagnostics.requestedSourceId != null)
-      _DiagnosticTile(
-        label: context.l10n.playbackDiagnosticRequestedSource,
-        value: context.l10n.sourceDisplayLabel(diagnostics.requestedSourceId!),
-        icon: Icons.compare_arrows_outlined,
-      ),
-    _DiagnosticTile(
-      label: context.l10n.playbackDiagnosticSource,
-      value: context.l10n.sourceDisplayLabel(diagnostics.sourceId),
-      icon: Icons.source_outlined,
-    ),
-    _DiagnosticTile(
-      label: context.l10n.playbackDiagnosticLine,
-      value: lineValue,
-      icon: Icons.playlist_play_outlined,
-    ),
-    _DiagnosticTile(
-      label: context.l10n.playbackDiagnosticUrlType,
-      value: diagnostics.urlType,
-      icon: Icons.link_outlined,
-    ),
-    _DiagnosticTile(
-      label: context.l10n.playbackDiagnosticUrl,
-      value: diagnostics.sanitizedUrl,
-      icon: Icons.language_outlined,
-    ),
-    _DiagnosticTile(
-      label: context.l10n.playbackDiagnosticHeaders,
-      value: headers,
-      icon: Icons.key_outlined,
-    ),
-  ];
+  return entries.map((entry) {
+    return _DiagnosticTile(
+      label: entry.label,
+      value: entry.value,
+      icon: _playbackDiagnosticIcon(entry.field),
+    );
+  }).toList(growable: false);
 }
 
-String _diagnosticContextValue(String? value) {
-  final trimmed = value?.trim();
-  if (trimmed == null || trimmed.isEmpty) {
-    return '-';
+IconData _playbackDiagnosticIcon(PlaybackDiagnosticDetailField field) {
+  return switch (field) {
+    PlaybackDiagnosticDetailField.anime => Icons.movie_outlined,
+    PlaybackDiagnosticDetailField.episode => Icons.live_tv_outlined,
+    PlaybackDiagnosticDetailField.selectedAppSource => Icons.route_outlined,
+    PlaybackDiagnosticDetailField.requestedSource =>
+      Icons.compare_arrows_outlined,
+    PlaybackDiagnosticDetailField.source => Icons.source_outlined,
+    PlaybackDiagnosticDetailField.sourceStatus => Icons.swap_horiz_outlined,
+    PlaybackDiagnosticDetailField.line => Icons.playlist_play_outlined,
+    PlaybackDiagnosticDetailField.state => Icons.monitor_heart_outlined,
+    PlaybackDiagnosticDetailField.capturedAt => Icons.schedule_outlined,
+    PlaybackDiagnosticDetailField.urlType => Icons.link_outlined,
+    PlaybackDiagnosticDetailField.url => Icons.language_outlined,
+    PlaybackDiagnosticDetailField.headers => Icons.key_outlined,
+  };
+}
+
+String _playbackSnapshotSubtitle(
+  BuildContext context,
+  PlaybackDiagnostics? diagnostics,
+) {
+  if (diagnostics == null) {
+    return context.l10n.playbackDiagnosticsEmptyHint;
   }
-  return trimmed;
-}
-
-String _formatCapturedAt(BuildContext context, DateTime capturedAt) {
-  final localizations = MaterialLocalizations.of(context);
-  final localCapturedAt = capturedAt.toLocal();
-  final date = localizations.formatMediumDate(localCapturedAt);
-  final time = localizations.formatTimeOfDay(
-    TimeOfDay.fromDateTime(localCapturedAt),
-    alwaysUse24HourFormat: true,
+  final preview = buildPlaybackDiagnosticSnapshotPreview(
+    l10n: context.l10n,
+    localeName: Localizations.localeOf(context).toLanguageTag(),
+    diagnostics: diagnostics,
   );
-  return '$date $time';
+  return '${context.l10n.playbackDiagnosticsSnapshotHint}\n\n$preview';
 }
 
 class _SourceHealthTile extends StatelessWidget {
@@ -385,6 +388,30 @@ Future<void> _copyDiagnostics(BuildContext context, WidgetRef ref) async {
     ScaffoldMessenger.of(
       context,
     ).showSnackBar(SnackBar(content: Text(context.l10n.diagnosticsCopied)));
+  } catch (error) {
+    if (!context.mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(context.l10n.diagnosticsCopyFailed)),
+    );
+  }
+}
+
+Future<void> _copyPlaybackDiagnostics(
+  BuildContext context,
+  PlaybackDiagnostics diagnostics,
+) async {
+  final summary = buildPlaybackDiagnosticSummary(
+    l10n: context.l10n,
+    localeName: Localizations.localeOf(context).toLanguageTag(),
+    diagnostics: diagnostics,
+  );
+
+  try {
+    await Clipboard.setData(ClipboardData(text: summary));
+    if (!context.mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(context.l10n.playbackDiagnosticsCopied)),
+    );
   } catch (error) {
     if (!context.mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(

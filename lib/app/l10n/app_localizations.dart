@@ -172,6 +172,8 @@ class AppLocalizations {
   String get playbackDiagnosticRequestedSource =>
       _t('playbackDiagnosticRequestedSource');
   String get playbackDiagnosticSource => _t('playbackDiagnosticSource');
+  String get playbackDiagnosticSourceStatus =>
+      _t('playbackDiagnosticSourceStatus');
   String get playbackDiagnosticLine => _t('playbackDiagnosticLine');
   String get playbackDiagnosticUrlType => _t('playbackDiagnosticUrlType');
   String get playbackDiagnosticUrl => _t('playbackDiagnosticUrl');
@@ -244,9 +246,17 @@ class AppLocalizations {
   String get danmakuAbout => _t('danmakuAbout');
   String get danmakuAboutValue => _t('danmakuAboutValue');
   String get copyDiagnostics => _t('copyDiagnostics');
+  String get copyPlaybackDiagnostics => _t('copyPlaybackDiagnostics');
   String get diagnosticsCopied => _t('diagnosticsCopied');
+  String get playbackDiagnosticsCopied => _t('playbackDiagnosticsCopied');
   String get diagnosticsCopyFailed => _t('diagnosticsCopyFailed');
   String get diagnosticsPrivacyNote => _t('diagnosticsPrivacyNote');
+  String get playbackDiagnosticsPrivacyNote =>
+      _t('playbackDiagnosticsPrivacyNote');
+  String get copyPlaybackDiagnosticsPendingHint =>
+      _t('copyPlaybackDiagnosticsPendingHint');
+  String get copyDiagnosticsPlaybackPendingHint =>
+      _t('copyDiagnosticsPlaybackPendingHint');
   String get reportIssue => _t('reportIssue');
   String get githubRepository => _t('githubRepository');
   String get openSource => _t('openSource');
@@ -302,13 +312,36 @@ class AppLocalizations {
   String get feedbackPackageDanmakuFallbackProvider =>
       _t('feedbackPackageDanmakuFallbackProvider');
   String get feedbackPackageAvailable => _t('feedbackPackageAvailable');
+  String get selectedAppSource => _t('selectedAppSource');
+  String get playbackDiagnosticSelectedAppSource =>
+      _t('playbackDiagnosticSelectedAppSource');
   String get currentSource => _t('currentSource');
   String get currentSourceId => _t('currentSourceId');
   String get latestSourceDiagnostics => _t('latestSourceDiagnostics');
+  String get playbackDiagnosticsLatestPlayback =>
+      _t('playbackDiagnosticsLatestPlayback');
   String get playbackDiagnosticsSummary => _t('playbackDiagnosticsSummary');
-  String get playbackDiagnosticsSummaryHint =>
-      _t('playbackDiagnosticsSummaryHint');
+  String get playbackDiagnosticsRequestDetails =>
+      _t('playbackDiagnosticsRequestDetails');
+  String get playbackDiagnosticsRequestDetailsHint =>
+      _t('playbackDiagnosticsRequestDetailsHint');
   String get playbackDiagnosticsEmptyHint => _t('playbackDiagnosticsEmptyHint');
+  String get playbackDiagnosticsSnapshotHint =>
+      _t('playbackDiagnosticsSnapshotHint');
+  String playbackDiagnosticsSnapshotPreview(
+    String animeTitle,
+    String episodeTitle,
+    String playbackContext,
+    String capturedAt,
+  ) {
+    final template = _t('playbackDiagnosticsSnapshotPreview');
+    return template
+        .replaceFirst('{animeTitle}', animeTitle)
+        .replaceFirst('{episodeTitle}', episodeTitle)
+        .replaceFirst('{playbackContext}', playbackContext)
+        .replaceFirst('{capturedAt}', capturedAt);
+  }
+
   String sourceFallbackPlayerNotice(
     String requestedSource,
     String activeSource,
@@ -319,7 +352,6 @@ class AppLocalizations {
         .replaceFirst('{activeSource}', activeSource);
   }
 
-  String get playbackDiagnosticsDebugHint => _t('playbackDiagnosticsDebugHint');
   String get playbackDiagnosticCapturedAt => _t('playbackDiagnosticCapturedAt');
   String get sourceTemporarilyUnavailable => _t('sourceTemporarilyUnavailable');
   String get sourceUnavailableSuggestion => _t('sourceUnavailableSuggestion');
@@ -500,12 +532,13 @@ const _localizedValues = {
     'playbackDiagnostics': '播放诊断',
     'playbackDiagnosticAnime': '番剧',
     'playbackDiagnosticEpisode': '剧集',
-    'playbackDiagnosticRequestedSource': '原始数据源',
-    'playbackDiagnosticSource': '数据源',
+    'playbackDiagnosticRequestedSource': '所选播放源',
+    'playbackDiagnosticSource': '当前播放源',
+    'playbackDiagnosticSourceStatus': '播放源状态',
     'playbackDiagnosticLine': '线路',
     'playbackDiagnosticUrlType': 'URL 类型',
     'playbackDiagnosticUrl': 'URL',
-    'playbackDiagnosticHeaders': '请求头',
+    'playbackDiagnosticHeaders': '请求头名称',
     'playbackDiagnosticState': '状态',
     'playbackDiagnosticStateLoading': '加载中',
     'playbackDiagnosticStateReady': '就绪',
@@ -566,9 +599,15 @@ const _localizedValues = {
     'danmakuAbout': '弹幕',
     'danmakuAboutValue': '弹弹play 为可选集成；不可用时会改用备用来源。',
     'copyDiagnostics': '复制诊断信息',
+    'copyPlaybackDiagnostics': '复制播放诊断',
     'diagnosticsCopied': '诊断信息已复制',
+    'playbackDiagnosticsCopied': '播放诊断已复制',
     'diagnosticsCopyFailed': '复制诊断信息失败',
     'diagnosticsPrivacyNote': '将生成已脱敏的反馈摘要，不包含敏感值。',
+    'playbackDiagnosticsPrivacyNote': '将复制最近一次播放的已脱敏摘要，不包含敏感值。',
+    'copyPlaybackDiagnosticsPendingHint': '先在当前会话里播放一次后，才能复制最近一次播放诊断。',
+    'copyDiagnosticsPlaybackPendingHint':
+        '将生成已脱敏的反馈摘要；当前还没有播放快照，播放部分会在当前会话先播放一次后补上。',
     'reportIssue': '反馈问题',
     'githubRepository': 'GitHub 仓库',
     'openSource': '开源地址',
@@ -610,17 +649,23 @@ const _localizedValues = {
     'feedbackPackageDandanplayAppSecretConfigured': 'Dandanplay 次级凭据已配置',
     'feedbackPackageDanmakuFallbackProvider': '备用提供元',
     'feedbackPackageAvailable': '可用',
+    'selectedAppSource': '应用所选数据源',
+    'playbackDiagnosticSelectedAppSource': '播放时应用所选数据源',
     'currentSource': '当前数据源',
     'currentSourceId': '当前数据源 ID',
     'latestSourceDiagnostics': '最近数据源诊断',
+    'playbackDiagnosticsLatestPlayback': '最近一次播放',
     'playbackDiagnosticsSummary': '播放诊断摘要',
-    'playbackDiagnosticsSummaryHint':
-        '这里会显示当前会话最近一次播放快照，方便你在复制诊断信息前先确认番剧、线路、URL 类型和请求头字段。',
-    'playbackDiagnosticsEmptyHint': '先在当前会话里播放一次，再回来这里确认最近一次播放快照并复制诊断信息。',
+    'playbackDiagnosticsRequestDetails': '播放请求细节',
+    'playbackDiagnosticsRequestDetailsHint':
+        '下面这些是最近一次播放的已脱敏请求细节，主要用于确认线路和请求是否正常。',
+    'playbackDiagnosticsEmptyHint': '当前会话还没有播放快照；先播放一次后，这里会显示最近一次播放现场。',
+    'playbackDiagnosticsSnapshotHint':
+        '这里展示的是当前会话里捕获的最近一次播放现场；先确认作品、播放源、状态、线路和采集时间。',
+    'playbackDiagnosticsSnapshotPreview':
+        '{animeTitle} · {episodeTitle}\n{playbackContext}\n{capturedAt}',
     'sourceFallbackPlayerNotice':
         '当前所选数据源 {requestedSource} 暂时不可用，已改用 {activeSource} 继续播放。',
-    'playbackDiagnosticsDebugHint':
-        '这里会显示当前会话最近一次播放快照，方便你在复制诊断信息前先确认番剧、线路、URL 类型和请求头字段。',
     'playbackDiagnosticCapturedAt': '采集时间',
     'sourceTemporarilyUnavailable': '数据源暂时不可用',
     'sourceUnavailableSuggestion': '上游数据源可能已变化或暂时不可用，请稍后重试或切换数据源。',
@@ -775,12 +820,13 @@ const _localizedValues = {
     'playbackDiagnostics': 'Playback diagnostics',
     'playbackDiagnosticAnime': 'Anime',
     'playbackDiagnosticEpisode': 'Episode',
-    'playbackDiagnosticRequestedSource': 'Requested source',
-    'playbackDiagnosticSource': 'Source',
+    'playbackDiagnosticRequestedSource': 'Selected playback source',
+    'playbackDiagnosticSource': 'Active playback source',
+    'playbackDiagnosticSourceStatus': 'Playback source status',
     'playbackDiagnosticLine': 'Line',
     'playbackDiagnosticUrlType': 'URL type',
     'playbackDiagnosticUrl': 'URL',
-    'playbackDiagnosticHeaders': 'Request headers',
+    'playbackDiagnosticHeaders': 'Request header names',
     'playbackDiagnosticState': 'State',
     'playbackDiagnosticStateLoading': 'Loading',
     'playbackDiagnosticStateReady': 'Ready',
@@ -845,10 +891,18 @@ const _localizedValues = {
     'danmakuAboutValue':
         'Dandanplay is optional; a backup provider is used when unavailable.',
     'copyDiagnostics': 'Copy diagnostics',
+    'copyPlaybackDiagnostics': 'Copy playback diagnostics',
     'diagnosticsCopied': 'Diagnostics copied',
+    'playbackDiagnosticsCopied': 'Playback diagnostics copied',
     'diagnosticsCopyFailed': 'Failed to copy diagnostics',
     'diagnosticsPrivacyNote':
         'Generates a sanitized feedback summary without sensitive values.',
+    'playbackDiagnosticsPrivacyNote':
+        'Copies a sanitized summary of the latest playback without sensitive values.',
+    'copyPlaybackDiagnosticsPendingHint':
+        'Start playback once in this session to copy the latest playback diagnostics.',
+    'copyDiagnosticsPlaybackPendingHint':
+        'A sanitized feedback summary will be copied. The playback section stays unavailable until playback runs once in this session.',
     'reportIssue': 'Report issue',
     'githubRepository': 'GitHub repository',
     'openSource': 'Open source',
@@ -893,18 +947,24 @@ const _localizedValues = {
         'Dandanplay secondary credential configured',
     'feedbackPackageDanmakuFallbackProvider': 'Fallback provider',
     'feedbackPackageAvailable': 'Available',
+    'selectedAppSource': 'Selected app source',
+    'playbackDiagnosticSelectedAppSource': 'Selected app source at playback',
     'currentSource': 'Current source',
     'currentSourceId': 'Current source ID',
     'latestSourceDiagnostics': 'Latest source diagnostics',
+    'playbackDiagnosticsLatestPlayback': 'Latest playback',
     'playbackDiagnosticsSummary': 'Playback diagnostics summary',
-    'playbackDiagnosticsSummaryHint':
-        'The latest playback snapshot captured in this session appears here so you can confirm the anime, line, URL type, and request-header names before copying diagnostics.',
+    'playbackDiagnosticsRequestDetails': 'Playback request details',
+    'playbackDiagnosticsRequestDetailsHint':
+        'These sanitized request details help confirm how the latest playback was requested.',
     'playbackDiagnosticsEmptyHint':
-        'Start playback once in this session, then come back here to confirm the latest playback snapshot before copying diagnostics.',
+        'No playback snapshot has been captured in this session yet. Start playback once and the latest playback moment will appear here.',
+    'playbackDiagnosticsSnapshotHint':
+        'This is the latest playback snapshot captured in this session. Confirm the title, playback source, state, line, and capture time first.',
+    'playbackDiagnosticsSnapshotPreview':
+        '{animeTitle} · {episodeTitle}\n{playbackContext}\n{capturedAt}',
     'sourceFallbackPlayerNotice':
         '{requestedSource} is temporarily unavailable. AniDestiny is playing from {activeSource} instead.',
-    'playbackDiagnosticsDebugHint':
-        'The latest playback snapshot captured in this session appears here so you can confirm the anime, line, URL type, and request-header names before copying diagnostics.',
     'playbackDiagnosticCapturedAt': 'Captured at',
     'sourceTemporarilyUnavailable': 'Source temporarily unavailable',
     'sourceUnavailableSuggestion':
@@ -1055,12 +1115,13 @@ const _localizedValues = {
     'playbackDiagnostics': '再生診断',
     'playbackDiagnosticAnime': '作品',
     'playbackDiagnosticEpisode': 'エピソード',
-    'playbackDiagnosticRequestedSource': '元のソース',
-    'playbackDiagnosticSource': 'ソース',
+    'playbackDiagnosticRequestedSource': '選択した再生ソース',
+    'playbackDiagnosticSource': '現在の再生ソース',
+    'playbackDiagnosticSourceStatus': '再生ソース状態',
     'playbackDiagnosticLine': 'ライン',
     'playbackDiagnosticUrlType': 'URL 種類',
     'playbackDiagnosticUrl': 'URL',
-    'playbackDiagnosticHeaders': 'リクエストヘッダー',
+    'playbackDiagnosticHeaders': 'リクエストヘッダー名',
     'playbackDiagnosticState': '状態',
     'playbackDiagnosticStateLoading': '読み込み中',
     'playbackDiagnosticStateReady': '準備完了',
@@ -1122,9 +1183,15 @@ const _localizedValues = {
     'danmakuAbout': '弾幕',
     'danmakuAboutValue': '弹弹play は任意連携です。利用できない場合は代替提供元を使います。',
     'copyDiagnostics': '診断情報をコピー',
+    'copyPlaybackDiagnostics': '再生診断をコピー',
     'diagnosticsCopied': '診断情報をコピーしました',
+    'playbackDiagnosticsCopied': '再生診断をコピーしました',
     'diagnosticsCopyFailed': '診断情報のコピーに失敗しました',
     'diagnosticsPrivacyNote': '機密値を含まないフィードバック概要を生成します。',
+    'playbackDiagnosticsPrivacyNote': '最新の再生を機密値なしで要約した内容をコピーします。',
+    'copyPlaybackDiagnosticsPendingHint': 'このセッションで一度再生すると、最新の再生診断をコピーできます。',
+    'copyDiagnosticsPlaybackPendingHint':
+        '機密値を含まないフィードバック概要をコピーします。このセッションで一度再生するまでは再生欄は利用できません。',
     'reportIssue': '問題を報告',
     'githubRepository': 'GitHub リポジトリ',
     'openSource': 'オープンソース',
@@ -1166,18 +1233,24 @@ const _localizedValues = {
     'feedbackPackageDandanplayAppSecretConfigured': 'Dandanplay 二次認証情報 設定済み',
     'feedbackPackageDanmakuFallbackProvider': '代替提供元',
     'feedbackPackageAvailable': '利用可能',
+    'selectedAppSource': '選択中のアプリソース',
+    'playbackDiagnosticSelectedAppSource': '再生時のアプリソース',
     'currentSource': '現在のソース',
     'currentSourceId': '現在のソース ID',
     'latestSourceDiagnostics': '最近のソース診断',
+    'playbackDiagnosticsLatestPlayback': '最新の再生',
     'playbackDiagnosticsSummary': '再生診断の概要',
-    'playbackDiagnosticsSummaryHint':
-        'このセッションで直近に取得した再生スナップショットをここへ表示し、診断情報をコピーする前に作品・ライン・URL 種類・リクエストヘッダー項目を確認できます。',
+    'playbackDiagnosticsRequestDetails': '再生リクエストの詳細',
+    'playbackDiagnosticsRequestDetailsHint':
+        '以下は最新の再生で使われた、機密値を除いたリクエスト詳細です。ラインやリクエストの状態確認に使えます。',
     'playbackDiagnosticsEmptyHint':
-        'このセッションで一度再生してから戻ると、診断情報をコピーする前に直近の再生スナップショットをここで確認できます。',
+        'このセッションではまだ再生スナップショットがありません。一度再生すると、ここに最新の再生状況が表示されます。',
+    'playbackDiagnosticsSnapshotHint':
+        'ここには、このセッションで取得した最新の再生状況を表示します。作品名、再生ソース、状態、ライン、取得時刻を先に確認できます。',
+    'playbackDiagnosticsSnapshotPreview':
+        '{animeTitle} · {episodeTitle}\n{playbackContext}\n{capturedAt}',
     'sourceFallbackPlayerNotice':
         '選択していたソース {requestedSource} は一時的に利用できないため、現在は {activeSource} に切り替えて再生しています。',
-    'playbackDiagnosticsDebugHint':
-        'このセッションで直近に取得した再生スナップショットをここへ表示し、診断情報をコピーする前に作品・ライン・URL 種類・リクエストヘッダー項目を確認できます。',
     'playbackDiagnosticCapturedAt': '取得時刻',
     'sourceTemporarilyUnavailable': 'ソースが一時的に利用できません',
     'sourceUnavailableSuggestion':

@@ -1,6 +1,7 @@
 import 'package:ani_destiny/app/l10n/app_localizations.dart';
 import 'package:ani_destiny/core/diagnostics/feedback_package_collector.dart';
 import 'package:ani_destiny/core/diagnostics/feedback_package_formatter.dart';
+import 'package:ani_destiny/core/diagnostics/playback_diagnostic_time_formatter.dart';
 import 'package:ani_destiny/features/download/domain/entities/download_failure_reason.dart';
 import 'package:ani_destiny/features/download/domain/entities/download_kind.dart';
 import 'package:ani_destiny/features/download/domain/entities/download_task.dart';
@@ -52,12 +53,14 @@ void main() {
         capturedAt: now,
         animeTitle: 'Anime',
         episodeTitle: 'Episode 1',
+        selectedAppSourceId: 'sakura',
         sourceId: 'sakura',
-        requestedSourceId: null,
+        requestedSourceId: 'mock',
         playSourceTitle: 'Line 1',
         urlType: 'm3u8',
         sanitizedUrl: 'https://cdn.example.test/.../video.m3u8',
         headerKeys: ['Referer', 'User-Agent'],
+        state: PlaybackDiagnosticState.error,
       ),
       danmakuEnabled: true,
       dandanplayAppIdConfigured: true,
@@ -87,13 +90,44 @@ void main() {
     final lower = markdown.toLowerCase();
 
     expect(markdown, contains('- Total tasks: 1'));
-    expect(markdown, contains('- Captured at: 2026-05-30T02:03:04.000Z'));
+    expect(
+      markdown,
+      contains('- Selected app source: sakura'),
+    );
+    expect(markdown, contains('- Active playback source: sakura'));
+    expect(markdown, contains('- State: Failed'));
+    expect(
+      markdown,
+      contains(
+        '- Captured at: ${formatPlaybackDiagnosticCapturedAt(now, localeName: l10n.locale.toLanguageTag(), includeExactIso: true)}',
+      ),
+    );
+    expect(markdown, contains('- Selected playback source: mock'));
+    expect(
+      markdown,
+      contains(
+        '- Playback source status: mock is temporarily unavailable. AniDestiny is playing from sakura instead.',
+      ),
+    );
+    expect(markdown, contains('- Request header names: Referer'));
     expect(markdown, contains('- Failed: 1'));
     expect(markdown, contains('Reason: Network error'));
     expect(markdown, contains('https://example.test/.../detail.html'));
     expect(markdown, isNot(contains('https://cdn.example.test/video.mp4')));
     expect(lower, isNot(contains('token')));
     expect(lower, isNot(contains('secret')));
+    expect(
+      markdown.indexOf('- Active playback source: sakura'),
+      lessThan(markdown.indexOf('- State: Failed')),
+    );
+    expect(
+      markdown.indexOf('- State: Failed'),
+      lessThan(
+        markdown.indexOf(
+          '- Captured at: ${formatPlaybackDiagnosticCapturedAt(now, localeName: l10n.locale.toLanguageTag(), includeExactIso: true)}',
+        ),
+      ),
+    );
   });
 
   test('collector localizes copied feedback summary for Chinese support copy',
@@ -134,12 +168,14 @@ void main() {
         capturedAt: now,
         animeTitle: 'Anime',
         episodeTitle: 'Episode 1',
+        selectedAppSourceId: 'sakura',
         sourceId: 'sakura',
         requestedSourceId: null,
         playSourceTitle: 'Line 1',
         urlType: 'm3u8',
         sanitizedUrl: 'https://cdn.example.test/.../video.m3u8',
         headerKeys: [],
+        state: PlaybackDiagnosticState.ready,
       ),
       danmakuEnabled: true,
       dandanplayAppIdConfigured: false,
@@ -151,12 +187,19 @@ void main() {
     final markdown = const FeedbackPackageFormatter(l10n: l10n).format(package);
 
     expect(markdown, contains('# AniDestiny 反馈摘要'));
-    expect(markdown, contains('- 当前数据源: Sakura Anime'));
+    expect(markdown, contains('- 应用所选数据源: Sakura Anime'));
     expect(markdown, contains('Sakura Anime · 正常'));
     expect(markdown, contains('失败次数: 0'));
     expect(markdown, contains('详情: Sakura Anime -> Mock 动漫数据源'));
-    expect(markdown, contains('- 采集时间: 2026-06-08T01:02:03.000Z'));
+    expect(
+      markdown,
+      contains(
+        '- 采集时间: ${formatPlaybackDiagnosticCapturedAt(now, localeName: l10n.locale.toLanguageTag(), includeExactIso: true)}',
+      ),
+    );
     expect(markdown, contains('- 线路: Line 1'));
+    expect(markdown, contains('- 状态: 就绪'));
+    expect(markdown, isNot(contains('请求头名称')));
     expect(markdown, contains('- 启用: 是'));
     expect(markdown, contains('Dandanplay App ID 已配置: 否'));
     expect(markdown, isNot(contains('- 当前数据源: sakura')));
@@ -208,6 +251,116 @@ void main() {
     expect(markdown, contains('- Latest issue: None'));
     expect(markdown, isNot(contains('Reason: Canceled')));
     expect(markdown, isNot(contains('Download canceled.')));
+  });
+
+  test(
+      'collector adds selected app source to playback summary only for divergent playback context',
+      () {
+    final now = DateTime.utc(2026, 6, 8, 1, 2, 3);
+    const l10n = AppLocalizations(Locale('en'));
+    final package = FeedbackPackageCollector(
+      l10n: l10n,
+      appName: 'AniDestiny',
+      appVersion: '1.0.2',
+      platform: 'Android',
+      currentSourceId: 'remote-proxy',
+      sourceHealth: const [],
+      sourceDiagnostics: const [],
+      fallbackEvents: const [],
+      playbackDiagnostics: PlaybackDiagnostics(
+        capturedAt: now,
+        animeTitle: 'Anime',
+        episodeTitle: 'Episode 1',
+        selectedAppSourceId: 'remote-proxy',
+        sourceId: 'sakura',
+        requestedSourceId: 'mock',
+        playSourceTitle: 'Line 1',
+        urlType: 'm3u8',
+        sanitizedUrl: 'https://cdn.example.test/.../video.m3u8',
+        headerKeys: const [],
+        state: PlaybackDiagnosticState.playing,
+      ),
+      danmakuEnabled: true,
+      dandanplayAppIdConfigured: false,
+      dandanplayAppSecretConfigured: false,
+      downloadTasks: const [],
+      sourceLabelForId: (sourceId) {
+        return switch (sourceId) {
+          'remote-proxy' => 'Remote Source Proxy',
+          _ => _sourceLabelForId(sourceId),
+        };
+      },
+    ).collect(generatedAt: now);
+
+    final markdown = const FeedbackPackageFormatter(l10n: l10n).format(package);
+    final selectedAppSourceMatches =
+        RegExp(r'^- Selected app source: Remote Source Proxy$', multiLine: true)
+            .allMatches(markdown)
+            .length;
+
+    expect(selectedAppSourceMatches, 1);
+    expect(
+      markdown,
+      contains(
+        '- Selected app source at playback: Remote Source Proxy',
+      ),
+    );
+    expect(markdown, contains('- Selected playback source: Mock Anime Source'));
+    expect(markdown, contains('- Active playback source: Sakura Anime'));
+  });
+
+  test(
+      'collector keeps the captured app source in playback summary after the live source changes',
+      () {
+    final now = DateTime.utc(2026, 6, 8, 1, 2, 3);
+    const l10n = AppLocalizations(Locale('en'));
+    final package = FeedbackPackageCollector(
+      l10n: l10n,
+      appName: 'AniDestiny',
+      appVersion: '1.0.2',
+      platform: 'Android',
+      currentSourceId: 'sakura',
+      sourceHealth: const [],
+      sourceDiagnostics: const [],
+      fallbackEvents: const [],
+      playbackDiagnostics: PlaybackDiagnostics(
+        capturedAt: now,
+        animeTitle: 'Anime',
+        episodeTitle: 'Episode 1',
+        selectedAppSourceId: 'remote-proxy',
+        sourceId: 'sakura',
+        requestedSourceId: 'mock',
+        playSourceTitle: 'Line 1',
+        urlType: 'm3u8',
+        sanitizedUrl: 'https://cdn.example.test/.../video.m3u8',
+        headerKeys: const [],
+        state: PlaybackDiagnosticState.playing,
+      ),
+      danmakuEnabled: true,
+      dandanplayAppIdConfigured: false,
+      dandanplayAppSecretConfigured: false,
+      downloadTasks: const [],
+      sourceLabelForId: (sourceId) {
+        return switch (sourceId) {
+          'remote-proxy' => 'Remote Source Proxy',
+          _ => _sourceLabelForId(sourceId),
+        };
+      },
+    ).collect(generatedAt: now);
+
+    final markdown = const FeedbackPackageFormatter(l10n: l10n).format(package);
+
+    expect(markdown, contains('- Selected app source: Sakura Anime'));
+    expect(
+      markdown,
+      contains(
+        '## Playback\n- Anime: Anime\n- Episode: Episode 1\n- Selected app source at playback: Remote Source Proxy\n- Selected playback source: Mock Anime Source\n- Active playback source: Sakura Anime\n- Playback source status: Mock Anime Source is temporarily unavailable. AniDestiny is playing from Sakura Anime instead.\n- Line: Line 1\n- State: Playing\n- Captured at: ${formatPlaybackDiagnosticCapturedAt(now, localeName: l10n.locale.toLanguageTag(), includeExactIso: true)}',
+      ),
+    );
+    expect(
+      markdown,
+      contains('- Selected app source at playback: Remote Source Proxy'),
+    );
   });
 }
 

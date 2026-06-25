@@ -250,37 +250,133 @@ void main() {
   test('runtime diagnostics helpers keep support copy localized', () {
     const zh = AppLocalizations(Locale('zh'));
     expect(zh.runtimeDiagnosticsSubtitle, isNot(contains('Debug')));
-    expect(zh.playbackDiagnosticsSummaryHint, isNot(contains('Debug')));
     expect(zh.playbackDiagnosticsEmptyHint, isNot(contains('Debug')));
-    expect(zh.playbackDiagnosticsDebugHint, isNot(contains('Debug')));
-    expect(zh.playbackDiagnosticsDebugHint, isNot(contains('header keys')));
+    expect(zh.playbackDiagnosticsLatestPlayback, '最近一次播放');
+    expect(zh.playbackDiagnosticsRequestDetails, '播放请求细节');
+    expect(
+      zh.playbackDiagnosticsRequestDetailsHint,
+      '下面这些是最近一次播放的已脱敏请求细节，主要用于确认线路和请求是否正常。',
+    );
+    expect(
+      zh.playbackDiagnosticsSnapshotHint,
+      '这里展示的是当前会话里捕获的最近一次播放现场；先确认作品、播放源、状态、线路和采集时间。',
+    );
+    expect(
+      zh.playbackDiagnosticsSnapshotPreview(
+        '番剧 A',
+        '第 2 集',
+        '当前播放源：Sakura Anime · 线路 1\n状态：缓冲中',
+        '采集时间：2026/6/17 09:02',
+      ),
+      '番剧 A · 第 2 集\n当前播放源：Sakura Anime · 线路 1\n状态：缓冲中\n采集时间：2026/6/17 09:02',
+    );
+    expect(zh.copyDiagnosticsPlaybackPendingHint, isNot(contains('Debug')));
     expect(zh.playbackDiagnosticCapturedAt, '采集时间');
+    expect(zh.selectedAppSource, '应用所选数据源');
+    expect(zh.playbackDiagnosticSelectedAppSource, '播放时应用所选数据源');
+    expect(zh.playbackDiagnosticRequestedSource, '所选播放源');
+    expect(zh.playbackDiagnosticSource, '当前播放源');
+    expect(zh.playbackDiagnosticSourceStatus, '播放源状态');
     expect(zh.sourceFallbackEvents, isNot(contains('fallback')));
     expect(zh.sourceFallbackEventsEmpty, isNot(contains('fallback')));
-    expect(zh.playbackDiagnosticHeaders, '请求头');
+    expect(zh.playbackDiagnosticHeaders, '请求头名称');
+    expect(zh.playbackDiagnosticsPrivacyNote, '将复制最近一次播放的已脱敏摘要，不包含敏感值。');
+    expect(zh.copyPlaybackDiagnosticsPendingHint, '先在当前会话里播放一次后，才能复制最近一次播放诊断。');
     expect(zh.yesNo(true), '是');
     expect(zh.yesNo(false), '否');
     expect(zh.platformDisplayName('android'), 'Android');
     expect(zh.sourceOperationLabel('detail'), '详情');
 
     const en = AppLocalizations(Locale('en'));
-    expect(en.playbackDiagnosticsSummaryHint, isNot(contains('player page')));
-    expect(en.playbackDiagnosticHeaders, 'Request headers');
+    expect(en.playbackDiagnosticsLatestPlayback, 'Latest playback');
+    expect(en.playbackDiagnosticsRequestDetails, 'Playback request details');
+    expect(
+      en.playbackDiagnosticsRequestDetailsHint,
+      'These sanitized request details help confirm how the latest playback was requested.',
+    );
+    expect(
+      en.playbackDiagnosticsSnapshotHint,
+      'This is the latest playback snapshot captured in this session. Confirm the title, playback source, state, line, and capture time first.',
+    );
+    expect(
+      en.playbackDiagnosticsSnapshotPreview(
+        'Anime 1',
+        'Episode 2',
+        'Active playback source: Mock Anime Source\nLine: Line 1\nState: Buffering',
+        'Captured at: Jun 17, 2026 1:02 AM',
+      ),
+      'Anime 1 · Episode 2\nActive playback source: Mock Anime Source\nLine: Line 1\nState: Buffering\nCaptured at: Jun 17, 2026 1:02 AM',
+    );
+    expect(en.playbackDiagnosticHeaders, 'Request header names');
     expect(en.playbackDiagnosticCapturedAt, 'Captured at');
+    expect(en.selectedAppSource, 'Selected app source');
+    expect(en.copyPlaybackDiagnostics, 'Copy playback diagnostics');
+    expect(
+      en.playbackDiagnosticsPrivacyNote,
+      'Copies a sanitized summary of the latest playback without sensitive values.',
+    );
+    expect(
+      en.copyPlaybackDiagnosticsPendingHint,
+      'Start playback once in this session to copy the latest playback diagnostics.',
+    );
+    expect(en.playbackDiagnosticsCopied, 'Playback diagnostics copied');
+    expect(
+      en.playbackDiagnosticSelectedAppSource,
+      'Selected app source at playback',
+    );
+    expect(en.playbackDiagnosticRequestedSource, 'Selected playback source');
+    expect(en.playbackDiagnosticSource, 'Active playback source');
+    expect(en.playbackDiagnosticSourceStatus, 'Playback source status');
+    expect(
+      en.copyDiagnosticsPlaybackPendingHint,
+      contains('playback section stays unavailable'),
+    );
     expect(en.sourceOperationLabel('play_sources'), 'Playback lines');
     expect(en.yesNo(true), 'Yes');
     expect(en.yesNo(false), 'No');
 
     const ja = AppLocalizations(Locale('ja'));
     expect(ja.runtimeDiagnosticsSubtitle, isNot(contains('Debug')));
-    expect(ja.playbackDiagnosticsSummaryHint, isNot(contains('Debug')));
     expect(ja.playbackDiagnosticsEmptyHint, isNot(contains('Debug')));
-    expect(ja.playbackDiagnosticsDebugHint, isNot(contains('Debug')));
-    expect(ja.playbackDiagnosticsDebugHint, isNot(contains('header keys')));
+    expect(ja.playbackDiagnosticsLatestPlayback, '最新の再生');
+    expect(ja.playbackDiagnosticsRequestDetails, '再生リクエストの詳細');
+    expect(
+      ja.playbackDiagnosticsRequestDetailsHint,
+      '以下は最新の再生で使われた、機密値を除いたリクエスト詳細です。ラインやリクエストの状態確認に使えます。',
+    );
+    expect(
+      ja.playbackDiagnosticsSnapshotHint,
+      'ここには、このセッションで取得した最新の再生状況を表示します。作品名、再生ソース、状態、ライン、取得時刻を先に確認できます。',
+    );
+    expect(
+      ja.copyPlaybackDiagnosticsPendingHint,
+      'このセッションで一度再生すると、最新の再生診断をコピーできます。',
+    );
+    expect(
+      ja.playbackDiagnosticsPrivacyNote,
+      '最新の再生を機密値なしで要約した内容をコピーします。',
+    );
+    expect(
+      ja.playbackDiagnosticsSnapshotPreview(
+        'アニメ 1',
+        '第 2 話',
+        '現在の再生ソース: Sakura Anime · ライン 1\n状態: バッファ中',
+        '取得時刻: 2026/6/17 1:02',
+      ),
+      'アニメ 1 · 第 2 話\n現在の再生ソース: Sakura Anime · ライン 1\n状態: バッファ中\n取得時刻: 2026/6/17 1:02',
+    );
+    expect(ja.copyDiagnosticsPlaybackPendingHint, isNot(contains('Debug')));
     expect(ja.playbackDiagnosticCapturedAt, '取得時刻');
+    expect(ja.selectedAppSource, '選択中のアプリソース');
+    expect(ja.copyPlaybackDiagnostics, '再生診断をコピー');
+    expect(ja.playbackDiagnosticsCopied, '再生診断をコピーしました');
+    expect(ja.playbackDiagnosticSelectedAppSource, '再生時のアプリソース');
+    expect(ja.playbackDiagnosticRequestedSource, '選択した再生ソース');
+    expect(ja.playbackDiagnosticSource, '現在の再生ソース');
+    expect(ja.playbackDiagnosticSourceStatus, '再生ソース状態');
     expect(ja.sourceFallbackEvents, isNot(contains('fallback')));
     expect(ja.sourceFallbackEventsEmpty, isNot(contains('fallback')));
-    expect(ja.playbackDiagnosticHeaders, 'リクエストヘッダー');
+    expect(ja.playbackDiagnosticHeaders, 'リクエストヘッダー名');
     expect(ja.yesNo(true), 'はい');
     expect(ja.yesNo(false), 'いいえ');
     expect(ja.platformDisplayName('windows'), 'Windows');

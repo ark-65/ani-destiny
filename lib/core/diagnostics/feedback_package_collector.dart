@@ -8,6 +8,7 @@ import '../../features/source/domain/entities/source_fallback_event.dart';
 import '../../features/source/domain/entities/source_health.dart';
 import 'diagnostic_sanitizer.dart';
 import 'feedback_package.dart';
+import 'playback_diagnostic_summary.dart';
 
 class FeedbackPackageCollector {
   const FeedbackPackageCollector({
@@ -60,7 +61,7 @@ class FeedbackPackageCollector {
 
   String _sourceSummary() {
     final lines = <String>[
-      '- ${l10n.currentSource}: ${_sourceLabelOrUnavailable(currentSourceId)}',
+      '- ${l10n.selectedAppSource}: ${_sourceLabelOrUnavailable(currentSourceId)}',
     ];
 
     if (sourceHealth.isEmpty) {
@@ -135,25 +136,13 @@ class FeedbackPackageCollector {
           '${l10n.feedbackPackagePlaybackUnavailable}';
     }
 
-    final lines = <String>[
-      '- ${l10n.playbackDiagnosticCapturedAt}: '
-          '${diagnostics.capturedAt.toIso8601String()}',
-      '- ${l10n.playbackDiagnosticAnime}: ${diagnostics.animeTitle}',
-      '- ${l10n.playbackDiagnosticEpisode}: ${diagnostics.episodeTitle}',
-      if (diagnostics.usedSourceFallback &&
-          diagnostics.requestedSourceId != null)
-        '- ${l10n.playbackDiagnosticRequestedSource}: '
-            '${_sourceLabel(diagnostics.requestedSourceId!)}',
-      '- ${l10n.playbackDiagnosticSource}: ${_sourceLabel(diagnostics.sourceId)}',
-      '- ${l10n.playbackDiagnosticLine}: '
-          '${diagnostics.playSourceTitle ?? l10n.feedbackPackageUnavailable}',
-      '- ${l10n.playbackDiagnosticUrlType}: ${diagnostics.urlType}',
-      '- ${l10n.playbackDiagnosticUrl}: ${diagnostics.sanitizedUrl}',
-      '- ${l10n.playbackDiagnosticHeaders}: '
-          '${diagnostics.headerKeys.isEmpty ? l10n.feedbackPackageNone : diagnostics.headerKeys.join(', ')}',
-    ];
-
-    return lines.join('\n');
+    return buildPlaybackDiagnosticDetailLines(
+      l10n: l10n,
+      localeName: l10n.locale.toLanguageTag(),
+      diagnostics: diagnostics,
+      sourceLabelForId: _sourceLabel,
+      includeExactIso: true,
+    ).map((line) => '- $line').join('\n');
   }
 
   String _danmakuSummary() {
