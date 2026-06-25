@@ -6,6 +6,8 @@
 
 ## [Unreleased]
 
+## [1.0.4] - 2026-06-25
+
 ### 🐛 Fixed
 - Fixed Runtime diagnostics, the in-player Playback diagnostics sheet, and copied playback summaries still showing empty `Line: -` placeholders when that playback had no real line value; AniDestiny now drops those low-signal line rows so users see the real playback moment before they decide to share support details.
 - Fixed Runtime diagnostics, the in-player Playback diagnostics sheet, and copied playback summaries still showing low-signal placeholders like an `unknown` URL type or empty request-header rows; AniDestiny now keeps only the request details that actually help confirm how that playback was made, so support copy stays calmer and more useful.
@@ -122,7 +124,6 @@
 - Fixed the changelog gate shallow-fetching the base branch and then diffing with `...`, which could falsely fail with `no merge base` after certain PR syncs; it now keeps the base history intact and computes the merge base explicitly so the Chinese/English changelog check stays stable on normal PR histories.
 - Tightened the player failure-card diagnostics-copy assertion around the new `Request headers` wording so PR validation keeps protecting the localized support copy instead of failing on stale expectations.
 - Removed the unused `permission_handler` dependency that was breaking `flutter build windows --release` on the newer GitHub Windows runner, so the Windows delivery path is no longer blocked by an unused platform plugin.
-
 ## [1.0.3] - 2026-06-13
 
 ### 🐛 Fixed
