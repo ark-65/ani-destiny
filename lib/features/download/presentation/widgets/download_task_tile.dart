@@ -80,7 +80,7 @@ class DownloadTaskTile extends StatelessWidget {
                     ),
               ),
             ],
-            if (task.localPath != null) ...[
+            if (_showLocalPath(task)) ...[
               const SizedBox(height: 6),
               Text(
                 '${context.l10n.downloadLocalPath}: ${task.localPath}',
@@ -143,6 +143,10 @@ class DownloadTaskTile extends StatelessWidget {
   bool _showFailureMessage(DownloadTask task) {
     return task.failureMessage != null &&
         task.status != DownloadStatus.canceled;
+  }
+
+  bool _showLocalPath(DownloadTask task) {
+    return task.status == DownloadStatus.completed && task.localPath != null;
   }
 
   List<Widget> _actions(BuildContext context) {

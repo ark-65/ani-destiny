@@ -131,7 +131,7 @@ void main() {
   ) async {
     await tester.pumpWidget(
       _buildTileApp(
-        Column(
+        ListView(
           children: [
             DownloadTaskTile(
               task: _task(status: DownloadStatus.downloading, progress: 1.2),
@@ -161,10 +161,11 @@ void main() {
     expect(find.textContaining('Progress: -20%'), findsNothing);
   });
 
-  testWidgets('direct downloads use honest stop and retry copy', (tester) async {
+  testWidgets('direct downloads use honest stop and retry copy',
+      (tester) async {
     await tester.pumpWidget(
       _buildTileApp(
-        Column(
+        ListView(
           children: [
             DownloadTaskTile(
               task: _task(status: DownloadStatus.downloading),
@@ -204,6 +205,45 @@ void main() {
       ),
       findsOneWidget,
     );
+    expect(find.textContaining('Local path:'), findsNothing);
+  });
+
+  testWidgets('only completed downloads show a local path', (tester) async {
+    await tester.pumpWidget(
+      _buildTileApp(
+        ListView(
+          children: [
+            DownloadTaskTile(
+              task: _task(status: DownloadStatus.downloading),
+              isBusy: false,
+              onStart: () {},
+              onPause: () {},
+              onCancel: () {},
+              onRemove: () {},
+            ),
+            DownloadTaskTile(
+              task: _task(status: DownloadStatus.failed),
+              isBusy: false,
+              onStart: () {},
+              onPause: () {},
+              onCancel: () {},
+              onRemove: () {},
+            ),
+            DownloadTaskTile(
+              task: _task(status: DownloadStatus.completed),
+              isBusy: false,
+              onStart: () {},
+              onPause: () {},
+              onCancel: () {},
+              onRemove: () {},
+            ),
+          ],
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('Local path: /tmp/video.mp4'), findsOneWidget);
   });
 
   testWidgets('busy download tasks disable actions and show inline progress', (
