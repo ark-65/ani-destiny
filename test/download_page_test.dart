@@ -144,6 +144,28 @@ void main() {
   });
 
   testWidgets(
+    'canceled downloads explain when a leftover partial file needs manual cleanup',
+    (tester) async {
+      final repository = _FakeDownloadRepository([
+        _task('canceled', DownloadStatus.canceled).copyWith(
+          localPath: '/tmp/partial-video.mp4',
+          failureReason: DownloadFailureReason.canceled,
+        ),
+      ]);
+
+      await _pumpDownloadPage(tester, repository);
+
+      expect(
+        find.text(
+          'This download was discarded, but AniDestiny could not clear the partial file automatically. Remove the leftover file from your device if you no longer need it.',
+        ),
+        findsOneWidget,
+      );
+      expect(find.text('Local path: /tmp/partial-video.mp4'), findsOneWidget);
+    },
+  );
+
+  testWidgets(
     'clear ended tasks continues after one deletion fails and shows summary',
     (tester) async {
       final repository = _FakeDownloadRepository(

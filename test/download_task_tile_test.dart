@@ -128,12 +128,50 @@ void main() {
     expect(find.byIcon(Icons.error_outline), findsNothing);
     expect(find.text('Download canceled.'), findsNothing);
     expect(find.byTooltip('Remove from list'), findsOneWidget);
+    expect(
+      find.text(
+        'This download was discarded. Any partial file was cleared. You can remove this task from the list when you are done.',
+      ),
+      findsOneWidget,
+    );
+    expect(find.textContaining('Local path:'), findsNothing);
 
     await tester.tap(removeButton);
     await tester.pump();
 
     expect(removeTapped, isTrue);
   });
+
+  testWidgets(
+    'canceled downloads show leftover local path when cleanup still needs help',
+    (tester) async {
+      await tester.pumpWidget(
+        _buildTileApp(
+          DownloadTaskTile(
+            task: _task(
+              status: DownloadStatus.canceled,
+              failureReason: DownloadFailureReason.canceled,
+              localPath: '/tmp/partial-video.mp4',
+            ),
+            isBusy: false,
+            onStart: () {},
+            onPause: () {},
+            onCancel: () {},
+            onRemove: () {},
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(
+        find.text(
+          'This download was discarded, but AniDestiny could not clear the partial file automatically. Remove the leftover file from your device if you no longer need it.',
+        ),
+        findsOneWidget,
+      );
+      expect(find.text('Local path: /tmp/partial-video.mp4'), findsOneWidget);
+    },
+  );
 
   testWidgets('download progress label stays within 0 to 100 percent', (
     tester,
@@ -314,6 +352,7 @@ DownloadTask _task({
   double progress = 1,
   DownloadFailureReason failureReason = DownloadFailureReason.none,
   String? failureMessage,
+  String? localPath,
 }) {
   final now = DateTime(2026, 6, 4, 1, 0);
   return DownloadTask(
@@ -333,6 +372,7 @@ DownloadTask _task({
     downloadedBytes: 1024,
     createdAt: now,
     updatedAt: now,
-    localPath: '/tmp/video.mp4',
+    localPath: localPath ??
+        (status == DownloadStatus.completed ? '/tmp/video.mp4' : null),
   );
 }

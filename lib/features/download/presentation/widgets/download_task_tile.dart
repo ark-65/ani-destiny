@@ -124,6 +124,10 @@ class DownloadTaskTile extends StatelessWidget {
         context.l10n.downloadStopMayRestartNote,
       DownloadStatus.paused when task.kind == DownloadKind.directFile =>
         context.l10n.downloadPausedRetryNote,
+      DownloadStatus.canceled when task.kind == DownloadKind.directFile =>
+        task.localPath == null
+            ? context.l10n.downloadDiscardedNote
+            : context.l10n.downloadDiscardedNeedsManualCleanupNote,
       DownloadStatus.completed when _showLocalPath(task) =>
         context.l10n.downloadRemoveKeepsFileNote,
       DownloadStatus.pending ||
@@ -149,7 +153,9 @@ class DownloadTaskTile extends StatelessWidget {
   }
 
   bool _showLocalPath(DownloadTask task) {
-    return task.status == DownloadStatus.completed && task.localPath != null;
+    return task.localPath != null &&
+        (task.status == DownloadStatus.completed ||
+            task.status == DownloadStatus.canceled);
   }
 
   List<Widget> _actions(BuildContext context) {
