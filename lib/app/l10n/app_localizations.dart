@@ -205,11 +205,14 @@ class AppLocalizations {
   String mockDownloadTaskCreated(String taskId) =>
       '${_t('mockDownloadTaskCreated')}: $taskId';
   String get start => _t('start');
+  String get stopForNow => _t('stopForNow');
   String get cancel => _t('cancel');
   String get remove => _t('remove');
   String get downloadProgress => _t('downloadProgress');
   String get downloadLocalPath => _t('downloadLocalPath');
-  String get downloadBasicPauseNote => _t('downloadBasicPauseNote');
+  String get downloadStopMayRestartNote => _t('downloadStopMayRestartNote');
+  String get downloadPausedRetryNote => _t('downloadPausedRetryNote');
+  String get downloadStoppedStatus => _t('downloadStoppedStatus');
   String get downloadKindDirectFile => _t('downloadKindDirectFile');
   String get downloadKindHls => _t('downloadKindHls');
   String get downloadKindBt => _t('downloadKindBt');
@@ -563,11 +566,14 @@ const _localizedValues = {
     'mock': 'Mock',
     'mockDownloadTaskCreated': '已创建 Mock 下载任务',
     'start': '开始',
+    'stopForNow': '先停一下',
     'cancel': '取消',
     'remove': '移除',
     'downloadProgress': '进度',
     'downloadLocalPath': '本地路径',
-    'downloadBasicPauseNote': '暂停为基础能力，继续时可能重新下载。',
+    'downloadStopMayRestartNote': '当前下载只能先停下；下次重试时可能会从头开始。',
+    'downloadPausedRetryNote': '这个下载已先停下；再次开始会按重试处理，可能从头开始。',
+    'downloadStoppedStatus': '已停下',
     'downloadKindDirectFile': '直链文件',
     'downloadKindHls': 'HLS / m3u8',
     'downloadKindBt': 'BT 占位',
@@ -851,12 +857,16 @@ const _localizedValues = {
     'mock': 'Mock',
     'mockDownloadTaskCreated': 'Mock download task created',
     'start': 'Start',
+    'stopForNow': 'Stop for now',
     'cancel': 'Cancel',
     'remove': 'Remove',
     'downloadProgress': 'Progress',
     'downloadLocalPath': 'Local path',
-    'downloadBasicPauseNote':
-        'Pause support is basic and may restart the download.',
+    'downloadStopMayRestartNote':
+        'Stopping this download keeps the task, but the next retry may restart from the beginning.',
+    'downloadPausedRetryNote':
+        'This download is stopped for now. Retrying may restart it from the beginning.',
+    'downloadStoppedStatus': 'Stopped',
     'downloadKindDirectFile': 'Direct file',
     'downloadKindHls': 'HLS / m3u8',
     'downloadKindBt': 'BT placeholder',
@@ -1146,11 +1156,14 @@ const _localizedValues = {
     'mock': 'Mock',
     'mockDownloadTaskCreated': 'Mock ダウンロードタスクを作成しました',
     'start': '開始',
+    'stopForNow': 'いったん止める',
     'cancel': 'キャンセル',
     'remove': '削除',
     'downloadProgress': '進捗',
     'downloadLocalPath': 'ローカルパス',
-    'downloadBasicPauseNote': '一時停止は基本機能です。再開時に再ダウンロードされる場合があります。',
+    'downloadStopMayRestartNote': 'いったん止めることはできますが、次の再試行では最初からやり直す場合があります。',
+    'downloadPausedRetryNote': 'このダウンロードはいったん停止しています。再試行時は最初からやり直す場合があります。',
+    'downloadStoppedStatus': '停止中',
     'downloadKindDirectFile': '直接ファイル',
     'downloadKindHls': 'HLS / m3u8',
     'downloadKindBt': 'BT プレースホルダー',

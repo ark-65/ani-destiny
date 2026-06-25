@@ -25,6 +25,8 @@ class DownloadTaskTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final pauseNote = _pauseNote(context);
+
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(12),
@@ -88,10 +90,10 @@ class DownloadTaskTile extends StatelessWidget {
             const SizedBox(height: 8),
             Row(
               children: [
-                if (_showPauseNote(task))
+                if (pauseNote != null)
                   Expanded(
                     child: Text(
-                      context.l10n.downloadBasicPauseNote,
+                      pauseNote,
                       style: Theme.of(context).textTheme.bodySmall,
                     ),
                   )
@@ -116,20 +118,21 @@ class DownloadTaskTile extends StatelessWidget {
     );
   }
 
-  bool _showPauseNote(DownloadTask task) {
-    return task.kind == DownloadKind.directFile &&
-        switch (task.status) {
-          DownloadStatus.pending ||
-          DownloadStatus.preparing ||
-          DownloadStatus.downloading ||
-          DownloadStatus.paused =>
-            true,
-          DownloadStatus.failed ||
-          DownloadStatus.completed ||
-          DownloadStatus.canceled ||
-          DownloadStatus.unsupported =>
-            false,
-        };
+  String? _pauseNote(BuildContext context) {
+    if (task.kind != DownloadKind.directFile) {
+      return null;
+    }
+    return switch (task.status) {
+      DownloadStatus.downloading => context.l10n.downloadStopMayRestartNote,
+      DownloadStatus.paused => context.l10n.downloadPausedRetryNote,
+      DownloadStatus.pending ||
+      DownloadStatus.preparing ||
+      DownloadStatus.failed ||
+      DownloadStatus.completed ||
+      DownloadStatus.canceled ||
+      DownloadStatus.unsupported =>
+        null,
+    };
   }
 
   bool _showFailureReason(DownloadTask task) {
@@ -169,9 +172,9 @@ class DownloadTaskTile extends StatelessWidget {
       DownloadStatus.downloading => [
           IconButton(
             key: ValueKey('download-task-pause-${task.id}'),
-            tooltip: context.l10n.pause,
+            tooltip: context.l10n.stopForNow,
             onPressed: isBusy ? null : onPause,
-            icon: const Icon(Icons.pause),
+            icon: const Icon(Icons.stop_circle_outlined),
           ),
           IconButton(
             key: ValueKey('download-task-cancel-${task.id}'),
@@ -182,10 +185,10 @@ class DownloadTaskTile extends StatelessWidget {
         ],
       DownloadStatus.paused => [
           IconButton(
-            key: ValueKey('download-task-start-${task.id}'),
-            tooltip: context.l10n.start,
+            key: ValueKey('download-task-retry-${task.id}'),
+            tooltip: context.l10n.retry,
             onPressed: isBusy ? null : onStart,
-            icon: const Icon(Icons.play_arrow),
+            icon: const Icon(Icons.refresh),
           ),
           IconButton(
             key: ValueKey('download-task-cancel-${task.id}'),
@@ -315,7 +318,7 @@ class _StatusChip extends StatelessWidget {
       DownloadStatus.pending => context.l10n.pending,
       DownloadStatus.preparing => context.l10n.preparing,
       DownloadStatus.downloading => context.l10n.downloading,
-      DownloadStatus.paused => context.l10n.paused,
+      DownloadStatus.paused => context.l10n.downloadStoppedStatus,
       DownloadStatus.completed => context.l10n.completed,
       DownloadStatus.failed => context.l10n.failed,
       DownloadStatus.canceled => context.l10n.canceled,

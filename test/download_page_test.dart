@@ -54,6 +54,39 @@ void main() {
     expect(repository.deletedTaskIds, isEmpty);
   });
 
+  testWidgets('direct downloads use honest stop and retry wording', (
+    tester,
+  ) async {
+    final repository = _FakeDownloadRepository([
+      _task('downloading', DownloadStatus.downloading),
+      _task('paused', DownloadStatus.paused),
+    ]);
+
+    await _pumpDownloadPage(tester, repository);
+
+    expect(find.byTooltip('Stop for now'), findsOneWidget);
+    expect(
+      find.text(
+        'Stopping this download keeps the task, but the next retry may restart from the beginning.',
+      ),
+      findsOneWidget,
+    );
+
+    expect(find.byTooltip('Retry'), findsOneWidget);
+    expect(
+      find.byKey(const ValueKey('download-task-retry-paused')),
+      findsOneWidget,
+    );
+    expect(find.text('Stopped'), findsOneWidget);
+    expect(
+      find.text(
+        'This download is stopped for now. Retrying may restart it from the beginning.',
+      ),
+      findsOneWidget,
+    );
+    expect(find.byTooltip('Pause'), findsNothing);
+  });
+
   testWidgets(
     'clear ended tasks continues after one deletion fails and shows summary',
     (tester) async {
