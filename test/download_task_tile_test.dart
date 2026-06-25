@@ -161,6 +161,51 @@ void main() {
     expect(find.textContaining('Progress: -20%'), findsNothing);
   });
 
+  testWidgets('direct downloads use honest stop and retry copy', (tester) async {
+    await tester.pumpWidget(
+      _buildTileApp(
+        Column(
+          children: [
+            DownloadTaskTile(
+              task: _task(status: DownloadStatus.downloading),
+              isBusy: false,
+              onStart: () {},
+              onPause: () {},
+              onCancel: () {},
+              onRemove: () {},
+            ),
+            DownloadTaskTile(
+              task: _task(status: DownloadStatus.paused),
+              isBusy: false,
+              onStart: () {},
+              onPause: () {},
+              onCancel: () {},
+              onRemove: () {},
+            ),
+          ],
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.byTooltip('Stop for now'), findsOneWidget);
+    expect(find.byTooltip('Retry'), findsOneWidget);
+    expect(find.byTooltip('Pause'), findsNothing);
+    expect(find.text('Stopped'), findsOneWidget);
+    expect(
+      find.text(
+        'Stopping this download keeps the task, but the next retry may restart from the beginning.',
+      ),
+      findsOneWidget,
+    );
+    expect(
+      find.text(
+        'This download is stopped for now. Retrying may restart it from the beginning.',
+      ),
+      findsOneWidget,
+    );
+  });
+
   testWidgets('busy download tasks disable actions and show inline progress', (
     tester,
   ) async {

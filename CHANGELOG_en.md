@@ -7,7 +7,7 @@
 ## [Unreleased]
 
 ### 🐛 Fixed
-- Fixed direct-file downloads still reading like a true resumable `Pause` flow even though AniDestiny can currently only stop the current attempt and retry later; active tasks now say `Stop for now`, stopped tasks show an honest `Stopped` state with `Retry`, and both states explain that the next attempt may restart from the beginning.
+- Fixed direct-file downloads still reading like a true resumable `Pause` flow even though AniDestiny can currently only stop the current attempt and retry later; active tasks now say `Stop for now`, stopped tasks show an honest `Stopped` state with `Retry`, both states explain that the next attempt may restart from the beginning, and the tile-level regression coverage now locks that wording in place.
 
 ## [1.0.4] - 2026-06-25
 
