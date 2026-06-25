@@ -102,9 +102,10 @@ void main() {
     await _pumpDownloadPage(tester, repository);
 
     expect(find.byTooltip('Stop for now'), findsOneWidget);
+    expect(find.byTooltip('Discard download'), findsNWidgets(2));
     expect(
       find.text(
-        'Stopping this download keeps the task, but the next retry may restart from the beginning.',
+        'Stopping this download keeps the task, but the next retry may restart from the beginning. Discarding it clears any partial file.',
       ),
       findsOneWidget,
     );
@@ -117,7 +118,7 @@ void main() {
     expect(find.text('Stopped'), findsOneWidget);
     expect(
       find.text(
-        'This download is stopped for now. Retrying may restart it from the beginning.',
+        'This download is stopped for now. Retrying may restart it from the beginning. Discarding it clears any partial file.',
       ),
       findsOneWidget,
     );

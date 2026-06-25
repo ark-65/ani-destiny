@@ -206,6 +206,7 @@ class AppLocalizations {
       '${_t('mockDownloadTaskCreated')}: $taskId';
   String get start => _t('start');
   String get stopForNow => _t('stopForNow');
+  String get downloadDiscardTooltip => _t('downloadDiscardTooltip');
   String get cancel => _t('cancel');
   String get removeFromList => _t('removeFromList');
   String get remove => _t('remove');
@@ -572,13 +573,16 @@ const _localizedValues = {
     'mockDownloadTaskCreated': '已创建 Mock 下载任务',
     'start': '开始',
     'stopForNow': '先停一下',
+    'downloadDiscardTooltip': '放弃这个下载',
     'cancel': '取消',
     'removeFromList': '从列表移除',
     'remove': '移除',
     'downloadProgress': '进度',
     'downloadLocalPath': '本地路径',
-    'downloadStopMayRestartNote': '当前下载只能先停下；下次重试时可能会从头开始。',
-    'downloadPausedRetryNote': '这个下载已先停下；再次开始会按重试处理，可能从头开始。',
+    'downloadStopMayRestartNote':
+        '当前下载只能先停下；下次重试时可能会从头开始。放弃这个任务会丢掉未完成内容，并清掉临时文件。',
+    'downloadPausedRetryNote':
+        '这个下载已先停下；再次开始会按重试处理，可能从头开始。放弃这个任务会丢掉未完成内容，并清掉临时文件。',
     'downloadRemoveKeepsFileNote': '从列表移除这个任务不会删除已下载文件；文件会继续保留在设备上。',
     'downloadStoppedStatus': '已停下',
     'downloadKindDirectFile': '直链文件',
@@ -867,15 +871,16 @@ const _localizedValues = {
     'mockDownloadTaskCreated': 'Mock download task created',
     'start': 'Start',
     'stopForNow': 'Stop for now',
+    'downloadDiscardTooltip': 'Discard download',
     'cancel': 'Cancel',
     'removeFromList': 'Remove from list',
     'remove': 'Remove',
     'downloadProgress': 'Progress',
     'downloadLocalPath': 'Local path',
     'downloadStopMayRestartNote':
-        'Stopping this download keeps the task, but the next retry may restart from the beginning.',
+        'Stopping this download keeps the task, but the next retry may restart from the beginning. Discarding it clears any partial file.',
     'downloadPausedRetryNote':
-        'This download is stopped for now. Retrying may restart it from the beginning.',
+        'This download is stopped for now. Retrying may restart it from the beginning. Discarding it clears any partial file.',
     'downloadRemoveKeepsFileNote':
         'Removing this task only clears it from the list. The downloaded file stays on your device.',
     'downloadStoppedStatus': 'Stopped',
@@ -1171,13 +1176,16 @@ const _localizedValues = {
     'mockDownloadTaskCreated': 'Mock ダウンロードタスクを作成しました',
     'start': '開始',
     'stopForNow': 'いったん止める',
+    'downloadDiscardTooltip': 'このダウンロードを破棄',
     'cancel': 'キャンセル',
     'removeFromList': '一覧から削除',
     'remove': '削除',
     'downloadProgress': '進捗',
     'downloadLocalPath': 'ローカルパス',
-    'downloadStopMayRestartNote': 'いったん止めることはできますが、次の再試行では最初からやり直す場合があります。',
-    'downloadPausedRetryNote': 'このダウンロードはいったん停止しています。再試行時は最初からやり直す場合があります。',
+    'downloadStopMayRestartNote':
+        'いったん止めることはできますが、次の再試行では最初からやり直す場合があります。破棄すると未完了の内容と一時ファイルが消えます。',
+    'downloadPausedRetryNote':
+        'このダウンロードはいったん停止しています。再試行時は最初からやり直す場合があります。破棄すると未完了の内容と一時ファイルが消えます。',
     'downloadRemoveKeepsFileNote': 'このタスクを一覧から削除しても、ダウンロード済みファイルは端末に残ります。',
     'downloadStoppedStatus': '停止中',
     'downloadKindDirectFile': '直接ファイル',

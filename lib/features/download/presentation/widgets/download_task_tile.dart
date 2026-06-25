@@ -163,7 +163,7 @@ class DownloadTaskTile extends StatelessWidget {
           ),
           IconButton(
             key: ValueKey('download-task-cancel-${task.id}'),
-            tooltip: context.l10n.cancel,
+            tooltip: context.l10n.downloadDiscardTooltip,
             onPressed: isBusy ? null : onCancel,
             icon: const Icon(Icons.close),
           ),
@@ -171,7 +171,7 @@ class DownloadTaskTile extends StatelessWidget {
       DownloadStatus.preparing => [
           IconButton(
             key: ValueKey('download-task-cancel-${task.id}'),
-            tooltip: context.l10n.cancel,
+            tooltip: context.l10n.downloadDiscardTooltip,
             onPressed: isBusy ? null : onCancel,
             icon: const Icon(Icons.close),
           ),
@@ -185,7 +185,7 @@ class DownloadTaskTile extends StatelessWidget {
           ),
           IconButton(
             key: ValueKey('download-task-cancel-${task.id}'),
-            tooltip: context.l10n.cancel,
+            tooltip: context.l10n.downloadDiscardTooltip,
             onPressed: isBusy ? null : onCancel,
             icon: const Icon(Icons.close),
           ),
@@ -199,7 +199,7 @@ class DownloadTaskTile extends StatelessWidget {
           ),
           IconButton(
             key: ValueKey('download-task-cancel-${task.id}'),
-            tooltip: context.l10n.cancel,
+            tooltip: context.l10n.downloadDiscardTooltip,
             onPressed: isBusy ? null : onCancel,
             icon: const Icon(Icons.close),
           ),

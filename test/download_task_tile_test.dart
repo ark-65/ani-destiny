@@ -77,7 +77,7 @@ void main() {
 
     expect(retryButton, findsOneWidget);
     expect(removeButton, findsOneWidget);
-    expect(find.byTooltip('Cancel'), findsNothing);
+    expect(find.byTooltip('Discard download'), findsNothing);
     expect(find.byTooltip('Remove from list'), findsOneWidget);
     expect(find.byIcon(Icons.refresh), findsOneWidget);
     expect(
@@ -200,17 +200,18 @@ void main() {
 
     expect(find.byTooltip('Stop for now'), findsOneWidget);
     expect(find.byTooltip('Retry'), findsOneWidget);
+    expect(find.byTooltip('Discard download'), findsNWidgets(2));
     expect(find.byTooltip('Pause'), findsNothing);
     expect(find.text('Stopped'), findsOneWidget);
     expect(
       find.text(
-        'Stopping this download keeps the task, but the next retry may restart from the beginning.',
+        'Stopping this download keeps the task, but the next retry may restart from the beginning. Discarding it clears any partial file.',
       ),
       findsOneWidget,
     );
     expect(
       find.text(
-        'This download is stopped for now. Retrying may restart it from the beginning.',
+        'This download is stopped for now. Retrying may restart it from the beginning. Discarding it clears any partial file.',
       ),
       findsOneWidget,
     );
