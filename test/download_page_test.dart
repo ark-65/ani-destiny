@@ -124,6 +124,31 @@ void main() {
     },
   );
 
+  testWidgets(
+    'clear ended tasks action stays hidden when only retained discarded leftovers remain',
+    (tester) async {
+      final repository = _FakeDownloadRepository([
+        _task('canceled', DownloadStatus.canceled).copyWith(
+          localPath: '/tmp/partial-video.mp4',
+          failureReason: DownloadFailureReason.canceled,
+        ),
+      ]);
+
+      await _pumpDownloadPage(tester, repository);
+
+      expect(
+        find.byKey(const ValueKey('downloads-clear-ended-tasks')),
+        findsNothing,
+      );
+      expect(
+        find.text(
+          'Discarded tasks that still show a leftover file path stay in the list until that partial file is gone.',
+        ),
+        findsOneWidget,
+      );
+    },
+  );
+
   testWidgets('direct downloads use honest stop and retry wording', (
     tester,
   ) async {

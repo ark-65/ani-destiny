@@ -80,6 +80,7 @@ class _DownloadPageState extends ConsumerState<DownloadPage> {
                 data: (items) {
                   final removableTaskIds = _removableTaskIds(items);
                   final clearableTaskIds = _clearableTaskIds(items);
+                  final showClearEndedTasksAction = clearableTaskIds.isNotEmpty;
                   final hasBusyRemovableTask = removableTaskIds.any(
                     _busyTaskIds.contains,
                   );
@@ -89,6 +90,9 @@ class _DownloadPageState extends ConsumerState<DownloadPage> {
                   final hasDiscardedTasksAwaitingCleanup = items.any(
                     _requiresManualCleanupBeforeRemoval,
                   );
+                  final showCleanupGuidance = showClearEndedTasksAction ||
+                      hasCompletedTasks ||
+                      hasDiscardedTasksAwaitingCleanup;
                   if (items.isEmpty) {
                     return AppEmptyView(
                       message: context.l10n.downloadsEmpty,
@@ -98,28 +102,28 @@ class _DownloadPageState extends ConsumerState<DownloadPage> {
                   return Column(
                     crossAxisAlignment: CrossAxisAlignment.end,
                     children: [
-                      if (removableTaskIds.isNotEmpty) ...[
-                        OutlinedButton.icon(
-                          key: const ValueKey('downloads-clear-ended-tasks'),
-                          onPressed: _isClearingEndedTasks ||
-                                  hasBusyRemovableTask ||
-                                  clearableTaskIds.isEmpty
-                              ? null
-                              : () => unawaited(
-                                    _handleClearRemovableTasks(
-                                      clearableTaskIds,
+                      if (showCleanupGuidance) ...[
+                        if (showClearEndedTasksAction)
+                          OutlinedButton.icon(
+                            key: const ValueKey('downloads-clear-ended-tasks'),
+                            onPressed:
+                                _isClearingEndedTasks || hasBusyRemovableTask
+                                    ? null
+                                    : () => unawaited(
+                                          _handleClearRemovableTasks(
+                                            clearableTaskIds,
+                                          ),
+                                        ),
+                            icon: _isClearingEndedTasks
+                                ? const SizedBox.square(
+                                    dimension: 18,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
                                     ),
-                                  ),
-                          icon: _isClearingEndedTasks
-                              ? const SizedBox.square(
-                                  dimension: 18,
-                                  child: CircularProgressIndicator(
-                                    strokeWidth: 2,
-                                  ),
-                                )
-                              : const Icon(Icons.clear_all),
-                          label: Text(context.l10n.clearEndedDownloads),
-                        ),
+                                  )
+                                : const Icon(Icons.clear_all),
+                            label: Text(context.l10n.clearEndedDownloads),
+                          ),
                         if (hasCompletedTasks) ...[
                           const SizedBox(height: 8),
                           Text(
