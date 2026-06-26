@@ -2,6 +2,7 @@ import 'package:ani_destiny/app/l10n/app_localizations.dart';
 import 'package:ani_destiny/features/download/domain/entities/download_failure_reason.dart';
 import 'package:ani_destiny/features/download/domain/entities/download_kind.dart';
 import 'package:ani_destiny/features/download/domain/entities/download_task.dart';
+import 'package:ani_destiny/features/download/presentation/download_task_cleanup_state.dart';
 import 'package:ani_destiny/features/download/presentation/widgets/download_task_tile.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
@@ -145,13 +146,15 @@ void main() {
   testWidgets(
     'canceled downloads show leftover local path when cleanup still needs help',
     (tester) async {
+      const partialPath = '/tmp/partial-video.mp4';
+      _stubCleanupPathExists({partialPath});
       await tester.pumpWidget(
         _buildTileApp(
           DownloadTaskTile(
             task: _task(
               status: DownloadStatus.canceled,
               failureReason: DownloadFailureReason.canceled,
-              localPath: '/tmp/partial-video.mp4',
+              localPath: partialPath,
             ),
             isBusy: false,
             onStart: () {},
@@ -161,7 +164,7 @@ void main() {
           ),
         ),
       );
-      await tester.pumpAndSettle();
+      await tester.pump();
 
       expect(
         find.text('Needs cleanup'),
@@ -173,12 +176,53 @@ void main() {
         ),
         findsOneWidget,
       );
-      expect(find.text('Local path: /tmp/partial-video.mp4'), findsOneWidget);
+      expect(find.text('Local path: $partialPath'), findsOneWidget);
       expect(
         find.byKey(const ValueKey('download-task-remove-task-1')),
         findsNothing,
       );
       expect(find.byTooltip('Remove from list'), findsNothing);
+    },
+  );
+
+  testWidgets(
+    'canceled downloads with stale local paths become removable again',
+    (tester) async {
+      const stalePath = '/tmp/partial-video.mp4';
+      _stubCleanupPathExists(const {});
+
+      await tester.pumpWidget(
+        _buildTileApp(
+          DownloadTaskTile(
+            task: _task(
+              status: DownloadStatus.canceled,
+              failureReason: DownloadFailureReason.canceled,
+              localPath: stalePath,
+            ),
+            isBusy: false,
+            onStart: () {},
+            onPause: () {},
+            onCancel: () {},
+            onRemove: () {},
+          ),
+        ),
+      );
+      await tester.pump();
+
+      expect(find.text('Needs cleanup'), findsNothing);
+      expect(find.text('Canceled'), findsOneWidget);
+      expect(
+        find.text(
+          'This download was discarded. Any partial file was cleared. You can remove this task from the list when you are done.',
+        ),
+        findsOneWidget,
+      );
+      expect(find.textContaining('Local path:'), findsNothing);
+      expect(
+        find.byKey(const ValueKey('download-task-remove-task-1')),
+        findsOneWidget,
+      );
+      expect(find.byTooltip('Remove from list'), findsOneWidget);
     },
   );
 
@@ -200,7 +244,7 @@ void main() {
           ),
         ),
       );
-      await tester.pumpAndSettle();
+      await tester.pump();
 
       expect(find.text('Canceled'), findsOneWidget);
       expect(find.text('Needs cleanup'), findsNothing);
@@ -409,4 +453,11 @@ DownloadTask _task({
     localPath: localPath ??
         (status == DownloadStatus.completed ? '/tmp/video.mp4' : null),
   );
+}
+
+void _stubCleanupPathExists(Set<String> existingPaths) {
+  debugSetDownloadCleanupPathExists(existingPaths.contains);
+  addTearDown(() {
+    debugSetDownloadCleanupPathExists(null);
+  });
 }

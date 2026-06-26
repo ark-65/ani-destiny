@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../../app/l10n/app_localizations.dart';
+import '../download_task_cleanup_state.dart';
 import '../../domain/entities/download_failure_reason.dart';
 import '../../domain/entities/download_kind.dart';
 import '../../domain/entities/download_task.dart';
@@ -125,9 +126,9 @@ class DownloadTaskTile extends StatelessWidget {
       DownloadStatus.paused when task.kind == DownloadKind.directFile =>
         context.l10n.downloadPausedRetryNote,
       DownloadStatus.canceled when task.kind == DownloadKind.directFile =>
-        task.localPath == null
-            ? context.l10n.downloadDiscardedNote
-            : context.l10n.downloadDiscardedNeedsManualCleanupNote,
+        downloadTaskNeedsManualCleanup(task)
+            ? context.l10n.downloadDiscardedNeedsManualCleanupNote
+            : context.l10n.downloadDiscardedNote,
       DownloadStatus.completed when _showLocalPath(task) =>
         context.l10n.downloadRemoveKeepsFileNote,
       DownloadStatus.pending ||
@@ -153,9 +154,7 @@ class DownloadTaskTile extends StatelessWidget {
   }
 
   bool _showLocalPath(DownloadTask task) {
-    return task.localPath != null &&
-        (task.status == DownloadStatus.completed ||
-            task.status == DownloadStatus.canceled);
+    return downloadTaskShowsLocalPath(task);
   }
 
   List<Widget> _actions(BuildContext context) {
@@ -232,7 +231,7 @@ class DownloadTaskTile extends StatelessWidget {
             icon: const Icon(Icons.delete_outline),
           ),
         ],
-      DownloadStatus.canceled => _requiresManualCleanupBeforeRemoval(task)
+      DownloadStatus.canceled => downloadTaskNeedsManualCleanup(task)
           ? const <Widget>[]
           : [
               IconButton(
@@ -243,10 +242,6 @@ class DownloadTaskTile extends StatelessWidget {
               ),
             ],
     };
-  }
-
-  bool _requiresManualCleanupBeforeRemoval(DownloadTask task) {
-    return task.status == DownloadStatus.canceled && task.localPath != null;
   }
 
   String _progressLabel(BuildContext context, DownloadTask task) {
@@ -338,7 +333,7 @@ class _StatusChip extends StatelessWidget {
   }
 
   String _label(BuildContext context, DownloadTask task) {
-    if (_requiresManualCleanupBeforeRemoval(task)) {
+    if (downloadTaskNeedsManualCleanup(task)) {
       return context.l10n.downloadManualCleanupStatus;
     }
     return switch (task.status) {
@@ -351,9 +346,5 @@ class _StatusChip extends StatelessWidget {
       DownloadStatus.canceled => context.l10n.canceled,
       DownloadStatus.unsupported => context.l10n.unsupported,
     };
-  }
-
-  bool _requiresManualCleanupBeforeRemoval(DownloadTask task) {
-    return task.status == DownloadStatus.canceled && task.localPath != null;
   }
 }

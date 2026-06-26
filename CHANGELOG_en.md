@@ -7,6 +7,7 @@
 ## [Unreleased]
 
 ### 🐛 Fixed
+- Fixed discarded downloads still getting stuck in `Needs cleanup` after users had already deleted the leftover partial file manually, because the downloads UI kept trusting the stale `Local path` record and never restored either `Remove from list` or batch cleanup; AniDestiny now checks whether that leftover file still exists before blocking cleanup, so the manual-delete recovery path actually closes.
 - Fixed actively running direct downloads jumping straight to `Needs cleanup` the moment users chose `Discard download`, even though AniDestiny was often still finishing its own file cleanup in the background; discarding now lands in a plain `Canceled` state first and only escalates to manual cleanup if that leftover-file cleanup actually fails.
 - Fixed discarded download tasks that still had a leftover partial file continuing to show the generic `Canceled` status at the top of the tile, which forced users to read the longer body copy before they could tell that cleanup was still unfinished; those tiles now surface a direct `Needs cleanup` status so the label, manual-cleanup guidance, and hidden actions all tell the same truth.
 - Fixed canceled download tiles still exposing `Remove from list` after the downloads page had already said that leftover partial files must keep those tasks visible until cleanup finishes; AniDestiny now hides that false single-item removal affordance and leaves the leftover path plus manual-cleanup guidance in place so the page and the tile tell the same truth.

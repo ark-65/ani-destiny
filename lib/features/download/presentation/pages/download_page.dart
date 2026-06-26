@@ -12,6 +12,7 @@ import '../../../../core/widgets/app_error_view.dart';
 import '../../../../core/widgets/app_loading_view.dart';
 import '../../../../shared/widgets/adaptive_page.dart';
 import '../../domain/entities/download_task.dart';
+import '../download_task_cleanup_state.dart';
 import '../providers/download_providers.dart';
 import '../widgets/download_task_tile.dart';
 
@@ -88,7 +89,7 @@ class _DownloadPageState extends ConsumerState<DownloadPage> {
                     (task) => task.status == DownloadStatus.completed,
                   );
                   final hasDiscardedTasksAwaitingCleanup = items.any(
-                    _requiresManualCleanupBeforeRemoval,
+                    downloadTaskNeedsManualCleanup,
                   );
                   final showCleanupGuidance = showClearEndedTasksAction ||
                       hasCompletedTasks ||
@@ -301,7 +302,7 @@ class _DownloadPageState extends ConsumerState<DownloadPage> {
   List<String> _clearableTaskIds(List<DownloadTask> items) {
     return items
         .where(_isRemovableTask)
-        .where((task) => !_requiresManualCleanupBeforeRemoval(task))
+        .where((task) => !downloadTaskNeedsManualCleanup(task))
         .map((task) => task.id)
         .where((taskId) => !_busyTaskIds.contains(taskId))
         .toList(growable: false);
@@ -320,10 +321,6 @@ class _DownloadPageState extends ConsumerState<DownloadPage> {
       DownloadStatus.paused =>
         false,
     };
-  }
-
-  bool _requiresManualCleanupBeforeRemoval(DownloadTask task) {
-    return task.status == DownloadStatus.canceled && task.localPath != null;
   }
 
   String _actionErrorMessage(BuildContext context, Object error) {

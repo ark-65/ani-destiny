@@ -8,6 +8,7 @@ import 'package:ani_destiny/features/download/domain/entities/download_source.da
 import 'package:ani_destiny/features/download/domain/entities/download_task.dart';
 import 'package:ani_destiny/features/download/domain/repositories/download_repository.dart';
 import 'package:ani_destiny/features/download/domain/services/download_service.dart';
+import 'package:ani_destiny/features/download/presentation/download_task_cleanup_state.dart';
 import 'package:ani_destiny/features/download/presentation/pages/download_page.dart';
 import 'package:ani_destiny/features/download/presentation/providers/download_providers.dart';
 import 'package:flutter/material.dart';
@@ -97,10 +98,12 @@ void main() {
   testWidgets(
     'clear ended tasks keeps discarded leftovers visible for manual cleanup',
     (tester) async {
+      const partialPath = '/tmp/partial-video.mp4';
+      _stubCleanupPathExists({partialPath});
       final repository = _FakeDownloadRepository([
         _task('completed', DownloadStatus.completed),
         _task('canceled', DownloadStatus.canceled).copyWith(
-          localPath: '/tmp/partial-video.mp4',
+          localPath: partialPath,
           failureReason: DownloadFailureReason.canceled,
         ),
       ]);
@@ -126,9 +129,11 @@ void main() {
   testWidgets(
     'clear ended tasks action stays hidden when only retained discarded leftovers remain',
     (tester) async {
+      const partialPath = '/tmp/partial-video.mp4';
+      _stubCleanupPathExists({partialPath});
       final repository = _FakeDownloadRepository([
         _task('canceled', DownloadStatus.canceled).copyWith(
-          localPath: '/tmp/partial-video.mp4',
+          localPath: partialPath,
           failureReason: DownloadFailureReason.canceled,
         ),
       ]);
@@ -149,6 +154,43 @@ void main() {
         find.byKey(const ValueKey('download-task-remove-canceled')),
         findsNothing,
       );
+    },
+  );
+
+  testWidgets(
+    'stale discarded local paths become clearable again once the file is gone',
+    (tester) async {
+      const stalePath = '/tmp/partial-video.mp4';
+      _stubCleanupPathExists(const {});
+      final repository = _FakeDownloadRepository([
+        _task('canceled', DownloadStatus.canceled).copyWith(
+          localPath: stalePath,
+          failureReason: DownloadFailureReason.canceled,
+        ),
+      ]);
+
+      await _pumpDownloadPage(tester, repository);
+
+      expect(
+        find.byKey(const ValueKey('downloads-clear-ended-tasks')),
+        findsOneWidget,
+      );
+      expect(
+        find.text(
+          'Discarded tasks that still show a leftover file path stay in the list until that partial file is gone.',
+        ),
+        findsNothing,
+      );
+      expect(
+        find.byKey(const ValueKey('download-task-remove-canceled')),
+        findsOneWidget,
+      );
+
+      await tester
+          .tap(find.byKey(const ValueKey('downloads-clear-ended-tasks')));
+      await tester.pump();
+
+      expect(repository.deletedTaskIds, ['canceled']);
     },
   );
 
@@ -207,9 +249,11 @@ void main() {
   testWidgets(
     'canceled downloads explain when a leftover partial file needs manual cleanup',
     (tester) async {
+      const partialPath = '/tmp/partial-video.mp4';
+      _stubCleanupPathExists({partialPath});
       final repository = _FakeDownloadRepository([
         _task('canceled', DownloadStatus.canceled).copyWith(
-          localPath: '/tmp/partial-video.mp4',
+          localPath: partialPath,
           failureReason: DownloadFailureReason.canceled,
         ),
       ]);
@@ -222,7 +266,7 @@ void main() {
         ),
         findsOneWidget,
       );
-      expect(find.text('Local path: /tmp/partial-video.mp4'), findsOneWidget);
+      expect(find.text('Local path: $partialPath'), findsOneWidget);
     },
   );
 
@@ -328,9 +372,11 @@ void main() {
   testWidgets(
     'retained discarded leftovers do not expose a single-item remove action',
     (tester) async {
+      const partialPath = '/tmp/partial-video.mp4';
+      _stubCleanupPathExists({partialPath});
       final repository = _FakeDownloadRepository([
         _task('canceled', DownloadStatus.canceled).copyWith(
-          localPath: '/tmp/partial-video.mp4',
+          localPath: partialPath,
           failureReason: DownloadFailureReason.canceled,
         ),
       ]);
@@ -613,4 +659,11 @@ DownloadTask _task(String id, DownloadStatus status) {
     createdAt: now,
     updatedAt: now,
   );
+}
+
+void _stubCleanupPathExists(Set<String> existingPaths) {
+  debugSetDownloadCleanupPathExists(existingPaths.contains);
+  addTearDown(() {
+    debugSetDownloadCleanupPathExists(null);
+  });
 }
