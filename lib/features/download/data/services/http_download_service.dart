@@ -87,10 +87,12 @@ class HttpDownloadService implements DownloadService {
       return;
     }
 
+    String? activeLocalPath;
     try {
       final directory = await getApplicationDocumentsDirectory();
       final fileName = _safeFileName(_fileNameFor(existingTask));
       final localPath = p.join(directory.path, 'downloads', fileName);
+      activeLocalPath = localPath;
       await Directory(p.dirname(localPath)).create(recursive: true);
       final token = CancelToken();
       _tokens[taskId] = token;
@@ -164,7 +166,10 @@ class HttpDownloadService implements DownloadService {
       );
     } on DioException catch (error) {
       if (CancelToken.isCancel(error)) {
-        await _finalizeCanceledDownload(taskId);
+        await _finalizeCanceledDownload(
+          taskId,
+          originalLocalPath: activeLocalPath,
+        );
         return;
       }
       final latest = await _repository.getTask(taskId) ?? existingTask;
@@ -244,12 +249,13 @@ class HttpDownloadService implements DownloadService {
     final task = await _repository.getTask(taskId);
     if (task == null) return;
     if (!_canCancel(task.status)) return;
+    final cleanupTargetPath = task.localPath;
     final clearedLocalPath = await _clearDiscardedDownload(
-      localPath: task.localPath,
+      localPath: cleanupTargetPath,
       clearNow: !hadActiveDownload,
     );
     final updated = task.copyWith(
-      localPath: clearedLocalPath,
+      localPath: hadActiveDownload ? null : clearedLocalPath,
       status: DownloadStatus.canceled,
       failureReason: DownloadFailureReason.canceled,
       failureMessage: null,
@@ -417,7 +423,10 @@ class HttpDownloadService implements DownloadService {
     return error.message ?? 'Network request could not be completed.';
   }
 
-  Future<void> _finalizeCanceledDownload(String taskId) async {
+  Future<void> _finalizeCanceledDownload(
+    String taskId, {
+    String? originalLocalPath,
+  }) async {
     final latest = await _repository.getTask(taskId);
     if (latest == null) return;
     if (latest.status != DownloadStatus.paused &&
@@ -426,7 +435,7 @@ class HttpDownloadService implements DownloadService {
     }
 
     final clearedLocalPath = await _clearDiscardedDownload(
-      localPath: latest.localPath,
+      localPath: originalLocalPath ?? latest.localPath,
       clearNow: true,
     );
     if (clearedLocalPath == latest.localPath) return;
