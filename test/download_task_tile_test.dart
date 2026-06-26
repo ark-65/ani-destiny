@@ -164,6 +164,10 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(
+        find.text('Needs cleanup'),
+        findsOneWidget,
+      );
+      expect(
         find.text(
           'This download was discarded, but AniDestiny could not clear the partial file automatically. Remove the leftover file from your device if you no longer need it.',
         ),
@@ -175,6 +179,31 @@ void main() {
         findsNothing,
       );
       expect(find.byTooltip('Remove from list'), findsNothing);
+    },
+  );
+
+  testWidgets(
+    'removable canceled downloads keep the standard canceled status label',
+    (tester) async {
+      await tester.pumpWidget(
+        _buildTileApp(
+          DownloadTaskTile(
+            task: _task(
+              status: DownloadStatus.canceled,
+              failureReason: DownloadFailureReason.canceled,
+            ),
+            isBusy: false,
+            onStart: () {},
+            onPause: () {},
+            onCancel: () {},
+            onRemove: () {},
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('Canceled'), findsOneWidget);
+      expect(find.text('Needs cleanup'), findsNothing);
     },
   );
 

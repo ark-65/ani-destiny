@@ -41,7 +41,7 @@ class DownloadTaskTile extends StatelessWidget {
                     style: Theme.of(context).textTheme.titleMedium,
                   ),
                 ),
-                _StatusChip(status: task.status),
+                _StatusChip(task: task),
               ],
             ),
             const SizedBox(height: 4),
@@ -325,20 +325,23 @@ class _InfoChip extends StatelessWidget {
 }
 
 class _StatusChip extends StatelessWidget {
-  const _StatusChip({required this.status});
+  const _StatusChip({required this.task});
 
-  final DownloadStatus status;
+  final DownloadTask task;
 
   @override
   Widget build(BuildContext context) {
     return Chip(
-      label: Text(_label(context, status)),
+      label: Text(_label(context, task)),
       visualDensity: VisualDensity.compact,
     );
   }
 
-  String _label(BuildContext context, DownloadStatus status) {
-    return switch (status) {
+  String _label(BuildContext context, DownloadTask task) {
+    if (_requiresManualCleanupBeforeRemoval(task)) {
+      return context.l10n.downloadManualCleanupStatus;
+    }
+    return switch (task.status) {
       DownloadStatus.pending => context.l10n.pending,
       DownloadStatus.preparing => context.l10n.preparing,
       DownloadStatus.downloading => context.l10n.downloading,
@@ -348,5 +351,9 @@ class _StatusChip extends StatelessWidget {
       DownloadStatus.canceled => context.l10n.canceled,
       DownloadStatus.unsupported => context.l10n.unsupported,
     };
+  }
+
+  bool _requiresManualCleanupBeforeRemoval(DownloadTask task) {
+    return task.status == DownloadStatus.canceled && task.localPath != null;
   }
 }

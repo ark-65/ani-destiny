@@ -7,6 +7,7 @@
 ## [Unreleased]
 
 ### 🐛 Fixed
+- Fixed discarded download tasks that still had a leftover partial file continuing to show the generic `Canceled` status at the top of the tile, which forced users to read the longer body copy before they could tell that cleanup was still unfinished; those tiles now surface a direct `Needs cleanup` status so the label, manual-cleanup guidance, and hidden actions all tell the same truth.
 - Fixed canceled download tiles still exposing `Remove from list` after the downloads page had already said that leftover partial files must keep those tasks visible until cleanup finishes; AniDestiny now hides that false single-item removal affordance and leaves the leftover path plus manual-cleanup guidance in place so the page and the tile tell the same truth.
 - Fixed the downloads page still leaving a dead `Clear ended tasks from list` button behind when the only ended entries were discarded tasks that still needed manual leftover-file cleanup; AniDestiny now shows that batch action only when something can actually be cleared immediately, so the page stops looking broken while users still need to delete a leftover partial file first.
 - Fixed `Remove from list` and `Clear ended tasks from list` still being able to erase the only leftover-file clue after a discarded download could not delete its partial file; AniDestiny now retries that cleanup first and keeps the task visible with a direct manual-cleanup explanation until the leftover file is actually gone.

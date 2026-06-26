@@ -224,6 +224,7 @@ class AppLocalizations {
       _t('clearEndedDownloadsRetainedDiscardedNote');
   String get downloadManualCleanupRequiredError =>
       _t('downloadManualCleanupRequiredError');
+  String get downloadManualCleanupStatus => _t('downloadManualCleanupStatus');
   String get downloadStoppedStatus => _t('downloadStoppedStatus');
   String get downloadKindDirectFile => _t('downloadKindDirectFile');
   String get downloadKindHls => _t('downloadKindHls');
@@ -598,6 +599,7 @@ const _localizedValues = {
     'downloadRemoveKeepsFileNote': '从列表移除这个任务不会删除已下载文件；文件会继续保留在设备上。',
     'downloadManualCleanupRequiredError':
         'AniDestiny 还没能清掉这份残留文件；请先在设备上手动删除它，之后再把这条任务从列表里移除。',
+    'downloadManualCleanupStatus': '待清理残留文件',
     'downloadStoppedStatus': '已停下',
     'downloadKindDirectFile': '直链文件',
     'downloadKindHls': 'HLS / m3u8',
@@ -905,6 +907,7 @@ const _localizedValues = {
         'Removing this task only clears it from the list. The downloaded file stays on your device.',
     'downloadManualCleanupRequiredError':
         'AniDestiny still could not clear that leftover partial file. Remove it from your device first, then clear this task from the list.',
+    'downloadManualCleanupStatus': 'Needs cleanup',
     'downloadStoppedStatus': 'Stopped',
     'downloadKindDirectFile': 'Direct file',
     'downloadKindHls': 'HLS / m3u8',
@@ -1217,6 +1220,7 @@ const _localizedValues = {
     'downloadRemoveKeepsFileNote': 'このタスクを一覧から削除しても、ダウンロード済みファイルは端末に残ります。',
     'downloadManualCleanupRequiredError':
         'AniDestiny はこの残留ファイルをまだ削除できませんでした。先に端末上で削除してから、このタスクを一覧から整理してください。',
+    'downloadManualCleanupStatus': '残留ファイルを要整理',
     'downloadStoppedStatus': '停止中',
     'downloadKindDirectFile': '直接ファイル',
     'downloadKindHls': 'HLS / m3u8',
