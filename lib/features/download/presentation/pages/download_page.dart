@@ -59,13 +59,17 @@ class _DownloadPageState extends ConsumerState<DownloadPage>
           _manualCleanupTaskIdsBeforeBackground.difference(
         currentManualCleanupTaskIds,
       );
+      final remainingCount = currentManualCleanupTaskIds.length;
       _manualCleanupTaskIdsBeforeBackground = currentManualCleanupTaskIds;
       setState(() {});
       if (recoveredCleanupTaskIds.isNotEmpty) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
-              context.l10n.downloadManualCleanupResumeCleared,
+              context.l10n.downloadManualCleanupResumeResult(
+                recoveredCleanupTaskIds.length,
+                remainingCount,
+              ),
             ),
           ),
         );

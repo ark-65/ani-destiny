@@ -7,6 +7,7 @@
 ## [Unreleased]
 
 ### 🐛 Fixed
+- Fixed AniDestiny still greeting users with a vague “some leftover files are gone” message after they had manually deleted only part of the retained download leftovers and returned to the app, which left them guessing how much cleanup was actually finished; the resume confirmation now says exactly how many leftover files were cleared and how many tasks still need cleanup.
 - Fixed the downloads page still making users re-check leftover-file cleanup one task at a time when several discarded tasks were waiting on manual cleanup; AniDestiny now adds a count-aware page-level recheck action that refreshes every leftover-file task together and immediately tells users which ones can now be removed and which ones still need cleanup.
 - Fixed the downloads page only saying how many ended tasks were cleared after users tapped the batch cleanup action while still leaving behind discarded tasks that needed manual leftover-file cleanup, which made the remaining tasks look like the cleanup had only half-worked; AniDestiny now adds an immediate follow-up note in that result message explaining that leftover-file tasks stay visible until those partial files are truly gone.
 - Fixed the downloads-page batch action still reading like it would clear every ended task at once even when only some entries were actually removable; AniDestiny now shows the exact number of ended tasks that can be cleared right now, so users know up front how many records this action will remove while leftover-file cleanup tasks stay visible.

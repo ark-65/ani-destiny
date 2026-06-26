@@ -559,7 +559,7 @@ void main() {
       );
       expect(
         find.text(
-          'AniDestiny confirmed that one or more leftover partial files are gone. You can remove those tasks from the list now.',
+          'AniDestiny confirmed that 1 leftover partial file is gone. You can remove that task from the list now.',
         ),
         findsOneWidget,
       );
@@ -592,9 +592,52 @@ void main() {
       );
       expect(
         find.text(
-          'AniDestiny confirmed that one or more leftover partial files are gone. You can remove those tasks from the list now.',
+          'AniDestiny confirmed that 1 leftover partial file is gone. You can remove that task from the list now.',
         ),
         findsNothing,
+      );
+    },
+  );
+
+  testWidgets(
+    'resume explains how many leftover files were cleared and how many still need cleanup',
+    (tester) async {
+      const partialPathA = '/tmp/partial-video-a.mp4';
+      const partialPathB = '/tmp/partial-video-b.mp4';
+      _stubCleanupPathExists({partialPathA, partialPathB});
+      final repository = _FakeDownloadRepository([
+        _task('canceled-a', DownloadStatus.canceled).copyWith(
+          localPath: partialPathA,
+          failureReason: DownloadFailureReason.canceled,
+        ),
+        _task('canceled-b', DownloadStatus.canceled).copyWith(
+          localPath: partialPathB,
+          failureReason: DownloadFailureReason.canceled,
+        ),
+      ]);
+
+      await _pumpDownloadPage(tester, repository);
+
+      tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.paused);
+      await tester.pump();
+
+      _stubCleanupPathExists({partialPathB});
+      tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
+      await tester.pump();
+
+      expect(
+        find.text(
+          'AniDestiny confirmed that 1 leftover partial file is gone. 1 still needs cleanup.',
+        ),
+        findsOneWidget,
+      );
+      expect(
+        find.byKey(const ValueKey('download-task-remove-canceled-a')),
+        findsOneWidget,
+      );
+      expect(
+        find.byKey(const ValueKey('download-task-refresh-cleanup-canceled-b')),
+        findsOneWidget,
       );
     },
   );
