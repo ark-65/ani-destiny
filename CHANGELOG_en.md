@@ -7,6 +7,7 @@
 ## [Unreleased]
 
 ### 🐛 Fixed
+- Fixed copied feedback summaries still calling leftover-file cleanup tasks ordinary `Canceled` entries even after the downloads page had already surfaced the same tasks as `Needs cleanup`; support-export download status counts and the latest-issue summary now use that same cleanup-needed wording so what users see in-app matches what they share for support.
 - Fixed AniDestiny quietly turning manual-cleanup download tasks back into removable entries after users had already deleted the leftover partial file, without clearly telling them that the cleanup flow was now ready to finish; the downloads page now confirms that recovery when users return to the app, so the manual-cleanup path ends with an explicit “you can remove this now” moment.
 - Fixed `Check again` on manual-cleanup download tasks only doing a silent refresh, which left users guessing whether the leftover partial file was still there or whether the task was ready to remove; AniDestiny now reports that recheck result directly so the final cleanup step no longer feels like a dead button.
 - Fixed leftover-file cleanup tasks still leaving users without a clear way to finish the flow after they had already deleted the partial file manually; AniDestiny now offers a `Check again` action on those tasks and automatically rechecks their cleanup status when users return to the app, so `Needs cleanup` can recover into real remove-from-list or batch-clear actions as soon as the leftover file is truly gone.
