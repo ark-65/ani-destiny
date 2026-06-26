@@ -317,12 +317,18 @@ class _DownloadPageState extends ConsumerState<DownloadPage>
       }
     }
     if (!context.mounted) return;
-    final message = failedCount == 0
+    final baseMessage = failedCount == 0
         ? context.l10n.clearEndedDownloadsResult(clearedCount)
         : context.l10n.clearEndedDownloadsPartialResult(
             clearedCount,
             failedCount,
           );
+    final remainingTasks = ref.read(downloadTasksProvider).valueOrNull;
+    final hasDiscardedTasksAwaitingCleanup =
+        remainingTasks?.any(downloadTaskNeedsManualCleanup) ?? false;
+    final message = hasDiscardedTasksAwaitingCleanup
+        ? '$baseMessage\n${context.l10n.clearEndedDownloadsManualCleanupRemaining}'
+        : baseMessage;
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text(message)),
     );

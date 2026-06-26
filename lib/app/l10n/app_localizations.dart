@@ -231,6 +231,8 @@ class AppLocalizations {
       _t('clearEndedDownloadsKeepsFilesNote');
   String get clearEndedDownloadsRetainedDiscardedNote =>
       _t('clearEndedDownloadsRetainedDiscardedNote');
+  String get clearEndedDownloadsManualCleanupRemaining =>
+      _t('clearEndedDownloadsManualCleanupRemaining');
   String get downloadManualCleanupRequiredError =>
       _t('downloadManualCleanupRequiredError');
   String get downloadManualCleanupRecheckStillNeeded =>
@@ -594,6 +596,8 @@ const _localizedValues = {
     'clearEndedDownloadsKeepsFilesNote': '这里只会清掉列表里的已结束任务；已经下载完成的文件会继续保留在设备上。',
     'clearEndedDownloadsRetainedDiscardedNote':
         '仍带着残留文件路径的“已取消”任务会继续留在列表里，直到这份半截文件已经被手动删掉，或 AniDestiny 成功把它清掉。删完后回到这里点一下“重新检查”。',
+    'clearEndedDownloadsManualCleanupRemaining':
+        '仍带着残留文件路径的“已取消”任务会继续留在列表里，直到这些半截文件已经被手动删掉，或 AniDestiny 成功把它们清掉。',
     'mock': 'Mock',
     'mockDownloadTaskCreated': '已创建 Mock 下载任务',
     'checkAgain': '重新检查',
@@ -905,6 +909,8 @@ const _localizedValues = {
         'This only clears ended tasks from the list. Completed files stay on your device.',
     'clearEndedDownloadsRetainedDiscardedNote':
         'Discarded tasks that still show a leftover file path stay in the list until that partial file is gone. After you delete it, return here and tap Check again on that task.',
+    'clearEndedDownloadsManualCleanupRemaining':
+        'Discarded tasks with leftover file paths stay visible until those partial files are gone.',
     'mock': 'Mock',
     'mockDownloadTaskCreated': 'Mock download task created',
     'checkAgain': 'Check again',
@@ -1226,6 +1232,8 @@ const _localizedValues = {
         'ここでは一覧上の終了済みタスクだけを整理します。ダウンロード済みのファイルは端末に残ります。',
     'clearEndedDownloadsRetainedDiscardedNote':
         '残留ファイルのパスが残っている「キャンセル済み」タスクは、その途中ファイルがなくなるまで一覧に残ります。削除したらここに戻って「再確認」を押してください。',
+    'clearEndedDownloadsManualCleanupRemaining':
+        '残留ファイルのパスが残っている破棄済みタスクは、その途中ファイルがなくなるまで一覧に残ります。',
     'mock': 'Mock',
     'mockDownloadTaskCreated': 'Mock ダウンロードタスクを作成しました',
     'checkAgain': '再確認',

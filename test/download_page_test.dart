@@ -127,6 +127,12 @@ void main() {
 
       expect(repository.deleteAttempts, ['completed']);
       expect(repository.deletedTaskIds, ['completed']);
+      expect(
+        find.text(
+          'Cleared 1 ended tasks from the list.\nDiscarded tasks with leftover file paths stay visible until those partial files are gone.',
+        ),
+        findsOneWidget,
+      );
     },
   );
 
