@@ -125,7 +125,11 @@ class _DownloadPageState extends ConsumerState<DownloadPage>
                 data: (items) {
                   final removableTaskIds = _removableTaskIds(items);
                   final clearableTaskIds = _clearableTaskIds(items);
+                  final manualCleanupTaskIds = _manualCleanupTaskIds(items);
+                  final manualCleanupTaskCount = manualCleanupTaskIds.length;
                   final showClearEndedTasksAction = clearableTaskIds.isNotEmpty;
+                  final showRecheckManualCleanupAction =
+                      manualCleanupTaskCount > 1;
                   final hasBusyRemovableTask = removableTaskIds.any(
                     _busyTaskIds.contains,
                   );
@@ -148,30 +152,64 @@ class _DownloadPageState extends ConsumerState<DownloadPage>
                     crossAxisAlignment: CrossAxisAlignment.end,
                     children: [
                       if (showCleanupGuidance) ...[
-                        if (showClearEndedTasksAction)
-                          OutlinedButton.icon(
-                            key: const ValueKey('downloads-clear-ended-tasks'),
-                            onPressed:
-                                _isClearingEndedTasks || hasBusyRemovableTask
-                                    ? null
-                                    : () => unawaited(
-                                          _handleClearRemovableTasks(
-                                            clearableTaskIds,
+                        if (showRecheckManualCleanupAction ||
+                            showClearEndedTasksAction)
+                          Wrap(
+                            spacing: 8,
+                            runSpacing: 8,
+                            alignment: WrapAlignment.end,
+                            crossAxisAlignment: WrapCrossAlignment.center,
+                            children: [
+                              if (showRecheckManualCleanupAction)
+                                OutlinedButton.icon(
+                                  key: const ValueKey(
+                                    'downloads-recheck-manual-cleanup',
+                                  ),
+                                  onPressed: _isClearingEndedTasks
+                                      ? null
+                                      : () => _recheckManualCleanupTasks(
+                                            items
+                                                .where(
+                                                  (task) => manualCleanupTaskIds
+                                                      .contains(task.id),
+                                                )
+                                                .toList(growable: false),
                                           ),
-                                        ),
-                            icon: _isClearingEndedTasks
-                                ? const SizedBox.square(
-                                    dimension: 18,
-                                    child: CircularProgressIndicator(
-                                      strokeWidth: 2,
+                                  icon: const Icon(Icons.refresh),
+                                  label: Text(
+                                    context.l10n.recheckLeftoverFilesCount(
+                                      manualCleanupTaskCount,
                                     ),
-                                  )
-                                : const Icon(Icons.clear_all),
-                            label: Text(
-                              context.l10n.clearEndedDownloadsCount(
-                                clearableTaskIds.length,
-                              ),
-                            ),
+                                  ),
+                                ),
+                              if (showClearEndedTasksAction)
+                                OutlinedButton.icon(
+                                  key: const ValueKey(
+                                    'downloads-clear-ended-tasks',
+                                  ),
+                                  onPressed: _isClearingEndedTasks ||
+                                          hasBusyRemovableTask
+                                      ? null
+                                      : () => unawaited(
+                                            _handleClearRemovableTasks(
+                                              clearableTaskIds,
+                                            ),
+                                          ),
+                                  icon: _isClearingEndedTasks
+                                      ? const SizedBox.square(
+                                          dimension: 18,
+                                          child: CircularProgressIndicator(
+                                            strokeWidth: 2,
+                                          ),
+                                        )
+                                      : const Icon(Icons.clear_all),
+                                  label: Text(
+                                    context.l10n.clearEndedDownloadsCount(
+                                      clearableTaskIds.length,
+                                    ),
+                                  ),
+                                ),
+                            ],
                           ),
                         if (hasCompletedTasks) ...[
                           const SizedBox(height: 8),
@@ -255,6 +293,38 @@ class _DownloadPageState extends ConsumerState<DownloadPage>
           ],
         ),
       ),
+    );
+  }
+
+  void _recheckManualCleanupTasks(List<DownloadTask> tasks) {
+    if (tasks.length < 2 || !mounted) {
+      return;
+    }
+
+    var remainingCount = 0;
+    for (final task in tasks) {
+      if (downloadTaskNeedsManualCleanup(task)) {
+        remainingCount += 1;
+      }
+    }
+    final clearedCount = tasks.length - remainingCount;
+
+    setState(() {});
+
+    final message = switch ((clearedCount, remainingCount)) {
+      (0, _) => context.l10n.downloadManualCleanupBulkRecheckStillNeeded(
+          tasks.length,
+        ),
+      (_, 0) => context.l10n.downloadManualCleanupBulkRecheckCleared(
+          clearedCount,
+        ),
+      _ => context.l10n.downloadManualCleanupBulkRecheckPartial(
+          clearedCount,
+          remainingCount,
+        ),
+    };
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message)),
     );
   }
 

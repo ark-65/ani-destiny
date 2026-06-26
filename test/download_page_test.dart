@@ -232,6 +232,58 @@ void main() {
   );
 
   testWidgets(
+    'page-level cleanup recheck refreshes multiple leftover-file tasks together',
+    (tester) async {
+      const partialPathA = '/tmp/partial-video-a.mp4';
+      const partialPathB = '/tmp/partial-video-b.mp4';
+      _stubCleanupPathExists({partialPathA, partialPathB});
+      final repository = _FakeDownloadRepository([
+        _task('canceled-a', DownloadStatus.canceled).copyWith(
+          localPath: partialPathA,
+          failureReason: DownloadFailureReason.canceled,
+        ),
+        _task('canceled-b', DownloadStatus.canceled).copyWith(
+          localPath: partialPathB,
+          failureReason: DownloadFailureReason.canceled,
+        ),
+      ]);
+
+      await _pumpDownloadPage(tester, repository);
+
+      expect(find.text('Check 2 leftover files again'), findsOneWidget);
+      expect(
+        find.byKey(const ValueKey('downloads-recheck-manual-cleanup')),
+        findsOneWidget,
+      );
+
+      _stubCleanupPathExists({partialPathB});
+      await tester.tap(
+        find.byKey(const ValueKey('downloads-recheck-manual-cleanup')),
+      );
+      await tester.pump();
+
+      expect(
+        find.text(
+          'AniDestiny confirmed that 1 leftover partial file is gone. 1 still needs cleanup.',
+        ),
+        findsOneWidget,
+      );
+      expect(
+        find.byKey(const ValueKey('downloads-recheck-manual-cleanup')),
+        findsNothing,
+      );
+      expect(
+        find.byKey(const ValueKey('download-task-remove-canceled-a')),
+        findsOneWidget,
+      );
+      expect(
+        find.byKey(const ValueKey('download-task-refresh-cleanup-canceled-b')),
+        findsOneWidget,
+      );
+    },
+  );
+
+  testWidgets(
     'manual cleanup recheck explains when the leftover file is still there',
     (tester) async {
       const partialPath = '/tmp/partial-video.mp4';
@@ -544,6 +596,46 @@ void main() {
         ),
         findsNothing,
       );
+    },
+  );
+
+  testWidgets(
+    'page-level cleanup recheck restores batch clear when all leftovers are gone',
+    (tester) async {
+      const partialPathA = '/tmp/partial-video-a.mp4';
+      const partialPathB = '/tmp/partial-video-b.mp4';
+      _stubCleanupPathExists({partialPathA, partialPathB});
+      final repository = _FakeDownloadRepository([
+        _task('canceled-a', DownloadStatus.canceled).copyWith(
+          localPath: partialPathA,
+          failureReason: DownloadFailureReason.canceled,
+        ),
+        _task('canceled-b', DownloadStatus.canceled).copyWith(
+          localPath: partialPathB,
+          failureReason: DownloadFailureReason.canceled,
+        ),
+      ]);
+
+      await _pumpDownloadPage(tester, repository);
+
+      _stubCleanupPathExists(const {});
+      await tester.tap(
+        find.byKey(const ValueKey('downloads-recheck-manual-cleanup')),
+      );
+      await tester.pump();
+
+      expect(
+        find.text(
+          'AniDestiny confirmed that all 2 leftover partial files are gone. You can remove those tasks from the list now.',
+        ),
+        findsOneWidget,
+      );
+      expect(find.text('Clear 2 ended tasks from list'), findsOneWidget);
+      expect(
+        find.byKey(const ValueKey('downloads-clear-ended-tasks')),
+        findsOneWidget,
+      );
+      expect(find.text('Check 2 leftover files again'), findsNothing);
     },
   );
 

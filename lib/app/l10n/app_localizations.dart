@@ -205,6 +205,14 @@ class AppLocalizations {
     };
   }
 
+  String recheckLeftoverFilesCount(int count) {
+    return switch (_languageCode) {
+      'en' => 'Check $count leftover ${count == 1 ? 'file' : 'files'} again',
+      'ja' => '残留ファイルを $count 件再確認',
+      _ => '重新检查 $count 份残留文件',
+    };
+  }
+
   String clearEndedDownloadsResult(int count) =>
       '${_t('clearEndedDownloadsResultPrefix')}$count${_t('clearEndedDownloadsResultSuffix')}';
   String clearEndedDownloadsPartialResult(int clearedCount, int failedCount) =>
@@ -239,6 +247,38 @@ class AppLocalizations {
       _t('downloadManualCleanupRecheckStillNeeded');
   String get downloadManualCleanupRecheckCleared =>
       _t('downloadManualCleanupRecheckCleared');
+  String downloadManualCleanupBulkRecheckStillNeeded(int count) {
+    return switch (_languageCode) {
+      'en' =>
+        'Those $count leftover partial ${count == 1 ? 'file is' : 'files are'} still on your device. Delete ${count == 1 ? 'it' : 'them'} first, then check again.',
+      'ja' => 'この $count 件の残留ファイルはまだ端末に残っています。先に削除してから、もう一度確認してください。',
+      _ => '这 $count 份残留文件还在。先在设备上删掉它们，再回来重新检查。',
+    };
+  }
+
+  String downloadManualCleanupBulkRecheckCleared(int count) {
+    return switch (_languageCode) {
+      'en' =>
+        'AniDestiny confirmed that all $count leftover partial ${count == 1 ? 'file is' : 'files are'} gone. You can remove those tasks from the list now.',
+      'ja' =>
+        'AniDestiny はこの $count 件の残留ファイルがすべてなくなったことを確認しました。今なら対応するタスクを一覧から消せます。',
+      _ => 'AniDestiny 已确认这 $count 份残留文件都不在了。现在可以把对应任务从列表移除了。',
+    };
+  }
+
+  String downloadManualCleanupBulkRecheckPartial(
+    int clearedCount,
+    int remainingCount,
+  ) {
+    return switch (_languageCode) {
+      'en' =>
+        'AniDestiny confirmed that $clearedCount leftover partial ${clearedCount == 1 ? 'file is' : 'files are'} gone. $remainingCount ${remainingCount == 1 ? 'still needs' : 'still need'} cleanup.',
+      'ja' =>
+        'AniDestiny は $clearedCount 件の残留ファイルがなくなったことを確認しました。まだ $remainingCount 件は整理が必要です。',
+      _ => 'AniDestiny 已确认有 $clearedCount 份残留文件不在了；还有 $remainingCount 份仍需清理。',
+    };
+  }
+
   String get downloadManualCleanupResumeCleared =>
       _t('downloadManualCleanupResumeCleared');
   String get downloadManualCleanupStatus => _t('downloadManualCleanupStatus');
