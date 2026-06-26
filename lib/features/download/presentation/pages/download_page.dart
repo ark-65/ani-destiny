@@ -32,6 +32,7 @@ class _DownloadPageState extends ConsumerState<DownloadPage>
     with WidgetsBindingObserver {
   var _isClearingEndedTasks = false;
   final Set<String> _busyTaskIds = <String>{};
+  Set<String> _manualCleanupTaskIdsBeforeBackground = const <String>{};
 
   @override
   void initState() {
@@ -47,9 +48,32 @@ class _DownloadPageState extends ConsumerState<DownloadPage>
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
-    if (state == AppLifecycleState.resumed && mounted) {
-      setState(() {});
+    final tasks = ref.read(downloadTasksProvider).valueOrNull;
+    if (tasks == null) {
+      return;
     }
+
+    if (state == AppLifecycleState.resumed && mounted) {
+      final currentManualCleanupTaskIds = _manualCleanupTaskIds(tasks);
+      final recoveredCleanupTaskIds =
+          _manualCleanupTaskIdsBeforeBackground.difference(
+        currentManualCleanupTaskIds,
+      );
+      _manualCleanupTaskIdsBeforeBackground = currentManualCleanupTaskIds;
+      setState(() {});
+      if (recoveredCleanupTaskIds.isNotEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              context.l10n.downloadManualCleanupResumeCleared,
+            ),
+          ),
+        );
+      }
+      return;
+    }
+
+    _manualCleanupTaskIdsBeforeBackground = _manualCleanupTaskIds(tasks);
   }
 
   @override
@@ -345,6 +369,13 @@ class _DownloadPageState extends ConsumerState<DownloadPage>
         .map((task) => task.id)
         .where((taskId) => !_busyTaskIds.contains(taskId))
         .toList(growable: false);
+  }
+
+  Set<String> _manualCleanupTaskIds(List<DownloadTask> items) {
+    return items
+        .where(downloadTaskNeedsManualCleanup)
+        .map((task) => task.id)
+        .toSet();
   }
 
   bool _isRemovableTask(DownloadTask task) {

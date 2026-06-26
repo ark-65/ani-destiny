@@ -229,6 +229,8 @@ class AppLocalizations {
       _t('downloadManualCleanupRecheckStillNeeded');
   String get downloadManualCleanupRecheckCleared =>
       _t('downloadManualCleanupRecheckCleared');
+  String get downloadManualCleanupResumeCleared =>
+      _t('downloadManualCleanupResumeCleared');
   String get downloadManualCleanupStatus => _t('downloadManualCleanupStatus');
   String get downloadStoppedStatus => _t('downloadStoppedStatus');
   String get downloadKindDirectFile => _t('downloadKindDirectFile');
@@ -607,6 +609,8 @@ const _localizedValues = {
         'AniDestiny 还没能清掉这份残留文件；请先在设备上手动删除它，之后再把这条任务从列表里移除。',
     'downloadManualCleanupRecheckStillNeeded': '这份残留文件还在。先在设备上删掉它，再回来重新检查。',
     'downloadManualCleanupRecheckCleared': '这份残留文件已经不在了。现在可以把这条任务从列表移除了。',
+    'downloadManualCleanupResumeCleared':
+        'AniDestiny 已确认至少有一份残留文件不在了。现在可以把对应任务从列表移除了。',
     'downloadManualCleanupStatus': '待清理残留文件',
     'downloadStoppedStatus': '已停下',
     'downloadKindDirectFile': '直链文件',
@@ -920,6 +924,8 @@ const _localizedValues = {
         'That leftover partial file is still on your device. Delete it first, then check again.',
     'downloadManualCleanupRecheckCleared':
         'That leftover partial file is gone. You can remove this task from the list now.',
+    'downloadManualCleanupResumeCleared':
+        'AniDestiny confirmed that one or more leftover partial files are gone. You can remove those tasks from the list now.',
     'downloadManualCleanupStatus': 'Needs cleanup',
     'downloadStoppedStatus': 'Stopped',
     'downloadKindDirectFile': 'Direct file',
@@ -1238,6 +1244,8 @@ const _localizedValues = {
         'この残留ファイルはまだ端末に残っています。先に削除してから、もう一度確認してください。',
     'downloadManualCleanupRecheckCleared':
         'この残留ファイルはもうありません。今ならこのタスクを一覧から消せます。',
+    'downloadManualCleanupResumeCleared':
+        'AniDestiny は残留ファイルがなくなったことを確認しました。今なら対応するタスクを一覧から消せます。',
     'downloadManualCleanupStatus': '残留ファイルを要整理',
     'downloadStoppedStatus': '停止中',
     'downloadKindDirectFile': '直接ファイル',

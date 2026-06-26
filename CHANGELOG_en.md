@@ -7,6 +7,7 @@
 ## [Unreleased]
 
 ### 🐛 Fixed
+- Fixed AniDestiny quietly turning manual-cleanup download tasks back into removable entries after users had already deleted the leftover partial file, without clearly telling them that the cleanup flow was now ready to finish; the downloads page now confirms that recovery when users return to the app, so the manual-cleanup path ends with an explicit “you can remove this now” moment.
 - Fixed `Check again` on manual-cleanup download tasks only doing a silent refresh, which left users guessing whether the leftover partial file was still there or whether the task was ready to remove; AniDestiny now reports that recheck result directly so the final cleanup step no longer feels like a dead button.
 - Fixed leftover-file cleanup tasks still leaving users without a clear way to finish the flow after they had already deleted the partial file manually; AniDestiny now offers a `Check again` action on those tasks and automatically rechecks their cleanup status when users return to the app, so `Needs cleanup` can recover into real remove-from-list or batch-clear actions as soon as the leftover file is truly gone.
 - Fixed discarded downloads still getting stuck in `Needs cleanup` after users had already deleted the leftover partial file manually, because the downloads UI kept trusting the stale `Local path` record and never restored either `Remove from list` or batch cleanup; AniDestiny now checks whether that leftover file still exists before blocking cleanup, so the manual-delete recovery path actually closes.

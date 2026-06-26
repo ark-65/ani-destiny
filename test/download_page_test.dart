@@ -479,6 +479,9 @@ void main() {
         findsOneWidget,
       );
 
+      tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.paused);
+      await tester.pump();
+
       _stubCleanupPathExists(const {});
       tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
       await tester.pump();
@@ -489,6 +492,45 @@ void main() {
       );
       expect(
         find.byKey(const ValueKey('download-task-refresh-cleanup-canceled')),
+        findsNothing,
+      );
+      expect(
+        find.text(
+          'AniDestiny confirmed that one or more leftover partial files are gone. You can remove those tasks from the list now.',
+        ),
+        findsOneWidget,
+      );
+    },
+  );
+
+  testWidgets(
+    'resume does not show a cleared message while leftover cleanup is still needed',
+    (tester) async {
+      const partialPath = '/tmp/partial-video.mp4';
+      _stubCleanupPathExists({partialPath});
+      final repository = _FakeDownloadRepository([
+        _task('canceled', DownloadStatus.canceled).copyWith(
+          localPath: partialPath,
+          failureReason: DownloadFailureReason.canceled,
+        ),
+      ]);
+
+      await _pumpDownloadPage(tester, repository);
+
+      tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.paused);
+      await tester.pump();
+
+      tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
+      await tester.pump();
+
+      expect(
+        find.byKey(const ValueKey('download-task-refresh-cleanup-canceled')),
+        findsOneWidget,
+      );
+      expect(
+        find.text(
+          'AniDestiny confirmed that one or more leftover partial files are gone. You can remove those tasks from the list now.',
+        ),
         findsNothing,
       );
     },
