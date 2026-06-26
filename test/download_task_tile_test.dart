@@ -170,6 +170,11 @@ void main() {
         findsOneWidget,
       );
       expect(find.text('Local path: /tmp/partial-video.mp4'), findsOneWidget);
+      expect(
+        find.byKey(const ValueKey('download-task-remove-task-1')),
+        findsNothing,
+      );
+      expect(find.byTooltip('Remove from list'), findsNothing);
     },
   );
 

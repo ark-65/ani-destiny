@@ -1,7 +1,6 @@
 import 'dart:async';
 
 import 'package:ani_destiny/app/l10n/app_localizations.dart';
-import 'package:ani_destiny/core/error/app_exception.dart';
 import 'package:ani_destiny/features/download/domain/entities/download_failure_reason.dart';
 import 'package:ani_destiny/features/download/domain/entities/download_kind.dart';
 import 'package:ani_destiny/features/download/domain/entities/download_progress.dart';
@@ -145,6 +144,10 @@ void main() {
           'Discarded tasks that still show a leftover file path stay in the list until that partial file is gone.',
         ),
         findsOneWidget,
+      );
+      expect(
+        find.byKey(const ValueKey('download-task-remove-canceled')),
+        findsNothing,
       );
     },
   );
@@ -323,7 +326,7 @@ void main() {
   });
 
   testWidgets(
-    'remove keeps discarded leftovers in the list until manual cleanup succeeds',
+    'retained discarded leftovers do not expose a single-item remove action',
     (tester) async {
       final repository = _FakeDownloadRepository([
         _task('canceled', DownloadStatus.canceled).copyWith(
@@ -331,31 +334,16 @@ void main() {
           failureReason: DownloadFailureReason.canceled,
         ),
       ]);
-      final downloadService = _FakeDownloadService(
-        repository,
-        removeErrors: const {
-          'canceled': AppException(
-            'The leftover partial file still needs manual cleanup.',
-            code: 'download_manual_cleanup_required',
-          ),
-        },
+      await _pumpDownloadPage(tester, repository);
+
+      expect(
+        find.byKey(const ValueKey('download-task-remove-canceled')),
+        findsNothing,
       );
-
-      await _pumpDownloadPage(
-        tester,
-        repository,
-        downloadService: downloadService,
-      );
-
-      await tester
-          .tap(find.byKey(const ValueKey('download-task-remove-canceled')));
-      await tester.pump();
-
-      expect(downloadService.removeAttempts, ['canceled']);
       expect(repository.deleteAttempts, isEmpty);
       expect(
         find.text(
-          'AniDestiny still could not clear that leftover partial file. Remove it from your device first, then clear this task from the list.',
+          'This download was discarded, but AniDestiny could not clear the partial file automatically. Remove the leftover file from your device if you no longer need it.',
         ),
         findsOneWidget,
       );
@@ -517,14 +505,9 @@ class _TestApp extends StatelessWidget {
 }
 
 class _FakeDownloadService implements DownloadService {
-  _FakeDownloadService(
-    this.repository, {
-    this.removeErrors = const {},
-  });
+  _FakeDownloadService(this.repository);
 
   final DownloadRepository repository;
-  final Map<String, Object> removeErrors;
-  final List<String> removeAttempts = [];
 
   @override
   Future<void> cancel(String taskId) async {}
@@ -546,11 +529,6 @@ class _FakeDownloadService implements DownloadService {
 
   @override
   Future<void> removeEndedTask(String taskId) async {
-    removeAttempts.add(taskId);
-    final error = removeErrors[taskId];
-    if (error != null) {
-      throw error;
-    }
     await repository.deleteTask(taskId);
   }
 

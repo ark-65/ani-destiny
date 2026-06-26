@@ -224,10 +224,7 @@ class DownloadTaskTile extends StatelessWidget {
             icon: const Icon(Icons.delete_outline),
           ),
         ],
-      DownloadStatus.completed ||
-      DownloadStatus.unsupported ||
-      DownloadStatus.canceled =>
-        [
+      DownloadStatus.completed || DownloadStatus.unsupported => [
           IconButton(
             key: ValueKey('download-task-remove-${task.id}'),
             tooltip: context.l10n.removeFromList,
@@ -235,7 +232,21 @@ class DownloadTaskTile extends StatelessWidget {
             icon: const Icon(Icons.delete_outline),
           ),
         ],
+      DownloadStatus.canceled => _requiresManualCleanupBeforeRemoval(task)
+          ? const <Widget>[]
+          : [
+              IconButton(
+                key: ValueKey('download-task-remove-${task.id}'),
+                tooltip: context.l10n.removeFromList,
+                onPressed: isBusy ? null : onRemove,
+                icon: const Icon(Icons.delete_outline),
+              ),
+            ],
     };
+  }
+
+  bool _requiresManualCleanupBeforeRemoval(DownloadTask task) {
+    return task.status == DownloadStatus.canceled && task.localPath != null;
   }
 
   String _progressLabel(BuildContext context, DownloadTask task) {
