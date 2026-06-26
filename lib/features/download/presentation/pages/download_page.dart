@@ -28,9 +28,29 @@ class DownloadPage extends ConsumerStatefulWidget {
   ConsumerState<DownloadPage> createState() => _DownloadPageState();
 }
 
-class _DownloadPageState extends ConsumerState<DownloadPage> {
+class _DownloadPageState extends ConsumerState<DownloadPage>
+    with WidgetsBindingObserver {
   var _isClearingEndedTasks = false;
   final Set<String> _busyTaskIds = <String>{};
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed && mounted) {
+      setState(() {});
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -191,6 +211,10 @@ class _DownloadPageState extends ConsumerState<DownloadPage> {
                                       .removeEndedTask(task.id),
                                 ),
                               ),
+                              onRefreshCleanupStatus:
+                                  downloadTaskNeedsManualCleanup(task)
+                                      ? _refreshCleanupStatus
+                                      : null,
                             );
                           },
                         ),
@@ -290,6 +314,11 @@ class _DownloadPageState extends ConsumerState<DownloadPage> {
         });
       }
     }
+  }
+
+  void _refreshCleanupStatus() {
+    if (!mounted) return;
+    setState(() {});
   }
 
   List<String> _removableTaskIds(List<DownloadTask> items) {

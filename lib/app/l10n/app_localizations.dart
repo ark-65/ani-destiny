@@ -204,6 +204,7 @@ class AppLocalizations {
   String get mock => _t('mock');
   String mockDownloadTaskCreated(String taskId) =>
       '${_t('mockDownloadTaskCreated')}: $taskId';
+  String get checkAgain => _t('checkAgain');
   String get start => _t('start');
   String get stopForNow => _t('stopForNow');
   String get downloadDiscardTooltip => _t('downloadDiscardTooltip');
@@ -578,9 +579,10 @@ const _localizedValues = {
     'clearEndedDownloadsPartialResultSuffix': ' 个清理失败。',
     'clearEndedDownloadsKeepsFilesNote': '这里只会清掉列表里的已结束任务；已经下载完成的文件会继续保留在设备上。',
     'clearEndedDownloadsRetainedDiscardedNote':
-        '仍带着残留文件路径的“已取消”任务会继续留在列表里，直到这份半截文件已经被手动删掉，或 AniDestiny 成功把它清掉。',
+        '仍带着残留文件路径的“已取消”任务会继续留在列表里，直到这份半截文件已经被手动删掉，或 AniDestiny 成功把它清掉。删完后回到这里点一下“重新检查”。',
     'mock': 'Mock',
     'mockDownloadTaskCreated': '已创建 Mock 下载任务',
+    'checkAgain': '重新检查',
     'start': '开始',
     'stopForNow': '先停一下',
     'downloadDiscardTooltip': '放弃这个下载',
@@ -595,7 +597,7 @@ const _localizedValues = {
         '这个下载已先停下；再次开始会按重试处理，可能从头开始。放弃这个任务会丢掉未完成内容，并清掉临时文件。',
     'downloadDiscardedNote': '这个下载已放弃；未完成内容和临时文件都已清掉。确认无误后，你可以把这条记录从列表移除。',
     'downloadDiscardedNeedsManualCleanupNote':
-        '这个下载已放弃，但 AniDestiny 没能自动清掉残留的未完成文件；如果你不再需要它，请按下面的本地路径手动删除。',
+        '这个下载已放弃，但 AniDestiny 没能自动清掉残留的未完成文件；如果你不再需要它，请按下面的本地路径手动删除，删完后回到这里点一下“重新检查”。',
     'downloadRemoveKeepsFileNote': '从列表移除这个任务不会删除已下载文件；文件会继续保留在设备上。',
     'downloadManualCleanupRequiredError':
         'AniDestiny 还没能清掉这份残留文件；请先在设备上手动删除它，之后再把这条任务从列表里移除。',
@@ -884,9 +886,10 @@ const _localizedValues = {
     'clearEndedDownloadsKeepsFilesNote':
         'This only clears ended tasks from the list. Completed files stay on your device.',
     'clearEndedDownloadsRetainedDiscardedNote':
-        'Discarded tasks that still show a leftover file path stay in the list until that partial file is gone.',
+        'Discarded tasks that still show a leftover file path stay in the list until that partial file is gone. After you delete it, return here and tap Check again on that task.',
     'mock': 'Mock',
     'mockDownloadTaskCreated': 'Mock download task created',
+    'checkAgain': 'Check again',
     'start': 'Start',
     'stopForNow': 'Stop for now',
     'downloadDiscardTooltip': 'Discard download',
@@ -902,7 +905,7 @@ const _localizedValues = {
     'downloadDiscardedNote':
         'This download was discarded. Any partial file was cleared. You can remove this task from the list when you are done.',
     'downloadDiscardedNeedsManualCleanupNote':
-        'This download was discarded, but AniDestiny could not clear the partial file automatically. Remove the leftover file from your device if you no longer need it.',
+        'This download was discarded, but AniDestiny could not clear the partial file automatically. Remove the leftover file from your device if you no longer need it, then return here and tap Check again.',
     'downloadRemoveKeepsFileNote':
         'Removing this task only clears it from the list. The downloaded file stays on your device.',
     'downloadManualCleanupRequiredError':
@@ -1198,9 +1201,10 @@ const _localizedValues = {
     'clearEndedDownloadsKeepsFilesNote':
         'ここでは一覧上の終了済みタスクだけを整理します。ダウンロード済みのファイルは端末に残ります。',
     'clearEndedDownloadsRetainedDiscardedNote':
-        '残留ファイルのパスが残っている「キャンセル済み」タスクは、その途中ファイルがなくなるまで一覧に残ります。',
+        '残留ファイルのパスが残っている「キャンセル済み」タスクは、その途中ファイルがなくなるまで一覧に残ります。削除したらここに戻って「再確認」を押してください。',
     'mock': 'Mock',
     'mockDownloadTaskCreated': 'Mock ダウンロードタスクを作成しました',
+    'checkAgain': '再確認',
     'start': '開始',
     'stopForNow': 'いったん止める',
     'downloadDiscardTooltip': 'このダウンロードを破棄',
@@ -1216,7 +1220,7 @@ const _localizedValues = {
     'downloadDiscardedNote':
         'このダウンロードは破棄され、未完了の内容と一時ファイルは削除されました。確認できたら、このタスクを一覧から消せます。',
     'downloadDiscardedNeedsManualCleanupNote':
-        'このダウンロードは破棄されましたが、AniDestiny は未完了ファイルを自動で削除できませんでした。不要なら下のローカルパスをもとに手動で削除してください。',
+        'このダウンロードは破棄されましたが、AniDestiny は未完了ファイルを自動で削除できませんでした。不要なら下のローカルパスをもとに手動で削除し、戻ってきたら「再確認」を押してください。',
     'downloadRemoveKeepsFileNote': 'このタスクを一覧から削除しても、ダウンロード済みファイルは端末に残ります。',
     'downloadManualCleanupRequiredError':
         'AniDestiny はこの残留ファイルをまだ削除できませんでした。先に端末上で削除してから、このタスクを一覧から整理してください。',

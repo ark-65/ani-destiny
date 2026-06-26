@@ -14,6 +14,7 @@ class DownloadTaskTile extends StatelessWidget {
     required this.onPause,
     required this.onCancel,
     required this.onRemove,
+    this.onRefreshCleanupStatus,
     super.key,
   });
 
@@ -23,6 +24,7 @@ class DownloadTaskTile extends StatelessWidget {
   final VoidCallback onPause;
   final VoidCallback onCancel;
   final VoidCallback onRemove;
+  final VoidCallback? onRefreshCleanupStatus;
 
   @override
   Widget build(BuildContext context) {
@@ -232,7 +234,14 @@ class DownloadTaskTile extends StatelessWidget {
           ),
         ],
       DownloadStatus.canceled => downloadTaskNeedsManualCleanup(task)
-          ? const <Widget>[]
+          ? [
+              TextButton.icon(
+                key: ValueKey('download-task-refresh-cleanup-${task.id}'),
+                onPressed: isBusy ? null : onRefreshCleanupStatus,
+                icon: const Icon(Icons.refresh, size: 18),
+                label: Text(context.l10n.checkAgain),
+              ),
+            ]
           : [
               IconButton(
                 key: ValueKey('download-task-remove-${task.id}'),

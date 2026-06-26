@@ -112,7 +112,7 @@ void main() {
 
       expect(
         find.text(
-          'Discarded tasks that still show a leftover file path stay in the list until that partial file is gone.',
+          'Discarded tasks that still show a leftover file path stay in the list until that partial file is gone. After you delete it, return here and tap Check again on that task.',
         ),
         findsOneWidget,
       );
@@ -146,7 +146,7 @@ void main() {
       );
       expect(
         find.text(
-          'Discarded tasks that still show a leftover file path stay in the list until that partial file is gone.',
+          'Discarded tasks that still show a leftover file path stay in the list until that partial file is gone. After you delete it, return here and tap Check again on that task.',
         ),
         findsOneWidget,
       );
@@ -154,14 +154,18 @@ void main() {
         find.byKey(const ValueKey('download-task-remove-canceled')),
         findsNothing,
       );
+      expect(
+        find.byKey(const ValueKey('download-task-refresh-cleanup-canceled')),
+        findsOneWidget,
+      );
     },
   );
 
   testWidgets(
-    'stale discarded local paths become clearable again once the file is gone',
+    'manual cleanup tasks become clearable again after users check the leftover file status',
     (tester) async {
       const stalePath = '/tmp/partial-video.mp4';
-      _stubCleanupPathExists(const {});
+      _stubCleanupPathExists({stalePath});
       final repository = _FakeDownloadRepository([
         _task('canceled', DownloadStatus.canceled).copyWith(
           localPath: stalePath,
@@ -170,6 +174,21 @@ void main() {
       ]);
 
       await _pumpDownloadPage(tester, repository);
+
+      expect(
+        find.byKey(const ValueKey('downloads-clear-ended-tasks')),
+        findsNothing,
+      );
+      expect(
+        find.byKey(const ValueKey('download-task-remove-canceled')),
+        findsNothing,
+      );
+
+      _stubCleanupPathExists(const {});
+      await tester.tap(
+        find.byKey(const ValueKey('download-task-refresh-cleanup-canceled')),
+      );
+      await tester.pump();
 
       expect(
         find.byKey(const ValueKey('downloads-clear-ended-tasks')),
@@ -185,6 +204,7 @@ void main() {
         find.byKey(const ValueKey('download-task-remove-canceled')),
         findsOneWidget,
       );
+      expect(find.text('Check again'), findsNothing);
 
       await tester
           .tap(find.byKey(const ValueKey('downloads-clear-ended-tasks')));
@@ -262,11 +282,12 @@ void main() {
 
       expect(
         find.text(
-          'This download was discarded, but AniDestiny could not clear the partial file automatically. Remove the leftover file from your device if you no longer need it.',
+          'This download was discarded, but AniDestiny could not clear the partial file automatically. Remove the leftover file from your device if you no longer need it, then return here and tap Check again.',
         ),
         findsOneWidget,
       );
       expect(find.text('Local path: $partialPath'), findsOneWidget);
+      expect(find.text('Check again'), findsOneWidget);
     },
   );
 
@@ -389,9 +410,44 @@ void main() {
       expect(repository.deleteAttempts, isEmpty);
       expect(
         find.text(
-          'This download was discarded, but AniDestiny could not clear the partial file automatically. Remove the leftover file from your device if you no longer need it.',
+          'This download was discarded, but AniDestiny could not clear the partial file automatically. Remove the leftover file from your device if you no longer need it, then return here and tap Check again.',
         ),
         findsOneWidget,
+      );
+      expect(find.text('Check again'), findsOneWidget);
+    },
+  );
+
+  testWidgets(
+    'manual cleanup tasks recheck leftover files when the app resumes',
+    (tester) async {
+      const partialPath = '/tmp/partial-video.mp4';
+      _stubCleanupPathExists({partialPath});
+      final repository = _FakeDownloadRepository([
+        _task('canceled', DownloadStatus.canceled).copyWith(
+          localPath: partialPath,
+          failureReason: DownloadFailureReason.canceled,
+        ),
+      ]);
+
+      await _pumpDownloadPage(tester, repository);
+
+      expect(
+        find.byKey(const ValueKey('download-task-refresh-cleanup-canceled')),
+        findsOneWidget,
+      );
+
+      _stubCleanupPathExists(const {});
+      tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
+      await tester.pump();
+
+      expect(
+        find.byKey(const ValueKey('download-task-remove-canceled')),
+        findsOneWidget,
+      );
+      expect(
+        find.byKey(const ValueKey('download-task-refresh-cleanup-canceled')),
+        findsNothing,
       );
     },
   );

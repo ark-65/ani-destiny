@@ -148,6 +148,7 @@ void main() {
     (tester) async {
       const partialPath = '/tmp/partial-video.mp4';
       _stubCleanupPathExists({partialPath});
+      var refreshTapped = false;
       await tester.pumpWidget(
         _buildTileApp(
           DownloadTaskTile(
@@ -161,6 +162,9 @@ void main() {
             onPause: () {},
             onCancel: () {},
             onRemove: () {},
+            onRefreshCleanupStatus: () {
+              refreshTapped = true;
+            },
           ),
         ),
       );
@@ -172,7 +176,7 @@ void main() {
       );
       expect(
         find.text(
-          'This download was discarded, but AniDestiny could not clear the partial file automatically. Remove the leftover file from your device if you no longer need it.',
+          'This download was discarded, but AniDestiny could not clear the partial file automatically. Remove the leftover file from your device if you no longer need it, then return here and tap Check again.',
         ),
         findsOneWidget,
       );
@@ -182,6 +186,14 @@ void main() {
         findsNothing,
       );
       expect(find.byTooltip('Remove from list'), findsNothing);
+      expect(find.text('Check again'), findsOneWidget);
+
+      await tester.tap(
+        find.byKey(const ValueKey('download-task-refresh-cleanup-task-1')),
+      );
+      await tester.pump();
+
+      expect(refreshTapped, isTrue);
     },
   );
 
