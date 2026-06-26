@@ -197,6 +197,14 @@ class AppLocalizations {
   String get loadingDownloads => _t('loadingDownloads');
   String get downloadsEmpty => _t('downloadsEmpty');
   String get clearEndedDownloads => _t('clearEndedDownloads');
+  String clearEndedDownloadsCount(int count) {
+    return switch (_languageCode) {
+      'en' => 'Clear $count ended ${count == 1 ? 'task' : 'tasks'} from list',
+      'ja' => '一覧から終了済みタスクを $count 件整理',
+      _ => '从列表清理 $count 个已结束任务',
+    };
+  }
+
   String clearEndedDownloadsResult(int count) =>
       '${_t('clearEndedDownloadsResultPrefix')}$count${_t('clearEndedDownloadsResultSuffix')}';
   String clearEndedDownloadsPartialResult(int clearedCount, int failedCount) =>

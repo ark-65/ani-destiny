@@ -33,6 +33,7 @@ void main() {
     final clearButton =
         find.byKey(const ValueKey('downloads-clear-ended-tasks'));
     expect(clearButton, findsOneWidget);
+    expect(find.text('Clear 4 ended tasks from list'), findsOneWidget);
 
     await tester.tap(clearButton);
     await tester.pump();
@@ -54,7 +55,10 @@ void main() {
 
     await _pumpDownloadPage(tester, repository);
 
-    expect(find.text('Clear ended tasks from list'), findsNothing);
+    expect(
+      find.byKey(const ValueKey('downloads-clear-ended-tasks')),
+      findsNothing,
+    );
     expect(repository.deletedTaskIds, isEmpty);
   });
 
@@ -196,6 +200,7 @@ void main() {
         ),
         findsOneWidget,
       );
+      expect(find.text('Clear 1 ended task from list'), findsOneWidget);
       expect(
         find.byKey(const ValueKey('downloads-clear-ended-tasks')),
         findsOneWidget,

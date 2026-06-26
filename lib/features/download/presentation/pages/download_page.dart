@@ -167,7 +167,11 @@ class _DownloadPageState extends ConsumerState<DownloadPage>
                                     ),
                                   )
                                 : const Icon(Icons.clear_all),
-                            label: Text(context.l10n.clearEndedDownloads),
+                            label: Text(
+                              context.l10n.clearEndedDownloadsCount(
+                                clearableTaskIds.length,
+                              ),
+                            ),
                           ),
                         if (hasCompletedTasks) ...[
                           const SizedBox(height: 8),
