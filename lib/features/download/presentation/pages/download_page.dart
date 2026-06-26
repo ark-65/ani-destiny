@@ -213,7 +213,7 @@ class _DownloadPageState extends ConsumerState<DownloadPage>
                               ),
                               onRefreshCleanupStatus:
                                   downloadTaskNeedsManualCleanup(task)
-                                      ? _refreshCleanupStatus
+                                      ? () => _refreshCleanupStatus(task)
                                       : null,
                             );
                           },
@@ -316,9 +316,19 @@ class _DownloadPageState extends ConsumerState<DownloadPage>
     }
   }
 
-  void _refreshCleanupStatus() {
+  void _refreshCleanupStatus(DownloadTask task) {
     if (!mounted) return;
+    final stillNeedsCleanup = downloadTaskNeedsManualCleanup(task);
     setState(() {});
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          stillNeedsCleanup
+              ? context.l10n.downloadManualCleanupRecheckStillNeeded
+              : context.l10n.downloadManualCleanupRecheckCleared,
+        ),
+      ),
+    );
   }
 
   List<String> _removableTaskIds(List<DownloadTask> items) {

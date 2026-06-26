@@ -225,6 +225,10 @@ class AppLocalizations {
       _t('clearEndedDownloadsRetainedDiscardedNote');
   String get downloadManualCleanupRequiredError =>
       _t('downloadManualCleanupRequiredError');
+  String get downloadManualCleanupRecheckStillNeeded =>
+      _t('downloadManualCleanupRecheckStillNeeded');
+  String get downloadManualCleanupRecheckCleared =>
+      _t('downloadManualCleanupRecheckCleared');
   String get downloadManualCleanupStatus => _t('downloadManualCleanupStatus');
   String get downloadStoppedStatus => _t('downloadStoppedStatus');
   String get downloadKindDirectFile => _t('downloadKindDirectFile');
@@ -601,6 +605,8 @@ const _localizedValues = {
     'downloadRemoveKeepsFileNote': '从列表移除这个任务不会删除已下载文件；文件会继续保留在设备上。',
     'downloadManualCleanupRequiredError':
         'AniDestiny 还没能清掉这份残留文件；请先在设备上手动删除它，之后再把这条任务从列表里移除。',
+    'downloadManualCleanupRecheckStillNeeded': '这份残留文件还在。先在设备上删掉它，再回来重新检查。',
+    'downloadManualCleanupRecheckCleared': '这份残留文件已经不在了。现在可以把这条任务从列表移除了。',
     'downloadManualCleanupStatus': '待清理残留文件',
     'downloadStoppedStatus': '已停下',
     'downloadKindDirectFile': '直链文件',
@@ -910,6 +916,10 @@ const _localizedValues = {
         'Removing this task only clears it from the list. The downloaded file stays on your device.',
     'downloadManualCleanupRequiredError':
         'AniDestiny still could not clear that leftover partial file. Remove it from your device first, then clear this task from the list.',
+    'downloadManualCleanupRecheckStillNeeded':
+        'That leftover partial file is still on your device. Delete it first, then check again.',
+    'downloadManualCleanupRecheckCleared':
+        'That leftover partial file is gone. You can remove this task from the list now.',
     'downloadManualCleanupStatus': 'Needs cleanup',
     'downloadStoppedStatus': 'Stopped',
     'downloadKindDirectFile': 'Direct file',
@@ -1224,6 +1234,10 @@ const _localizedValues = {
     'downloadRemoveKeepsFileNote': 'このタスクを一覧から削除しても、ダウンロード済みファイルは端末に残ります。',
     'downloadManualCleanupRequiredError':
         'AniDestiny はこの残留ファイルをまだ削除できませんでした。先に端末上で削除してから、このタスクを一覧から整理してください。',
+    'downloadManualCleanupRecheckStillNeeded':
+        'この残留ファイルはまだ端末に残っています。先に削除してから、もう一度確認してください。',
+    'downloadManualCleanupRecheckCleared':
+        'この残留ファイルはもうありません。今ならこのタスクを一覧から消せます。',
     'downloadManualCleanupStatus': '残留ファイルを要整理',
     'downloadStoppedStatus': '停止中',
     'downloadKindDirectFile': '直接ファイル',

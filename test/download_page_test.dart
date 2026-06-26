@@ -191,6 +191,12 @@ void main() {
       await tester.pump();
 
       expect(
+        find.text(
+          'That leftover partial file is gone. You can remove this task from the list now.',
+        ),
+        findsOneWidget,
+      );
+      expect(
         find.byKey(const ValueKey('downloads-clear-ended-tasks')),
         findsOneWidget,
       );
@@ -211,6 +217,42 @@ void main() {
       await tester.pump();
 
       expect(repository.deletedTaskIds, ['canceled']);
+    },
+  );
+
+  testWidgets(
+    'manual cleanup recheck explains when the leftover file is still there',
+    (tester) async {
+      const partialPath = '/tmp/partial-video.mp4';
+      _stubCleanupPathExists({partialPath});
+      final repository = _FakeDownloadRepository([
+        _task('canceled', DownloadStatus.canceled).copyWith(
+          localPath: partialPath,
+          failureReason: DownloadFailureReason.canceled,
+        ),
+      ]);
+
+      await _pumpDownloadPage(tester, repository);
+
+      await tester.tap(
+        find.byKey(const ValueKey('download-task-refresh-cleanup-canceled')),
+      );
+      await tester.pump();
+
+      expect(
+        find.text(
+          'That leftover partial file is still on your device. Delete it first, then check again.',
+        ),
+        findsOneWidget,
+      );
+      expect(
+        find.byKey(const ValueKey('download-task-refresh-cleanup-canceled')),
+        findsOneWidget,
+      );
+      expect(
+        find.byKey(const ValueKey('download-task-remove-canceled')),
+        findsNothing,
+      );
     },
   );
 
