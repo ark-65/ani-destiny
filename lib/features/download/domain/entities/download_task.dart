@@ -56,14 +56,14 @@ class DownloadTask {
   final DateTime updatedAt;
 
   DownloadTask copyWith({
-    String? localPath,
+    Object? localPath = _unset,
     DownloadKind? kind,
     Map<String, String>? headers,
     DownloadStatus? status,
     DownloadFailureReason? failureReason,
     Object? failureMessage = _unset,
     double? progress,
-    int? totalBytes,
+    Object? totalBytes = _unset,
     int? downloadedBytes,
     DateTime? updatedAt,
   }) {
@@ -77,14 +77,16 @@ class DownloadTask {
       url: url,
       kind: kind ?? this.kind,
       headers: headers ?? this.headers,
-      localPath: localPath ?? this.localPath,
+      localPath:
+          identical(localPath, _unset) ? this.localPath : localPath as String?,
       status: status ?? this.status,
       failureReason: failureReason ?? this.failureReason,
       failureMessage: identical(failureMessage, _unset)
           ? this.failureMessage
           : failureMessage as String?,
       progress: progress ?? this.progress,
-      totalBytes: totalBytes ?? this.totalBytes,
+      totalBytes:
+          identical(totalBytes, _unset) ? this.totalBytes : totalBytes as int?,
       downloadedBytes: downloadedBytes ?? this.downloadedBytes,
       createdAt: createdAt,
       updatedAt: updatedAt ?? this.updatedAt,

@@ -205,11 +205,26 @@ class AppLocalizations {
   String mockDownloadTaskCreated(String taskId) =>
       '${_t('mockDownloadTaskCreated')}: $taskId';
   String get start => _t('start');
+  String get stopForNow => _t('stopForNow');
+  String get downloadDiscardTooltip => _t('downloadDiscardTooltip');
   String get cancel => _t('cancel');
+  String get removeFromList => _t('removeFromList');
   String get remove => _t('remove');
   String get downloadProgress => _t('downloadProgress');
   String get downloadLocalPath => _t('downloadLocalPath');
-  String get downloadBasicPauseNote => _t('downloadBasicPauseNote');
+  String get downloadStopMayRestartNote => _t('downloadStopMayRestartNote');
+  String get downloadPausedRetryNote => _t('downloadPausedRetryNote');
+  String get downloadDiscardedNote => _t('downloadDiscardedNote');
+  String get downloadDiscardedNeedsManualCleanupNote =>
+      _t('downloadDiscardedNeedsManualCleanupNote');
+  String get downloadRemoveKeepsFileNote => _t('downloadRemoveKeepsFileNote');
+  String get clearEndedDownloadsKeepsFilesNote =>
+      _t('clearEndedDownloadsKeepsFilesNote');
+  String get clearEndedDownloadsRetainedDiscardedNote =>
+      _t('clearEndedDownloadsRetainedDiscardedNote');
+  String get downloadManualCleanupRequiredError =>
+      _t('downloadManualCleanupRequiredError');
+  String get downloadStoppedStatus => _t('downloadStoppedStatus');
   String get downloadKindDirectFile => _t('downloadKindDirectFile');
   String get downloadKindHls => _t('downloadKindHls');
   String get downloadKindBt => _t('downloadKindBt');
@@ -554,20 +569,36 @@ const _localizedValues = {
     'deleteHistory': '删除历史',
     'loadingDownloads': '正在加载下载',
     'downloadsEmpty': '下载任务会显示在这里',
-    'clearEndedDownloads': '清理已结束任务',
-    'clearEndedDownloadsResultPrefix': '已清理 ',
+    'clearEndedDownloads': '从列表清理已结束任务',
+    'clearEndedDownloadsResultPrefix': '已从列表清理 ',
     'clearEndedDownloadsResultSuffix': ' 个已结束任务。',
-    'clearEndedDownloadsPartialResultPrefix': '已清理 ',
+    'clearEndedDownloadsPartialResultPrefix': '已从列表清理 ',
     'clearEndedDownloadsPartialResultMiddle': ' 个已结束任务，',
     'clearEndedDownloadsPartialResultSuffix': ' 个清理失败。',
+    'clearEndedDownloadsKeepsFilesNote': '这里只会清掉列表里的已结束任务；已经下载完成的文件会继续保留在设备上。',
+    'clearEndedDownloadsRetainedDiscardedNote':
+        '仍带着残留文件路径的“已取消”任务会继续留在列表里，直到这份半截文件已经被手动删掉，或 AniDestiny 成功把它清掉。',
     'mock': 'Mock',
     'mockDownloadTaskCreated': '已创建 Mock 下载任务',
     'start': '开始',
+    'stopForNow': '先停一下',
+    'downloadDiscardTooltip': '放弃这个下载',
     'cancel': '取消',
+    'removeFromList': '从列表移除',
     'remove': '移除',
     'downloadProgress': '进度',
     'downloadLocalPath': '本地路径',
-    'downloadBasicPauseNote': '暂停为基础能力，继续时可能重新下载。',
+    'downloadStopMayRestartNote':
+        '当前下载只能先停下；下次重试时可能会从头开始。放弃这个任务会丢掉未完成内容，并清掉临时文件。',
+    'downloadPausedRetryNote':
+        '这个下载已先停下；再次开始会按重试处理，可能从头开始。放弃这个任务会丢掉未完成内容，并清掉临时文件。',
+    'downloadDiscardedNote': '这个下载已放弃；未完成内容和临时文件都已清掉。确认无误后，你可以把这条记录从列表移除。',
+    'downloadDiscardedNeedsManualCleanupNote':
+        '这个下载已放弃，但 AniDestiny 没能自动清掉残留的未完成文件；如果你不再需要它，请按下面的本地路径手动删除。',
+    'downloadRemoveKeepsFileNote': '从列表移除这个任务不会删除已下载文件；文件会继续保留在设备上。',
+    'downloadManualCleanupRequiredError':
+        'AniDestiny 还没能清掉这份残留文件；请先在设备上手动删除它，之后再把这条任务从列表里移除。',
+    'downloadStoppedStatus': '已停下',
     'downloadKindDirectFile': '直链文件',
     'downloadKindHls': 'HLS / m3u8',
     'downloadKindBt': 'BT 占位',
@@ -842,21 +873,39 @@ const _localizedValues = {
     'deleteHistory': 'Delete history',
     'loadingDownloads': 'Loading downloads',
     'downloadsEmpty': 'Download tasks will appear here',
-    'clearEndedDownloads': 'Clear ended tasks',
+    'clearEndedDownloads': 'Clear ended tasks from list',
     'clearEndedDownloadsResultPrefix': 'Cleared ',
-    'clearEndedDownloadsResultSuffix': ' ended tasks.',
+    'clearEndedDownloadsResultSuffix': ' ended tasks from the list.',
     'clearEndedDownloadsPartialResultPrefix': 'Cleared ',
-    'clearEndedDownloadsPartialResultMiddle': ' ended tasks, ',
+    'clearEndedDownloadsPartialResultMiddle': ' ended tasks from the list, ',
     'clearEndedDownloadsPartialResultSuffix': ' failed.',
+    'clearEndedDownloadsKeepsFilesNote':
+        'This only clears ended tasks from the list. Completed files stay on your device.',
+    'clearEndedDownloadsRetainedDiscardedNote':
+        'Discarded tasks that still show a leftover file path stay in the list until that partial file is gone.',
     'mock': 'Mock',
     'mockDownloadTaskCreated': 'Mock download task created',
     'start': 'Start',
+    'stopForNow': 'Stop for now',
+    'downloadDiscardTooltip': 'Discard download',
     'cancel': 'Cancel',
+    'removeFromList': 'Remove from list',
     'remove': 'Remove',
     'downloadProgress': 'Progress',
     'downloadLocalPath': 'Local path',
-    'downloadBasicPauseNote':
-        'Pause support is basic and may restart the download.',
+    'downloadStopMayRestartNote':
+        'Stopping this download keeps the task, but the next retry may restart from the beginning. Discarding it clears any partial file.',
+    'downloadPausedRetryNote':
+        'This download is stopped for now. Retrying may restart it from the beginning. Discarding it clears any partial file.',
+    'downloadDiscardedNote':
+        'This download was discarded. Any partial file was cleared. You can remove this task from the list when you are done.',
+    'downloadDiscardedNeedsManualCleanupNote':
+        'This download was discarded, but AniDestiny could not clear the partial file automatically. Remove the leftover file from your device if you no longer need it.',
+    'downloadRemoveKeepsFileNote':
+        'Removing this task only clears it from the list. The downloaded file stays on your device.',
+    'downloadManualCleanupRequiredError':
+        'AniDestiny still could not clear that leftover partial file. Remove it from your device first, then clear this task from the list.',
+    'downloadStoppedStatus': 'Stopped',
     'downloadKindDirectFile': 'Direct file',
     'downloadKindHls': 'HLS / m3u8',
     'downloadKindBt': 'BT placeholder',
@@ -1137,20 +1186,38 @@ const _localizedValues = {
     'deleteHistory': '履歴を削除',
     'loadingDownloads': 'ダウンロードを読み込み中',
     'downloadsEmpty': 'ダウンロードタスクがここに表示されます',
-    'clearEndedDownloads': '終了済みタスクを整理',
-    'clearEndedDownloadsResultPrefix': '終了済みタスクを ',
+    'clearEndedDownloads': '一覧から終了済みタスクを整理',
+    'clearEndedDownloadsResultPrefix': '一覧から終了済みタスクを ',
     'clearEndedDownloadsResultSuffix': ' 件整理しました。',
-    'clearEndedDownloadsPartialResultPrefix': '終了済みタスクを ',
+    'clearEndedDownloadsPartialResultPrefix': '一覧から終了済みタスクを ',
     'clearEndedDownloadsPartialResultMiddle': ' 件整理し、',
     'clearEndedDownloadsPartialResultSuffix': ' 件は失敗しました。',
+    'clearEndedDownloadsKeepsFilesNote':
+        'ここでは一覧上の終了済みタスクだけを整理します。ダウンロード済みのファイルは端末に残ります。',
+    'clearEndedDownloadsRetainedDiscardedNote':
+        '残留ファイルのパスが残っている「キャンセル済み」タスクは、その途中ファイルがなくなるまで一覧に残ります。',
     'mock': 'Mock',
     'mockDownloadTaskCreated': 'Mock ダウンロードタスクを作成しました',
     'start': '開始',
+    'stopForNow': 'いったん止める',
+    'downloadDiscardTooltip': 'このダウンロードを破棄',
     'cancel': 'キャンセル',
+    'removeFromList': '一覧から削除',
     'remove': '削除',
     'downloadProgress': '進捗',
     'downloadLocalPath': 'ローカルパス',
-    'downloadBasicPauseNote': '一時停止は基本機能です。再開時に再ダウンロードされる場合があります。',
+    'downloadStopMayRestartNote':
+        'いったん止めることはできますが、次の再試行では最初からやり直す場合があります。破棄すると未完了の内容と一時ファイルが消えます。',
+    'downloadPausedRetryNote':
+        'このダウンロードはいったん停止しています。再試行時は最初からやり直す場合があります。破棄すると未完了の内容と一時ファイルが消えます。',
+    'downloadDiscardedNote':
+        'このダウンロードは破棄され、未完了の内容と一時ファイルは削除されました。確認できたら、このタスクを一覧から消せます。',
+    'downloadDiscardedNeedsManualCleanupNote':
+        'このダウンロードは破棄されましたが、AniDestiny は未完了ファイルを自動で削除できませんでした。不要なら下のローカルパスをもとに手動で削除してください。',
+    'downloadRemoveKeepsFileNote': 'このタスクを一覧から削除しても、ダウンロード済みファイルは端末に残ります。',
+    'downloadManualCleanupRequiredError':
+        'AniDestiny はこの残留ファイルをまだ削除できませんでした。先に端末上で削除してから、このタスクを一覧から整理してください。',
+    'downloadStoppedStatus': '停止中',
     'downloadKindDirectFile': '直接ファイル',
     'downloadKindHls': 'HLS / m3u8',
     'downloadKindBt': 'BT プレースホルダー',

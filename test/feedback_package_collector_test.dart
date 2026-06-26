@@ -253,6 +253,49 @@ void main() {
     expect(markdown, isNot(contains('Download canceled.')));
   });
 
+  test('collector uses stopped download wording in support summaries', () {
+    final now = DateTime.utc(2026, 6, 25, 15, 0, 0);
+    const l10n = AppLocalizations(Locale('en'));
+    final package = FeedbackPackageCollector(
+      l10n: l10n,
+      appName: 'AniDestiny',
+      appVersion: '1.0.4',
+      platform: 'Windows',
+      currentSourceId: 'sakura',
+      sourceHealth: const [],
+      sourceDiagnostics: const [],
+      fallbackEvents: const [],
+      playbackDiagnostics: null,
+      danmakuEnabled: false,
+      dandanplayAppIdConfigured: false,
+      dandanplayAppSecretConfigured: false,
+      downloadTasks: [
+        DownloadTask(
+          id: 'task-stopped',
+          animeId: 'anime-1',
+          episodeId: 'episode-1',
+          sourceId: 'sakura',
+          title: 'Anime',
+          episodeTitle: 'Episode 1',
+          url: 'https://cdn.example.test/video.mp4',
+          kind: DownloadKind.directFile,
+          status: DownloadStatus.paused,
+          failureReason: DownloadFailureReason.none,
+          progress: 0.25,
+          downloadedBytes: 256,
+          createdAt: now,
+          updatedAt: now,
+        ),
+      ],
+    ).collect(generatedAt: now);
+
+    final markdown = const FeedbackPackageFormatter(l10n: l10n).format(package);
+
+    expect(markdown, contains('- Stopped: 1'));
+    expect(markdown, isNot(contains('- Paused: 1')));
+    expect(markdown, contains('- Latest issue: None'));
+  });
+
   test(
       'collector adds selected app source to playback summary only for divergent playback context',
       () {

@@ -232,7 +232,7 @@ class FeedbackPackageCollector {
       DownloadStatus.pending => l10n.pending,
       DownloadStatus.preparing => l10n.preparing,
       DownloadStatus.downloading => l10n.downloading,
-      DownloadStatus.paused => l10n.paused,
+      DownloadStatus.paused => l10n.downloadStoppedStatus,
       DownloadStatus.completed => l10n.completed,
       DownloadStatus.failed => l10n.failed,
       DownloadStatus.canceled => l10n.canceled,

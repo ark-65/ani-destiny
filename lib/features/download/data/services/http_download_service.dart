@@ -68,18 +68,18 @@ class HttpDownloadService implements DownloadService {
 
   @override
   Future<void> start(String taskId) async {
-    final task = await _repository.getTask(taskId);
-    if (task == null) {
+    final existingTask = await _repository.getTask(taskId);
+    if (existingTask == null) {
       throw const AppException(
         'Download task not found.',
         code: 'download_not_found',
       );
     }
-    if (task.kind != DownloadKind.directFile) {
-      final updated = task.copyWith(
+    if (existingTask.kind != DownloadKind.directFile) {
+      final updated = existingTask.copyWith(
         status: DownloadStatus.unsupported,
         failureReason: DownloadFailureReason.unsupportedType,
-        failureMessage: _unsupportedMessage(task.kind),
+        failureMessage: _unsupportedMessage(existingTask.kind),
         updatedAt: DateTime.now(),
       );
       await _repository.upsertTask(updated);
@@ -89,40 +89,42 @@ class HttpDownloadService implements DownloadService {
 
     try {
       final directory = await getApplicationDocumentsDirectory();
-      final fileName = _safeFileName(_fileNameFor(task));
+      final fileName = _safeFileName(_fileNameFor(existingTask));
       final localPath = p.join(directory.path, 'downloads', fileName);
       await Directory(p.dirname(localPath)).create(recursive: true);
       final token = CancelToken();
       _tokens[taskId] = token;
-      var lastDownloadedBytes = task.downloadedBytes;
-      int? lastTotalBytes = task.totalBytes;
+      var lastDownloadedBytes = 0;
+      int? lastTotalBytes;
 
-      await _repository.upsertTask(
-        task.copyWith(
-          localPath: localPath,
-          status: DownloadStatus.preparing,
-          failureReason: DownloadFailureReason.none,
-          failureMessage: null,
-          updatedAt: DateTime.now(),
-        ),
+      final preparingTask = existingTask.copyWith(
+        localPath: localPath,
+        status: DownloadStatus.preparing,
+        failureReason: DownloadFailureReason.none,
+        failureMessage: null,
+        progress: 0,
+        totalBytes: null,
+        downloadedBytes: 0,
+        updatedAt: DateTime.now(),
       );
-      _emit(taskId, task.progress, DownloadStatus.preparing);
+      await _repository.upsertTask(preparingTask);
+      _emit(taskId, preparingTask.progress, DownloadStatus.preparing);
 
       await _dio.download(
-        task.url,
+        existingTask.url,
         localPath,
         cancelToken: token,
-        options: Options(headers: task.headers),
+        options: Options(headers: existingTask.headers),
         onReceiveProgress: (received, total) {
           final totalBytes = total > 0 ? total : null;
           lastDownloadedBytes = received;
           lastTotalBytes = totalBytes ?? lastTotalBytes;
           final progress = totalBytes == null
-              ? task.progress
+              ? 0.0
               : (received / totalBytes).clamp(0.0, 1.0).toDouble();
           unawaited(
             _repository.upsertTask(
-              task.copyWith(
+              preparingTask.copyWith(
                 localPath: localPath,
                 status: DownloadStatus.downloading,
                 progress: progress,
@@ -142,18 +144,17 @@ class HttpDownloadService implements DownloadService {
           );
         },
       );
-      await _repository.upsertTask(
-        task.copyWith(
-          localPath: localPath,
-          status: DownloadStatus.completed,
-          progress: 1,
-          totalBytes: lastTotalBytes,
-          downloadedBytes: lastDownloadedBytes,
-          failureReason: DownloadFailureReason.none,
-          failureMessage: null,
-          updatedAt: DateTime.now(),
-        ),
+      final completedTask = preparingTask.copyWith(
+        localPath: localPath,
+        status: DownloadStatus.completed,
+        progress: 1,
+        totalBytes: lastTotalBytes,
+        downloadedBytes: lastDownloadedBytes,
+        failureReason: DownloadFailureReason.none,
+        failureMessage: null,
+        updatedAt: DateTime.now(),
       );
+      await _repository.upsertTask(completedTask);
       _emit(
         taskId,
         1,
@@ -162,8 +163,12 @@ class HttpDownloadService implements DownloadService {
         totalBytes: lastTotalBytes,
       );
     } on DioException catch (error) {
-      if (CancelToken.isCancel(error)) return;
-      final failed = task.copyWith(
+      if (CancelToken.isCancel(error)) {
+        await _finalizeCanceledDownload(taskId);
+        return;
+      }
+      final latest = await _repository.getTask(taskId) ?? existingTask;
+      final failed = latest.copyWith(
         status: DownloadStatus.failed,
         failureReason: DownloadFailureReason.networkError,
         failureMessage: _messageFromError(error),
@@ -177,7 +182,8 @@ class HttpDownloadService implements DownloadService {
         cause: error,
       );
     } on FileSystemException catch (error) {
-      final failed = task.copyWith(
+      final latest = await _repository.getTask(taskId) ?? existingTask;
+      final failed = latest.copyWith(
         status: DownloadStatus.failed,
         failureReason: DownloadFailureReason.storageUnavailable,
         failureMessage: error.message,
@@ -191,7 +197,7 @@ class HttpDownloadService implements DownloadService {
         cause: error,
       );
     } on Object catch (error) {
-      final latest = await _repository.getTask(taskId) ?? task;
+      final latest = await _repository.getTask(taskId) ?? existingTask;
       final failed = latest.copyWith(
         status: DownloadStatus.failed,
         failureReason: DownloadFailureReason.unknown,
@@ -208,11 +214,23 @@ class HttpDownloadService implements DownloadService {
 
   @override
   Future<void> pause(String taskId) async {
+    final hadActiveDownload = _tokens.containsKey(taskId);
     _tokens[taskId]?.cancel('paused');
     final task = await _repository.getTask(taskId);
     if (task == null) return;
+    if (!_canPause(task.status)) return;
+    final clearedLocalPath = await _clearDiscardedDownload(
+      localPath: task.localPath,
+      clearNow: !hadActiveDownload,
+    );
     final updated = task.copyWith(
+      localPath: clearedLocalPath,
       status: DownloadStatus.paused,
+      failureReason: DownloadFailureReason.none,
+      failureMessage: null,
+      progress: 0,
+      totalBytes: null,
+      downloadedBytes: 0,
       updatedAt: DateTime.now(),
     );
     await _repository.upsertTask(updated);
@@ -221,17 +239,65 @@ class HttpDownloadService implements DownloadService {
 
   @override
   Future<void> cancel(String taskId) async {
+    final hadActiveDownload = _tokens.containsKey(taskId);
     _tokens[taskId]?.cancel('canceled');
     final task = await _repository.getTask(taskId);
     if (task == null) return;
+    if (!_canCancel(task.status)) return;
+    final clearedLocalPath = await _clearDiscardedDownload(
+      localPath: task.localPath,
+      clearNow: !hadActiveDownload,
+    );
     final updated = task.copyWith(
+      localPath: clearedLocalPath,
       status: DownloadStatus.canceled,
       failureReason: DownloadFailureReason.canceled,
       failureMessage: null,
+      progress: 0,
+      totalBytes: null,
+      downloadedBytes: 0,
       updatedAt: DateTime.now(),
     );
     await _repository.upsertTask(updated);
     _emitTask(updated);
+  }
+
+  @override
+  Future<void> removeEndedTask(String taskId) async {
+    final task = await _repository.getTask(taskId);
+    if (task == null) return;
+    if (!_canRemove(task.status)) {
+      throw const AppException(
+        'This download is still active.',
+        code: 'download_remove_not_allowed',
+      );
+    }
+
+    if (_requiresManualCleanupBeforeRemoval(task)) {
+      final clearedLocalPath = await _clearDiscardedDownload(
+        localPath: task.localPath,
+        clearNow: true,
+      );
+      if (clearedLocalPath != null) {
+        final updated = task.copyWith(
+          localPath: clearedLocalPath,
+          updatedAt: DateTime.now(),
+        );
+        await _repository.upsertTask(updated);
+        _emitTask(updated);
+        throw const AppException(
+          'The leftover partial file still needs manual cleanup.',
+          code: 'download_manual_cleanup_required',
+        );
+      }
+    }
+
+    await _repository.deleteTask(taskId);
+    _tokens.remove(taskId);
+    final controller = _controllers.remove(taskId);
+    if (controller != null) {
+      unawaited(controller.close());
+    }
   }
 
   @override
@@ -283,6 +349,53 @@ class HttpDownloadService implements DownloadService {
     return '${task.title}-${task.episodeTitle}$extension';
   }
 
+  bool _canPause(DownloadStatus status) {
+    return switch (status) {
+      DownloadStatus.preparing || DownloadStatus.downloading => true,
+      DownloadStatus.pending ||
+      DownloadStatus.paused ||
+      DownloadStatus.completed ||
+      DownloadStatus.failed ||
+      DownloadStatus.canceled ||
+      DownloadStatus.unsupported =>
+        false,
+    };
+  }
+
+  bool _canCancel(DownloadStatus status) {
+    return switch (status) {
+      DownloadStatus.pending ||
+      DownloadStatus.preparing ||
+      DownloadStatus.downloading ||
+      DownloadStatus.paused =>
+        true,
+      DownloadStatus.completed ||
+      DownloadStatus.failed ||
+      DownloadStatus.canceled ||
+      DownloadStatus.unsupported =>
+        false,
+    };
+  }
+
+  bool _canRemove(DownloadStatus status) {
+    return switch (status) {
+      DownloadStatus.completed ||
+      DownloadStatus.failed ||
+      DownloadStatus.canceled ||
+      DownloadStatus.unsupported =>
+        true,
+      DownloadStatus.pending ||
+      DownloadStatus.preparing ||
+      DownloadStatus.downloading ||
+      DownloadStatus.paused =>
+        false,
+    };
+  }
+
+  bool _requiresManualCleanupBeforeRemoval(DownloadTask task) {
+    return task.status == DownloadStatus.canceled && task.localPath != null;
+  }
+
   String _safeFileName(String value) {
     return value.replaceAll(RegExp(r'[\\/:*?"<>|]+'), '_');
   }
@@ -302,5 +415,44 @@ class HttpDownloadService implements DownloadService {
       return 'Download failed with HTTP $statusCode.';
     }
     return error.message ?? 'Network request could not be completed.';
+  }
+
+  Future<void> _finalizeCanceledDownload(String taskId) async {
+    final latest = await _repository.getTask(taskId);
+    if (latest == null) return;
+    if (latest.status != DownloadStatus.paused &&
+        latest.status != DownloadStatus.canceled) {
+      return;
+    }
+
+    final clearedLocalPath = await _clearDiscardedDownload(
+      localPath: latest.localPath,
+      clearNow: true,
+    );
+    if (clearedLocalPath == latest.localPath) return;
+
+    final updated = latest.copyWith(
+      localPath: clearedLocalPath,
+      updatedAt: DateTime.now(),
+    );
+    await _repository.upsertTask(updated);
+    _emitTask(updated);
+  }
+
+  Future<String?> _clearDiscardedDownload({
+    required String? localPath,
+    required bool clearNow,
+  }) async {
+    if (localPath == null) return null;
+    if (!clearNow) return localPath;
+    try {
+      final file = File(localPath);
+      if (await file.exists()) {
+        await file.delete();
+      }
+      return null;
+    } on FileSystemException {
+      return localPath;
+    }
   }
 }

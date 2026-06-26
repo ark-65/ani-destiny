@@ -25,6 +25,8 @@ class DownloadTaskTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final supportNote = _supportNote(context);
+
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(12),
@@ -78,7 +80,7 @@ class DownloadTaskTile extends StatelessWidget {
                     ),
               ),
             ],
-            if (task.localPath != null) ...[
+            if (_showLocalPath(task)) ...[
               const SizedBox(height: 6),
               Text(
                 '${context.l10n.downloadLocalPath}: ${task.localPath}',
@@ -88,10 +90,10 @@ class DownloadTaskTile extends StatelessWidget {
             const SizedBox(height: 8),
             Row(
               children: [
-                if (_showPauseNote(task))
+                if (supportNote != null)
                   Expanded(
                     child: Text(
-                      context.l10n.downloadBasicPauseNote,
+                      supportNote,
                       style: Theme.of(context).textTheme.bodySmall,
                     ),
                   )
@@ -116,20 +118,28 @@ class DownloadTaskTile extends StatelessWidget {
     );
   }
 
-  bool _showPauseNote(DownloadTask task) {
-    return task.kind == DownloadKind.directFile &&
-        switch (task.status) {
-          DownloadStatus.pending ||
-          DownloadStatus.preparing ||
-          DownloadStatus.downloading ||
-          DownloadStatus.paused =>
-            true,
-          DownloadStatus.failed ||
-          DownloadStatus.completed ||
-          DownloadStatus.canceled ||
-          DownloadStatus.unsupported =>
-            false,
-        };
+  String? _supportNote(BuildContext context) {
+    return switch (task.status) {
+      DownloadStatus.downloading when task.kind == DownloadKind.directFile =>
+        context.l10n.downloadStopMayRestartNote,
+      DownloadStatus.paused when task.kind == DownloadKind.directFile =>
+        context.l10n.downloadPausedRetryNote,
+      DownloadStatus.canceled when task.kind == DownloadKind.directFile =>
+        task.localPath == null
+            ? context.l10n.downloadDiscardedNote
+            : context.l10n.downloadDiscardedNeedsManualCleanupNote,
+      DownloadStatus.completed when _showLocalPath(task) =>
+        context.l10n.downloadRemoveKeepsFileNote,
+      DownloadStatus.pending ||
+      DownloadStatus.preparing ||
+      DownloadStatus.failed ||
+      DownloadStatus.canceled ||
+      DownloadStatus.unsupported ||
+      DownloadStatus.downloading ||
+      DownloadStatus.paused ||
+      DownloadStatus.completed =>
+        null,
+    };
   }
 
   bool _showFailureReason(DownloadTask task) {
@@ -140,6 +150,12 @@ class DownloadTaskTile extends StatelessWidget {
   bool _showFailureMessage(DownloadTask task) {
     return task.failureMessage != null &&
         task.status != DownloadStatus.canceled;
+  }
+
+  bool _showLocalPath(DownloadTask task) {
+    return task.localPath != null &&
+        (task.status == DownloadStatus.completed ||
+            task.status == DownloadStatus.canceled);
   }
 
   List<Widget> _actions(BuildContext context) {
@@ -153,7 +169,7 @@ class DownloadTaskTile extends StatelessWidget {
           ),
           IconButton(
             key: ValueKey('download-task-cancel-${task.id}'),
-            tooltip: context.l10n.cancel,
+            tooltip: context.l10n.downloadDiscardTooltip,
             onPressed: isBusy ? null : onCancel,
             icon: const Icon(Icons.close),
           ),
@@ -161,7 +177,7 @@ class DownloadTaskTile extends StatelessWidget {
       DownloadStatus.preparing => [
           IconButton(
             key: ValueKey('download-task-cancel-${task.id}'),
-            tooltip: context.l10n.cancel,
+            tooltip: context.l10n.downloadDiscardTooltip,
             onPressed: isBusy ? null : onCancel,
             icon: const Icon(Icons.close),
           ),
@@ -169,27 +185,27 @@ class DownloadTaskTile extends StatelessWidget {
       DownloadStatus.downloading => [
           IconButton(
             key: ValueKey('download-task-pause-${task.id}'),
-            tooltip: context.l10n.pause,
+            tooltip: context.l10n.stopForNow,
             onPressed: isBusy ? null : onPause,
-            icon: const Icon(Icons.pause),
+            icon: const Icon(Icons.stop_circle_outlined),
           ),
           IconButton(
             key: ValueKey('download-task-cancel-${task.id}'),
-            tooltip: context.l10n.cancel,
+            tooltip: context.l10n.downloadDiscardTooltip,
             onPressed: isBusy ? null : onCancel,
             icon: const Icon(Icons.close),
           ),
         ],
       DownloadStatus.paused => [
           IconButton(
-            key: ValueKey('download-task-start-${task.id}'),
-            tooltip: context.l10n.start,
+            key: ValueKey('download-task-retry-${task.id}'),
+            tooltip: context.l10n.retry,
             onPressed: isBusy ? null : onStart,
-            icon: const Icon(Icons.play_arrow),
+            icon: const Icon(Icons.refresh),
           ),
           IconButton(
             key: ValueKey('download-task-cancel-${task.id}'),
-            tooltip: context.l10n.cancel,
+            tooltip: context.l10n.downloadDiscardTooltip,
             onPressed: isBusy ? null : onCancel,
             icon: const Icon(Icons.close),
           ),
@@ -203,7 +219,7 @@ class DownloadTaskTile extends StatelessWidget {
           ),
           IconButton(
             key: ValueKey('download-task-remove-${task.id}'),
-            tooltip: context.l10n.remove,
+            tooltip: context.l10n.removeFromList,
             onPressed: isBusy ? null : onRemove,
             icon: const Icon(Icons.delete_outline),
           ),
@@ -214,7 +230,7 @@ class DownloadTaskTile extends StatelessWidget {
         [
           IconButton(
             key: ValueKey('download-task-remove-${task.id}'),
-            tooltip: context.l10n.remove,
+            tooltip: context.l10n.removeFromList,
             onPressed: isBusy ? null : onRemove,
             icon: const Icon(Icons.delete_outline),
           ),
@@ -315,7 +331,7 @@ class _StatusChip extends StatelessWidget {
       DownloadStatus.pending => context.l10n.pending,
       DownloadStatus.preparing => context.l10n.preparing,
       DownloadStatus.downloading => context.l10n.downloading,
-      DownloadStatus.paused => context.l10n.paused,
+      DownloadStatus.paused => context.l10n.downloadStoppedStatus,
       DownloadStatus.completed => context.l10n.completed,
       DownloadStatus.failed => context.l10n.failed,
       DownloadStatus.canceled => context.l10n.canceled,

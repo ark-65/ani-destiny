@@ -17,5 +17,7 @@ abstract class DownloadService {
 
   Future<void> cancel(String taskId);
 
+  Future<void> removeEndedTask(String taskId);
+
   Stream<DownloadProgress> watchProgress(String taskId);
 }
