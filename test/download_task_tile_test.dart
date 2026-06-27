@@ -149,6 +149,48 @@ void main() {
   });
 
   testWidgets(
+    'busy stopped downloads keep showing an in-flight stopping state until cleanup settles',
+    (tester) async {
+      await tester.pumpWidget(
+        _buildTileApp(
+          DownloadTaskTile(
+            task: _task(
+              status: DownloadStatus.paused,
+              failureReason: DownloadFailureReason.none,
+            ),
+            isBusy: true,
+            busyAction: DownloadTaskBusyAction.pause,
+            onStart: () {},
+            onPause: () {},
+            onCancel: () {},
+            onRemove: () {},
+          ),
+        ),
+      );
+      await tester.pump();
+
+      expect(find.text('Stopping...'), findsOneWidget);
+      expect(
+        find.text(
+          'AniDestiny is still stopping this download and clearing its partial file. This task will show Stopped when that cleanup finishes.',
+        ),
+        findsOneWidget,
+      );
+      expect(find.text('Stopped'), findsNothing);
+      expect(
+        find.text(
+          'This download is stopped for now. Retrying may restart it from the beginning. Discarding it clears any partial file.',
+        ),
+        findsNothing,
+      );
+      expect(
+        find.byKey(const ValueKey('download-task-busy-task-1')),
+        findsOneWidget,
+      );
+    },
+  );
+
+  testWidgets(
     'busy discarded downloads keep showing an in-flight discard state until cleanup settles',
     (tester) async {
       await tester.pumpWidget(

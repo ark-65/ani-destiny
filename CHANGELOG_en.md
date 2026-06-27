@@ -7,6 +7,7 @@
 ## [Unreleased]
 
 ### 🐛 Fixed
+- Fixed direct-file download tiles already reading `Stopped` the moment users tapped `Stop for now`, even though AniDestiny could still be canceling that request and clearing its partial file underneath; the tile now stays in an explicit `Stopping...` transition until cleanup truly settles, then returns to the retryable stopped state.
 - Fixed direct-file download tiles already claiming `Discarded` and implying the partial file was gone the moment users tapped `Discard download`, even though AniDestiny could still be canceling the request and clearing that leftover file underneath; the tile now stays in an explicit `Discarding...` transition until cleanup actually settles, then shows the real final result.
 - Fixed direct-file downloads ending `Stop for now` or `Discard download` too early in the UI while AniDestiny was still unwinding the canceled request and cleaning up the partial file underneath; those actions now stay in-flight until that download attempt has truly settled, so users cannot race into retry or remove-from-list actions before the old partial file cleanup has finished.
 - Fixed the downloads page already surfacing leftover-file tasks as `Needs cleanup` while its page-level batch-cleanup guidance still called the same tasks generic canceled entries, which split the status label away from the cleanup instructions right when users were deciding what to do next; those page-level notes now reuse the same `Needs cleanup` wording so the list state and cleanup guidance tell one consistent story.

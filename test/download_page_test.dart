@@ -320,6 +320,49 @@ void main() {
   );
 
   testWidgets(
+    'active stop keeps an in-flight stopping message until cleanup settles',
+    (tester) async {
+      final settlePause = Completer<void>();
+      final repository = _FakeDownloadRepository([
+        _task('downloading', DownloadStatus.downloading).copyWith(
+          localPath: '/tmp/partial-video.mp4',
+        ),
+      ]);
+      final service = _PauseInFlightDownloadService(
+        repository,
+        settlePause.future,
+      );
+
+      await _pumpDownloadPage(
+        tester,
+        repository,
+        downloadService: service,
+      );
+
+      await tester.tap(
+        find.byKey(const ValueKey('download-task-pause-downloading')),
+      );
+      await tester.pump();
+
+      expect(find.text('Stopping...'), findsOneWidget);
+      expect(
+        find.text(
+          'AniDestiny is still stopping this download and clearing its partial file. This task will show Stopped when that cleanup finishes.',
+        ),
+        findsOneWidget,
+      );
+      expect(find.text('Stopped'), findsNothing);
+
+      settlePause.complete();
+      await tester.pump();
+      await tester.pump();
+
+      expect(find.text('Stopped'), findsOneWidget);
+      expect(find.text('Stopping...'), findsNothing);
+    },
+  );
+
+  testWidgets(
     'active discard keeps an in-flight discard message until cleanup settles',
     (tester) async {
       final settleCancel = Completer<void>();
@@ -971,6 +1014,35 @@ class _CancelInFlightDownloadService extends _FakeDownloadService {
         totalBytes: null,
         downloadedBytes: 0,
         localPath: null,
+      ),
+    );
+    await settleFuture;
+  }
+}
+
+class _PauseInFlightDownloadService extends _FakeDownloadService {
+  _PauseInFlightDownloadService(
+    super.repository,
+    this.settleFuture,
+  );
+
+  final Future<void> settleFuture;
+
+  @override
+  Future<void> pause(String taskId) async {
+    final task = await repository.getTask(taskId);
+    if (task == null) {
+      return;
+    }
+    await repository.upsertTask(
+      task.copyWith(
+        status: DownloadStatus.paused,
+        failureReason: DownloadFailureReason.none,
+        failureMessage: null,
+        progress: 0,
+        totalBytes: null,
+        downloadedBytes: 0,
+        localPath: '/tmp/partial-video.mp4',
       ),
     );
     await settleFuture;

@@ -137,6 +137,10 @@ class DownloadTaskTile extends StatelessWidget {
 
   String? _supportNote(BuildContext context) {
     return switch (task.status) {
+      DownloadStatus.paused
+          when task.kind == DownloadKind.directFile &&
+              busyAction == DownloadTaskBusyAction.pause =>
+        context.l10n.downloadStoppingNote,
       DownloadStatus.canceled
           when task.kind == DownloadKind.directFile &&
               busyAction == DownloadTaskBusyAction.cancel =>
@@ -375,6 +379,8 @@ class _StatusChip extends StatelessWidget {
       DownloadStatus.pending => context.l10n.pending,
       DownloadStatus.preparing => context.l10n.preparing,
       DownloadStatus.downloading => context.l10n.downloading,
+      DownloadStatus.paused when busyAction == DownloadTaskBusyAction.pause =>
+        context.l10n.downloadStoppingStatus,
       DownloadStatus.paused => context.l10n.downloadStoppedStatus,
       DownloadStatus.completed => context.l10n.completed,
       DownloadStatus.failed => context.l10n.failed,
