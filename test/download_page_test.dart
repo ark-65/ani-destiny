@@ -116,7 +116,7 @@ void main() {
 
       expect(
         find.text(
-          'Discarded tasks that still show a leftover file path stay in the list until that partial file is gone. After you delete it, return here and tap Check again on that task.',
+          'Tasks marked Needs cleanup stay in the list until that leftover partial file is gone. After you delete it, return here and tap Check again on that task.',
         ),
         findsOneWidget,
       );
@@ -129,7 +129,7 @@ void main() {
       expect(repository.deletedTaskIds, ['completed']);
       expect(
         find.text(
-          'Cleared 1 ended tasks from the list.\nDiscarded tasks with leftover file paths stay visible until those partial files are gone.',
+          'Cleared 1 ended tasks from the list.\nTasks marked Needs cleanup stay visible until those leftover partial files are gone.',
         ),
         findsOneWidget,
       );
@@ -156,7 +156,7 @@ void main() {
       );
       expect(
         find.text(
-          'Discarded tasks that still show a leftover file path stay in the list until that partial file is gone. After you delete it, return here and tap Check again on that task.',
+          'Tasks marked Needs cleanup stay in the list until that leftover partial file is gone. After you delete it, return here and tap Check again on that task.',
         ),
         findsOneWidget,
       );
@@ -213,7 +213,7 @@ void main() {
       );
       expect(
         find.text(
-          'Discarded tasks that still show a leftover file path stay in the list until that partial file is gone.',
+          'Tasks marked Needs cleanup stay in the list until that leftover partial file is gone.',
         ),
         findsNothing,
       );
@@ -524,6 +524,34 @@ void main() {
   );
 
   testWidgets(
+    'manual cleanup guidance uses the localized needs-cleanup status wording',
+    (tester) async {
+      const partialPath = '/tmp/partial-video.mp4';
+      _stubCleanupPathExists({partialPath});
+      final repository = _FakeDownloadRepository([
+        _task('canceled', DownloadStatus.canceled).copyWith(
+          localPath: partialPath,
+          failureReason: DownloadFailureReason.canceled,
+        ),
+      ]);
+
+      await _pumpDownloadPage(
+        tester,
+        repository,
+        locale: const Locale('zh'),
+      );
+
+      expect(
+        find.text(
+          '标成“待清理残留文件”的任务会继续留在列表里，直到这份半截文件已经被手动删掉，或 AniDestiny 成功把它清掉。删完后回到这里点一下“重新检查”。',
+        ),
+        findsOneWidget,
+      );
+      expect(find.textContaining('“已取消”任务'), findsNothing);
+    },
+  );
+
+  testWidgets(
     'manual cleanup tasks recheck leftover files when the app resumes',
     (tester) async {
       const partialPath = '/tmp/partial-video.mp4';
@@ -788,12 +816,14 @@ Future<void> _pumpDownloadPage(
   DownloadRepository repository, {
   bool showDebugMockAction = true,
   DownloadService? downloadService,
+  Locale locale = const Locale('en'),
 }) async {
   await tester.pumpWidget(
     _TestApp(
       repository: repository,
       showDebugMockAction: showDebugMockAction,
       downloadService: downloadService,
+      locale: locale,
     ),
   );
   await tester.pumpAndSettle();
@@ -804,11 +834,13 @@ class _TestApp extends StatelessWidget {
     required this.repository,
     required this.showDebugMockAction,
     this.downloadService,
+    required this.locale,
   });
 
   final DownloadRepository repository;
   final bool showDebugMockAction;
   final DownloadService? downloadService;
+  final Locale locale;
 
   @override
   Widget build(BuildContext context) {
@@ -820,7 +852,7 @@ class _TestApp extends StatelessWidget {
         httpDownloadServiceProvider.overrideWithValue(effectiveDownloadService),
       ],
       child: MaterialApp(
-        locale: const Locale('en'),
+        locale: locale,
         supportedLocales: AppLocalizations.supportedLocales,
         localizationsDelegates: const [
           AppLocalizations.delegate,
