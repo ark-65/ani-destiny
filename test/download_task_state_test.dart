@@ -343,7 +343,11 @@ void main() {
     final startFuture = service.start(taskId);
     await dio.downloadStarted.future;
 
-    await service.cancel(taskId);
+    var cancelSettled = false;
+    final cancelFuture = service.cancel(taskId).then((_) {
+      cancelSettled = true;
+    });
+    await Future<void>.delayed(Duration.zero);
 
     final canceledTask = await repository.getTask(taskId);
     expect(canceledTask, isNotNull);
@@ -354,11 +358,13 @@ void main() {
     expect(canceledTask.totalBytes, isNull);
     expect(canceledTask.downloadedBytes, 0);
     expect(canceledTask.localPath, isNull);
+    expect(cancelSettled, isFalse);
 
     final partialFile = File(dio.savePath!);
     expect(partialFile.existsSync(), isTrue);
 
     dio.allowCancelCompletion.complete();
+    await cancelFuture;
     await startFuture;
 
     final finalizedTask = await repository.getTask(taskId);
@@ -366,6 +372,82 @@ void main() {
     expect(finalizedTask!.status, DownloadStatus.canceled);
     expect(finalizedTask.localPath, isNull);
     expect(partialFile.existsSync(), isFalse);
+    expect(cancelSettled, isTrue);
+  });
+
+  test(
+      'pausing an active direct download waits for the canceled attempt to settle',
+      () async {
+    final database = AppDatabase(NativeDatabase.memory());
+    addTearDown(database.close);
+    final tempDir =
+        await Directory.systemTemp.createTemp('ani-destiny-active-pause');
+    addTearDown(() async {
+      if (tempDir.existsSync()) {
+        await tempDir.delete(recursive: true);
+      }
+    });
+
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMethodCallHandler(pathProviderChannel, (call) async {
+      if (call.method == 'getApplicationDocumentsDirectory') {
+        return tempDir.path;
+      }
+      return null;
+    });
+
+    final repository = DownloadRepositoryImpl(database);
+    final dio = _BlockingCancelDio();
+    final service = HttpDownloadService(
+      dio: dio,
+      repository: repository,
+    );
+
+    final taskId = await service.createTask(
+      animeId: 'anime-1',
+      episodeId: 'episode-1',
+      sourceId: 'sakura',
+      source: const DownloadSource(
+        url: 'https://cdn.example.test/video.mp4',
+        kind: DownloadKind.directFile,
+      ),
+      title: 'Direct Test',
+      episodeTitle: 'Episode 1',
+    );
+
+    final startFuture = service.start(taskId);
+    await dio.downloadStarted.future;
+
+    var pauseSettled = false;
+    final pauseFuture = service.pause(taskId).then((_) {
+      pauseSettled = true;
+    });
+    await Future<void>.delayed(Duration.zero);
+
+    final pausedTask = await repository.getTask(taskId);
+    expect(pausedTask, isNotNull);
+    expect(pausedTask!.status, DownloadStatus.paused);
+    expect(pausedTask.failureReason, DownloadFailureReason.none);
+    expect(pausedTask.failureMessage, isNull);
+    expect(pausedTask.progress, 0);
+    expect(pausedTask.totalBytes, isNull);
+    expect(pausedTask.downloadedBytes, 0);
+    expect(pausedTask.localPath, isNotNull);
+    expect(pauseSettled, isFalse);
+
+    final partialFile = File(dio.savePath!);
+    expect(partialFile.existsSync(), isTrue);
+
+    dio.allowCancelCompletion.complete();
+    await pauseFuture;
+    await startFuture;
+
+    final finalizedTask = await repository.getTask(taskId);
+    expect(finalizedTask, isNotNull);
+    expect(finalizedTask!.status, DownloadStatus.paused);
+    expect(finalizedTask.localPath, isNull);
+    expect(partialFile.existsSync(), isFalse);
+    expect(pauseSettled, isTrue);
   });
 
   test('removing a discarded task clears any leftover partial file first',
