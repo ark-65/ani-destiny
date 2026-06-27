@@ -358,7 +358,7 @@ class _StatusChip extends StatelessWidget {
       DownloadStatus.paused => context.l10n.downloadStoppedStatus,
       DownloadStatus.completed => context.l10n.completed,
       DownloadStatus.failed => context.l10n.failed,
-      DownloadStatus.canceled => context.l10n.canceled,
+      DownloadStatus.canceled => context.l10n.downloadDiscardedStatus,
       DownloadStatus.unsupported => context.l10n.unsupported,
     };
   }

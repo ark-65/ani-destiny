@@ -7,6 +7,7 @@
 ## [Unreleased]
 
 ### 🐛 Fixed
+- Fixed discarded download tiles already using discard-focused actions and explanations while still labeling the end state with a generic `Canceled` status chip, which made that finished state read more like an internal error flag than a deliberate user action; AniDestiny now labels those tasks as `Discarded` so the status, guidance, and cleanup actions all speak the same language.
 - Fixed discarded download tiles still keeping a `0%` progress bar and progress copy on screen after users had already thrown the download away, which made that ended state look like it was still waiting to continue; AniDestiny now hides that stale progress UI for discarded tasks so the tile focuses on the real cleanup result, leftover-file guidance, and finish-the-cleanup actions.
 - Fixed AniDestiny still greeting users with a vague “some leftover files are gone” message after they had manually deleted only part of the retained download leftovers and returned to the app, which left them guessing how much cleanup was actually finished; the resume confirmation now says exactly how many leftover files were cleared and how many tasks still need cleanup.
 - Fixed the downloads page still making users re-check leftover-file cleanup one task at a time when several discarded tasks were waiting on manual cleanup; AniDestiny now adds a count-aware page-level recheck action that refreshes every leftover-file task together and immediately tells users which ones can now be removed and which ones still need cleanup.

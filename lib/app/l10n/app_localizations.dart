@@ -234,6 +234,7 @@ class AppLocalizations {
   String get downloadDiscardedNote => _t('downloadDiscardedNote');
   String get downloadDiscardedNeedsManualCleanupNote =>
       _t('downloadDiscardedNeedsManualCleanupNote');
+  String get downloadDiscardedStatus => _t('downloadDiscardedStatus');
   String get downloadRemoveKeepsFileNote => _t('downloadRemoveKeepsFileNote');
   String get clearEndedDownloadsKeepsFilesNote =>
       _t('clearEndedDownloadsKeepsFilesNote');
@@ -673,6 +674,7 @@ const _localizedValues = {
     'downloadDiscardedNote': '这个下载已放弃；未完成内容和临时文件都已清掉。确认无误后，你可以把这条记录从列表移除。',
     'downloadDiscardedNeedsManualCleanupNote':
         '这个下载已放弃，但 AniDestiny 没能自动清掉残留的未完成文件；如果你不再需要它，请按下面的本地路径手动删除，删完后回到这里点一下“重新检查”。',
+    'downloadDiscardedStatus': '已放弃',
     'downloadRemoveKeepsFileNote': '从列表移除这个任务不会删除已下载文件；文件会继续保留在设备上。',
     'downloadManualCleanupRequiredError':
         'AniDestiny 还没能清掉这份残留文件；请先在设备上手动删除它，之后再把这条任务从列表里移除。',
@@ -985,6 +987,7 @@ const _localizedValues = {
         'This download was discarded. Any partial file was cleared. You can remove this task from the list when you are done.',
     'downloadDiscardedNeedsManualCleanupNote':
         'This download was discarded, but AniDestiny could not clear the partial file automatically. Remove the leftover file from your device if you no longer need it, then return here and tap Check again.',
+    'downloadDiscardedStatus': 'Discarded',
     'downloadRemoveKeepsFileNote':
         'Removing this task only clears it from the list. The downloaded file stays on your device.',
     'downloadManualCleanupRequiredError':
@@ -1306,6 +1309,7 @@ const _localizedValues = {
         'このダウンロードは破棄され、未完了の内容と一時ファイルは削除されました。確認できたら、このタスクを一覧から消せます。',
     'downloadDiscardedNeedsManualCleanupNote':
         'このダウンロードは破棄されましたが、AniDestiny は未完了ファイルを自動で削除できませんでした。不要なら下のローカルパスをもとに手動で削除し、戻ってきたら「再確認」を押してください。',
+    'downloadDiscardedStatus': '破棄済み',
     'downloadRemoveKeepsFileNote': 'このタスクを一覧から削除しても、ダウンロード済みファイルは端末に残ります。',
     'downloadManualCleanupRequiredError':
         'AniDestiny はこの残留ファイルをまだ削除できませんでした。先に端末上で削除してから、このタスクを一覧から整理してください。',

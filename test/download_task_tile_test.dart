@@ -232,7 +232,7 @@ void main() {
       await tester.pump();
 
       expect(find.text('Needs cleanup'), findsNothing);
-      expect(find.text('Canceled'), findsOneWidget);
+      expect(find.text('Discarded'), findsOneWidget);
       expect(
         find.text(
           'This download was discarded. Any partial file was cleared. You can remove this task from the list when you are done.',
@@ -254,7 +254,7 @@ void main() {
   );
 
   testWidgets(
-    'removable canceled downloads keep the standard canceled status label',
+    'removable canceled downloads use the discarded status label',
     (tester) async {
       await tester.pumpWidget(
         _buildTileApp(
@@ -273,7 +273,7 @@ void main() {
       );
       await tester.pump();
 
-      expect(find.text('Canceled'), findsOneWidget);
+      expect(find.text('Discarded'), findsOneWidget);
       expect(find.text('Needs cleanup'), findsNothing);
     },
   );
