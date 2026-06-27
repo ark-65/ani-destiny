@@ -248,9 +248,9 @@ void main() {
 
     final markdown = const FeedbackPackageFormatter(l10n: l10n).format(package);
 
-    expect(markdown, contains('- Canceled: 1'));
+    expect(markdown, contains('- Discarded: 1'));
     expect(markdown, contains('- Latest issue: None'));
-    expect(markdown, isNot(contains('Reason: Canceled')));
+    expect(markdown, isNot(contains('Reason: Discarded')));
     expect(markdown, isNot(contains('Download canceled.')));
   });
 
@@ -344,10 +344,10 @@ void main() {
     final markdown = const FeedbackPackageFormatter(l10n: l10n).format(package);
 
     expect(markdown, contains('- Needs cleanup: 1'));
-    expect(markdown, contains('- Canceled: 0'));
+    expect(markdown, contains('- Discarded: 0'));
     expect(
       markdown,
-      contains('- Latest issue: Needs cleanup · Reason: Canceled'),
+      contains('- Latest issue: Needs cleanup · Reason: Discarded'),
     );
   });
 
