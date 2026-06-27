@@ -1,4 +1,5 @@
 import '../../app/l10n/app_localizations.dart';
+import '../../features/download/download_task_cleanup_state.dart';
 import '../../features/download/domain/entities/download_failure_reason.dart';
 import '../../features/download/domain/entities/download_kind.dart';
 import '../../features/download/domain/entities/download_task.dart';
@@ -171,14 +172,24 @@ class FeedbackPackageCollector {
 
     final statusCounts = <DownloadStatus, int>{};
     final kindCounts = <DownloadKind, int>{};
+    final manualCleanupTaskIds = <String>{};
     for (final task in downloadTasks) {
+      final needsManualCleanup = downloadTaskNeedsManualCleanup(task);
+      if (needsManualCleanup) {
+        manualCleanupTaskIds.add(task.id);
+      }
       statusCounts[task.status] = (statusCounts[task.status] ?? 0) + 1;
       kindCounts[task.kind] = (kindCounts[task.kind] ?? 0) + 1;
     }
 
+    final manualCleanupCount = manualCleanupTaskIds.length;
+    final canceledCount =
+        (statusCounts[DownloadStatus.canceled] ?? 0) - manualCleanupCount;
+
     final latestIssue = downloadTasks
         .where(
           (task) =>
+              manualCleanupTaskIds.contains(task.id) ||
               task.status == DownloadStatus.failed ||
               task.status == DownloadStatus.unsupported ||
               (task.failureReason != DownloadFailureReason.none &&
@@ -190,8 +201,23 @@ class FeedbackPackageCollector {
     final lines = <String>[
       '- ${l10n.feedbackPackageTotalTasks}: ${downloadTasks.length}',
       '- ${l10n.feedbackPackageStatusCounts}:',
-      for (final status in DownloadStatus.values)
-        '  - ${_downloadStatusLabel(status)}: ${statusCounts[status] ?? 0}',
+      '  - ${_downloadStatusLabel(DownloadStatus.pending)}: '
+          '${statusCounts[DownloadStatus.pending] ?? 0}',
+      '  - ${_downloadStatusLabel(DownloadStatus.preparing)}: '
+          '${statusCounts[DownloadStatus.preparing] ?? 0}',
+      '  - ${_downloadStatusLabel(DownloadStatus.downloading)}: '
+          '${statusCounts[DownloadStatus.downloading] ?? 0}',
+      '  - ${_downloadStatusLabel(DownloadStatus.paused)}: '
+          '${statusCounts[DownloadStatus.paused] ?? 0}',
+      '  - ${_downloadStatusLabel(DownloadStatus.completed)}: '
+          '${statusCounts[DownloadStatus.completed] ?? 0}',
+      '  - ${_downloadStatusLabel(DownloadStatus.failed)}: '
+          '${statusCounts[DownloadStatus.failed] ?? 0}',
+      if (manualCleanupCount > 0)
+        '  - ${l10n.downloadManualCleanupStatus}: $manualCleanupCount',
+      '  - ${_downloadStatusLabel(DownloadStatus.canceled)}: $canceledCount',
+      '  - ${_downloadStatusLabel(DownloadStatus.unsupported)}: '
+          '${statusCounts[DownloadStatus.unsupported] ?? 0}',
       '- ${l10n.feedbackPackageKindCounts}:',
       for (final kind in DownloadKind.values)
         '  - ${_downloadKindLabel(kind)}: ${kindCounts[kind] ?? 0}',
@@ -203,8 +229,10 @@ class FeedbackPackageCollector {
       );
     } else {
       final task = latestIssue.first;
+      final needsManualCleanup = manualCleanupTaskIds.contains(task.id);
       lines.add(
-        '- ${l10n.feedbackPackageLatestIssue}: ${_downloadStatusLabel(task.status)}'
+        '- ${l10n.feedbackPackageLatestIssue}: '
+        '${needsManualCleanup ? l10n.downloadManualCleanupStatus : _downloadStatusLabel(task.status)}'
         ' · ${l10n.feedbackPackageReason}: '
         '${_downloadFailureReasonLabel(task.failureReason)}',
       );

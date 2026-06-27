@@ -2,6 +2,7 @@ import 'package:ani_destiny/app/l10n/app_localizations.dart';
 import 'package:ani_destiny/core/diagnostics/feedback_package_collector.dart';
 import 'package:ani_destiny/core/diagnostics/feedback_package_formatter.dart';
 import 'package:ani_destiny/core/diagnostics/playback_diagnostic_time_formatter.dart';
+import 'package:ani_destiny/features/download/download_task_cleanup_state.dart';
 import 'package:ani_destiny/features/download/domain/entities/download_failure_reason.dart';
 import 'package:ani_destiny/features/download/domain/entities/download_kind.dart';
 import 'package:ani_destiny/features/download/domain/entities/download_task.dart';
@@ -294,6 +295,60 @@ void main() {
     expect(markdown, contains('- Stopped: 1'));
     expect(markdown, isNot(contains('- Paused: 1')));
     expect(markdown, contains('- Latest issue: None'));
+  });
+
+  test('collector keeps manual-cleanup download wording aligned with the page',
+      () {
+    const leftoverPath = '/tmp/manual-cleanup-partial.mp4';
+    debugSetDownloadCleanupPathExists(
+      (localPath) => localPath == leftoverPath,
+    );
+    addTearDown(() => debugSetDownloadCleanupPathExists(null));
+
+    final now = DateTime.utc(2026, 6, 27, 1, 0, 0);
+    const l10n = AppLocalizations(Locale('en'));
+    final package = FeedbackPackageCollector(
+      l10n: l10n,
+      appName: 'AniDestiny',
+      appVersion: '1.0.4',
+      platform: 'Windows',
+      currentSourceId: 'sakura',
+      sourceHealth: const [],
+      sourceDiagnostics: const [],
+      fallbackEvents: const [],
+      playbackDiagnostics: null,
+      danmakuEnabled: false,
+      dandanplayAppIdConfigured: false,
+      dandanplayAppSecretConfigured: false,
+      downloadTasks: [
+        DownloadTask(
+          id: 'task-cleanup',
+          animeId: 'anime-1',
+          episodeId: 'episode-1',
+          sourceId: 'sakura',
+          title: 'Anime',
+          episodeTitle: 'Episode 1',
+          url: 'https://cdn.example.test/video.mp4',
+          kind: DownloadKind.directFile,
+          status: DownloadStatus.canceled,
+          failureReason: DownloadFailureReason.canceled,
+          progress: 0,
+          downloadedBytes: 0,
+          localPath: leftoverPath,
+          createdAt: now,
+          updatedAt: now,
+        ),
+      ],
+    ).collect(generatedAt: now);
+
+    final markdown = const FeedbackPackageFormatter(l10n: l10n).format(package);
+
+    expect(markdown, contains('- Needs cleanup: 1'));
+    expect(markdown, contains('- Canceled: 0'));
+    expect(
+      markdown,
+      contains('- Latest issue: Needs cleanup · Reason: Canceled'),
+    );
   });
 
   test(

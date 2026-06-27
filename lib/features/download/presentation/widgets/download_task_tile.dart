@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../../app/l10n/app_localizations.dart';
+import '../download_task_cleanup_state.dart';
 import '../../domain/entities/download_failure_reason.dart';
 import '../../domain/entities/download_kind.dart';
 import '../../domain/entities/download_task.dart';
@@ -13,6 +14,7 @@ class DownloadTaskTile extends StatelessWidget {
     required this.onPause,
     required this.onCancel,
     required this.onRemove,
+    this.onRefreshCleanupStatus,
     super.key,
   });
 
@@ -22,6 +24,7 @@ class DownloadTaskTile extends StatelessWidget {
   final VoidCallback onPause;
   final VoidCallback onCancel;
   final VoidCallback onRemove;
+  final VoidCallback? onRefreshCleanupStatus;
 
   @override
   Widget build(BuildContext context) {
@@ -41,7 +44,7 @@ class DownloadTaskTile extends StatelessWidget {
                     style: Theme.of(context).textTheme.titleMedium,
                   ),
                 ),
-                _StatusChip(status: task.status),
+                _StatusChip(task: task),
               ],
             ),
             const SizedBox(height: 4),
@@ -125,9 +128,9 @@ class DownloadTaskTile extends StatelessWidget {
       DownloadStatus.paused when task.kind == DownloadKind.directFile =>
         context.l10n.downloadPausedRetryNote,
       DownloadStatus.canceled when task.kind == DownloadKind.directFile =>
-        task.localPath == null
-            ? context.l10n.downloadDiscardedNote
-            : context.l10n.downloadDiscardedNeedsManualCleanupNote,
+        downloadTaskNeedsManualCleanup(task)
+            ? context.l10n.downloadDiscardedNeedsManualCleanupNote
+            : context.l10n.downloadDiscardedNote,
       DownloadStatus.completed when _showLocalPath(task) =>
         context.l10n.downloadRemoveKeepsFileNote,
       DownloadStatus.pending ||
@@ -153,9 +156,7 @@ class DownloadTaskTile extends StatelessWidget {
   }
 
   bool _showLocalPath(DownloadTask task) {
-    return task.localPath != null &&
-        (task.status == DownloadStatus.completed ||
-            task.status == DownloadStatus.canceled);
+    return downloadTaskShowsLocalPath(task);
   }
 
   List<Widget> _actions(BuildContext context) {
@@ -224,10 +225,7 @@ class DownloadTaskTile extends StatelessWidget {
             icon: const Icon(Icons.delete_outline),
           ),
         ],
-      DownloadStatus.completed ||
-      DownloadStatus.unsupported ||
-      DownloadStatus.canceled =>
-        [
+      DownloadStatus.completed || DownloadStatus.unsupported => [
           IconButton(
             key: ValueKey('download-task-remove-${task.id}'),
             tooltip: context.l10n.removeFromList,
@@ -235,6 +233,23 @@ class DownloadTaskTile extends StatelessWidget {
             icon: const Icon(Icons.delete_outline),
           ),
         ],
+      DownloadStatus.canceled => downloadTaskNeedsManualCleanup(task)
+          ? [
+              TextButton.icon(
+                key: ValueKey('download-task-refresh-cleanup-${task.id}'),
+                onPressed: isBusy ? null : onRefreshCleanupStatus,
+                icon: const Icon(Icons.refresh, size: 18),
+                label: Text(context.l10n.checkAgain),
+              ),
+            ]
+          : [
+              IconButton(
+                key: ValueKey('download-task-remove-${task.id}'),
+                tooltip: context.l10n.removeFromList,
+                onPressed: isBusy ? null : onRemove,
+                icon: const Icon(Icons.delete_outline),
+              ),
+            ],
     };
   }
 
@@ -314,20 +329,23 @@ class _InfoChip extends StatelessWidget {
 }
 
 class _StatusChip extends StatelessWidget {
-  const _StatusChip({required this.status});
+  const _StatusChip({required this.task});
 
-  final DownloadStatus status;
+  final DownloadTask task;
 
   @override
   Widget build(BuildContext context) {
     return Chip(
-      label: Text(_label(context, status)),
+      label: Text(_label(context, task)),
       visualDensity: VisualDensity.compact,
     );
   }
 
-  String _label(BuildContext context, DownloadStatus status) {
-    return switch (status) {
+  String _label(BuildContext context, DownloadTask task) {
+    if (downloadTaskNeedsManualCleanup(task)) {
+      return context.l10n.downloadManualCleanupStatus;
+    }
+    return switch (task.status) {
       DownloadStatus.pending => context.l10n.pending,
       DownloadStatus.preparing => context.l10n.preparing,
       DownloadStatus.downloading => context.l10n.downloading,

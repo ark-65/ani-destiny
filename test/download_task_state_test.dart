@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:ani_destiny/core/error/app_exception.dart';
@@ -10,6 +11,7 @@ import 'package:ani_destiny/features/download/domain/entities/download_progress.
 import 'package:ani_destiny/features/download/domain/entities/download_source.dart';
 import 'package:ani_destiny/features/download/domain/entities/download_task.dart';
 import 'package:dio/dio.dart';
+import 'package:dio/io.dart';
 import 'package:drift/native.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -298,6 +300,74 @@ void main() {
     expect(partialFile.existsSync(), isFalse);
   });
 
+  test(
+      'canceling an active direct download stays plain canceled until cleanup actually fails',
+      () async {
+    final database = AppDatabase(NativeDatabase.memory());
+    addTearDown(database.close);
+    final tempDir =
+        await Directory.systemTemp.createTemp('ani-destiny-active-cancel');
+    addTearDown(() async {
+      if (tempDir.existsSync()) {
+        await tempDir.delete(recursive: true);
+      }
+    });
+
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMethodCallHandler(pathProviderChannel, (call) async {
+      if (call.method == 'getApplicationDocumentsDirectory') {
+        return tempDir.path;
+      }
+      return null;
+    });
+
+    final repository = DownloadRepositoryImpl(database);
+    final dio = _BlockingCancelDio();
+    final service = HttpDownloadService(
+      dio: dio,
+      repository: repository,
+    );
+
+    final taskId = await service.createTask(
+      animeId: 'anime-1',
+      episodeId: 'episode-1',
+      sourceId: 'sakura',
+      source: const DownloadSource(
+        url: 'https://cdn.example.test/video.mp4',
+        kind: DownloadKind.directFile,
+      ),
+      title: 'Direct Test',
+      episodeTitle: 'Episode 1',
+    );
+
+    final startFuture = service.start(taskId);
+    await dio.downloadStarted.future;
+
+    await service.cancel(taskId);
+
+    final canceledTask = await repository.getTask(taskId);
+    expect(canceledTask, isNotNull);
+    expect(canceledTask!.status, DownloadStatus.canceled);
+    expect(canceledTask.failureReason, DownloadFailureReason.canceled);
+    expect(canceledTask.failureMessage, isNull);
+    expect(canceledTask.progress, 0);
+    expect(canceledTask.totalBytes, isNull);
+    expect(canceledTask.downloadedBytes, 0);
+    expect(canceledTask.localPath, isNull);
+
+    final partialFile = File(dio.savePath!);
+    expect(partialFile.existsSync(), isTrue);
+
+    dio.allowCancelCompletion.complete();
+    await startFuture;
+
+    final finalizedTask = await repository.getTask(taskId);
+    expect(finalizedTask, isNotNull);
+    expect(finalizedTask!.status, DownloadStatus.canceled);
+    expect(finalizedTask.localPath, isNull);
+    expect(partialFile.existsSync(), isFalse);
+  });
+
   test('removing a discarded task clears any leftover partial file first',
       () async {
     final database = AppDatabase(NativeDatabase.memory());
@@ -428,4 +498,39 @@ void main() {
     expect(task.failureReason, DownloadFailureReason.networkError);
     expect(task.failureMessage, 'offline');
   });
+}
+
+class _BlockingCancelDio extends DioForNative {
+  final Completer<void> downloadStarted = Completer<void>();
+  final Completer<void> allowCancelCompletion = Completer<void>();
+  String? savePath;
+
+  @override
+  Future<Response> download(
+    String urlPath,
+    dynamic savePath, {
+    ProgressCallback? onReceiveProgress,
+    Map<String, dynamic>? queryParameters,
+    CancelToken? cancelToken,
+    bool deleteOnError = true,
+    FileAccessMode fileAccessMode = FileAccessMode.write,
+    String lengthHeader = Headers.contentLengthHeader,
+    Object? data,
+    Options? options,
+  }) async {
+    this.savePath = savePath as String;
+    final file = File(this.savePath!);
+    await file.parent.create(recursive: true);
+    await file.writeAsString('partial');
+    onReceiveProgress?.call(600, 1000);
+    if (!downloadStarted.isCompleted) {
+      downloadStarted.complete();
+    }
+    await cancelToken?.whenCancel;
+    await allowCancelCompletion.future;
+    throw DioException.requestCancelled(
+      requestOptions: RequestOptions(path: urlPath),
+      reason: 'canceled',
+    );
+  }
 }
