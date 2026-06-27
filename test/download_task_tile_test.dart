@@ -149,6 +149,48 @@ void main() {
   });
 
   testWidgets(
+    'busy discarded downloads keep showing an in-flight discard state until cleanup settles',
+    (tester) async {
+      await tester.pumpWidget(
+        _buildTileApp(
+          DownloadTaskTile(
+            task: _task(
+              status: DownloadStatus.canceled,
+              failureReason: DownloadFailureReason.canceled,
+            ),
+            isBusy: true,
+            busyAction: DownloadTaskBusyAction.cancel,
+            onStart: () {},
+            onPause: () {},
+            onCancel: () {},
+            onRemove: () {},
+          ),
+        ),
+      );
+      await tester.pump();
+
+      expect(find.text('Discarding...'), findsOneWidget);
+      expect(
+        find.text(
+          'AniDestiny is still discarding this download and clearing its partial file. The final cleanup result will appear here when it finishes.',
+        ),
+        findsOneWidget,
+      );
+      expect(find.text('Discarded'), findsNothing);
+      expect(
+        find.text(
+          'This download was discarded. Any partial file was cleared. You can remove this task from the list when you are done.',
+        ),
+        findsNothing,
+      );
+      expect(
+        find.byKey(const ValueKey('download-task-busy-task-1')),
+        findsOneWidget,
+      );
+    },
+  );
+
+  testWidgets(
     'canceled downloads show leftover local path when cleanup still needs help',
     (tester) async {
       const partialPath = '/tmp/partial-video.mp4';

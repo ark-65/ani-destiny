@@ -319,6 +319,49 @@ void main() {
     },
   );
 
+  testWidgets(
+    'active discard keeps an in-flight discard message until cleanup settles',
+    (tester) async {
+      final settleCancel = Completer<void>();
+      final repository = _FakeDownloadRepository([
+        _task('downloading', DownloadStatus.downloading).copyWith(
+          localPath: '/tmp/partial-video.mp4',
+        ),
+      ]);
+      final service = _CancelInFlightDownloadService(
+        repository,
+        settleCancel.future,
+      );
+
+      await _pumpDownloadPage(
+        tester,
+        repository,
+        downloadService: service,
+      );
+
+      await tester.tap(
+        find.byKey(const ValueKey('download-task-cancel-downloading')),
+      );
+      await tester.pump();
+
+      expect(find.text('Discarding...'), findsOneWidget);
+      expect(
+        find.text(
+          'AniDestiny is still discarding this download and clearing its partial file. The final cleanup result will appear here when it finishes.',
+        ),
+        findsOneWidget,
+      );
+      expect(find.text('Discarded'), findsNothing);
+
+      settleCancel.complete();
+      await tester.pump();
+      await tester.pump();
+
+      expect(find.text('Discarded'), findsOneWidget);
+      expect(find.text('Discarding...'), findsNothing);
+    },
+  );
+
   testWidgets('direct downloads use honest stop and retry wording', (
     tester,
   ) async {
@@ -905,6 +948,35 @@ class _FakeDownloadService implements DownloadService {
   }
 }
 
+class _CancelInFlightDownloadService extends _FakeDownloadService {
+  _CancelInFlightDownloadService(
+    super.repository,
+    this.settleFuture,
+  );
+
+  final Future<void> settleFuture;
+
+  @override
+  Future<void> cancel(String taskId) async {
+    final task = await repository.getTask(taskId);
+    if (task == null) {
+      return;
+    }
+    await repository.upsertTask(
+      task.copyWith(
+        status: DownloadStatus.canceled,
+        failureReason: DownloadFailureReason.canceled,
+        failureMessage: null,
+        progress: 0,
+        totalBytes: null,
+        downloadedBytes: 0,
+        localPath: null,
+      ),
+    );
+    await settleFuture;
+  }
+}
+
 class _FakeDownloadRepository implements DownloadRepository {
   _FakeDownloadRepository(
     this._tasks, {
@@ -919,6 +991,8 @@ class _FakeDownloadRepository implements DownloadRepository {
   final Map<String, Future<void>> deleteBlockers;
   final List<String> deleteAttempts = [];
   final List<String> deletedTaskIds = [];
+  final StreamController<List<DownloadTask>> _controller =
+      StreamController<List<DownloadTask>>.broadcast();
 
   @override
   Future<void> deleteTask(String taskId) async {
@@ -934,6 +1008,8 @@ class _FakeDownloadRepository implements DownloadRepository {
       throw StateError('delete failed for $taskId');
     }
     deletedTaskIds.add(taskId);
+    _tasks.removeWhere((task) => task.id == taskId);
+    _controller.add(List.unmodifiable(_tasks));
   }
 
   @override
@@ -946,12 +1022,25 @@ class _FakeDownloadRepository implements DownloadRepository {
 
   @override
   Future<void> upsertTask(DownloadTask task) async {
-    throw UnimplementedError();
+    final index = _tasks.indexWhere((existing) => existing.id == task.id);
+    if (index == -1) {
+      _tasks.add(task);
+    } else {
+      _tasks[index] = task;
+    }
+    _controller.add(List.unmodifiable(_tasks));
   }
 
   @override
   Stream<List<DownloadTask>> watchTasks() {
-    return Stream.value(List.unmodifiable(_tasks));
+    return Stream<List<DownloadTask>>.multi((controller) {
+      controller.add(List.unmodifiable(_tasks));
+      final subscription = _controller.stream.listen(
+        controller.add,
+        onError: controller.addError,
+      );
+      controller.onCancel = subscription.cancel;
+    });
   }
 }
 
