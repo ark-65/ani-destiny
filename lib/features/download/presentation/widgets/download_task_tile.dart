@@ -65,15 +65,17 @@ class DownloadTaskTile extends StatelessWidget {
                   ),
               ],
             ),
-            const SizedBox(height: 12),
-            LinearProgressIndicator(
-              value: task.progress.clamp(0, 1).toDouble(),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              _progressLabel(context, task),
-              key: ValueKey('download-task-progress-${task.id}'),
-            ),
+            if (_showProgress(task)) ...[
+              const SizedBox(height: 12),
+              LinearProgressIndicator(
+                value: task.progress.clamp(0, 1).toDouble(),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                _progressLabel(context, task),
+                key: ValueKey('download-task-progress-${task.id}'),
+              ),
+            ],
             if (_showFailureMessage(task)) ...[
               const SizedBox(height: 6),
               Text(
@@ -157,6 +159,10 @@ class DownloadTaskTile extends StatelessWidget {
 
   bool _showLocalPath(DownloadTask task) {
     return downloadTaskShowsLocalPath(task);
+  }
+
+  bool _showProgress(DownloadTask task) {
+    return task.status != DownloadStatus.canceled;
   }
 
   List<Widget> _actions(BuildContext context) {

@@ -135,6 +135,11 @@ void main() {
       ),
       findsOneWidget,
     );
+    expect(
+      find.byKey(const ValueKey('download-task-progress-task-1')),
+      findsNothing,
+    );
+    expect(find.textContaining('Progress:'), findsNothing);
     expect(find.textContaining('Local path:'), findsNothing);
 
     await tester.tap(removeButton);
@@ -181,6 +186,11 @@ void main() {
         findsOneWidget,
       );
       expect(find.text('Local path: $partialPath'), findsOneWidget);
+      expect(
+        find.byKey(const ValueKey('download-task-progress-task-1')),
+        findsNothing,
+      );
+      expect(find.textContaining('Progress:'), findsNothing);
       expect(
         find.byKey(const ValueKey('download-task-remove-task-1')),
         findsNothing,
@@ -229,6 +239,11 @@ void main() {
         ),
         findsOneWidget,
       );
+      expect(
+        find.byKey(const ValueKey('download-task-progress-task-1')),
+        findsNothing,
+      );
+      expect(find.textContaining('Progress:'), findsNothing);
       expect(find.textContaining('Local path:'), findsNothing);
       expect(
         find.byKey(const ValueKey('download-task-remove-task-1')),
