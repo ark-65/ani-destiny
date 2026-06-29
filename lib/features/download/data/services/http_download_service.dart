@@ -25,6 +25,7 @@ class HttpDownloadService implements DownloadService {
   final DownloadRepository _repository;
   final Map<String, CancelToken> _tokens = {};
   final Map<String, StreamController<DownloadProgress>> _controllers = {};
+  final Map<String, Completer<void>> _settleCompleters = {};
 
   @override
   Future<String> createTask({
@@ -68,12 +69,22 @@ class HttpDownloadService implements DownloadService {
 
   @override
   Future<void> start(String taskId) async {
-    final existingTask = await _repository.getTask(taskId);
+    var existingTask = await _repository.getTask(taskId);
     if (existingTask == null) {
       throw const AppException(
         'Download task not found.',
         code: 'download_not_found',
       );
+    }
+    if (_shouldWaitForSettlement(existingTask)) {
+      await _waitForTaskSettlement(taskId);
+      existingTask = await _repository.getTask(taskId);
+      if (existingTask == null) {
+        throw const AppException(
+          'Download task not found.',
+          code: 'download_not_found',
+        );
+      }
     }
     if (existingTask.kind != DownloadKind.directFile) {
       final updated = existingTask.copyWith(
@@ -88,6 +99,8 @@ class HttpDownloadService implements DownloadService {
     }
 
     String? activeLocalPath;
+    final settleCompleter = Completer<void>();
+    _settleCompleters[taskId] = settleCompleter;
     try {
       final directory = await getApplicationDocumentsDirectory();
       final fileName = _safeFileName(_fileNameFor(existingTask));
@@ -214,6 +227,12 @@ class HttpDownloadService implements DownloadService {
       rethrow;
     } finally {
       _tokens.remove(taskId);
+      if (identical(_settleCompleters[taskId], settleCompleter)) {
+        _settleCompleters.remove(taskId);
+      }
+      if (!settleCompleter.isCompleted) {
+        settleCompleter.complete();
+      }
     }
   }
 
@@ -240,6 +259,9 @@ class HttpDownloadService implements DownloadService {
     );
     await _repository.upsertTask(updated);
     _emitTask(updated);
+    if (hadActiveDownload) {
+      await _waitForTaskSettlement(taskId);
+    }
   }
 
   @override
@@ -266,12 +288,20 @@ class HttpDownloadService implements DownloadService {
     );
     await _repository.upsertTask(updated);
     _emitTask(updated);
+    if (hadActiveDownload) {
+      await _waitForTaskSettlement(taskId);
+    }
   }
 
   @override
   Future<void> removeEndedTask(String taskId) async {
-    final task = await _repository.getTask(taskId);
+    var task = await _repository.getTask(taskId);
     if (task == null) return;
+    if (_shouldWaitForSettlement(task)) {
+      await _waitForTaskSettlement(taskId);
+      task = await _repository.getTask(taskId);
+      if (task == null) return;
+    }
     if (!_canRemove(task.status)) {
       throw const AppException(
         'This download is still active.',
@@ -400,6 +430,20 @@ class HttpDownloadService implements DownloadService {
 
   bool _requiresManualCleanupBeforeRemoval(DownloadTask task) {
     return task.status == DownloadStatus.canceled && task.localPath != null;
+  }
+
+  bool _shouldWaitForSettlement(DownloadTask task) {
+    return _settleCompleters.containsKey(task.id) &&
+        (task.status == DownloadStatus.paused ||
+            task.status == DownloadStatus.canceled);
+  }
+
+  Future<void> _waitForTaskSettlement(String taskId) async {
+    final completer = _settleCompleters[taskId];
+    if (completer == null) {
+      return;
+    }
+    await completer.future;
   }
 
   String _safeFileName(String value) {

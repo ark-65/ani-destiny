@@ -116,7 +116,7 @@ void main() {
 
       expect(
         find.text(
-          'Discarded tasks that still show a leftover file path stay in the list until that partial file is gone. After you delete it, return here and tap Check again on that task.',
+          'Tasks marked Needs cleanup stay in the list until that leftover partial file is gone. After you delete it, return here and tap Check again on that task.',
         ),
         findsOneWidget,
       );
@@ -129,7 +129,7 @@ void main() {
       expect(repository.deletedTaskIds, ['completed']);
       expect(
         find.text(
-          'Cleared 1 ended tasks from the list.\nDiscarded tasks with leftover file paths stay visible until those partial files are gone.',
+          'Cleared 1 ended tasks from the list.\nTasks marked Needs cleanup stay visible until those leftover partial files are gone.',
         ),
         findsOneWidget,
       );
@@ -156,7 +156,7 @@ void main() {
       );
       expect(
         find.text(
-          'Discarded tasks that still show a leftover file path stay in the list until that partial file is gone. After you delete it, return here and tap Check again on that task.',
+          'Tasks marked Needs cleanup stay in the list until that leftover partial file is gone. After you delete it, return here and tap Check again on that task.',
         ),
         findsOneWidget,
       );
@@ -213,7 +213,7 @@ void main() {
       );
       expect(
         find.text(
-          'Discarded tasks that still show a leftover file path stay in the list until that partial file is gone.',
+          'Tasks marked Needs cleanup stay in the list until that leftover partial file is gone.',
         ),
         findsNothing,
       );
@@ -316,6 +316,92 @@ void main() {
         find.byKey(const ValueKey('download-task-remove-canceled')),
         findsNothing,
       );
+    },
+  );
+
+  testWidgets(
+    'active stop keeps an in-flight stopping message until cleanup settles',
+    (tester) async {
+      final settlePause = Completer<void>();
+      final repository = _FakeDownloadRepository([
+        _task('downloading', DownloadStatus.downloading).copyWith(
+          localPath: '/tmp/partial-video.mp4',
+        ),
+      ]);
+      final service = _PauseInFlightDownloadService(
+        repository,
+        settlePause.future,
+      );
+
+      await _pumpDownloadPage(
+        tester,
+        repository,
+        downloadService: service,
+      );
+
+      await tester.tap(
+        find.byKey(const ValueKey('download-task-pause-downloading')),
+      );
+      await tester.pump();
+
+      expect(find.text('Stopping...'), findsOneWidget);
+      expect(
+        find.text(
+          'AniDestiny is still stopping this download and clearing its partial file. This task will show Stopped when that cleanup finishes.',
+        ),
+        findsOneWidget,
+      );
+      expect(find.text('Stopped'), findsNothing);
+
+      settlePause.complete();
+      await tester.pump();
+      await tester.pump();
+
+      expect(find.text('Stopped'), findsOneWidget);
+      expect(find.text('Stopping...'), findsNothing);
+    },
+  );
+
+  testWidgets(
+    'active discard keeps an in-flight discard message until cleanup settles',
+    (tester) async {
+      final settleCancel = Completer<void>();
+      final repository = _FakeDownloadRepository([
+        _task('downloading', DownloadStatus.downloading).copyWith(
+          localPath: '/tmp/partial-video.mp4',
+        ),
+      ]);
+      final service = _CancelInFlightDownloadService(
+        repository,
+        settleCancel.future,
+      );
+
+      await _pumpDownloadPage(
+        tester,
+        repository,
+        downloadService: service,
+      );
+
+      await tester.tap(
+        find.byKey(const ValueKey('download-task-cancel-downloading')),
+      );
+      await tester.pump();
+
+      expect(find.text('Discarding...'), findsOneWidget);
+      expect(
+        find.text(
+          'AniDestiny is still discarding this download and clearing its partial file. The final cleanup result will appear here when it finishes.',
+        ),
+        findsOneWidget,
+      );
+      expect(find.text('Discarded'), findsNothing);
+
+      settleCancel.complete();
+      await tester.pump();
+      await tester.pump();
+
+      expect(find.text('Discarded'), findsOneWidget);
+      expect(find.text('Discarding...'), findsNothing);
     },
   );
 
@@ -520,6 +606,34 @@ void main() {
         findsOneWidget,
       );
       expect(find.text('Check again'), findsOneWidget);
+    },
+  );
+
+  testWidgets(
+    'manual cleanup guidance uses the localized needs-cleanup status wording',
+    (tester) async {
+      const partialPath = '/tmp/partial-video.mp4';
+      _stubCleanupPathExists({partialPath});
+      final repository = _FakeDownloadRepository([
+        _task('canceled', DownloadStatus.canceled).copyWith(
+          localPath: partialPath,
+          failureReason: DownloadFailureReason.canceled,
+        ),
+      ]);
+
+      await _pumpDownloadPage(
+        tester,
+        repository,
+        locale: const Locale('zh'),
+      );
+
+      expect(
+        find.text(
+          '标成“待清理残留文件”的任务会继续留在列表里，直到这份半截文件已经被手动删掉，或 AniDestiny 成功把它清掉。删完后回到这里点一下“重新检查”。',
+        ),
+        findsOneWidget,
+      );
+      expect(find.textContaining('“已取消”任务'), findsNothing);
     },
   );
 
@@ -788,12 +902,14 @@ Future<void> _pumpDownloadPage(
   DownloadRepository repository, {
   bool showDebugMockAction = true,
   DownloadService? downloadService,
+  Locale locale = const Locale('en'),
 }) async {
   await tester.pumpWidget(
     _TestApp(
       repository: repository,
       showDebugMockAction: showDebugMockAction,
       downloadService: downloadService,
+      locale: locale,
     ),
   );
   await tester.pumpAndSettle();
@@ -804,11 +920,13 @@ class _TestApp extends StatelessWidget {
     required this.repository,
     required this.showDebugMockAction,
     this.downloadService,
+    required this.locale,
   });
 
   final DownloadRepository repository;
   final bool showDebugMockAction;
   final DownloadService? downloadService;
+  final Locale locale;
 
   @override
   Widget build(BuildContext context) {
@@ -820,7 +938,7 @@ class _TestApp extends StatelessWidget {
         httpDownloadServiceProvider.overrideWithValue(effectiveDownloadService),
       ],
       child: MaterialApp(
-        locale: const Locale('en'),
+        locale: locale,
         supportedLocales: AppLocalizations.supportedLocales,
         localizationsDelegates: const [
           AppLocalizations.delegate,
@@ -873,6 +991,64 @@ class _FakeDownloadService implements DownloadService {
   }
 }
 
+class _CancelInFlightDownloadService extends _FakeDownloadService {
+  _CancelInFlightDownloadService(
+    super.repository,
+    this.settleFuture,
+  );
+
+  final Future<void> settleFuture;
+
+  @override
+  Future<void> cancel(String taskId) async {
+    final task = await repository.getTask(taskId);
+    if (task == null) {
+      return;
+    }
+    await repository.upsertTask(
+      task.copyWith(
+        status: DownloadStatus.canceled,
+        failureReason: DownloadFailureReason.canceled,
+        failureMessage: null,
+        progress: 0,
+        totalBytes: null,
+        downloadedBytes: 0,
+        localPath: null,
+      ),
+    );
+    await settleFuture;
+  }
+}
+
+class _PauseInFlightDownloadService extends _FakeDownloadService {
+  _PauseInFlightDownloadService(
+    super.repository,
+    this.settleFuture,
+  );
+
+  final Future<void> settleFuture;
+
+  @override
+  Future<void> pause(String taskId) async {
+    final task = await repository.getTask(taskId);
+    if (task == null) {
+      return;
+    }
+    await repository.upsertTask(
+      task.copyWith(
+        status: DownloadStatus.paused,
+        failureReason: DownloadFailureReason.none,
+        failureMessage: null,
+        progress: 0,
+        totalBytes: null,
+        downloadedBytes: 0,
+        localPath: '/tmp/partial-video.mp4',
+      ),
+    );
+    await settleFuture;
+  }
+}
+
 class _FakeDownloadRepository implements DownloadRepository {
   _FakeDownloadRepository(
     this._tasks, {
@@ -887,6 +1063,8 @@ class _FakeDownloadRepository implements DownloadRepository {
   final Map<String, Future<void>> deleteBlockers;
   final List<String> deleteAttempts = [];
   final List<String> deletedTaskIds = [];
+  final StreamController<List<DownloadTask>> _controller =
+      StreamController<List<DownloadTask>>.broadcast();
 
   @override
   Future<void> deleteTask(String taskId) async {
@@ -902,6 +1080,8 @@ class _FakeDownloadRepository implements DownloadRepository {
       throw StateError('delete failed for $taskId');
     }
     deletedTaskIds.add(taskId);
+    _tasks.removeWhere((task) => task.id == taskId);
+    _controller.add(List.unmodifiable(_tasks));
   }
 
   @override
@@ -914,12 +1094,25 @@ class _FakeDownloadRepository implements DownloadRepository {
 
   @override
   Future<void> upsertTask(DownloadTask task) async {
-    throw UnimplementedError();
+    final index = _tasks.indexWhere((existing) => existing.id == task.id);
+    if (index == -1) {
+      _tasks.add(task);
+    } else {
+      _tasks[index] = task;
+    }
+    _controller.add(List.unmodifiable(_tasks));
   }
 
   @override
   Stream<List<DownloadTask>> watchTasks() {
-    return Stream.value(List.unmodifiable(_tasks));
+    return Stream<List<DownloadTask>>.multi((controller) {
+      controller.add(List.unmodifiable(_tasks));
+      final subscription = _controller.stream.listen(
+        controller.add,
+        onError: controller.addError,
+      );
+      controller.onCancel = subscription.cancel;
+    });
   }
 }
 

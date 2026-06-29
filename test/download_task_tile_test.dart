@@ -135,6 +135,11 @@ void main() {
       ),
       findsOneWidget,
     );
+    expect(
+      find.byKey(const ValueKey('download-task-progress-task-1')),
+      findsNothing,
+    );
+    expect(find.textContaining('Progress:'), findsNothing);
     expect(find.textContaining('Local path:'), findsNothing);
 
     await tester.tap(removeButton);
@@ -142,6 +147,90 @@ void main() {
 
     expect(removeTapped, isTrue);
   });
+
+  testWidgets(
+    'busy stopped downloads keep showing an in-flight stopping state until cleanup settles',
+    (tester) async {
+      await tester.pumpWidget(
+        _buildTileApp(
+          DownloadTaskTile(
+            task: _task(
+              status: DownloadStatus.paused,
+              failureReason: DownloadFailureReason.none,
+            ),
+            isBusy: true,
+            busyAction: DownloadTaskBusyAction.pause,
+            onStart: () {},
+            onPause: () {},
+            onCancel: () {},
+            onRemove: () {},
+          ),
+        ),
+      );
+      await tester.pump();
+
+      expect(find.text('Stopping...'), findsOneWidget);
+      expect(
+        find.text(
+          'AniDestiny is still stopping this download and clearing its partial file. This task will show Stopped when that cleanup finishes.',
+        ),
+        findsOneWidget,
+      );
+      expect(find.text('Stopped'), findsNothing);
+      expect(
+        find.text(
+          'This download is stopped for now. Retrying may restart it from the beginning. Discarding it clears any partial file.',
+        ),
+        findsNothing,
+      );
+      expect(
+        find.byKey(const ValueKey('download-task-busy-task-1')),
+        findsOneWidget,
+      );
+    },
+  );
+
+  testWidgets(
+    'busy discarded downloads keep showing an in-flight discard state until cleanup settles',
+    (tester) async {
+      await tester.pumpWidget(
+        _buildTileApp(
+          DownloadTaskTile(
+            task: _task(
+              status: DownloadStatus.canceled,
+              failureReason: DownloadFailureReason.canceled,
+            ),
+            isBusy: true,
+            busyAction: DownloadTaskBusyAction.cancel,
+            onStart: () {},
+            onPause: () {},
+            onCancel: () {},
+            onRemove: () {},
+          ),
+        ),
+      );
+      await tester.pump();
+
+      expect(find.text('Discarding...'), findsOneWidget);
+      expect(
+        find.text(
+          'AniDestiny is still discarding this download and clearing its partial file. The final cleanup result will appear here when it finishes.',
+        ),
+        findsOneWidget,
+      );
+      expect(find.text('Discarded'), findsNothing);
+      expect(
+        find.text(
+          'This download was discarded. Any partial file was cleared. You can remove this task from the list when you are done.',
+        ),
+        findsNothing,
+      );
+      expect(
+        find.byKey(const ValueKey('download-task-busy-task-1')),
+        findsOneWidget,
+      );
+    },
+  );
 
   testWidgets(
     'canceled downloads show leftover local path when cleanup still needs help',
@@ -181,6 +270,11 @@ void main() {
         findsOneWidget,
       );
       expect(find.text('Local path: $partialPath'), findsOneWidget);
+      expect(
+        find.byKey(const ValueKey('download-task-progress-task-1')),
+        findsNothing,
+      );
+      expect(find.textContaining('Progress:'), findsNothing);
       expect(
         find.byKey(const ValueKey('download-task-remove-task-1')),
         findsNothing,
@@ -222,13 +316,18 @@ void main() {
       await tester.pump();
 
       expect(find.text('Needs cleanup'), findsNothing);
-      expect(find.text('Canceled'), findsOneWidget);
+      expect(find.text('Discarded'), findsOneWidget);
       expect(
         find.text(
           'This download was discarded. Any partial file was cleared. You can remove this task from the list when you are done.',
         ),
         findsOneWidget,
       );
+      expect(
+        find.byKey(const ValueKey('download-task-progress-task-1')),
+        findsNothing,
+      );
+      expect(find.textContaining('Progress:'), findsNothing);
       expect(find.textContaining('Local path:'), findsNothing);
       expect(
         find.byKey(const ValueKey('download-task-remove-task-1')),
@@ -239,7 +338,7 @@ void main() {
   );
 
   testWidgets(
-    'removable canceled downloads keep the standard canceled status label',
+    'removable canceled downloads use the discarded status label',
     (tester) async {
       await tester.pumpWidget(
         _buildTileApp(
@@ -258,7 +357,7 @@ void main() {
       );
       await tester.pump();
 
-      expect(find.text('Canceled'), findsOneWidget);
+      expect(find.text('Discarded'), findsOneWidget);
       expect(find.text('Needs cleanup'), findsNothing);
     },
   );

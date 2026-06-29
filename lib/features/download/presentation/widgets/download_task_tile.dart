@@ -6,6 +6,13 @@ import '../../domain/entities/download_failure_reason.dart';
 import '../../domain/entities/download_kind.dart';
 import '../../domain/entities/download_task.dart';
 
+enum DownloadTaskBusyAction {
+  start,
+  pause,
+  cancel,
+  remove,
+}
+
 class DownloadTaskTile extends StatelessWidget {
   const DownloadTaskTile({
     required this.task,
@@ -15,6 +22,7 @@ class DownloadTaskTile extends StatelessWidget {
     required this.onCancel,
     required this.onRemove,
     this.onRefreshCleanupStatus,
+    this.busyAction,
     super.key,
   });
 
@@ -25,6 +33,7 @@ class DownloadTaskTile extends StatelessWidget {
   final VoidCallback onCancel;
   final VoidCallback onRemove;
   final VoidCallback? onRefreshCleanupStatus;
+  final DownloadTaskBusyAction? busyAction;
 
   @override
   Widget build(BuildContext context) {
@@ -44,7 +53,10 @@ class DownloadTaskTile extends StatelessWidget {
                     style: Theme.of(context).textTheme.titleMedium,
                   ),
                 ),
-                _StatusChip(task: task),
+                _StatusChip(
+                  task: task,
+                  busyAction: busyAction,
+                ),
               ],
             ),
             const SizedBox(height: 4),
@@ -65,15 +77,17 @@ class DownloadTaskTile extends StatelessWidget {
                   ),
               ],
             ),
-            const SizedBox(height: 12),
-            LinearProgressIndicator(
-              value: task.progress.clamp(0, 1).toDouble(),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              _progressLabel(context, task),
-              key: ValueKey('download-task-progress-${task.id}'),
-            ),
+            if (_showProgress(task)) ...[
+              const SizedBox(height: 12),
+              LinearProgressIndicator(
+                value: task.progress.clamp(0, 1).toDouble(),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                _progressLabel(context, task),
+                key: ValueKey('download-task-progress-${task.id}'),
+              ),
+            ],
             if (_showFailureMessage(task)) ...[
               const SizedBox(height: 6),
               Text(
@@ -123,6 +137,14 @@ class DownloadTaskTile extends StatelessWidget {
 
   String? _supportNote(BuildContext context) {
     return switch (task.status) {
+      DownloadStatus.paused
+          when task.kind == DownloadKind.directFile &&
+              busyAction == DownloadTaskBusyAction.pause =>
+        context.l10n.downloadStoppingNote,
+      DownloadStatus.canceled
+          when task.kind == DownloadKind.directFile &&
+              busyAction == DownloadTaskBusyAction.cancel =>
+        context.l10n.downloadDiscardingNote,
       DownloadStatus.downloading when task.kind == DownloadKind.directFile =>
         context.l10n.downloadStopMayRestartNote,
       DownloadStatus.paused when task.kind == DownloadKind.directFile =>
@@ -157,6 +179,10 @@ class DownloadTaskTile extends StatelessWidget {
 
   bool _showLocalPath(DownloadTask task) {
     return downloadTaskShowsLocalPath(task);
+  }
+
+  bool _showProgress(DownloadTask task) {
+    return task.status != DownloadStatus.canceled;
   }
 
   List<Widget> _actions(BuildContext context) {
@@ -329,9 +355,13 @@ class _InfoChip extends StatelessWidget {
 }
 
 class _StatusChip extends StatelessWidget {
-  const _StatusChip({required this.task});
+  const _StatusChip({
+    required this.task,
+    this.busyAction,
+  });
 
   final DownloadTask task;
+  final DownloadTaskBusyAction? busyAction;
 
   @override
   Widget build(BuildContext context) {
@@ -349,10 +379,15 @@ class _StatusChip extends StatelessWidget {
       DownloadStatus.pending => context.l10n.pending,
       DownloadStatus.preparing => context.l10n.preparing,
       DownloadStatus.downloading => context.l10n.downloading,
+      DownloadStatus.paused when busyAction == DownloadTaskBusyAction.pause =>
+        context.l10n.downloadStoppingStatus,
       DownloadStatus.paused => context.l10n.downloadStoppedStatus,
       DownloadStatus.completed => context.l10n.completed,
       DownloadStatus.failed => context.l10n.failed,
-      DownloadStatus.canceled => context.l10n.canceled,
+      DownloadStatus.canceled
+          when busyAction == DownloadTaskBusyAction.cancel =>
+        context.l10n.downloadDiscardingStatus,
+      DownloadStatus.canceled => context.l10n.downloadDiscardedStatus,
       DownloadStatus.unsupported => context.l10n.unsupported,
     };
   }

@@ -263,7 +263,7 @@ class FeedbackPackageCollector {
       DownloadStatus.paused => l10n.downloadStoppedStatus,
       DownloadStatus.completed => l10n.completed,
       DownloadStatus.failed => l10n.failed,
-      DownloadStatus.canceled => l10n.canceled,
+      DownloadStatus.canceled => l10n.downloadDiscardedStatus,
       DownloadStatus.unsupported => l10n.unsupported,
     };
   }
@@ -292,7 +292,7 @@ class FeedbackPackageCollector {
         l10n.downloadFailureInvalidManifest,
       DownloadFailureReason.storageUnavailable =>
         l10n.downloadFailureStorageUnavailable,
-      DownloadFailureReason.canceled => l10n.canceled,
+      DownloadFailureReason.canceled => l10n.downloadDiscardedStatus,
       DownloadFailureReason.unknown => l10n.downloadFailureUnknown,
     };
   }

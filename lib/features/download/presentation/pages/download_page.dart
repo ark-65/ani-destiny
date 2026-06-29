@@ -31,7 +31,8 @@ class DownloadPage extends ConsumerStatefulWidget {
 class _DownloadPageState extends ConsumerState<DownloadPage>
     with WidgetsBindingObserver {
   var _isClearingEndedTasks = false;
-  final Set<String> _busyTaskIds = <String>{};
+  final Map<String, DownloadTaskBusyAction> _busyTaskActions =
+      <String, DownloadTaskBusyAction>{};
   Set<String> _manualCleanupTaskIdsBeforeBackground = const <String>{};
 
   @override
@@ -135,7 +136,7 @@ class _DownloadPageState extends ConsumerState<DownloadPage>
                   final showRecheckManualCleanupAction =
                       manualCleanupTaskCount > 1;
                   final hasBusyRemovableTask = removableTaskIds.any(
-                    _busyTaskIds.contains,
+                    _busyTaskActions.containsKey,
                   );
                   final hasCompletedTasks = items.any(
                     (task) => task.status == DownloadStatus.completed,
@@ -239,16 +240,19 @@ class _DownloadPageState extends ConsumerState<DownloadPage>
                           itemCount: items.length,
                           itemBuilder: (context, index) {
                             final task = items[index];
-                            final isBusy = _busyTaskIds.contains(task.id) ||
-                                (_isClearingEndedTasks &&
-                                    clearableTaskIds.contains(task.id));
+                            final isBusy =
+                                _busyTaskActions.containsKey(task.id) ||
+                                    (_isClearingEndedTasks &&
+                                        clearableTaskIds.contains(task.id));
                             return DownloadTaskTile(
                               task: task,
                               isBusy: isBusy,
+                              busyAction: _busyTaskActions[task.id],
                               onStart: () => unawaited(
                                 _runTaskAction(
                                   context,
                                   task.id,
+                                  DownloadTaskBusyAction.start,
                                   () => ref
                                       .read(httpDownloadServiceProvider)
                                       .start(task.id),
@@ -258,6 +262,7 @@ class _DownloadPageState extends ConsumerState<DownloadPage>
                                 _runTaskAction(
                                   context,
                                   task.id,
+                                  DownloadTaskBusyAction.pause,
                                   () => ref
                                       .read(httpDownloadServiceProvider)
                                       .pause(task.id),
@@ -267,6 +272,7 @@ class _DownloadPageState extends ConsumerState<DownloadPage>
                                 _runTaskAction(
                                   context,
                                   task.id,
+                                  DownloadTaskBusyAction.cancel,
                                   () => ref
                                       .read(httpDownloadServiceProvider)
                                       .cancel(task.id),
@@ -276,6 +282,7 @@ class _DownloadPageState extends ConsumerState<DownloadPage>
                                 _runTaskAction(
                                   context,
                                   task.id,
+                                  DownloadTaskBusyAction.remove,
                                   () => ref
                                       .read(httpDownloadServiceProvider)
                                       .removeEndedTask(task.id),
@@ -350,11 +357,12 @@ class _DownloadPageState extends ConsumerState<DownloadPage>
   Future<void> _runTaskAction(
     BuildContext context,
     String taskId,
+    DownloadTaskBusyAction busyAction,
     Future<void> Function() action,
   ) async {
-    if (_busyTaskIds.contains(taskId)) return;
+    if (_busyTaskActions.containsKey(taskId)) return;
     setState(() {
-      _busyTaskIds.add(taskId);
+      _busyTaskActions[taskId] = busyAction;
     });
     try {
       await action();
@@ -366,10 +374,10 @@ class _DownloadPageState extends ConsumerState<DownloadPage>
     } finally {
       if (mounted) {
         setState(() {
-          _busyTaskIds.remove(taskId);
+          _busyTaskActions.remove(taskId);
         });
       } else {
-        _busyTaskIds.remove(taskId);
+        _busyTaskActions.remove(taskId);
       }
     }
   }
@@ -451,7 +459,7 @@ class _DownloadPageState extends ConsumerState<DownloadPage>
         .where(_isRemovableTask)
         .where((task) => !downloadTaskNeedsManualCleanup(task))
         .map((task) => task.id)
-        .where((taskId) => !_busyTaskIds.contains(taskId))
+        .where((taskId) => !_busyTaskActions.containsKey(taskId))
         .toList(growable: false);
   }
 
