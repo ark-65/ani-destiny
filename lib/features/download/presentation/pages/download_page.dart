@@ -529,6 +529,13 @@ class _DownloadPageState extends ConsumerState<DownloadPage>
       }
       return context.l10n.clearEndedDownloadsRetainedDiscardedNote;
     }
+    if (clearableTaskCount > 1) {
+      return context.l10n
+          .clearEndedDownloadsRetainedDiscardedBatchClearActionNote(
+        context.l10n.clearEndedDownloadsCount(clearableTaskCount),
+        context.l10n.recheckLeftoverFilesCount(count),
+      );
+    }
     return context.l10n.clearEndedDownloadsRetainedDiscardedBatchRecheckNote(
       context.l10n.recheckLeftoverFilesCount(count),
     );

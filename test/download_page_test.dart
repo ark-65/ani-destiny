@@ -906,6 +906,38 @@ void main() {
   );
 
   testWidgets(
+    'multi-leftover guidance also points at batch clear when other ended tasks are ready',
+    (tester) async {
+      const partialPathA = '/tmp/partial-video-a.mp4';
+      const partialPathB = '/tmp/partial-video-b.mp4';
+      _stubCleanupPathExists({partialPathA, partialPathB});
+      final repository = _FakeDownloadRepository([
+        _task('completed-a', DownloadStatus.completed),
+        _task('completed-b', DownloadStatus.completed),
+        _task('canceled-a', DownloadStatus.canceled).copyWith(
+          localPath: partialPathA,
+          failureReason: DownloadFailureReason.canceled,
+        ),
+        _task('canceled-b', DownloadStatus.canceled).copyWith(
+          localPath: partialPathB,
+          failureReason: DownloadFailureReason.canceled,
+        ),
+      ]);
+
+      await _pumpDownloadPage(tester, repository);
+
+      expect(find.text('Clear 2 ended tasks from list'), findsOneWidget);
+      expect(find.text('Check 2 leftover files again'), findsOneWidget);
+      expect(
+        find.text(
+          'Tasks marked Needs cleanup stay in the list until those leftover partial files are gone. You can use "Clear 2 ended tasks from list" above for the other ended tasks now. After you delete the leftover files, use "Check 2 leftover files again" above or tap Check again on each task.',
+        ),
+        findsOneWidget,
+      );
+    },
+  );
+
+  testWidgets(
     'partial batch recheck keeps the remaining next step explicit',
     (tester) async {
       const partialPathA = '/tmp/partial-video-a.mp4';
