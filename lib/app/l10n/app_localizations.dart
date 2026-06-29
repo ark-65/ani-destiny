@@ -255,6 +255,19 @@ class AppLocalizations {
       _t('clearEndedDownloadsKeepsFilesNote');
   String get clearEndedDownloadsRetainedDiscardedNote =>
       _t('clearEndedDownloadsRetainedDiscardedNote');
+  String clearEndedDownloadsRetainedDiscardedClearActionNote(
+    String actionLabel,
+  ) {
+    return switch (_languageCode) {
+      'en' =>
+        'Tasks marked Needs cleanup stay in the list until that leftover partial file is gone. You can use "$actionLabel" above for the other ended tasks now. After you delete that file, return here and tap Check again on this task.',
+      'ja' =>
+        '「残留ファイルを要整理」と表示されているタスクは、その途中ファイルがなくなるまで一覧に残ります。ほかの終了済みタスクは今すぐ上の「$actionLabel」で整理できます。そのファイルを削除した後、このタスクに戻って「再確認」を押してください。',
+      _ =>
+        '标成“待清理残留文件”的任务会继续留在列表里，直到这份半截文件已经被手动删掉，或 AniDestiny 成功把它清掉。上面的“$actionLabel”可以先清掉其他已经收尾的任务；删完这份残留后，再回来点这条任务的“重新检查”。',
+    };
+  }
+
   String clearEndedDownloadsRetainedDiscardedBatchRecheckNote(
     String actionLabel,
   ) {

@@ -161,6 +161,35 @@ void main() {
   );
 
   testWidgets(
+    'single leftover guidance points at batch clear when other ended tasks are already ready',
+    (tester) async {
+      const partialPath = '/tmp/partial-video.mp4';
+      _stubCleanupPathExists({partialPath});
+      final repository = _FakeDownloadRepository([
+        _task('completed-a', DownloadStatus.completed),
+        _task('completed-b', DownloadStatus.completed),
+        _task('canceled', DownloadStatus.canceled).copyWith(
+          localPath: partialPath,
+          failureReason: DownloadFailureReason.canceled,
+        ),
+      ]);
+
+      await _pumpDownloadPage(tester, repository);
+
+      expect(
+        find.byKey(const ValueKey('downloads-clear-ended-tasks')),
+        findsOneWidget,
+      );
+      expect(
+        find.text(
+          'Tasks marked Needs cleanup stay in the list until that leftover partial file is gone. You can use "Clear 2 ended tasks from list" above for the other ended tasks now. After you delete that file, return here and tap Check again on this task.',
+        ),
+        findsOneWidget,
+      );
+    },
+  );
+
+  testWidgets(
     'clear ended tasks action stays hidden when only retained discarded leftovers remain',
     (tester) async {
       const partialPath = '/tmp/partial-video.mp4';

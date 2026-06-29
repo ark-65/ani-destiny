@@ -249,6 +249,7 @@ class _DownloadPageState extends ConsumerState<DownloadPage>
                             _manualCleanupRetentionGuidance(
                               context,
                               manualCleanupTaskCount,
+                              clearableTaskCount: clearableTaskIds.length,
                             ),
                             style: Theme.of(context).textTheme.bodySmall,
                             textAlign: TextAlign.right,
@@ -529,9 +530,18 @@ class _DownloadPageState extends ConsumerState<DownloadPage>
     };
   }
 
-  String _manualCleanupRetentionGuidance(BuildContext context, int count) {
+  String _manualCleanupRetentionGuidance(
+    BuildContext context,
+    int count, {
+    int clearableTaskCount = 0,
+  }) {
     assert(count > 0);
     if (count == 1) {
+      if (clearableTaskCount > 1) {
+        return context.l10n.clearEndedDownloadsRetainedDiscardedClearActionNote(
+          context.l10n.clearEndedDownloadsCount(clearableTaskCount),
+        );
+      }
       return context.l10n.clearEndedDownloadsRetainedDiscardedNote;
     }
     return context.l10n.clearEndedDownloadsRetainedDiscardedBatchRecheckNote(
