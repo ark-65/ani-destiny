@@ -65,27 +65,18 @@ class _DownloadPageState extends ConsumerState<DownloadPage>
       setState(() {});
       if (recoveredCleanupTaskIds.isNotEmpty) {
         final clearableTaskCount = _clearableTaskIds(tasks).length;
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              context.l10n.downloadManualCleanupResumeResult(
-                recoveredCleanupTaskIds.length,
-                remainingCount,
-                actionLabel: remainingCount > 1
-                    ? context.l10n.recheckLeftoverFilesCount(remainingCount)
-                    : clearableTaskCount > 1
-                        ? context.l10n.clearEndedDownloadsCount(
-                            clearableTaskCount,
-                          )
-                        : null,
-                clearActionLabel: remainingCount == 1 && clearableTaskCount > 1
-                    ? context.l10n.clearEndedDownloadsCount(
-                        clearableTaskCount,
-                      )
-                    : null,
-              ),
-            ),
+        final clearActionLabel =
+            _clearEndedTasksActionLabel(clearableTaskCount);
+        _showDownloadSnackBar(
+          context.l10n.downloadManualCleanupResumeResult(
+            recoveredCleanupTaskIds.length,
+            remainingCount,
+            actionLabel: remainingCount > 1
+                ? context.l10n.recheckLeftoverFilesCount(remainingCount)
+                : clearActionLabel,
+            clearActionLabel: remainingCount == 1 ? clearActionLabel : null,
           ),
+          actionLabel: remainingCount <= 1 ? clearActionLabel : null,
         );
       }
       return;
@@ -348,6 +339,7 @@ class _DownloadPageState extends ConsumerState<DownloadPage>
     final allTasks = ref.read(downloadTasksProvider).valueOrNull;
     final clearableTaskCount =
         allTasks == null ? 0 : _clearableTaskIds(allTasks).length;
+    final clearActionLabel = _clearEndedTasksActionLabel(clearableTaskCount);
 
     setState(() {});
 
@@ -357,9 +349,7 @@ class _DownloadPageState extends ConsumerState<DownloadPage>
         ),
       (_, 0) => context.l10n.downloadManualCleanupBulkRecheckCleared(
           clearedCount,
-          actionLabel: clearableTaskCount > 1
-              ? context.l10n.clearEndedDownloadsCount(clearableTaskCount)
-              : null,
+          actionLabel: clearActionLabel,
         ),
       _ => context.l10n.downloadManualCleanupBulkRecheckPartial(
           clearedCount,
@@ -367,13 +357,12 @@ class _DownloadPageState extends ConsumerState<DownloadPage>
           actionLabel: remainingCount > 1
               ? context.l10n.recheckLeftoverFilesCount(remainingCount)
               : null,
-          clearActionLabel: remainingCount == 1 && clearableTaskCount > 1
-              ? context.l10n.clearEndedDownloadsCount(clearableTaskCount)
-              : null,
+          clearActionLabel: remainingCount == 1 ? clearActionLabel : null,
         ),
     };
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message)),
+    _showDownloadSnackBar(
+      message,
+      actionLabel: remainingCount <= 1 ? clearActionLabel : null,
     );
   }
 
@@ -449,9 +438,7 @@ class _DownloadPageState extends ConsumerState<DownloadPage>
     final message = remainingManualCleanupCount > 0
         ? '$baseMessage\n${_manualCleanupRetentionGuidance(context, remainingManualCleanupCount)}'
         : baseMessage;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message)),
-    );
+    _showDownloadSnackBar(message);
   }
 
   Future<void> _handleClearRemovableTasks(List<String> taskIds) async {
@@ -476,19 +463,17 @@ class _DownloadPageState extends ConsumerState<DownloadPage>
     final allTasks = ref.read(downloadTasksProvider).valueOrNull;
     final clearableTaskCount =
         allTasks == null ? 0 : _clearableTaskIds(allTasks).length;
+    final clearActionLabel = _clearEndedTasksActionLabel(clearableTaskCount);
     setState(() {});
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          stillNeedsCleanup
-              ? context.l10n.downloadManualCleanupRecheckStillNeeded
-              : clearableTaskCount > 1
-                  ? context.l10n.downloadManualCleanupRecheckClearedAction(
-                      context.l10n.clearEndedDownloadsCount(clearableTaskCount),
-                    )
-                  : context.l10n.downloadManualCleanupRecheckCleared,
-        ),
-      ),
+    _showDownloadSnackBar(
+      stillNeedsCleanup
+          ? context.l10n.downloadManualCleanupRecheckStillNeeded
+          : clearActionLabel != null
+              ? context.l10n.downloadManualCleanupRecheckClearedAction(
+                  clearActionLabel,
+                )
+              : context.l10n.downloadManualCleanupRecheckCleared,
+      actionLabel: stillNeedsCleanup ? null : clearActionLabel,
     );
   }
 
@@ -547,6 +532,45 @@ class _DownloadPageState extends ConsumerState<DownloadPage>
     return context.l10n.clearEndedDownloadsRetainedDiscardedBatchRecheckNote(
       context.l10n.recheckLeftoverFilesCount(count),
     );
+  }
+
+  void _showDownloadSnackBar(
+    String message, {
+    String? actionLabel,
+  }) {
+    if (!mounted) return;
+    final messenger = ScaffoldMessenger.of(context);
+    messenger.hideCurrentSnackBar();
+    messenger.showSnackBar(
+      SnackBar(
+        content: Text(message),
+        action: actionLabel == null
+            ? null
+            : SnackBarAction(
+                label: actionLabel,
+                onPressed: _handleSnackBarClearEndedTasksAction,
+              ),
+      ),
+    );
+  }
+
+  String? _clearEndedTasksActionLabel(int clearableTaskCount) {
+    if (clearableTaskCount <= 1) {
+      return null;
+    }
+    return context.l10n.clearEndedDownloadsCount(clearableTaskCount);
+  }
+
+  void _handleSnackBarClearEndedTasksAction() {
+    final tasks = ref.read(downloadTasksProvider).valueOrNull;
+    if (tasks == null) {
+      return;
+    }
+    final clearableTaskIds = _clearableTaskIds(tasks);
+    if (clearableTaskIds.length <= 1) {
+      return;
+    }
+    unawaited(_handleClearRemovableTasks(clearableTaskIds));
   }
 
   String _actionErrorMessage(BuildContext context, Object error) {

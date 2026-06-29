@@ -7,6 +7,7 @@
 ## [Unreleased]
 
 ### 🐛 Fixed
+- Fixed cleanup-complete download messages that already told users the page-level `Clear N ended tasks from list` action was ready, but still made them look back up and find that button themselves; those `Check again` and app-resume confirmations now include the same clear-ended-tasks action directly so the final cleanup step can finish the moment the result appears.
 - Fixed the downloads page still using single-task `Check again` guidance when the last `Needs cleanup` task was already sharing the page with a visible `Clear N ended tasks from list` action above; that page note now explains both truths together by naming the ended tasks users can clear immediately and the leftover-file task that still needs one final recheck after manual deletion.
 - Fixed the downloads page still surfacing a global `Clear 1 ended task from list` action even when only one finished task was actually ready to remove, which made a single-task cleanup read like a batch operation; AniDestiny now keeps that page-level action for real multi-task cleanup only, while single finished tasks fall back to their in-card remove action so the downloads finish flow stays calmer and more consistent.
 - Fixed direct-file download tiles still keeping a stale `0%` progress bar after users had already reached `Stopped` or in-flight `Stopping...`, which made a settled stop state look like it was still waiting to continue; AniDestiny now hides that old progress UI for stop states so the tile focuses on the real stop guidance, retry action, and cleanup outcome.

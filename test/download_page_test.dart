@@ -284,10 +284,10 @@ void main() {
   );
 
   testWidgets(
-    'single cleanup recheck points at batch clear when other ended tasks are ready',
+    'single cleanup recheck offers the batch clear action when other ended tasks are ready',
     (tester) async {
       tester.view.devicePixelRatio = 1;
-      tester.view.physicalSize = const Size(800, 1400);
+      tester.view.physicalSize = const Size(800, 1800);
       addTearDown(tester.view.resetDevicePixelRatio);
       addTearDown(tester.view.resetPhysicalSize);
       const stalePath = '/tmp/partial-video.mp4';
@@ -314,11 +314,20 @@ void main() {
         ),
         findsOneWidget,
       );
-      expect(find.text('Clear 2 ended tasks from list'), findsOneWidget);
+      expect(find.text('Clear 2 ended tasks from list'), findsNWidgets(2));
       expect(
         find.byKey(const ValueKey('downloads-clear-ended-tasks')),
         findsOneWidget,
       );
+
+      tester
+          .widget<TextButton>(
+            find.widgetWithText(TextButton, 'Clear 2 ended tasks from list'),
+          )
+          .onPressed!();
+      await tester.pumpAndSettle();
+
+      expect(repository.deletedTaskIds, ['completed', 'canceled']);
     },
   );
 
@@ -968,13 +977,17 @@ void main() {
         ),
         findsOneWidget,
       );
-      expect(find.text('Clear 2 ended tasks from list'), findsOneWidget);
+      expect(find.text('Clear 2 ended tasks from list'), findsNWidgets(2));
     },
   );
 
   testWidgets(
-    'page-level cleanup recheck restores batch clear when all leftovers are gone',
+    'page-level cleanup recheck offers batch clear when all leftovers are gone',
     (tester) async {
+      tester.view.devicePixelRatio = 1;
+      tester.view.physicalSize = const Size(800, 1800);
+      addTearDown(tester.view.resetDevicePixelRatio);
+      addTearDown(tester.view.resetPhysicalSize);
       const partialPathA = '/tmp/partial-video-a.mp4';
       const partialPathB = '/tmp/partial-video-b.mp4';
       _stubCleanupPathExists({partialPathA, partialPathB});
@@ -1003,18 +1016,31 @@ void main() {
         ),
         findsOneWidget,
       );
-      expect(find.text('Clear 2 ended tasks from list'), findsOneWidget);
+      expect(find.text('Clear 2 ended tasks from list'), findsNWidgets(2));
       expect(
         find.byKey(const ValueKey('downloads-clear-ended-tasks')),
         findsOneWidget,
       );
       expect(find.text('Check 2 leftover files again'), findsNothing);
+
+      tester
+          .widget<TextButton>(
+            find.widgetWithText(TextButton, 'Clear 2 ended tasks from list'),
+          )
+          .onPressed!();
+      await tester.pumpAndSettle();
+
+      expect(repository.deletedTaskIds, ['canceled-a', 'canceled-b']);
     },
   );
 
   testWidgets(
-    'resume points recovered leftovers at the batch clear action when several tasks are now removable',
+    'resume offers batch clear after recovered leftovers become removable',
     (tester) async {
+      tester.view.devicePixelRatio = 1;
+      tester.view.physicalSize = const Size(800, 1800);
+      addTearDown(tester.view.resetDevicePixelRatio);
+      addTearDown(tester.view.resetPhysicalSize);
       const partialPathA = '/tmp/partial-video-a.mp4';
       const partialPathB = '/tmp/partial-video-b.mp4';
       _stubCleanupPathExists({partialPathA, partialPathB});
@@ -1045,7 +1071,19 @@ void main() {
         ),
         findsOneWidget,
       );
-      expect(find.text('Clear 3 ended tasks from list'), findsOneWidget);
+      expect(find.text('Clear 3 ended tasks from list'), findsNWidgets(2));
+
+      tester
+          .widget<TextButton>(
+            find.widgetWithText(TextButton, 'Clear 3 ended tasks from list'),
+          )
+          .onPressed!();
+      await tester.pumpAndSettle();
+
+      expect(
+        repository.deletedTaskIds,
+        ['completed', 'canceled-a', 'canceled-b'],
+      );
     },
   );
 
@@ -1077,7 +1115,7 @@ void main() {
         ),
         findsOneWidget,
       );
-      expect(find.text('Clear 2 ended tasks from list'), findsOneWidget);
+      expect(find.text('Clear 2 ended tasks from list'), findsNWidgets(2));
       expect(
         find.byKey(const ValueKey('download-task-remove-canceled')),
         findsOneWidget,
@@ -1118,7 +1156,7 @@ void main() {
         ),
         findsOneWidget,
       );
-      expect(find.text('Clear 2 ended tasks from list'), findsOneWidget);
+      expect(find.text('Clear 2 ended tasks from list'), findsNWidgets(2));
       expect(
         find.byKey(const ValueKey('download-task-remove-canceled-a')),
         findsOneWidget,
