@@ -988,6 +988,42 @@ void main() {
   );
 
   testWidgets(
+    'resume keeps single-task cleanup copy explicit when batch clear also becomes available',
+    (tester) async {
+      const partialPath = '/tmp/partial-video.mp4';
+      _stubCleanupPathExists({partialPath});
+      final repository = _FakeDownloadRepository([
+        _task('completed', DownloadStatus.completed),
+        _task('canceled', DownloadStatus.canceled).copyWith(
+          localPath: partialPath,
+          failureReason: DownloadFailureReason.canceled,
+        ),
+      ]);
+
+      await _pumpDownloadPage(tester, repository);
+
+      tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.paused);
+      await tester.pump();
+
+      _stubCleanupPathExists(const {});
+      tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
+      await tester.pump();
+
+      expect(
+        find.text(
+          'AniDestiny confirmed that 1 leftover partial file is gone. You can use "Clear 2 ended tasks from list" above now, or remove this task from the list.',
+        ),
+        findsOneWidget,
+      );
+      expect(find.text('Clear 2 ended tasks from list'), findsOneWidget);
+      expect(
+        find.byKey(const ValueKey('download-task-remove-canceled')),
+        findsOneWidget,
+      );
+    },
+  );
+
+  testWidgets(
     'resume keeps batch clear visible when one leftover still needs manual cleanup',
     (tester) async {
       const partialPathA = '/tmp/partial-video-a.mp4';

@@ -353,6 +353,12 @@ class AppLocalizations {
   }) {
     assert(clearedCount > 0);
     return switch ((clearedCount, remainingCount, _languageCode)) {
+      (1, 0, 'en') when actionLabel != null =>
+        'AniDestiny confirmed that 1 leftover partial file is gone. You can use "$actionLabel" above now, or remove this task from the list.',
+      (1, 0, 'ja') when actionLabel != null =>
+        'AniDestiny はこの 1 件の残留ファイルがなくなったことを確認しました。今なら上の「$actionLabel」を使うか、このタスクを一覧から消せます。',
+      (1, 0, _) when actionLabel != null =>
+        'AniDestiny 已确认这 1 份残留文件不在了。现在可以直接点上面的“$actionLabel”，也可以把这条任务从列表移除。',
       (_, 0, 'en') when actionLabel != null =>
         'AniDestiny confirmed that ${clearedCount == 1 ? '1 leftover partial file is' : '$clearedCount leftover partial files are'} gone. You can use "$actionLabel" above now, or remove ${clearedCount == 1 ? 'that task' : 'those tasks'} one by one.',
       (_, 0, 'ja') when actionLabel != null =>
