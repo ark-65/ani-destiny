@@ -78,6 +78,11 @@ class _DownloadPageState extends ConsumerState<DownloadPage>
                             clearableTaskCount,
                           )
                         : null,
+                clearActionLabel: remainingCount == 1 && clearableTaskCount > 1
+                    ? context.l10n.clearEndedDownloadsCount(
+                        clearableTaskCount,
+                      )
+                    : null,
               ),
             ),
           ),
@@ -360,6 +365,9 @@ class _DownloadPageState extends ConsumerState<DownloadPage>
           remainingCount,
           actionLabel: remainingCount > 1
               ? context.l10n.recheckLeftoverFilesCount(remainingCount)
+              : null,
+          clearActionLabel: remainingCount == 1 && clearableTaskCount > 1
+              ? context.l10n.clearEndedDownloadsCount(clearableTaskCount)
               : null,
         ),
     };
