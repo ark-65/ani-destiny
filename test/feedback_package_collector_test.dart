@@ -349,6 +349,89 @@ void main() {
       markdown,
       contains('- Latest issue: Needs cleanup · Reason: Discarded'),
     );
+    expect(markdown, contains('Local path: /tmp/manual-cleanup-partial.mp4'));
+    expect(
+      markdown,
+      contains(
+        'Message: Delete the leftover partial file from your device first. Then return to Downloads and tap Check again on that task.',
+      ),
+    );
+  });
+
+  test(
+      'collector points multi-task manual cleanup summaries at the batch recheck action',
+      () {
+    const firstLeftoverPath = '/tmp/manual-cleanup-partial-1.mp4';
+    const secondLeftoverPath = '/tmp/manual-cleanup-partial-2.mp4';
+    debugSetDownloadCleanupPathExists(
+      (localPath) =>
+          localPath == firstLeftoverPath || localPath == secondLeftoverPath,
+    );
+    addTearDown(() => debugSetDownloadCleanupPathExists(null));
+
+    final now = DateTime.utc(2026, 6, 30, 1, 0, 0);
+    const l10n = AppLocalizations(Locale('en'));
+    final package = FeedbackPackageCollector(
+      l10n: l10n,
+      appName: 'AniDestiny',
+      appVersion: '1.0.4',
+      platform: 'Windows',
+      currentSourceId: 'sakura',
+      sourceHealth: const [],
+      sourceDiagnostics: const [],
+      fallbackEvents: const [],
+      playbackDiagnostics: null,
+      danmakuEnabled: false,
+      dandanplayAppIdConfigured: false,
+      dandanplayAppSecretConfigured: false,
+      downloadTasks: [
+        DownloadTask(
+          id: 'task-cleanup-1',
+          animeId: 'anime-1',
+          episodeId: 'episode-1',
+          sourceId: 'sakura',
+          title: 'Anime',
+          episodeTitle: 'Episode 1',
+          url: 'https://cdn.example.test/video-1.mp4',
+          kind: DownloadKind.directFile,
+          status: DownloadStatus.canceled,
+          failureReason: DownloadFailureReason.canceled,
+          progress: 0,
+          downloadedBytes: 0,
+          localPath: firstLeftoverPath,
+          createdAt: now,
+          updatedAt: now.add(const Duration(minutes: 1)),
+        ),
+        DownloadTask(
+          id: 'task-cleanup-2',
+          animeId: 'anime-2',
+          episodeId: 'episode-2',
+          sourceId: 'sakura',
+          title: 'Anime 2',
+          episodeTitle: 'Episode 2',
+          url: 'https://cdn.example.test/video-2.mp4',
+          kind: DownloadKind.directFile,
+          status: DownloadStatus.canceled,
+          failureReason: DownloadFailureReason.canceled,
+          progress: 0,
+          downloadedBytes: 0,
+          localPath: secondLeftoverPath,
+          createdAt: now,
+          updatedAt: now,
+        ),
+      ],
+    ).collect(generatedAt: now);
+
+    final markdown = const FeedbackPackageFormatter(l10n: l10n).format(package);
+
+    expect(markdown, contains('- Needs cleanup: 2'));
+    expect(markdown, contains('Local path: /tmp/manual-cleanup-partial-1.mp4'));
+    expect(
+      markdown,
+      contains(
+        'Message: Delete the leftover partial file from your device first. Then return to Downloads and use "Check 2 leftover files again", or tap Check again on that task.',
+      ),
+    );
   });
 
   test(

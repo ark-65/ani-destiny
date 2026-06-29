@@ -276,6 +276,21 @@ class AppLocalizations {
       _t('downloadManualCleanupRecheckStillNeeded');
   String get downloadManualCleanupRecheckCleared =>
       _t('downloadManualCleanupRecheckCleared');
+  String downloadManualCleanupFeedbackNextStep({String? actionLabel}) {
+    return switch ((_languageCode, actionLabel != null)) {
+      ('en', true) =>
+        'Delete the leftover partial file from your device first. Then return to Downloads and use "$actionLabel", or tap Check again on that task.',
+      ('ja', true) =>
+        '先にその残留ファイルを端末から削除してから、ダウンロード画面に戻って上の「$actionLabel」を使うか、そのタスクの「もう一度確認」を押してください。',
+      (_, true) => '先在设备上删掉这份残留文件，再回到下载列表，点“$actionLabel”，或在对应任务上点“重新检查”。',
+      ('en', false) =>
+        'Delete the leftover partial file from your device first. Then return to Downloads and tap Check again on that task.',
+      ('ja', false) =>
+        '先にその残留ファイルを端末から削除してから、ダウンロード画面に戻ってそのタスクの「もう一度確認」を押してください。',
+      _ => '先在设备上删掉这份残留文件，再回到下载列表，在对应任务上点“重新检查”。',
+    };
+  }
+
   String downloadManualCleanupRecheckClearedAction(String actionLabel) {
     return switch (_languageCode) {
       'en' =>
