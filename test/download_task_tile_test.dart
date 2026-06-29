@@ -292,6 +292,41 @@ void main() {
   );
 
   testWidgets(
+    'manual cleanup tiles mention the page-level batch recheck when it is available',
+    (tester) async {
+      const partialPath = '/tmp/partial-video.mp4';
+      _stubCleanupPathExists({partialPath});
+
+      await tester.pumpWidget(
+        _buildTileApp(
+          DownloadTaskTile(
+            task: _task(
+              status: DownloadStatus.canceled,
+              failureReason: DownloadFailureReason.canceled,
+              localPath: partialPath,
+            ),
+            isBusy: false,
+            onStart: () {},
+            onPause: () {},
+            onCancel: () {},
+            onRemove: () {},
+            onRefreshCleanupStatus: () {},
+            manualCleanupBatchRecheckLabel: 'Check 2 leftover files again',
+          ),
+        ),
+      );
+      await tester.pump();
+
+      expect(
+        find.text(
+          'This download was discarded, but AniDestiny could not clear the partial file automatically. Remove the leftover file from your device if you no longer need it, then use "Check 2 leftover files again" above or tap Check again here.',
+        ),
+        findsOneWidget,
+      );
+    },
+  );
+
+  testWidgets(
     'canceled downloads with stale local paths become removable again',
     (tester) async {
       const stalePath = '/tmp/partial-video.mp4';

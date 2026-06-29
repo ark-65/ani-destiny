@@ -236,6 +236,17 @@ class AppLocalizations {
   String get downloadDiscardedNote => _t('downloadDiscardedNote');
   String get downloadDiscardedNeedsManualCleanupNote =>
       _t('downloadDiscardedNeedsManualCleanupNote');
+  String downloadDiscardedNeedsManualCleanupBatchNote(String actionLabel) {
+    return switch (_languageCode) {
+      'en' =>
+        'This download was discarded, but AniDestiny could not clear the partial file automatically. Remove the leftover file from your device if you no longer need it, then use "$actionLabel" above or tap Check again here.',
+      'ja' =>
+        'このダウンロードは破棄されましたが、AniDestiny は残留する途中ファイルを自動では削除できませんでした。不要なら下のローカルパスを手がかりに端末から削除し、削除後は上の「$actionLabel」を使うか、このカードの「もう一度確認」を押してください。',
+      _ =>
+        '这个下载已放弃，但 AniDestiny 没能自动清掉残留的未完成文件；如果你不再需要它，请按下面的本地路径手动删除。删完后可以先点上面的“$actionLabel”，也可以点这里的“重新检查”。',
+    };
+  }
+
   String get downloadStoppingStatus => _t('downloadStoppingStatus');
   String get downloadDiscardingStatus => _t('downloadDiscardingStatus');
   String get downloadDiscardedStatus => _t('downloadDiscardedStatus');
@@ -244,6 +255,19 @@ class AppLocalizations {
       _t('clearEndedDownloadsKeepsFilesNote');
   String get clearEndedDownloadsRetainedDiscardedNote =>
       _t('clearEndedDownloadsRetainedDiscardedNote');
+  String clearEndedDownloadsRetainedDiscardedBatchRecheckNote(
+    String actionLabel,
+  ) {
+    return switch (_languageCode) {
+      'en' =>
+        'Tasks marked Needs cleanup stay in the list until those leftover partial files are gone. After you delete them, use "$actionLabel" above or tap Check again on each task.',
+      'ja' =>
+        '「残留ファイルを要整理」と表示されたタスクは、その途中ファイルがなくなるまで一覧に残ります。削除した後は上の「$actionLabel」を使うか、各タスクの「もう一度確認」を押してください。',
+      _ =>
+        '标成“待清理残留文件”的任务会继续留在列表里，直到这些半截文件已经被手动删掉，或 AniDestiny 成功把它们清掉。删完后可以先点上面的“$actionLabel”，也可以逐条点“重新检查”。',
+    };
+  }
+
   String get clearEndedDownloadsManualCleanupRemaining =>
       _t('clearEndedDownloadsManualCleanupRemaining');
   String get downloadManualCleanupRequiredError =>

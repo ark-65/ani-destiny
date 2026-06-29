@@ -135,6 +135,12 @@ class _DownloadPageState extends ConsumerState<DownloadPage>
                   final showClearEndedTasksAction = clearableTaskIds.isNotEmpty;
                   final showRecheckManualCleanupAction =
                       manualCleanupTaskCount > 1;
+                  final manualCleanupBatchRecheckLabel =
+                      showRecheckManualCleanupAction
+                          ? context.l10n.recheckLeftoverFilesCount(
+                              manualCleanupTaskCount,
+                            )
+                          : null;
                   final hasBusyRemovableTask = removableTaskIds.any(
                     _busyTaskActions.containsKey,
                   );
@@ -227,8 +233,13 @@ class _DownloadPageState extends ConsumerState<DownloadPage>
                         if (hasDiscardedTasksAwaitingCleanup) ...[
                           const SizedBox(height: 8),
                           Text(
-                            context
-                                .l10n.clearEndedDownloadsRetainedDiscardedNote,
+                            manualCleanupBatchRecheckLabel == null
+                                ? context.l10n
+                                    .clearEndedDownloadsRetainedDiscardedNote
+                                : context.l10n
+                                    .clearEndedDownloadsRetainedDiscardedBatchRecheckNote(
+                                    manualCleanupBatchRecheckLabel,
+                                  ),
                             style: Theme.of(context).textTheme.bodySmall,
                             textAlign: TextAlign.right,
                           ),
@@ -291,6 +302,10 @@ class _DownloadPageState extends ConsumerState<DownloadPage>
                               onRefreshCleanupStatus:
                                   downloadTaskNeedsManualCleanup(task)
                                       ? () => _refreshCleanupStatus(task)
+                                      : null,
+                              manualCleanupBatchRecheckLabel:
+                                  downloadTaskNeedsManualCleanup(task)
+                                      ? manualCleanupBatchRecheckLabel
                                       : null,
                             );
                           },

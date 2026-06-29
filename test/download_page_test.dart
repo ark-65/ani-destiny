@@ -252,6 +252,18 @@ void main() {
 
       expect(find.text('Check 2 leftover files again'), findsOneWidget);
       expect(
+        find.text(
+          'Tasks marked Needs cleanup stay in the list until those leftover partial files are gone. After you delete them, use "Check 2 leftover files again" above or tap Check again on each task.',
+        ),
+        findsOneWidget,
+      );
+      expect(
+        find.text(
+          'This download was discarded, but AniDestiny could not clear the partial file automatically. Remove the leftover file from your device if you no longer need it, then use "Check 2 leftover files again" above or tap Check again here.',
+        ),
+        findsNWidgets(2),
+      );
+      expect(
         find.byKey(const ValueKey('downloads-recheck-manual-cleanup')),
         findsOneWidget,
       );
