@@ -145,7 +145,7 @@ class _DownloadPageState extends ConsumerState<DownloadPage>
                   final clearableTaskIds = _clearableTaskIds(items);
                   final manualCleanupTaskIds = _manualCleanupTaskIds(items);
                   final manualCleanupTaskCount = manualCleanupTaskIds.length;
-                  final showClearEndedTasksAction = clearableTaskIds.isNotEmpty;
+                  final showClearEndedTasksAction = clearableTaskIds.length > 1;
                   final showRecheckManualCleanupAction =
                       manualCleanupTaskCount > 1;
                   final manualCleanupBatchRecheckLabel =

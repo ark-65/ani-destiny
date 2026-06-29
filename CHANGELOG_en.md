@@ -7,6 +7,7 @@
 ## [Unreleased]
 
 ### 🐛 Fixed
+- Fixed the downloads page still surfacing a global `Clear 1 ended task from list` action even when only one finished task was actually ready to remove, which made a single-task cleanup read like a batch operation; AniDestiny now keeps that page-level action for real multi-task cleanup only, while single finished tasks fall back to their in-card remove action so the downloads finish flow stays calmer and more consistent.
 - Fixed direct-file download tiles still keeping a stale `0%` progress bar after users had already reached `Stopped` or in-flight `Stopping...`, which made a settled stop state look like it was still waiting to continue; AniDestiny now hides that old progress UI for stop states so the tile focuses on the real stop guidance, retry action, and cleanup outcome.
 - Fixed copied feedback summaries for discarded downloads that still need manual cleanup so they now include the leftover local file path and the exact next step, telling users to delete the file first and then return to Downloads for the matching `Check again` or batch recheck action.
 - Fixed AniDestiny still using awkward generic wording after users deleted the last leftover partial file for one task and returned to a page that also had a top-level `Clear N ended tasks from list` action; that resume message now says explicitly that users can either use the batch-clear action above or remove this task from the list right away.
