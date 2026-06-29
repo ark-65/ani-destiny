@@ -464,13 +464,20 @@ class _DownloadPageState extends ConsumerState<DownloadPage>
   void _refreshCleanupStatus(DownloadTask task) {
     if (!mounted) return;
     final stillNeedsCleanup = downloadTaskNeedsManualCleanup(task);
+    final allTasks = ref.read(downloadTasksProvider).valueOrNull;
+    final clearableTaskCount =
+        allTasks == null ? 0 : _clearableTaskIds(allTasks).length;
     setState(() {});
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(
           stillNeedsCleanup
               ? context.l10n.downloadManualCleanupRecheckStillNeeded
-              : context.l10n.downloadManualCleanupRecheckCleared,
+              : clearableTaskCount > 1
+                  ? context.l10n.downloadManualCleanupRecheckClearedAction(
+                      context.l10n.clearEndedDownloadsCount(clearableTaskCount),
+                    )
+                  : context.l10n.downloadManualCleanupRecheckCleared,
         ),
       ),
     );

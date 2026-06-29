@@ -232,6 +232,45 @@ void main() {
   );
 
   testWidgets(
+    'single cleanup recheck points at batch clear when other ended tasks are ready',
+    (tester) async {
+      tester.view.devicePixelRatio = 1;
+      tester.view.physicalSize = const Size(800, 1400);
+      addTearDown(tester.view.resetDevicePixelRatio);
+      addTearDown(tester.view.resetPhysicalSize);
+      const stalePath = '/tmp/partial-video.mp4';
+      _stubCleanupPathExists({stalePath});
+      final repository = _FakeDownloadRepository([
+        _task('completed', DownloadStatus.completed),
+        _task('canceled', DownloadStatus.canceled).copyWith(
+          localPath: stalePath,
+          failureReason: DownloadFailureReason.canceled,
+        ),
+      ]);
+
+      await _pumpDownloadPage(tester, repository);
+
+      _stubCleanupPathExists(const {});
+      await tester.tap(
+        find.byKey(const ValueKey('download-task-refresh-cleanup-canceled')),
+      );
+      await tester.pump();
+
+      expect(
+        find.text(
+          'That leftover partial file is gone. You can use "Clear 2 ended tasks from list" above now, or remove this task from the list.',
+        ),
+        findsOneWidget,
+      );
+      expect(find.text('Clear 2 ended tasks from list'), findsOneWidget);
+      expect(
+        find.byKey(const ValueKey('downloads-clear-ended-tasks')),
+        findsOneWidget,
+      );
+    },
+  );
+
+  testWidgets(
     'clear ended tasks result points multi-leftover follow-up at the batch recheck action',
     (tester) async {
       const partialPathA = '/tmp/partial-video-a.mp4';

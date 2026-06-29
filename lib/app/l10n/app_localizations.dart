@@ -276,6 +276,15 @@ class AppLocalizations {
       _t('downloadManualCleanupRecheckStillNeeded');
   String get downloadManualCleanupRecheckCleared =>
       _t('downloadManualCleanupRecheckCleared');
+  String downloadManualCleanupRecheckClearedAction(String actionLabel) {
+    return switch (_languageCode) {
+      'en' =>
+        'That leftover partial file is gone. You can use "$actionLabel" above now, or remove this task from the list.',
+      'ja' => 'この残留ファイルはもうありません。今なら上の「$actionLabel」を使うか、このタスクを一覧から消せます。',
+      _ => '这份残留文件已经不在了。现在可以直接点上面的“$actionLabel”，也可以把这条任务从列表移除。',
+    };
+  }
+
   String downloadManualCleanupBulkRecheckStillNeeded(int count) {
     return switch (_languageCode) {
       'en' =>
