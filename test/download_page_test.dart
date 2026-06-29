@@ -830,7 +830,7 @@ void main() {
 
       expect(
         find.text(
-          'AniDestiny confirmed that all 2 leftover partial files are gone. You can remove those tasks from the list now.',
+          'AniDestiny confirmed that all 2 leftover partial files are gone. You can use "Clear 2 ended tasks from list" above now, or remove those tasks one by one.',
         ),
         findsOneWidget,
       );
@@ -840,6 +840,43 @@ void main() {
         findsOneWidget,
       );
       expect(find.text('Check 2 leftover files again'), findsNothing);
+    },
+  );
+
+  testWidgets(
+    'resume points recovered leftovers at the batch clear action when several tasks are now removable',
+    (tester) async {
+      const partialPathA = '/tmp/partial-video-a.mp4';
+      const partialPathB = '/tmp/partial-video-b.mp4';
+      _stubCleanupPathExists({partialPathA, partialPathB});
+      final repository = _FakeDownloadRepository([
+        _task('completed', DownloadStatus.completed),
+        _task('canceled-a', DownloadStatus.canceled).copyWith(
+          localPath: partialPathA,
+          failureReason: DownloadFailureReason.canceled,
+        ),
+        _task('canceled-b', DownloadStatus.canceled).copyWith(
+          localPath: partialPathB,
+          failureReason: DownloadFailureReason.canceled,
+        ),
+      ]);
+
+      await _pumpDownloadPage(tester, repository);
+
+      tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.paused);
+      await tester.pump();
+
+      _stubCleanupPathExists(const {});
+      tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
+      await tester.pump();
+
+      expect(
+        find.text(
+          'AniDestiny confirmed that 2 leftover partial files are gone. You can use "Clear 3 ended tasks from list" above now, or remove those tasks one by one.',
+        ),
+        findsOneWidget,
+      );
+      expect(find.text('Clear 3 ended tasks from list'), findsOneWidget);
     },
   );
 

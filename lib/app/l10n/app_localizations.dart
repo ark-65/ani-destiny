@@ -285,7 +285,20 @@ class AppLocalizations {
     };
   }
 
-  String downloadManualCleanupBulkRecheckCleared(int count) {
+  String downloadManualCleanupBulkRecheckCleared(
+    int count, {
+    String? actionLabel,
+  }) {
+    if (actionLabel != null) {
+      return switch (_languageCode) {
+        'en' =>
+          'AniDestiny confirmed that all $count leftover partial ${count == 1 ? 'file is' : 'files are'} gone. You can use "$actionLabel" above now, or remove those tasks one by one.',
+        'ja' =>
+          'AniDestiny はこの $count 件の残留ファイルがすべてなくなったことを確認しました。今なら上の「$actionLabel」を使うか、対応するタスクを 1 件ずつ一覧から消せます。',
+        _ =>
+          'AniDestiny 已确认这 $count 份残留文件都不在了。现在可以直接点上面的“$actionLabel”，也可以逐条移除对应任务。',
+      };
+    }
     return switch (_languageCode) {
       'en' =>
         'AniDestiny confirmed that all $count leftover partial ${count == 1 ? 'file is' : 'files are'} gone. You can remove those tasks from the list now.',
@@ -310,10 +323,17 @@ class AppLocalizations {
 
   String downloadManualCleanupResumeResult(
     int clearedCount,
-    int remainingCount,
-  ) {
+    int remainingCount, {
+    String? actionLabel,
+  }) {
     assert(clearedCount > 0);
     return switch ((clearedCount, remainingCount, _languageCode)) {
+      (_, 0, 'en') when actionLabel != null =>
+        'AniDestiny confirmed that ${clearedCount == 1 ? '1 leftover partial file is' : '$clearedCount leftover partial files are'} gone. You can use "$actionLabel" above now, or remove ${clearedCount == 1 ? 'that task' : 'those tasks'} one by one.',
+      (_, 0, 'ja') when actionLabel != null =>
+        'AniDestiny は $clearedCount 件の残留ファイルがなくなったことを確認しました。今なら上の「$actionLabel」を使うか、対応するタスクを 1 件ずつ一覧から消せます。',
+      (_, 0, _) when actionLabel != null =>
+        'AniDestiny 已确认有 $clearedCount 份残留文件不在了。现在可以直接点上面的“$actionLabel”，也可以逐条移除对应任务。',
       (_, 0, 'en') =>
         'AniDestiny confirmed that ${clearedCount == 1 ? '1 leftover partial file is' : '$clearedCount leftover partial files are'} gone. You can remove ${clearedCount == 1 ? 'that task' : 'those tasks'} from the list now.',
       (_, 0, 'ja') =>
