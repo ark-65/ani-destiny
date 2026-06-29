@@ -7,6 +7,7 @@
 ## [Unreleased]
 
 ### 🐛 Fixed
+- Fixed the batch cleanup result on the downloads page still giving a vague “leftover files remain” follow-up after users cleared ended tasks, without pointing them toward the same next-step recheck action already explained on the page itself; that result message now stays aligned with the page guidance by sending single leftovers back to that task’s `Check again` action and multi-leftover cases straight to the page-level `Check N leftover files again` entry.
 - Fixed the downloads page still nudging users toward one-by-one `Check again` taps even after AniDestiny had already added a page-level `Check N leftover files again` action for multiple retained leftovers; the page guidance and per-task cleanup note now both acknowledge that batch recheck path so manual leftover cleanup reads like one coherent finish-the-job flow.
 - Fixed direct-file download tiles already reading `Stopped` the moment users tapped `Stop for now`, even though AniDestiny could still be canceling that request and clearing its partial file underneath; the tile now stays in an explicit `Stopping...` transition until cleanup truly settles, then returns to the retryable stopped state.
 - Fixed direct-file download tiles already claiming `Discarded` and implying the partial file was gone the moment users tapped `Discard download`, even though AniDestiny could still be canceling the request and clearing that leftover file underneath; the tile now stays in an explicit `Discarding...` transition until cleanup actually settles, then shows the real final result.

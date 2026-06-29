@@ -129,7 +129,7 @@ void main() {
       expect(repository.deletedTaskIds, ['completed']);
       expect(
         find.text(
-          'Cleared 1 ended tasks from the list.\nTasks marked Needs cleanup stay visible until those leftover partial files are gone.',
+          'Cleared 1 ended tasks from the list.\nTasks marked Needs cleanup stay in the list until that leftover partial file is gone. After you delete it, return here and tap Check again on that task.',
         ),
         findsOneWidget,
       );
@@ -228,6 +228,41 @@ void main() {
       await tester.pump();
 
       expect(repository.deletedTaskIds, ['canceled']);
+    },
+  );
+
+  testWidgets(
+    'clear ended tasks result points multi-leftover follow-up at the batch recheck action',
+    (tester) async {
+      const partialPathA = '/tmp/partial-video-a.mp4';
+      const partialPathB = '/tmp/partial-video-b.mp4';
+      _stubCleanupPathExists({partialPathA, partialPathB});
+      final repository = _FakeDownloadRepository([
+        _task('completed', DownloadStatus.completed),
+        _task('canceled-a', DownloadStatus.canceled).copyWith(
+          localPath: partialPathA,
+          failureReason: DownloadFailureReason.canceled,
+        ),
+        _task('canceled-b', DownloadStatus.canceled).copyWith(
+          localPath: partialPathB,
+          failureReason: DownloadFailureReason.canceled,
+        ),
+      ]);
+
+      await _pumpDownloadPage(tester, repository);
+
+      await tester
+          .tap(find.byKey(const ValueKey('downloads-clear-ended-tasks')));
+      await tester.pump();
+
+      expect(repository.deleteAttempts, ['completed']);
+      expect(repository.deletedTaskIds, ['completed']);
+      expect(
+        find.text(
+          'Cleared 1 ended tasks from the list.\nTasks marked Needs cleanup stay in the list until those leftover partial files are gone. After you delete them, use "Check 2 leftover files again" above or tap Check again on each task.',
+        ),
+        findsOneWidget,
+      );
     },
   );
 

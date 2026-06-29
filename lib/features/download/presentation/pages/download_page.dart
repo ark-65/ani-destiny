@@ -233,13 +233,10 @@ class _DownloadPageState extends ConsumerState<DownloadPage>
                         if (hasDiscardedTasksAwaitingCleanup) ...[
                           const SizedBox(height: 8),
                           Text(
-                            manualCleanupBatchRecheckLabel == null
-                                ? context.l10n
-                                    .clearEndedDownloadsRetainedDiscardedNote
-                                : context.l10n
-                                    .clearEndedDownloadsRetainedDiscardedBatchRecheckNote(
-                                    manualCleanupBatchRecheckLabel,
-                                  ),
+                            _manualCleanupRetentionGuidance(
+                              context,
+                              manualCleanupTaskCount,
+                            ),
                             style: Theme.of(context).textTheme.bodySmall,
                             textAlign: TextAlign.right,
                           ),
@@ -421,10 +418,10 @@ class _DownloadPageState extends ConsumerState<DownloadPage>
             failedCount,
           );
     final remainingTasks = ref.read(downloadTasksProvider).valueOrNull;
-    final hasDiscardedTasksAwaitingCleanup =
-        remainingTasks?.any(downloadTaskNeedsManualCleanup) ?? false;
-    final message = hasDiscardedTasksAwaitingCleanup
-        ? '$baseMessage\n${context.l10n.clearEndedDownloadsManualCleanupRemaining}'
+    final remainingManualCleanupCount =
+        remainingTasks?.where(downloadTaskNeedsManualCleanup).length ?? 0;
+    final message = remainingManualCleanupCount > 0
+        ? '$baseMessage\n${_manualCleanupRetentionGuidance(context, remainingManualCleanupCount)}'
         : baseMessage;
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text(message)),
@@ -498,6 +495,16 @@ class _DownloadPageState extends ConsumerState<DownloadPage>
       DownloadStatus.paused =>
         false,
     };
+  }
+
+  String _manualCleanupRetentionGuidance(BuildContext context, int count) {
+    assert(count > 0);
+    if (count == 1) {
+      return context.l10n.clearEndedDownloadsRetainedDiscardedNote;
+    }
+    return context.l10n.clearEndedDownloadsRetainedDiscardedBatchRecheckNote(
+      context.l10n.recheckLeftoverFilesCount(count),
+    );
   }
 
   String _actionErrorMessage(BuildContext context, Object error) {
