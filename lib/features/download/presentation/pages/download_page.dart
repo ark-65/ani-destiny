@@ -71,9 +71,13 @@ class _DownloadPageState extends ConsumerState<DownloadPage>
               context.l10n.downloadManualCleanupResumeResult(
                 recoveredCleanupTaskIds.length,
                 remainingCount,
-                actionLabel: clearableTaskCount > 1
-                    ? context.l10n.clearEndedDownloadsCount(clearableTaskCount)
-                    : null,
+                actionLabel: remainingCount > 1
+                    ? context.l10n.recheckLeftoverFilesCount(remainingCount)
+                    : clearableTaskCount > 1
+                        ? context.l10n.clearEndedDownloadsCount(
+                            clearableTaskCount,
+                          )
+                        : null,
               ),
             ),
           ),
@@ -354,6 +358,9 @@ class _DownloadPageState extends ConsumerState<DownloadPage>
       _ => context.l10n.downloadManualCleanupBulkRecheckPartial(
           clearedCount,
           remainingCount,
+          actionLabel: remainingCount > 1
+              ? context.l10n.recheckLeftoverFilesCount(remainingCount)
+              : null,
         ),
     };
     ScaffoldMessenger.of(context).showSnackBar(
