@@ -187,6 +187,11 @@ void main() {
         find.byKey(const ValueKey('download-task-busy-task-1')),
         findsOneWidget,
       );
+      expect(
+        find.byKey(const ValueKey('download-task-progress-task-1')),
+        findsNothing,
+      );
+      expect(find.textContaining('Progress:'), findsNothing);
     },
   );
 
@@ -323,6 +328,41 @@ void main() {
         ),
         findsOneWidget,
       );
+    },
+  );
+
+  testWidgets(
+    'stopped direct downloads hide stale progress once the task is settled',
+    (tester) async {
+      await tester.pumpWidget(
+        _buildTileApp(
+          DownloadTaskTile(
+            task: _task(
+              status: DownloadStatus.paused,
+              progress: 0,
+            ),
+            isBusy: false,
+            onStart: () {},
+            onPause: () {},
+            onCancel: () {},
+            onRemove: () {},
+          ),
+        ),
+      );
+      await tester.pump();
+
+      expect(find.text('Stopped'), findsOneWidget);
+      expect(
+        find.text(
+          'This download is stopped for now. Retrying may restart it from the beginning. Discarding it clears any partial file.',
+        ),
+        findsOneWidget,
+      );
+      expect(
+        find.byKey(const ValueKey('download-task-progress-task-1')),
+        findsNothing,
+      );
+      expect(find.textContaining('Progress:'), findsNothing);
     },
   );
 

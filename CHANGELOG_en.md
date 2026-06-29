@@ -7,6 +7,7 @@
 ## [Unreleased]
 
 ### 🐛 Fixed
+- Fixed direct-file download tiles still keeping a stale `0%` progress bar after users had already reached `Stopped` or in-flight `Stopping...`, which made a settled stop state look like it was still waiting to continue; AniDestiny now hides that old progress UI for stop states so the tile focuses on the real stop guidance, retry action, and cleanup outcome.
 - Fixed copied feedback summaries for discarded downloads that still need manual cleanup so they now include the leftover local file path and the exact next step, telling users to delete the file first and then return to Downloads for the matching `Check again` or batch recheck action.
 - Fixed AniDestiny still using awkward generic wording after users deleted the last leftover partial file for one task and returned to a page that also had a top-level `Clear N ended tasks from list` action; that resume message now says explicitly that users can either use the batch-clear action above or remove this task from the list right away.
 - Fixed AniDestiny re-exposing the top `Clear N ended tasks from list` action after users manually cleared part of the leftover partial files, while still only pushing them toward the last remaining cleanup task and never pointing out which tasks were already safe to finish; resume feedback and page-level leftover recheck feedback now explain both the batch clear action that is ready immediately and the final leftover file that still needs manual cleanup.

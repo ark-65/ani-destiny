@@ -513,6 +513,11 @@ void main() {
     );
     expect(find.text('Stopped'), findsOneWidget);
     expect(
+      find.byKey(const ValueKey('download-task-progress-paused')),
+      findsNothing,
+    );
+    expect(find.textContaining('Progress:'), findsOneWidget);
+    expect(
       find.text(
         'This download is stopped for now. Retrying may restart it from the beginning. Discarding it clears any partial file.',
       ),

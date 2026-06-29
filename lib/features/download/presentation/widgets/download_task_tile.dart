@@ -188,7 +188,14 @@ class DownloadTaskTile extends StatelessWidget {
   }
 
   bool _showProgress(DownloadTask task) {
-    return task.status != DownloadStatus.canceled;
+    if (task.status == DownloadStatus.canceled) {
+      return false;
+    }
+    if (task.status == DownloadStatus.paused &&
+        task.kind == DownloadKind.directFile) {
+      return false;
+    }
+    return true;
   }
 
   List<Widget> _actions(BuildContext context) {
