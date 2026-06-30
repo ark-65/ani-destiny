@@ -202,6 +202,9 @@ class DownloadTaskTile extends StatelessWidget {
     if (task.status == DownloadStatus.canceled) {
       return false;
     }
+    if (task.status == DownloadStatus.unsupported) {
+      return false;
+    }
     if (task.status == DownloadStatus.paused &&
         task.kind == DownloadKind.directFile) {
       return false;

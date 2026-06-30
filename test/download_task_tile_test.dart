@@ -179,6 +179,11 @@ void main() {
         findsOneWidget,
       );
       expect(find.text('BT download is not implemented yet.'), findsNothing);
+      expect(
+        find.byKey(const ValueKey('download-task-progress-task-1')),
+        findsNothing,
+      );
+      expect(find.textContaining('Progress:'), findsNothing);
     },
   );
 
