@@ -278,12 +278,20 @@ class DownloadTaskTile extends StatelessWidget {
             icon: const Icon(Icons.delete_outline),
           ),
         ],
-      DownloadStatus.completed || DownloadStatus.unsupported => [
+      DownloadStatus.completed => [
           IconButton(
             key: ValueKey('download-task-remove-${task.id}'),
             tooltip: context.l10n.removeFromList,
             onPressed: isBusy ? null : onRemove,
             icon: const Icon(Icons.delete_outline),
+          ),
+        ],
+      DownloadStatus.unsupported => [
+          TextButton.icon(
+            key: ValueKey('download-task-remove-${task.id}'),
+            onPressed: isBusy ? null : onRemove,
+            icon: const Icon(Icons.delete_outline, size: 18),
+            label: Text(context.l10n.removeFromList),
           ),
         ],
       DownloadStatus.canceled => downloadTaskNeedsManualCleanup(task)

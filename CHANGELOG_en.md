@@ -7,6 +7,7 @@
 ## [Unreleased]
 
 ### 🐛 Fixed
+- Fixed unsupported download cards already explaining the real limit, but still hiding the final `Remove from list` step behind an icon-only action; those tasks now surface that one remaining exit as a visible button so unsupported downloads can end cleanly without guesswork.
 - Fixed the downloads page still only telling users to keep working on leftover-file cleanup when exactly one `Needs cleanup` task and one already-finished removable task remained; the page guidance plus resume/recheck feedback now also point out that the ready task can be cleared with `Remove from list`, so the last cleanup path no longer splits into guesswork.
 - Fixed unsupported download cards already naming the real type and limit, but still stopping short of the only remaining action; those tasks now add a direct remove-from-list note so AniDestiny closes the loop instead of leaving a stranded record behind.
 - Fixed unsupported HLS, BT, and unknown download tasks still leaking placeholder wording like `BT placeholder` and `not implemented yet`, while also showing a meaningless progress bar; AniDestiny now names the real download type, explains the current limit in plain product-facing language, and hides fake progress for unsupported tasks.
