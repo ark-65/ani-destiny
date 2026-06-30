@@ -716,6 +716,48 @@ void main() {
     },
   );
 
+  testWidgets(
+    'batch clear keeps each ended task in an explicit removing state until deletion finishes',
+    (tester) async {
+      final deleteBlocker = Completer<void>();
+      final repository = _FakeDownloadRepository([
+        _task('completed', DownloadStatus.completed),
+        _task('failed', DownloadStatus.failed),
+      ]);
+      final service = _RemoveEndedTaskInFlightDownloadService(
+        repository,
+        deleteBlocker.future,
+      );
+
+      await _pumpDownloadPage(
+        tester,
+        repository,
+        downloadService: service,
+      );
+
+      await tester
+          .tap(find.byKey(const ValueKey('downloads-clear-ended-tasks')));
+      await tester.pump();
+
+      expect(find.text('Removing...'), findsNWidgets(2));
+      expect(find.text('Completed'), findsNothing);
+      expect(find.text('Failed'), findsNothing);
+      expect(
+        find.text(
+          'AniDestiny is still removing this task from the list. Any file already on your device will stay there.',
+        ),
+        findsNWidgets(2),
+      );
+
+      deleteBlocker.complete();
+      await tester.pump();
+      await tester.pump();
+
+      expect(find.text('Removing...'), findsNothing);
+      expect(repository.deletedTaskIds, ['completed', 'failed']);
+    },
+  );
+
   testWidgets('remove action failures surface a snackbar', (tester) async {
     final repository = _FakeDownloadRepository(
       [
@@ -1414,6 +1456,21 @@ class _CancelInFlightDownloadService extends _FakeDownloadService {
       ),
     );
     await settleFuture;
+  }
+}
+
+class _RemoveEndedTaskInFlightDownloadService extends _FakeDownloadService {
+  _RemoveEndedTaskInFlightDownloadService(
+    super.repository,
+    this.settleFuture,
+  );
+
+  final Future<void> settleFuture;
+
+  @override
+  Future<void> removeEndedTask(String taskId) async {
+    await settleFuture;
+    return super.removeEndedTask(taskId);
   }
 }
 

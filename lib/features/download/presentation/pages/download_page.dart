@@ -256,14 +256,18 @@ class _DownloadPageState extends ConsumerState<DownloadPage>
                           itemCount: items.length,
                           itemBuilder: (context, index) {
                             final task = items[index];
+                            final batchRemovingTask = _isClearingEndedTasks &&
+                                clearableTaskIds.contains(task.id);
                             final isBusy =
                                 _busyTaskActions.containsKey(task.id) ||
-                                    (_isClearingEndedTasks &&
-                                        clearableTaskIds.contains(task.id));
+                                    batchRemovingTask;
                             return DownloadTaskTile(
                               task: task,
                               isBusy: isBusy,
-                              busyAction: _busyTaskActions[task.id],
+                              busyAction: _busyTaskActions[task.id] ??
+                                  (batchRemovingTask
+                                      ? DownloadTaskBusyAction.remove
+                                      : null),
                               onStart: () => unawaited(
                                 _runTaskAction(
                                   context,
