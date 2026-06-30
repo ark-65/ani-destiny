@@ -194,6 +194,8 @@ void main() {
         ),
         findsOneWidget,
       );
+      expect(find.text('Unsupported type'), findsNothing);
+      expect(find.byIcon(Icons.error_outline), findsNothing);
       expect(find.text('BT download is not implemented yet.'), findsNothing);
       expect(
         find.byKey(const ValueKey('download-task-progress-task-1')),

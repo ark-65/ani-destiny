@@ -182,6 +182,9 @@ class DownloadTaskTile extends StatelessWidget {
     if (isRemovingFromList) {
       return false;
     }
+    if (task.failureReason == DownloadFailureReason.unsupportedType) {
+      return false;
+    }
     return task.failureReason != DownloadFailureReason.none &&
         task.status != DownloadStatus.canceled;
   }
