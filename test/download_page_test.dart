@@ -274,10 +274,16 @@ void main() {
         findsOneWidget,
       );
       expect(find.text('Check again'), findsNothing);
-
-      await tester
-          .tap(find.byKey(const ValueKey('download-task-remove-canceled')));
-      await tester.pump();
+      expect(
+        find.widgetWithText(SnackBarAction, 'Remove from list'),
+        findsOneWidget,
+      );
+      tester
+          .widget<SnackBarAction>(
+            find.widgetWithText(SnackBarAction, 'Remove from list'),
+          )
+          .onPressed!();
+      await tester.pumpAndSettle();
 
       expect(repository.deletedTaskIds, ['canceled']);
     },
@@ -944,6 +950,18 @@ void main() {
         find.byKey(const ValueKey('download-task-remove-canceled-a')),
         findsOneWidget,
       );
+      expect(
+        find.widgetWithText(SnackBarAction, 'Remove from list'),
+        findsOneWidget,
+      );
+      tester
+          .widget<SnackBarAction>(
+            find.widgetWithText(SnackBarAction, 'Remove from list'),
+          )
+          .onPressed!();
+      await tester.pumpAndSettle();
+
+      expect(repository.deletedTaskIds, ['canceled-a']);
     },
   );
 
