@@ -79,6 +79,13 @@ void main() {
         find.byKey(const ValueKey('download-task-remove-completed')),
         findsOneWidget,
       );
+      expect(
+        find.descendant(
+          of: find.byKey(const ValueKey('download-task-remove-completed')),
+          matching: find.text('Remove from list'),
+        ),
+        findsOneWidget,
+      );
     },
   );
 
@@ -1345,7 +1352,7 @@ void main() {
       find.byKey(const ValueKey('download-task-busy-completed')),
       findsOneWidget,
     );
-    expect(tester.widget<IconButton>(removeButton).onPressed, isNull);
+    expect(tester.widget<TextButton>(removeButton).onPressed, isNull);
 
     await tester.tap(removeButton, warnIfMissed: false);
     await tester.pump();

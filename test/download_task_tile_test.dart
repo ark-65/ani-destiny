@@ -35,6 +35,13 @@ void main() {
     expect(removeButton, findsOneWidget);
     expect(find.byTooltip('Remove from list'), findsOneWidget);
     expect(
+      find.descendant(
+        of: removeButton,
+        matching: find.text('Remove from list'),
+      ),
+      findsOneWidget,
+    );
+    expect(
       find.text(
         'Removing this task only clears it from the list. The downloaded file stays on your device.',
       ),
@@ -129,6 +136,13 @@ void main() {
     expect(find.byIcon(Icons.error_outline), findsNothing);
     expect(find.text('Download canceled.'), findsNothing);
     expect(find.byTooltip('Remove from list'), findsOneWidget);
+    expect(
+      find.descendant(
+        of: removeButton,
+        matching: find.text('Remove from list'),
+      ),
+      findsOneWidget,
+    );
     expect(
       find.text(
         'This download was discarded. Any partial file was cleared. You can remove this task from the list when you are done.',

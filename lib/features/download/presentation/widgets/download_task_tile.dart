@@ -313,20 +313,10 @@ class DownloadTaskTile extends StatelessWidget {
           ),
         ],
       DownloadStatus.completed => [
-          IconButton(
-            key: ValueKey('download-task-remove-${task.id}'),
-            tooltip: context.l10n.removeFromList,
-            onPressed: isBusy ? null : onRemove,
-            icon: const Icon(Icons.delete_outline),
-          ),
+          _removeTextAction(context),
         ],
       DownloadStatus.unsupported => [
-          TextButton.icon(
-            key: ValueKey('download-task-remove-${task.id}'),
-            onPressed: isBusy ? null : onRemove,
-            icon: const Icon(Icons.delete_outline, size: 18),
-            label: Text(context.l10n.removeFromList),
-          ),
+          _removeTextAction(context),
         ],
       DownloadStatus.canceled => downloadTaskNeedsManualCleanup(task)
           ? [
@@ -338,14 +328,21 @@ class DownloadTaskTile extends StatelessWidget {
               ),
             ]
           : [
-              IconButton(
-                key: ValueKey('download-task-remove-${task.id}'),
-                tooltip: context.l10n.removeFromList,
-                onPressed: isBusy ? null : onRemove,
-                icon: const Icon(Icons.delete_outline),
-              ),
+              _removeTextAction(context),
             ],
     };
+  }
+
+  Widget _removeTextAction(BuildContext context) {
+    return Tooltip(
+      message: context.l10n.removeFromList,
+      child: TextButton.icon(
+        key: ValueKey('download-task-remove-${task.id}'),
+        onPressed: isBusy ? null : onRemove,
+        icon: const Icon(Icons.delete_outline, size: 18),
+        label: Text(context.l10n.removeFromList),
+      ),
+    );
   }
 
   String _progressLabel(BuildContext context, DownloadTask task) {
