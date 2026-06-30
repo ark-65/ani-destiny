@@ -235,6 +235,7 @@ class AppLocalizations {
   String get downloadDiscardingNote => _t('downloadDiscardingNote');
   String get downloadDiscardedNote => _t('downloadDiscardedNote');
   String get downloadRemovingNote => _t('downloadRemovingNote');
+  String get downloadRemovingListOnlyNote => _t('downloadRemovingListOnlyNote');
   String get downloadUnsupportedRemoveNote =>
       _t('downloadUnsupportedRemoveNote');
   String get downloadDiscardedNeedsManualCleanupNote =>
@@ -872,6 +873,7 @@ const _localizedValues = {
     'downloadDiscardingNote': 'AniDestiny 还在放弃这个下载，并清理这次未完成内容；清理完成后，这里会更新最终结果。',
     'downloadDiscardedNote': '这个下载已放弃；未完成内容和临时文件都已清掉。确认无误后，你可以把这条记录从列表移除。',
     'downloadRemovingNote': 'AniDestiny 正在把这条任务从列表移除；这个动作不会改动设备上已有的文件。',
+    'downloadRemovingListOnlyNote': 'AniDestiny 正在把这条任务从列表移除，请稍候片刻。',
     'downloadUnsupportedRemoveNote': 'AniDestiny 还不能接管这类下载；确认后可以先把这条任务从列表移除。',
     'downloadDiscardedNeedsManualCleanupNote':
         '这个下载已放弃，但 AniDestiny 没能自动清掉残留的未完成文件；如果你不再需要它，请按下面的本地路径手动删除，删完后回到这里点一下“重新检查”。',
@@ -1200,6 +1202,8 @@ const _localizedValues = {
         'This download was discarded. Any partial file was cleared. You can remove this task from the list when you are done.',
     'downloadRemovingNote':
         'AniDestiny is still removing this task from the list. Any file already on your device will stay there.',
+    'downloadRemovingListOnlyNote':
+        'AniDestiny is still removing this task from the list. Please give it a moment.',
     'downloadUnsupportedRemoveNote':
         'AniDestiny cannot take over this type of download yet. You can remove this task from the list for now.',
     'downloadDiscardedNeedsManualCleanupNote':
@@ -1539,6 +1543,7 @@ const _localizedValues = {
         'このダウンロードは破棄され、未完了の内容と一時ファイルは削除されました。確認できたら、このタスクを一覧から消せます。',
     'downloadRemovingNote':
         'AniDestiny はこのタスクを一覧からまだ削除中です。この操作で端末上の既存ファイルは変更されません。',
+    'downloadRemovingListOnlyNote': 'AniDestiny はこのタスクを一覧からまだ削除中です。少しお待ちください。',
     'downloadUnsupportedRemoveNote':
         'AniDestiny はまだこの種類のダウンロードを引き継げません。今はこのタスクを一覧から消せます。',
     'downloadDiscardedNeedsManualCleanupNote':

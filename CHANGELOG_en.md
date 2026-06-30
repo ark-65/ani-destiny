@@ -7,6 +7,7 @@
 ## [Unreleased]
 
 ### 🐛 Fixed
+- Fixed unsupported download tasks already being down to one honest exit path while copied feedback summaries still omitted that last `Remove from list` step and the in-flight removal note still hinted that a file might already exist on the device; support exports now include the same remove-from-list guidance, and the unsupported removing state keeps copy focused on the list cleanup that is actually happening.
 - Fixed completed and already-settled discarded downloads still hiding their last `Remove from list` step inside a trash icon even after the page copy was already naming that final action; those end-state cards now surface the same exit as a visible button so cleanup can finish without guesswork.
 - Fixed partial leftover-file recovery messages already saying that one task was ready to leave the list while other leftovers still needed manual cleanup, but still making users go back to that card to finish it; those batch recheck and resume results now keep offering `Remove from list` directly so one ready task can still close cleanly without hunting for the exit.
 - Fixed cleanup confirmations already saying that only one ended download was ready to leave the list while still making users go back to the matching card to find the final button; those resume and recheck results now offer `Remove from list` directly so a single leftover-file cleanup can finish in one step.

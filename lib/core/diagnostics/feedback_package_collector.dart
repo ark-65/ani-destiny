@@ -253,6 +253,11 @@ class FeedbackPackageCollector {
           '  ${l10n.feedbackPackageMessage}: $failureMessage',
         );
       }
+      if (task.status == DownloadStatus.unsupported) {
+        lines.add(
+          '  ${l10n.feedbackPackageMessage}: ${l10n.downloadUnsupportedRemoveNote}',
+        );
+      }
     }
 
     return lines.join('\n');

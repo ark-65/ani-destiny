@@ -345,7 +345,7 @@ void main() {
       );
       expect(
         find.text(
-          'AniDestiny is still removing this task from the list. Any file already on your device will stay there.',
+          'AniDestiny is still removing this task from the list. Please give it a moment.',
         ),
         findsOneWidget,
       );

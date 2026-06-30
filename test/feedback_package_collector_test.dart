@@ -310,6 +310,12 @@ void main() {
           'Message: This download currently uses a BT / magnet link, and AniDestiny cannot handle that type directly yet.',
         ),
       );
+      expect(
+        markdown,
+        contains(
+          'Message: AniDestiny cannot take over this type of download yet. You can remove this task from the list for now.',
+        ),
+      );
       expect(markdown, isNot(contains('BT placeholder')));
       expect(markdown, isNot(contains('BT download is not implemented yet.')));
     },

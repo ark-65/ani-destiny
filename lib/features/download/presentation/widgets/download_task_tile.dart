@@ -141,7 +141,9 @@ class DownloadTaskTile extends StatelessWidget {
 
   String? _supportNote(BuildContext context) {
     if (_isRemovingFromList(task)) {
-      return context.l10n.downloadRemovingNote;
+      return task.status == DownloadStatus.unsupported
+          ? context.l10n.downloadRemovingListOnlyNote
+          : context.l10n.downloadRemovingNote;
     }
     return switch (task.status) {
       DownloadStatus.paused
