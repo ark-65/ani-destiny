@@ -140,7 +140,7 @@ void main() {
       );
       expect(
         find.text(
-          'Tasks marked Needs cleanup stay in the list until that leftover partial file is gone. After you delete it, return here and tap Check again on that task.',
+          'Tasks marked Needs cleanup stay in the list until that leftover partial file is gone. You can use "Remove from list" on the task that is already ready now. After you delete that file, return here and tap Check again on this task.',
         ),
         findsOneWidget,
       );
@@ -416,7 +416,7 @@ void main() {
 
       expect(
         find.text(
-          'AniDestiny confirmed that 1 leftover partial file is gone. 1 still needs cleanup. Delete that leftover file first, then tap Check again on that task.',
+          'AniDestiny confirmed that 1 leftover partial file is gone. You can use "Remove from list" on the task that is already ready now. 1 still needs cleanup. Delete that leftover file first, then tap Check again on that task.',
         ),
         findsOneWidget,
       );
@@ -894,7 +894,7 @@ void main() {
 
       expect(
         find.text(
-          'AniDestiny confirmed that 1 leftover partial file is gone. 1 still needs cleanup. Delete that leftover file first, then tap Check again on that task.',
+          'AniDestiny confirmed that 1 leftover partial file is gone. You can use "Remove from list" on the task that is already ready now. 1 still needs cleanup. Delete that leftover file first, then tap Check again on that task.',
         ),
         findsOneWidget,
       );
@@ -969,7 +969,7 @@ void main() {
 
       expect(
         find.text(
-          'AniDestiny confirmed that 1 leftover partial file is gone. 2 still need cleanup. After you delete them, use "Check 2 leftover files again" above or tap Check again on each task.',
+          'AniDestiny confirmed that 1 leftover partial file is gone. You can use "Remove from list" on the task that is already ready now. 2 still need cleanup. After you delete them, use "Check 2 leftover files again" above or tap Check again on each task.',
         ),
         findsOneWidget,
       );

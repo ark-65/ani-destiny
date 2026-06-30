@@ -67,6 +67,8 @@ class _DownloadPageState extends ConsumerState<DownloadPage>
         final clearableTaskCount = _clearableTaskIds(tasks).length;
         final clearActionLabel =
             _clearEndedTasksActionLabel(clearableTaskCount);
+        final removeActionLabel =
+            _singleReadyTaskRemoveActionLabel(clearableTaskCount);
         _showDownloadSnackBar(
           context.l10n.downloadManualCleanupResumeResult(
             recoveredCleanupTaskIds.length,
@@ -75,6 +77,7 @@ class _DownloadPageState extends ConsumerState<DownloadPage>
                 ? context.l10n.recheckLeftoverFilesCount(remainingCount)
                 : clearActionLabel,
             clearActionLabel: remainingCount == 1 ? clearActionLabel : null,
+            removeActionLabel: removeActionLabel,
           ),
           actionLabel: remainingCount <= 1 ? clearActionLabel : null,
         );
@@ -340,6 +343,8 @@ class _DownloadPageState extends ConsumerState<DownloadPage>
     final clearableTaskCount =
         allTasks == null ? 0 : _clearableTaskIds(allTasks).length;
     final clearActionLabel = _clearEndedTasksActionLabel(clearableTaskCount);
+    final removeActionLabel =
+        _singleReadyTaskRemoveActionLabel(clearableTaskCount);
 
     setState(() {});
 
@@ -358,6 +363,7 @@ class _DownloadPageState extends ConsumerState<DownloadPage>
               ? context.l10n.recheckLeftoverFilesCount(remainingCount)
               : null,
           clearActionLabel: remainingCount == 1 ? clearActionLabel : null,
+          removeActionLabel: removeActionLabel,
         ),
     };
     _showDownloadSnackBar(
@@ -435,8 +441,10 @@ class _DownloadPageState extends ConsumerState<DownloadPage>
     final remainingTasks = ref.read(downloadTasksProvider).valueOrNull;
     final remainingManualCleanupCount =
         remainingTasks?.where(downloadTaskNeedsManualCleanup).length ?? 0;
+    final remainingClearableTaskCount =
+        remainingTasks == null ? 0 : _clearableTaskIds(remainingTasks).length;
     final message = remainingManualCleanupCount > 0
-        ? '$baseMessage\n${_manualCleanupRetentionGuidance(context, remainingManualCleanupCount)}'
+        ? '$baseMessage\n${_manualCleanupRetentionGuidance(context, remainingManualCleanupCount, clearableTaskCount: remainingClearableTaskCount)}'
         : baseMessage;
     _showDownloadSnackBar(message);
   }
@@ -527,12 +535,25 @@ class _DownloadPageState extends ConsumerState<DownloadPage>
           context.l10n.clearEndedDownloadsCount(clearableTaskCount),
         );
       }
+      if (clearableTaskCount == 1) {
+        return context.l10n
+            .clearEndedDownloadsRetainedDiscardedRemoveActionNote(
+          context.l10n.removeFromList,
+        );
+      }
       return context.l10n.clearEndedDownloadsRetainedDiscardedNote;
     }
     if (clearableTaskCount > 1) {
       return context.l10n
           .clearEndedDownloadsRetainedDiscardedBatchClearActionNote(
         context.l10n.clearEndedDownloadsCount(clearableTaskCount),
+        context.l10n.recheckLeftoverFilesCount(count),
+      );
+    }
+    if (clearableTaskCount == 1) {
+      return context.l10n
+          .clearEndedDownloadsRetainedDiscardedBatchRemoveActionNote(
+        context.l10n.removeFromList,
         context.l10n.recheckLeftoverFilesCount(count),
       );
     }
@@ -566,6 +587,13 @@ class _DownloadPageState extends ConsumerState<DownloadPage>
       return null;
     }
     return context.l10n.clearEndedDownloadsCount(clearableTaskCount);
+  }
+
+  String? _singleReadyTaskRemoveActionLabel(int clearableTaskCount) {
+    if (clearableTaskCount != 1) {
+      return null;
+    }
+    return context.l10n.removeFromList;
   }
 
   void _handleSnackBarClearEndedTasksAction() {
