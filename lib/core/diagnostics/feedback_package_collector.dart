@@ -247,10 +247,10 @@ class FeedbackPackageCollector {
           '${l10n.downloadManualCleanupFeedbackNextStep(actionLabel: manualCleanupActionLabel)}',
         );
       }
-      if (task.failureMessage != null) {
+      final failureMessage = _downloadFailureMessage(task);
+      if (failureMessage != null) {
         lines.add(
-          '  ${l10n.feedbackPackageMessage}: '
-          '${sanitizeError(task.failureMessage!)}',
+          '  ${l10n.feedbackPackageMessage}: $failureMessage',
         );
       }
     }
@@ -306,5 +306,21 @@ class FeedbackPackageCollector {
       DownloadFailureReason.canceled => l10n.downloadDiscardedStatus,
       DownloadFailureReason.unknown => l10n.downloadFailureUnknown,
     };
+  }
+
+  String? _downloadFailureMessage(DownloadTask task) {
+    if (task.failureReason == DownloadFailureReason.unsupportedType) {
+      return switch (task.kind) {
+        DownloadKind.hls => l10n.downloadUnsupportedHlsMessage,
+        DownloadKind.bt => l10n.downloadUnsupportedBtMessage,
+        DownloadKind.unknown => l10n.downloadUnsupportedUnknownMessage,
+        DownloadKind.directFile => task.failureMessage == null
+            ? null
+            : sanitizeError(task.failureMessage!),
+      };
+    }
+    return task.failureMessage == null
+        ? null
+        : sanitizeError(task.failureMessage!);
   }
 }

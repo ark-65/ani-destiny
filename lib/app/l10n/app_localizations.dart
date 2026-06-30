@@ -439,6 +439,11 @@ class AppLocalizations {
   String get downloadKindHls => _t('downloadKindHls');
   String get downloadKindBt => _t('downloadKindBt');
   String get downloadKindUnknown => _t('downloadKindUnknown');
+  String get downloadUnsupportedHlsMessage =>
+      _t('downloadUnsupportedHlsMessage');
+  String get downloadUnsupportedBtMessage => _t('downloadUnsupportedBtMessage');
+  String get downloadUnsupportedUnknownMessage =>
+      _t('downloadUnsupportedUnknownMessage');
   String get downloadFailureUnsupportedType =>
       _t('downloadFailureUnsupportedType');
   String get downloadFailurePermissionDenied =>
@@ -823,8 +828,13 @@ const _localizedValues = {
     'downloadStoppedStatus': '已停下',
     'downloadKindDirectFile': '直链文件',
     'downloadKindHls': 'HLS / m3u8',
-    'downloadKindBt': 'BT 占位',
+    'downloadKindBt': 'BT / magnet',
     'downloadKindUnknown': '未知类型',
+    'downloadUnsupportedHlsMessage':
+        '这条下载目前是 HLS / m3u8 流，AniDestiny 还不能直接离线保存这种类型。',
+    'downloadUnsupportedBtMessage':
+        '这条下载目前是 BT / magnet 链接，AniDestiny 还不能直接处理这种下载。',
+    'downloadUnsupportedUnknownMessage': '这条下载链接目前还不是 AniDestiny 能直接保存的类型。',
     'downloadFailureUnsupportedType': '暂不支持该类型',
     'downloadFailurePermissionDenied': '权限不足',
     'downloadFailureNetworkError': '网络错误',
@@ -1145,8 +1155,14 @@ const _localizedValues = {
     'downloadStoppedStatus': 'Stopped',
     'downloadKindDirectFile': 'Direct file',
     'downloadKindHls': 'HLS / m3u8',
-    'downloadKindBt': 'BT placeholder',
+    'downloadKindBt': 'BT / magnet',
     'downloadKindUnknown': 'Unknown type',
+    'downloadUnsupportedHlsMessage':
+        'This download currently uses an HLS / m3u8 stream, and AniDestiny cannot save that type offline yet.',
+    'downloadUnsupportedBtMessage':
+        'This download currently uses a BT / magnet link, and AniDestiny cannot handle that type directly yet.',
+    'downloadUnsupportedUnknownMessage':
+        'This download link is not a type AniDestiny can save directly yet.',
     'downloadFailureUnsupportedType': 'Unsupported type',
     'downloadFailurePermissionDenied': 'Permission denied',
     'downloadFailureNetworkError': 'Network error',
@@ -1472,8 +1488,14 @@ const _localizedValues = {
     'downloadStoppedStatus': '停止中',
     'downloadKindDirectFile': '直接ファイル',
     'downloadKindHls': 'HLS / m3u8',
-    'downloadKindBt': 'BT プレースホルダー',
+    'downloadKindBt': 'BT / magnet',
     'downloadKindUnknown': '不明な種類',
+    'downloadUnsupportedHlsMessage':
+        'このダウンロードは現在 HLS / m3u8 ストリームのため、AniDestiny ではまだこの種類をオフライン保存できません。',
+    'downloadUnsupportedBtMessage':
+        'このダウンロードは現在 BT / magnet リンクのため、AniDestiny ではまだこの種類を直接処理できません。',
+    'downloadUnsupportedUnknownMessage':
+        'このダウンロードリンクは、AniDestiny がまだ直接保存できる種類ではありません。',
     'downloadFailureUnsupportedType': '未対応の種類',
     'downloadFailurePermissionDenied': '権限がありません',
     'downloadFailureNetworkError': 'ネットワークエラー',

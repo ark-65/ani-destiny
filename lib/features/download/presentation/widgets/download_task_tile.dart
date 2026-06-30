@@ -40,6 +40,7 @@ class DownloadTaskTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final supportNote = _supportNote(context);
+    final failureMessage = _failureMessage(context, task);
 
     return Card(
       child: Padding(
@@ -90,10 +91,10 @@ class DownloadTaskTile extends StatelessWidget {
                 key: ValueKey('download-task-progress-${task.id}'),
               ),
             ],
-            if (_showFailureMessage(task)) ...[
+            if (failureMessage != null) ...[
               const SizedBox(height: 6),
               Text(
-                task.failureMessage!,
+                failureMessage,
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
                       color: Theme.of(context).colorScheme.error,
                     ),
@@ -178,13 +179,23 @@ class DownloadTaskTile extends StatelessWidget {
         task.status != DownloadStatus.canceled;
   }
 
-  bool _showFailureMessage(DownloadTask task) {
-    return task.failureMessage != null &&
-        task.status != DownloadStatus.canceled;
-  }
-
   bool _showLocalPath(DownloadTask task) {
     return downloadTaskShowsLocalPath(task);
+  }
+
+  String? _failureMessage(BuildContext context, DownloadTask task) {
+    if (task.status == DownloadStatus.canceled) {
+      return null;
+    }
+    if (task.failureReason == DownloadFailureReason.unsupportedType) {
+      return switch (task.kind) {
+        DownloadKind.hls => context.l10n.downloadUnsupportedHlsMessage,
+        DownloadKind.bt => context.l10n.downloadUnsupportedBtMessage,
+        DownloadKind.unknown => context.l10n.downloadUnsupportedUnknownMessage,
+        DownloadKind.directFile => task.failureMessage,
+      };
+    }
+    return task.failureMessage;
   }
 
   bool _showProgress(DownloadTask task) {

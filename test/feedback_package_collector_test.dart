@@ -254,6 +254,67 @@ void main() {
     expect(markdown, isNot(contains('Download canceled.')));
   });
 
+  test(
+    'collector uses honest localized copy for unsupported BT downloads',
+    () {
+      final now = DateTime.utc(2026, 6, 30, 15, 0, 0);
+      const l10n = AppLocalizations(Locale('en'));
+      final package = FeedbackPackageCollector(
+        l10n: l10n,
+        appName: 'AniDestiny',
+        appVersion: '1.0.4',
+        platform: 'Windows',
+        currentSourceId: 'sakura',
+        sourceHealth: const [],
+        sourceDiagnostics: const [],
+        fallbackEvents: const [],
+        playbackDiagnostics: null,
+        danmakuEnabled: false,
+        dandanplayAppIdConfigured: false,
+        dandanplayAppSecretConfigured: false,
+        downloadTasks: [
+          DownloadTask(
+            id: 'task-bt',
+            animeId: 'anime-1',
+            episodeId: 'episode-1',
+            sourceId: 'sakura',
+            title: 'Anime',
+            episodeTitle: 'Episode 1',
+            url: 'magnet:?xt=urn:btih:abc123',
+            kind: DownloadKind.bt,
+            status: DownloadStatus.unsupported,
+            failureReason: DownloadFailureReason.unsupportedType,
+            failureMessage: 'BT download is not implemented yet.',
+            progress: 0,
+            downloadedBytes: 0,
+            createdAt: now,
+            updatedAt: now,
+          ),
+        ],
+      ).collect(generatedAt: now);
+
+      final markdown = const FeedbackPackageFormatter(l10n: l10n).format(
+        package,
+      );
+
+      expect(markdown, contains('- BT / magnet: 1'));
+      expect(
+        markdown,
+        contains(
+          '- Latest issue: Unsupported · Reason: Unsupported type',
+        ),
+      );
+      expect(
+        markdown,
+        contains(
+          'Message: This download currently uses a BT / magnet link, and AniDestiny cannot handle that type directly yet.',
+        ),
+      );
+      expect(markdown, isNot(contains('BT placeholder')));
+      expect(markdown, isNot(contains('BT download is not implemented yet.')));
+    },
+  );
+
   test('collector uses stopped download wording in support summaries', () {
     final now = DateTime.utc(2026, 6, 25, 15, 0, 0);
     const l10n = AppLocalizations(Locale('en'));

@@ -7,6 +7,7 @@
 ## [Unreleased]
 
 ### 🐛 Fixed
+- Fixed download cards and support summaries still leaking placeholder wording like `BT placeholder` and `not implemented yet` for unsupported HLS, BT, and unknown download types; AniDestiny now names the actual download type and explains the current limit in plain product-facing language.
 - Fixed the downloads page still only pushing users toward leftover-file rechecks when several `Needs cleanup` tasks were still visible and the page-level `Clear N ended tasks from list` action was already available too; that page note now names both the ended tasks users can clear right away and the batch leftover-file recheck they should use after deleting the remaining files, so the last cleanup stretch reads like one coherent finish path.
 - Fixed cleanup-complete download messages that already told users the page-level `Clear N ended tasks from list` action was ready, but still made them look back up and find that button themselves; those `Check again` and app-resume confirmations now include the same clear-ended-tasks action directly so the final cleanup step can finish the moment the result appears.
 - Fixed the downloads page still using single-task `Check again` guidance when the last `Needs cleanup` task was already sharing the page with a visible `Clear N ended tasks from list` action above; that page note now explains both truths together by naming the ended tasks users can clear immediately and the leftover-file task that still needs one final recheck after manual deletion.

@@ -149,6 +149,40 @@ void main() {
   });
 
   testWidgets(
+    'unsupported BT downloads replace placeholder copy with honest guidance',
+    (tester) async {
+      await tester.pumpWidget(
+        _buildTileApp(
+          DownloadTaskTile(
+            task: _task(
+              status: DownloadStatus.unsupported,
+              kind: DownloadKind.bt,
+              failureReason: DownloadFailureReason.unsupportedType,
+              failureMessage: 'BT download is not implemented yet.',
+            ),
+            isBusy: false,
+            onStart: () {},
+            onPause: () {},
+            onCancel: () {},
+            onRemove: () {},
+          ),
+        ),
+      );
+      await tester.pump();
+
+      expect(find.text('BT / magnet'), findsOneWidget);
+      expect(find.text('BT placeholder'), findsNothing);
+      expect(
+        find.text(
+          'This download currently uses a BT / magnet link, and AniDestiny cannot handle that type directly yet.',
+        ),
+        findsOneWidget,
+      );
+      expect(find.text('BT download is not implemented yet.'), findsNothing);
+    },
+  );
+
+  testWidgets(
     'busy stopped downloads keep showing an in-flight stopping state until cleanup settles',
     (tester) async {
       await tester.pumpWidget(
@@ -614,6 +648,7 @@ Widget _buildTileApp(Widget child) {
 DownloadTask _task({
   required DownloadStatus status,
   double progress = 1,
+  DownloadKind kind = DownloadKind.directFile,
   DownloadFailureReason failureReason = DownloadFailureReason.none,
   String? failureMessage,
   String? localPath,
@@ -626,8 +661,10 @@ DownloadTask _task({
     sourceId: 'sakura',
     title: 'AniDestiny',
     episodeTitle: 'Episode 1',
-    url: 'https://cdn.example.test/video.mp4',
-    kind: DownloadKind.directFile,
+    url: kind == DownloadKind.bt
+        ? 'magnet:?xt=urn:btih:abc123'
+        : 'https://cdn.example.test/video.mp4',
+    kind: kind,
     status: status,
     failureReason: failureReason,
     failureMessage: failureMessage,
