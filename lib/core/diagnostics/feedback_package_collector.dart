@@ -230,12 +230,23 @@ class FeedbackPackageCollector {
     } else {
       final task = latestIssue.first;
       final needsManualCleanup = manualCleanupTaskIds.contains(task.id);
+      final manualCleanupActionLabel = manualCleanupCount > 1
+          ? l10n.recheckLeftoverFilesCount(manualCleanupCount)
+          : null;
       lines.add(
         '- ${l10n.feedbackPackageLatestIssue}: '
         '${needsManualCleanup ? l10n.downloadManualCleanupStatus : _downloadStatusLabel(task.status)}'
         ' · ${l10n.feedbackPackageReason}: '
         '${_downloadFailureReasonLabel(task.failureReason)}',
       );
+      final localPath = task.localPath;
+      if (needsManualCleanup && localPath != null && localPath.isNotEmpty) {
+        lines.add('  ${l10n.downloadLocalPath}: $localPath');
+        lines.add(
+          '  ${l10n.feedbackPackageMessage}: '
+          '${l10n.downloadManualCleanupFeedbackNextStep(actionLabel: manualCleanupActionLabel)}',
+        );
+      }
       if (task.failureMessage != null) {
         lines.add(
           '  ${l10n.feedbackPackageMessage}: '

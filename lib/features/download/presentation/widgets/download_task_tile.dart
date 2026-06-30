@@ -22,6 +22,7 @@ class DownloadTaskTile extends StatelessWidget {
     required this.onCancel,
     required this.onRemove,
     this.onRefreshCleanupStatus,
+    this.manualCleanupBatchRecheckLabel,
     this.busyAction,
     super.key,
   });
@@ -33,6 +34,7 @@ class DownloadTaskTile extends StatelessWidget {
   final VoidCallback onCancel;
   final VoidCallback onRemove;
   final VoidCallback? onRefreshCleanupStatus;
+  final String? manualCleanupBatchRecheckLabel;
   final DownloadTaskBusyAction? busyAction;
 
   @override
@@ -151,7 +153,11 @@ class DownloadTaskTile extends StatelessWidget {
         context.l10n.downloadPausedRetryNote,
       DownloadStatus.canceled when task.kind == DownloadKind.directFile =>
         downloadTaskNeedsManualCleanup(task)
-            ? context.l10n.downloadDiscardedNeedsManualCleanupNote
+            ? manualCleanupBatchRecheckLabel == null
+                ? context.l10n.downloadDiscardedNeedsManualCleanupNote
+                : context.l10n.downloadDiscardedNeedsManualCleanupBatchNote(
+                    manualCleanupBatchRecheckLabel!,
+                  )
             : context.l10n.downloadDiscardedNote,
       DownloadStatus.completed when _showLocalPath(task) =>
         context.l10n.downloadRemoveKeepsFileNote,
@@ -182,7 +188,14 @@ class DownloadTaskTile extends StatelessWidget {
   }
 
   bool _showProgress(DownloadTask task) {
-    return task.status != DownloadStatus.canceled;
+    if (task.status == DownloadStatus.canceled) {
+      return false;
+    }
+    if (task.status == DownloadStatus.paused &&
+        task.kind == DownloadKind.directFile) {
+      return false;
+    }
+    return true;
   }
 
   List<Widget> _actions(BuildContext context) {

@@ -187,6 +187,11 @@ void main() {
         find.byKey(const ValueKey('download-task-busy-task-1')),
         findsOneWidget,
       );
+      expect(
+        find.byKey(const ValueKey('download-task-progress-task-1')),
+        findsNothing,
+      );
+      expect(find.textContaining('Progress:'), findsNothing);
     },
   );
 
@@ -288,6 +293,76 @@ void main() {
       await tester.pump();
 
       expect(refreshTapped, isTrue);
+    },
+  );
+
+  testWidgets(
+    'manual cleanup tiles mention the page-level batch recheck when it is available',
+    (tester) async {
+      const partialPath = '/tmp/partial-video.mp4';
+      _stubCleanupPathExists({partialPath});
+
+      await tester.pumpWidget(
+        _buildTileApp(
+          DownloadTaskTile(
+            task: _task(
+              status: DownloadStatus.canceled,
+              failureReason: DownloadFailureReason.canceled,
+              localPath: partialPath,
+            ),
+            isBusy: false,
+            onStart: () {},
+            onPause: () {},
+            onCancel: () {},
+            onRemove: () {},
+            onRefreshCleanupStatus: () {},
+            manualCleanupBatchRecheckLabel: 'Check 2 leftover files again',
+          ),
+        ),
+      );
+      await tester.pump();
+
+      expect(
+        find.text(
+          'This download was discarded, but AniDestiny could not clear the partial file automatically. Remove the leftover file from your device if you no longer need it, then use "Check 2 leftover files again" above or tap Check again here.',
+        ),
+        findsOneWidget,
+      );
+    },
+  );
+
+  testWidgets(
+    'stopped direct downloads hide stale progress once the task is settled',
+    (tester) async {
+      await tester.pumpWidget(
+        _buildTileApp(
+          DownloadTaskTile(
+            task: _task(
+              status: DownloadStatus.paused,
+              progress: 0,
+            ),
+            isBusy: false,
+            onStart: () {},
+            onPause: () {},
+            onCancel: () {},
+            onRemove: () {},
+          ),
+        ),
+      );
+      await tester.pump();
+
+      expect(find.text('Stopped'), findsOneWidget);
+      expect(
+        find.text(
+          'This download is stopped for now. Retrying may restart it from the beginning. Discarding it clears any partial file.',
+        ),
+        findsOneWidget,
+      );
+      expect(
+        find.byKey(const ValueKey('download-task-progress-task-1')),
+        findsNothing,
+      );
+      expect(find.textContaining('Progress:'), findsNothing);
     },
   );
 

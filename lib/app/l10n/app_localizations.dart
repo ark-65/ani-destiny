@@ -236,6 +236,17 @@ class AppLocalizations {
   String get downloadDiscardedNote => _t('downloadDiscardedNote');
   String get downloadDiscardedNeedsManualCleanupNote =>
       _t('downloadDiscardedNeedsManualCleanupNote');
+  String downloadDiscardedNeedsManualCleanupBatchNote(String actionLabel) {
+    return switch (_languageCode) {
+      'en' =>
+        'This download was discarded, but AniDestiny could not clear the partial file automatically. Remove the leftover file from your device if you no longer need it, then use "$actionLabel" above or tap Check again here.',
+      'ja' =>
+        'このダウンロードは破棄されましたが、AniDestiny は残留する途中ファイルを自動では削除できませんでした。不要なら下のローカルパスを手がかりに端末から削除し、削除後は上の「$actionLabel」を使うか、このカードの「もう一度確認」を押してください。',
+      _ =>
+        '这个下载已放弃，但 AniDestiny 没能自动清掉残留的未完成文件；如果你不再需要它，请按下面的本地路径手动删除。删完后可以先点上面的“$actionLabel”，也可以点这里的“重新检查”。',
+    };
+  }
+
   String get downloadStoppingStatus => _t('downloadStoppingStatus');
   String get downloadDiscardingStatus => _t('downloadDiscardingStatus');
   String get downloadDiscardedStatus => _t('downloadDiscardedStatus');
@@ -244,6 +255,46 @@ class AppLocalizations {
       _t('clearEndedDownloadsKeepsFilesNote');
   String get clearEndedDownloadsRetainedDiscardedNote =>
       _t('clearEndedDownloadsRetainedDiscardedNote');
+  String clearEndedDownloadsRetainedDiscardedClearActionNote(
+    String actionLabel,
+  ) {
+    return switch (_languageCode) {
+      'en' =>
+        'Tasks marked Needs cleanup stay in the list until that leftover partial file is gone. You can use "$actionLabel" above for the other ended tasks now. After you delete that file, return here and tap Check again on this task.',
+      'ja' =>
+        '「残留ファイルを要整理」と表示されているタスクは、その途中ファイルがなくなるまで一覧に残ります。ほかの終了済みタスクは今すぐ上の「$actionLabel」で整理できます。そのファイルを削除した後、このタスクに戻って「再確認」を押してください。',
+      _ =>
+        '标成“待清理残留文件”的任务会继续留在列表里，直到这份半截文件已经被手动删掉，或 AniDestiny 成功把它清掉。上面的“$actionLabel”可以先清掉其他已经收尾的任务；删完这份残留后，再回来点这条任务的“重新检查”。',
+    };
+  }
+
+  String clearEndedDownloadsRetainedDiscardedBatchRecheckNote(
+    String actionLabel,
+  ) {
+    return switch (_languageCode) {
+      'en' =>
+        'Tasks marked Needs cleanup stay in the list until those leftover partial files are gone. After you delete them, use "$actionLabel" above or tap Check again on each task.',
+      'ja' =>
+        '「残留ファイルを要整理」と表示されたタスクは、その途中ファイルがなくなるまで一覧に残ります。削除した後は上の「$actionLabel」を使うか、各タスクの「もう一度確認」を押してください。',
+      _ =>
+        '标成“待清理残留文件”的任务会继续留在列表里，直到这些半截文件已经被手动删掉，或 AniDestiny 成功把它们清掉。删完后可以先点上面的“$actionLabel”，也可以逐条点“重新检查”。',
+    };
+  }
+
+  String clearEndedDownloadsRetainedDiscardedBatchClearActionNote(
+    String clearActionLabel,
+    String recheckActionLabel,
+  ) {
+    return switch (_languageCode) {
+      'en' =>
+        'Tasks marked Needs cleanup stay in the list until those leftover partial files are gone. You can use "$clearActionLabel" above for the other ended tasks now. After you delete the leftover files, use "$recheckActionLabel" above or tap Check again on each task.',
+      'ja' =>
+        '「残留ファイルを要整理」と表示されたタスクは、その途中ファイルがなくなるまで一覧に残ります。ほかの終了済みタスクは今すぐ上の「$clearActionLabel」で整理できます。残留ファイルを削除した後は、上の「$recheckActionLabel」を使うか、各タスクの「もう一度確認」を押してください。',
+      _ =>
+        '标成“待清理残留文件”的任务会继续留在列表里，直到这些半截文件已经被手动删掉，或 AniDestiny 成功把它们清掉。上面的“$clearActionLabel”可以先清掉其他已经收尾的任务；删完这些残留后，再点上面的“$recheckActionLabel”，或逐条点“重新检查”。',
+    };
+  }
+
   String get clearEndedDownloadsManualCleanupRemaining =>
       _t('clearEndedDownloadsManualCleanupRemaining');
   String get downloadManualCleanupRequiredError =>
@@ -252,6 +303,30 @@ class AppLocalizations {
       _t('downloadManualCleanupRecheckStillNeeded');
   String get downloadManualCleanupRecheckCleared =>
       _t('downloadManualCleanupRecheckCleared');
+  String downloadManualCleanupFeedbackNextStep({String? actionLabel}) {
+    return switch ((_languageCode, actionLabel != null)) {
+      ('en', true) =>
+        'Delete the leftover partial file from your device first. Then return to Downloads and use "$actionLabel", or tap Check again on that task.',
+      ('ja', true) =>
+        '先にその残留ファイルを端末から削除してから、ダウンロード画面に戻って上の「$actionLabel」を使うか、そのタスクの「もう一度確認」を押してください。',
+      (_, true) => '先在设备上删掉这份残留文件，再回到下载列表，点“$actionLabel”，或在对应任务上点“重新检查”。',
+      ('en', false) =>
+        'Delete the leftover partial file from your device first. Then return to Downloads and tap Check again on that task.',
+      ('ja', false) =>
+        '先にその残留ファイルを端末から削除してから、ダウンロード画面に戻ってそのタスクの「もう一度確認」を押してください。',
+      _ => '先在设备上删掉这份残留文件，再回到下载列表，在对应任务上点“重新检查”。',
+    };
+  }
+
+  String downloadManualCleanupRecheckClearedAction(String actionLabel) {
+    return switch (_languageCode) {
+      'en' =>
+        'That leftover partial file is gone. You can use "$actionLabel" above now, or remove this task from the list.',
+      'ja' => 'この残留ファイルはもうありません。今なら上の「$actionLabel」を使うか、このタスクを一覧から消せます。',
+      _ => '这份残留文件已经不在了。现在可以直接点上面的“$actionLabel”，也可以把这条任务从列表移除。',
+    };
+  }
+
   String downloadManualCleanupBulkRecheckStillNeeded(int count) {
     return switch (_languageCode) {
       'en' =>
@@ -261,7 +336,20 @@ class AppLocalizations {
     };
   }
 
-  String downloadManualCleanupBulkRecheckCleared(int count) {
+  String downloadManualCleanupBulkRecheckCleared(
+    int count, {
+    String? actionLabel,
+  }) {
+    if (actionLabel != null) {
+      return switch (_languageCode) {
+        'en' =>
+          'AniDestiny confirmed that all $count leftover partial ${count == 1 ? 'file is' : 'files are'} gone. You can use "$actionLabel" above now, or remove those tasks one by one.',
+        'ja' =>
+          'AniDestiny はこの $count 件の残留ファイルがすべてなくなったことを確認しました。今なら上の「$actionLabel」を使うか、対応するタスクを 1 件ずつ一覧から消せます。',
+        _ =>
+          'AniDestiny 已确认这 $count 份残留文件都不在了。现在可以直接点上面的“$actionLabel”，也可以逐条移除对应任务。',
+      };
+    }
     return switch (_languageCode) {
       'en' =>
         'AniDestiny confirmed that all $count leftover partial ${count == 1 ? 'file is' : 'files are'} gone. You can remove those tasks from the list now.',
@@ -273,33 +361,75 @@ class AppLocalizations {
 
   String downloadManualCleanupBulkRecheckPartial(
     int clearedCount,
-    int remainingCount,
-  ) {
-    return switch (_languageCode) {
-      'en' =>
-        'AniDestiny confirmed that $clearedCount leftover partial ${clearedCount == 1 ? 'file is' : 'files are'} gone. $remainingCount ${remainingCount == 1 ? 'still needs' : 'still need'} cleanup.',
-      'ja' =>
-        'AniDestiny は $clearedCount 件の残留ファイルがなくなったことを確認しました。まだ $remainingCount 件は整理が必要です。',
-      _ => 'AniDestiny 已确认有 $clearedCount 份残留文件不在了；还有 $remainingCount 份仍需清理。',
+    int remainingCount, {
+    String? actionLabel,
+    String? clearActionLabel,
+  }) {
+    return switch ((_languageCode, remainingCount > 1 && actionLabel != null)) {
+      ('en', true) =>
+        'AniDestiny confirmed that $clearedCount leftover partial ${clearedCount == 1 ? 'file is' : 'files are'} gone. $remainingCount still need cleanup. After you delete them, use "$actionLabel" above or tap Check again on each task.',
+      ('ja', true) =>
+        'AniDestiny は $clearedCount 件の残留ファイルがなくなったことを確認しました。まだ $remainingCount 件は整理が必要です。削除したら、上の「$actionLabel」を使うか、各タスクで「もう一度確認」を押してください。',
+      (_, true) =>
+        'AniDestiny 已确认有 $clearedCount 份残留文件不在了；还有 $remainingCount 份仍需清理。删完后可以先点上面的“$actionLabel”，也可以逐条点“重新检查”。',
+      ('en', false) when clearActionLabel != null =>
+        'AniDestiny confirmed that $clearedCount leftover partial ${clearedCount == 1 ? 'file is' : 'files are'} gone. You can use "$clearActionLabel" above now to clear the tasks that are ready. 1 still needs cleanup. Delete that leftover file first, then tap Check again on that task.',
+      ('ja', false) when clearActionLabel != null =>
+        'AniDestiny は $clearedCount 件の残留ファイルがなくなったことを確認しました。今なら上の「$clearActionLabel」を使って、先に片付けられるタスクを整理できます。まだ 1 件は整理が必要です。その残留ファイルを削除してから、そのタスクで「もう一度確認」を押してください。',
+      (_, false) when clearActionLabel != null =>
+        'AniDestiny 已确认有 $clearedCount 份残留文件不在了。现在可以直接点上面的“$clearActionLabel”，先把已经可以收尾的任务清掉；还有 1 份仍需清理。先删掉那份残留文件，再回到对应任务点“重新检查”。',
+      ('en', false) =>
+        'AniDestiny confirmed that $clearedCount leftover partial ${clearedCount == 1 ? 'file is' : 'files are'} gone. 1 still needs cleanup. Delete that leftover file first, then tap Check again on that task.',
+      ('ja', false) =>
+        'AniDestiny は $clearedCount 件の残留ファイルがなくなったことを確認しました。まだ 1 件は整理が必要です。その残留ファイルを削除してから、そのタスクで「もう一度確認」を押してください。',
+      _ =>
+        'AniDestiny 已确认有 $clearedCount 份残留文件不在了；还有 1 份仍需清理。先删掉那份残留文件，再回到对应任务点“重新检查”。',
     };
   }
 
   String downloadManualCleanupResumeResult(
     int clearedCount,
-    int remainingCount,
-  ) {
+    int remainingCount, {
+    String? actionLabel,
+    String? clearActionLabel,
+  }) {
     assert(clearedCount > 0);
     return switch ((clearedCount, remainingCount, _languageCode)) {
+      (1, 0, 'en') when actionLabel != null =>
+        'AniDestiny confirmed that 1 leftover partial file is gone. You can use "$actionLabel" above now, or remove this task from the list.',
+      (1, 0, 'ja') when actionLabel != null =>
+        'AniDestiny はこの 1 件の残留ファイルがなくなったことを確認しました。今なら上の「$actionLabel」を使うか、このタスクを一覧から消せます。',
+      (1, 0, _) when actionLabel != null =>
+        'AniDestiny 已确认这 1 份残留文件不在了。现在可以直接点上面的“$actionLabel”，也可以把这条任务从列表移除。',
+      (_, 0, 'en') when actionLabel != null =>
+        'AniDestiny confirmed that ${clearedCount == 1 ? '1 leftover partial file is' : '$clearedCount leftover partial files are'} gone. You can use "$actionLabel" above now, or remove ${clearedCount == 1 ? 'that task' : 'those tasks'} one by one.',
+      (_, 0, 'ja') when actionLabel != null =>
+        'AniDestiny は $clearedCount 件の残留ファイルがなくなったことを確認しました。今なら上の「$actionLabel」を使うか、対応するタスクを 1 件ずつ一覧から消せます。',
+      (_, 0, _) when actionLabel != null =>
+        'AniDestiny 已确认有 $clearedCount 份残留文件不在了。现在可以直接点上面的“$actionLabel”，也可以逐条移除对应任务。',
       (_, 0, 'en') =>
         'AniDestiny confirmed that ${clearedCount == 1 ? '1 leftover partial file is' : '$clearedCount leftover partial files are'} gone. You can remove ${clearedCount == 1 ? 'that task' : 'those tasks'} from the list now.',
       (_, 0, 'ja') =>
         'AniDestiny は $clearedCount 件の残留ファイルがなくなったことを確認しました。今なら対応するタスクを一覧から消せます。',
+      (_, _, 'en') when remainingCount > 1 && actionLabel != null =>
+        'AniDestiny confirmed that ${clearedCount == 1 ? '1 leftover partial file is' : '$clearedCount leftover partial files are'} gone. $remainingCount still need cleanup. After you delete them, use "$actionLabel" above or tap Check again on each task.',
+      (_, _, 'ja') when remainingCount > 1 && actionLabel != null =>
+        'AniDestiny は $clearedCount 件の残留ファイルがなくなったことを確認しました。まだ $remainingCount 件は整理が必要です。削除したら、上の「$actionLabel」を使うか、各タスクで「もう一度確認」を押してください。',
+      (_, _, 'en') when clearActionLabel != null =>
+        'AniDestiny confirmed that ${clearedCount == 1 ? '1 leftover partial file is' : '$clearedCount leftover partial files are'} gone. You can use "$clearActionLabel" above now to clear the tasks that are ready. 1 still needs cleanup. Delete that leftover file first, then tap Check again on that task.',
+      (_, _, 'ja') when clearActionLabel != null =>
+        'AniDestiny は $clearedCount 件の残留ファイルがなくなったことを確認しました。今なら上の「$clearActionLabel」を使って、先に片付けられるタスクを整理できます。まだ 1 件は整理が必要です。その残留ファイルを削除してから、そのタスクで「もう一度確認」を押してください。',
       (_, _, 'en') =>
-        'AniDestiny confirmed that ${clearedCount == 1 ? '1 leftover partial file is' : '$clearedCount leftover partial files are'} gone. $remainingCount ${remainingCount == 1 ? 'still needs' : 'still need'} cleanup.',
+        'AniDestiny confirmed that ${clearedCount == 1 ? '1 leftover partial file is' : '$clearedCount leftover partial files are'} gone. 1 still needs cleanup. Delete that leftover file first, then tap Check again on that task.',
       (_, _, 'ja') =>
-        'AniDestiny は $clearedCount 件の残留ファイルがなくなったことを確認しました。まだ $remainingCount 件は整理が必要です。',
+        'AniDestiny は $clearedCount 件の残留ファイルがなくなったことを確認しました。まだ 1 件は整理が必要です。その残留ファイルを削除してから、そのタスクで「もう一度確認」を押してください。',
       (_, 0, _) => 'AniDestiny 已确认有 $clearedCount 份残留文件不在了。现在可以把对应任务从列表移除了。',
-      _ => 'AniDestiny 已确认有 $clearedCount 份残留文件不在了；还有 $remainingCount 份仍需清理。',
+      _ when remainingCount > 1 && actionLabel != null =>
+        'AniDestiny 已确认有 $clearedCount 份残留文件不在了；还有 $remainingCount 份仍需清理。删完后可以先点上面的“$actionLabel”，也可以逐条点“重新检查”。',
+      _ when clearActionLabel != null =>
+        'AniDestiny 已确认有 $clearedCount 份残留文件不在了。现在可以直接点上面的“$clearActionLabel”，先把已经可以收尾的任务清掉；还有 1 份仍需清理。先删掉那份残留文件，再回到对应任务点“重新检查”。',
+      _ =>
+        'AniDestiny 已确认有 $clearedCount 份残留文件不在了；还有 1 份仍需清理。先删掉那份残留文件，再回到对应任务点“重新检查”。',
     };
   }
 
