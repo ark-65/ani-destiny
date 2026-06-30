@@ -39,6 +39,7 @@ class DownloadTaskTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isRemovingFromList = _isRemovingFromList(task);
     final supportNote = _supportNote(context);
     final failureMessage = _failureMessage(context, task);
 
@@ -73,14 +74,14 @@ class DownloadTaskTile extends StatelessWidget {
                   icon: Icons.category_outlined,
                   label: _kindLabel(context, task.kind),
                 ),
-                if (_showFailureReason(task))
+                if (_showFailureReason(task, isRemovingFromList))
                   _InfoChip(
                     icon: Icons.error_outline,
                     label: _failureLabel(context, task.failureReason),
                   ),
               ],
             ),
-            if (_showProgress(task)) ...[
+            if (_showProgress(task, isRemovingFromList)) ...[
               const SizedBox(height: 12),
               LinearProgressIndicator(
                 value: task.progress.clamp(0, 1).toDouble(),
@@ -177,7 +178,10 @@ class DownloadTaskTile extends StatelessWidget {
     };
   }
 
-  bool _showFailureReason(DownloadTask task) {
+  bool _showFailureReason(DownloadTask task, bool isRemovingFromList) {
+    if (isRemovingFromList) {
+      return false;
+    }
     return task.failureReason != DownloadFailureReason.none &&
         task.status != DownloadStatus.canceled;
   }
@@ -187,6 +191,9 @@ class DownloadTaskTile extends StatelessWidget {
   }
 
   String? _failureMessage(BuildContext context, DownloadTask task) {
+    if (_isRemovingFromList(task)) {
+      return null;
+    }
     if (task.status == DownloadStatus.canceled) {
       return null;
     }
@@ -201,7 +208,10 @@ class DownloadTaskTile extends StatelessWidget {
     return task.failureMessage;
   }
 
-  bool _showProgress(DownloadTask task) {
+  bool _showProgress(DownloadTask task, bool isRemovingFromList) {
+    if (isRemovingFromList) {
+      return false;
+    }
     if (task.status == DownloadStatus.canceled) {
       return false;
     }

@@ -245,6 +245,95 @@ void main() {
         find.byKey(const ValueKey('download-task-busy-task-1')),
         findsOneWidget,
       );
+      expect(
+        find.byKey(const ValueKey('download-task-progress-task-1')),
+        findsNothing,
+      );
+      expect(find.textContaining('Progress:'), findsNothing);
+    },
+  );
+
+  testWidgets(
+    'busy remove actions hide stale failed-state details while the card is leaving',
+    (tester) async {
+      await tester.pumpWidget(
+        _buildTileApp(
+          DownloadTaskTile(
+            task: _task(
+              status: DownloadStatus.failed,
+              failureReason: DownloadFailureReason.networkError,
+              failureMessage: 'The source stopped responding.',
+              progress: 0.42,
+            ),
+            isBusy: true,
+            busyAction: DownloadTaskBusyAction.remove,
+            onStart: () {},
+            onPause: () {},
+            onCancel: () {},
+            onRemove: () {},
+          ),
+        ),
+      );
+      await tester.pump();
+
+      expect(find.text('Removing...'), findsOneWidget);
+      expect(find.text('Failed'), findsNothing);
+      expect(find.text('Network error'), findsNothing);
+      expect(find.text('The source stopped responding.'), findsNothing);
+      expect(
+        find.byKey(const ValueKey('download-task-progress-task-1')),
+        findsNothing,
+      );
+      expect(find.textContaining('Progress:'), findsNothing);
+      expect(find.byIcon(Icons.error_outline), findsNothing);
+    },
+  );
+
+  testWidgets(
+    'busy remove actions hide unsupported-state details while the card is leaving',
+    (tester) async {
+      await tester.pumpWidget(
+        _buildTileApp(
+          DownloadTaskTile(
+            task: _task(
+              status: DownloadStatus.unsupported,
+              kind: DownloadKind.bt,
+              failureReason: DownloadFailureReason.unsupportedType,
+              failureMessage: 'BT download is not implemented yet.',
+            ),
+            isBusy: true,
+            busyAction: DownloadTaskBusyAction.remove,
+            onStart: () {},
+            onPause: () {},
+            onCancel: () {},
+            onRemove: () {},
+          ),
+        ),
+      );
+      await tester.pump();
+
+      expect(find.text('Removing...'), findsOneWidget);
+      expect(find.text('Unsupported'), findsNothing);
+      expect(find.text('Unsupported type'), findsNothing);
+      expect(
+        find.text(
+          'This download currently uses a BT / magnet link, and AniDestiny cannot handle that type directly yet.',
+        ),
+        findsNothing,
+      );
+      expect(
+        find.text(
+          'AniDestiny cannot take over this type of download yet. You can remove this task from the list for now.',
+        ),
+        findsNothing,
+      );
+      expect(
+        find.text(
+          'AniDestiny is still removing this task from the list. Any file already on your device will stay there.',
+        ),
+        findsOneWidget,
+      );
+      expect(find.byIcon(Icons.error_outline), findsNothing);
     },
   );
 

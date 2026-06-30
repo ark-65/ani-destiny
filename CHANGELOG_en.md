@@ -7,6 +7,7 @@
 ## [Unreleased]
 
 ### 🐛 Fixed
+- Fixed download cards already entering their final `Remove from list` flow while still leaking the old failure reason, stale failure copy, or old progress bar under a new `Removing...` status; that last step now shows one consistent removal state instead of competing truths.
 - Fixed the page-level `Clear N ended tasks from list` flow still leaving ended download cards on their old `Completed` or `Failed` copy while only adding a spinner at the side; those batch-cleared cards now switch into the same explicit `Removing...` state as single-item cleanup and keep saying that this step only clears the list entry, not any file already on the device.
 - Fixed ended download tasks already entering their final remove-from-list flow while the card still kept the old settled state text and only added a spinner on the side; AniDestiny now switches those cards into an explicit `Removing...` state and says that this step only clears the list entry, leaving any on-device file untouched.
 - Fixed unsupported download cards already explaining the real limit, but still hiding the final `Remove from list` step behind an icon-only action; those tasks now surface that one remaining exit as a visible button so unsupported downloads can end cleanly without guesswork.
