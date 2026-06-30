@@ -234,6 +234,8 @@ class AppLocalizations {
   String get downloadPausedRetryNote => _t('downloadPausedRetryNote');
   String get downloadDiscardingNote => _t('downloadDiscardingNote');
   String get downloadDiscardedNote => _t('downloadDiscardedNote');
+  String get downloadUnsupportedRemoveNote =>
+      _t('downloadUnsupportedRemoveNote');
   String get downloadDiscardedNeedsManualCleanupNote =>
       _t('downloadDiscardedNeedsManualCleanupNote');
   String downloadDiscardedNeedsManualCleanupBatchNote(String actionLabel) {
@@ -814,6 +816,7 @@ const _localizedValues = {
         '这个下载已先停下；再次开始会按重试处理，可能从头开始。放弃这个任务会丢掉未完成内容，并清掉临时文件。',
     'downloadDiscardingNote': 'AniDestiny 还在放弃这个下载，并清理这次未完成内容；清理完成后，这里会更新最终结果。',
     'downloadDiscardedNote': '这个下载已放弃；未完成内容和临时文件都已清掉。确认无误后，你可以把这条记录从列表移除。',
+    'downloadUnsupportedRemoveNote': 'AniDestiny 还不能接管这类下载；确认后可以先把这条任务从列表移除。',
     'downloadDiscardedNeedsManualCleanupNote':
         '这个下载已放弃，但 AniDestiny 没能自动清掉残留的未完成文件；如果你不再需要它，请按下面的本地路径手动删除，删完后回到这里点一下“重新检查”。',
     'downloadStoppingStatus': '正在停下',
@@ -1138,6 +1141,8 @@ const _localizedValues = {
         'AniDestiny is still discarding this download and clearing its partial file. The final cleanup result will appear here when it finishes.',
     'downloadDiscardedNote':
         'This download was discarded. Any partial file was cleared. You can remove this task from the list when you are done.',
+    'downloadUnsupportedRemoveNote':
+        'AniDestiny cannot take over this type of download yet. You can remove this task from the list for now.',
     'downloadDiscardedNeedsManualCleanupNote':
         'This download was discarded, but AniDestiny could not clear the partial file automatically. Remove the leftover file from your device if you no longer need it, then return here and tap Check again.',
     'downloadStoppingStatus': 'Stopping...',
@@ -1472,6 +1477,8 @@ const _localizedValues = {
         'AniDestiny はこのダウンロードをまだ破棄中で、未完了ファイルも整理しています。終わったらここに最終結果を表示します。',
     'downloadDiscardedNote':
         'このダウンロードは破棄され、未完了の内容と一時ファイルは削除されました。確認できたら、このタスクを一覧から消せます。',
+    'downloadUnsupportedRemoveNote':
+        'AniDestiny はまだこの種類のダウンロードを引き継げません。今はこのタスクを一覧から消せます。',
     'downloadDiscardedNeedsManualCleanupNote':
         'このダウンロードは破棄されましたが、AniDestiny は未完了ファイルを自動で削除できませんでした。不要なら下のローカルパスをもとに手動で削除し、戻ってきたら「再確認」を押してください。',
     'downloadStoppingStatus': '停止中...',

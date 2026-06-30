@@ -178,6 +178,12 @@ void main() {
         ),
         findsOneWidget,
       );
+      expect(
+        find.text(
+          'AniDestiny cannot take over this type of download yet. You can remove this task from the list for now.',
+        ),
+        findsOneWidget,
+      );
       expect(find.text('BT download is not implemented yet.'), findsNothing);
       expect(
         find.byKey(const ValueKey('download-task-progress-task-1')),

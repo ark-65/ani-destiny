@@ -160,13 +160,13 @@ class DownloadTaskTile extends StatelessWidget {
                     manualCleanupBatchRecheckLabel!,
                   )
             : context.l10n.downloadDiscardedNote,
+      DownloadStatus.unsupported => context.l10n.downloadUnsupportedRemoveNote,
       DownloadStatus.completed when _showLocalPath(task) =>
         context.l10n.downloadRemoveKeepsFileNote,
       DownloadStatus.pending ||
       DownloadStatus.preparing ||
       DownloadStatus.failed ||
       DownloadStatus.canceled ||
-      DownloadStatus.unsupported ||
       DownloadStatus.downloading ||
       DownloadStatus.paused ||
       DownloadStatus.completed =>
