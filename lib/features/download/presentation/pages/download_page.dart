@@ -55,6 +55,21 @@ class _DownloadPageState extends ConsumerState<DownloadPage>
     return null;
   }
 
+  _DownloadSnackBarAction? _manualCleanupFollowUpSnackBarAction(
+    List<DownloadTask>? tasks, {
+    required int remainingCount,
+  }) {
+    final action = _followUpSnackBarAction(tasks);
+    if (action == null || tasks == null) {
+      return null;
+    }
+    final clearableTaskCount = _clearableTaskIds(tasks).length;
+    if (remainingCount <= 1 || clearableTaskCount == 1) {
+      return action;
+    }
+    return null;
+  }
+
   @override
   void initState() {
     super.initState();
@@ -89,8 +104,10 @@ class _DownloadPageState extends ConsumerState<DownloadPage>
             _clearEndedTasksActionLabel(clearableTaskCount);
         final removeActionLabel =
             _singleReadyTaskRemoveActionLabel(clearableTaskCount);
-        final followUpAction =
-            remainingCount <= 1 ? _followUpSnackBarAction(tasks) : null;
+        final followUpAction = _manualCleanupFollowUpSnackBarAction(
+          tasks,
+          remainingCount: remainingCount,
+        );
         _showDownloadSnackBar(
           context.l10n.downloadManualCleanupResumeResult(
             recoveredCleanupTaskIds.length,
@@ -371,8 +388,10 @@ class _DownloadPageState extends ConsumerState<DownloadPage>
     final clearActionLabel = _clearEndedTasksActionLabel(clearableTaskCount);
     final removeActionLabel =
         _singleReadyTaskRemoveActionLabel(clearableTaskCount);
-    final followUpAction =
-        remainingCount <= 1 ? _followUpSnackBarAction(allTasks) : null;
+    final followUpAction = _manualCleanupFollowUpSnackBarAction(
+      allTasks,
+      remainingCount: remainingCount,
+    );
 
     setState(() {});
 

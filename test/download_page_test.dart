@@ -282,7 +282,7 @@ void main() {
           .widget<SnackBarAction>(
             find.widgetWithText(SnackBarAction, 'Remove from list'),
           )
-          .onPressed!();
+          .onPressed();
       await tester.pumpAndSettle();
 
       expect(repository.deletedTaskIds, ['canceled']);
@@ -958,7 +958,7 @@ void main() {
           .widget<SnackBarAction>(
             find.widgetWithText(SnackBarAction, 'Remove from list'),
           )
-          .onPressed!();
+          .onPressed();
       await tester.pumpAndSettle();
 
       expect(repository.deletedTaskIds, ['canceled-a']);
@@ -998,7 +998,7 @@ void main() {
   );
 
   testWidgets(
-    'partial batch recheck keeps the remaining next step explicit',
+    'partial batch recheck keeps direct remove available for the task that is already ready',
     (tester) async {
       const partialPathA = '/tmp/partial-video-a.mp4';
       const partialPathB = '/tmp/partial-video-b.mp4';
@@ -1033,7 +1033,20 @@ void main() {
         ),
         findsOneWidget,
       );
+      expect(
+        find.widgetWithText(SnackBarAction, 'Remove from list'),
+        findsOneWidget,
+      );
       expect(find.text('Check 2 leftover files again'), findsOneWidget);
+
+      tester
+          .widget<SnackBarAction>(
+            find.widgetWithText(SnackBarAction, 'Remove from list'),
+          )
+          .onPressed();
+      await tester.pumpAndSettle();
+
+      expect(repository.deletedTaskIds, ['canceled-a']);
     },
   );
 
@@ -1253,6 +1266,59 @@ void main() {
         find.byKey(const ValueKey('download-task-remove-canceled-a')),
         findsOneWidget,
       );
+    },
+  );
+
+  testWidgets(
+    'resume keeps direct remove available when one recovered task is ready but other leftovers remain',
+    (tester) async {
+      const partialPathA = '/tmp/partial-video-a.mp4';
+      const partialPathB = '/tmp/partial-video-b.mp4';
+      const partialPathC = '/tmp/partial-video-c.mp4';
+      _stubCleanupPathExists({partialPathA, partialPathB, partialPathC});
+      final repository = _FakeDownloadRepository([
+        _task('canceled-a', DownloadStatus.canceled).copyWith(
+          localPath: partialPathA,
+          failureReason: DownloadFailureReason.canceled,
+        ),
+        _task('canceled-b', DownloadStatus.canceled).copyWith(
+          localPath: partialPathB,
+          failureReason: DownloadFailureReason.canceled,
+        ),
+        _task('canceled-c', DownloadStatus.canceled).copyWith(
+          localPath: partialPathC,
+          failureReason: DownloadFailureReason.canceled,
+        ),
+      ]);
+
+      await _pumpDownloadPage(tester, repository);
+
+      tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.paused);
+      await tester.pump();
+
+      _stubCleanupPathExists({partialPathB, partialPathC});
+      tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
+      await tester.pump();
+
+      expect(
+        find.text(
+          'AniDestiny confirmed that 1 leftover partial file is gone. You can use "Remove from list" on the task that is already ready now. 2 still need cleanup. After you delete them, use "Check 2 leftover files again" above or tap Check again on each task.',
+        ),
+        findsOneWidget,
+      );
+      expect(
+        find.widgetWithText(SnackBarAction, 'Remove from list'),
+        findsOneWidget,
+      );
+
+      tester
+          .widget<SnackBarAction>(
+            find.widgetWithText(SnackBarAction, 'Remove from list'),
+          )
+          .onPressed();
+      await tester.pumpAndSettle();
+
+      expect(repository.deletedTaskIds, ['canceled-a']);
     },
   );
 

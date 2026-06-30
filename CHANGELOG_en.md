@@ -7,6 +7,7 @@
 ## [Unreleased]
 
 ### 🐛 Fixed
+- Fixed partial leftover-file recovery messages already saying that one task was ready to leave the list while other leftovers still needed manual cleanup, but still making users go back to that card to finish it; those batch recheck and resume results now keep offering `Remove from list` directly so one ready task can still close cleanly without hunting for the exit.
 - Fixed cleanup confirmations already saying that only one ended download was ready to leave the list while still making users go back to the matching card to find the final button; those resume and recheck results now offer `Remove from list` directly so a single leftover-file cleanup can finish in one step.
 - Fixed unsupported download cards already explaining the real type and next step, but still carrying an extra technical `Unsupported type` error chip; those tasks now keep only the user-facing type guidance and exit action so unsupported downloads read more calmly and coherently.
 - Fixed download cards already entering their final `Remove from list` flow while still leaking the old failure reason, stale failure copy, or old progress bar under a new `Removing...` status; that last step now shows one consistent removal state instead of competing truths.
