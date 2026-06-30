@@ -139,6 +139,9 @@ class DownloadTaskTile extends StatelessWidget {
   }
 
   String? _supportNote(BuildContext context) {
+    if (_isRemovingFromList(task)) {
+      return context.l10n.downloadRemovingNote;
+    }
     return switch (task.status) {
       DownloadStatus.paused
           when task.kind == DownloadKind.directFile &&
@@ -210,6 +213,24 @@ class DownloadTaskTile extends StatelessWidget {
       return false;
     }
     return true;
+  }
+
+  bool _isRemovingFromList(DownloadTask task) {
+    if (busyAction != DownloadTaskBusyAction.remove) {
+      return false;
+    }
+    return switch (task.status) {
+      DownloadStatus.completed ||
+      DownloadStatus.failed ||
+      DownloadStatus.unsupported =>
+        true,
+      DownloadStatus.canceled => !downloadTaskNeedsManualCleanup(task),
+      DownloadStatus.pending ||
+      DownloadStatus.preparing ||
+      DownloadStatus.downloading ||
+      DownloadStatus.paused =>
+        false,
+    };
   }
 
   List<Widget> _actions(BuildContext context) {
@@ -410,6 +431,9 @@ class _StatusChip extends StatelessWidget {
     if (downloadTaskNeedsManualCleanup(task)) {
       return context.l10n.downloadManualCleanupStatus;
     }
+    if (_isRemovingFromList(task)) {
+      return context.l10n.downloadRemovingStatus;
+    }
     return switch (task.status) {
       DownloadStatus.pending => context.l10n.pending,
       DownloadStatus.preparing => context.l10n.preparing,
@@ -424,6 +448,24 @@ class _StatusChip extends StatelessWidget {
         context.l10n.downloadDiscardingStatus,
       DownloadStatus.canceled => context.l10n.downloadDiscardedStatus,
       DownloadStatus.unsupported => context.l10n.unsupported,
+    };
+  }
+
+  bool _isRemovingFromList(DownloadTask task) {
+    if (busyAction != DownloadTaskBusyAction.remove) {
+      return false;
+    }
+    return switch (task.status) {
+      DownloadStatus.completed ||
+      DownloadStatus.failed ||
+      DownloadStatus.unsupported =>
+        true,
+      DownloadStatus.canceled => !downloadTaskNeedsManualCleanup(task),
+      DownloadStatus.pending ||
+      DownloadStatus.preparing ||
+      DownloadStatus.downloading ||
+      DownloadStatus.paused =>
+        false,
     };
   }
 }

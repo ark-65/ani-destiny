@@ -210,6 +210,45 @@ void main() {
   );
 
   testWidgets(
+    'busy remove actions keep ended downloads in an explicit removing state until the task is gone',
+    (tester) async {
+      await tester.pumpWidget(
+        _buildTileApp(
+          DownloadTaskTile(
+            task: _task(status: DownloadStatus.completed),
+            isBusy: true,
+            busyAction: DownloadTaskBusyAction.remove,
+            onStart: () {},
+            onPause: () {},
+            onCancel: () {},
+            onRemove: () {},
+          ),
+        ),
+      );
+      await tester.pump();
+
+      expect(find.text('Removing...'), findsOneWidget);
+      expect(
+        find.text(
+          'AniDestiny is still removing this task from the list. Any file already on your device will stay there.',
+        ),
+        findsOneWidget,
+      );
+      expect(find.text('Completed'), findsNothing);
+      expect(
+        find.text(
+          'Removing this task only clears it from the list. The downloaded file stays on your device.',
+        ),
+        findsNothing,
+      );
+      expect(
+        find.byKey(const ValueKey('download-task-busy-task-1')),
+        findsOneWidget,
+      );
+    },
+  );
+
+  testWidgets(
     'busy stopped downloads keep showing an in-flight stopping state until cleanup settles',
     (tester) async {
       await tester.pumpWidget(
