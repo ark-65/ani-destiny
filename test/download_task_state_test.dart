@@ -53,7 +53,42 @@ void main() {
     expect(task, isNotNull);
     expect(task!.status, DownloadStatus.unsupported);
     expect(task.failureReason, DownloadFailureReason.unsupportedType);
-    expect(task.failureMessage, contains('HLS offline download'));
+    expect(task.failureMessage, isNull);
+  });
+
+  test('unsupported tasks drop implementation placeholder messages on read',
+      () async {
+    final database = AppDatabase(NativeDatabase.memory());
+    addTearDown(database.close);
+
+    final repository = DownloadRepositoryImpl(database);
+    final now = DateTime.utc(2026, 7, 1, 12);
+
+    await repository.upsertTask(
+      DownloadTask(
+        id: 'task-unsupported-bt',
+        animeId: 'anime-1',
+        episodeId: 'episode-1',
+        sourceId: 'sakura',
+        title: 'BT Test',
+        episodeTitle: 'Episode 1',
+        url: 'magnet:?xt=urn:btih:abc123',
+        kind: DownloadKind.bt,
+        status: DownloadStatus.unsupported,
+        failureReason: DownloadFailureReason.unsupportedType,
+        failureMessage: 'BT download is not implemented yet.',
+        progress: 0,
+        downloadedBytes: 0,
+        createdAt: now,
+        updatedAt: now,
+      ),
+    );
+
+    final task = await repository.getTask('task-unsupported-bt');
+
+    expect(task, isNotNull);
+    expect(task!.failureReason, DownloadFailureReason.unsupportedType);
+    expect(task.failureMessage, isNull);
   });
 
   test('direct file progress maps downloaded and total bytes', () {

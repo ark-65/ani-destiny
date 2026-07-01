@@ -38,10 +38,9 @@ class HttpDownloadService implements DownloadService {
   }) async {
     final now = DateTime.now();
     final taskId = 'download-${now.microsecondsSinceEpoch}';
-    final unsupportedMessage = _unsupportedMessage(source.kind);
-    final status = unsupportedMessage == null
-        ? DownloadStatus.pending
-        : DownloadStatus.unsupported;
+    final isUnsupported = _isUnsupportedKind(source.kind);
+    final status =
+        isUnsupported ? DownloadStatus.unsupported : DownloadStatus.pending;
     await _repository.upsertTask(
       DownloadTask(
         id: taskId,
@@ -54,10 +53,10 @@ class HttpDownloadService implements DownloadService {
         kind: source.kind,
         headers: source.headers,
         status: status,
-        failureReason: unsupportedMessage == null
-            ? DownloadFailureReason.none
-            : DownloadFailureReason.unsupportedType,
-        failureMessage: unsupportedMessage,
+        failureReason: isUnsupported
+            ? DownloadFailureReason.unsupportedType
+            : DownloadFailureReason.none,
+        failureMessage: null,
         progress: 0,
         createdAt: now,
         updatedAt: now,
@@ -90,7 +89,7 @@ class HttpDownloadService implements DownloadService {
       final updated = existingTask.copyWith(
         status: DownloadStatus.unsupported,
         failureReason: DownloadFailureReason.unsupportedType,
-        failureMessage: _unsupportedMessage(existingTask.kind),
+        failureMessage: null,
         updatedAt: DateTime.now(),
       );
       await _repository.upsertTask(updated);
@@ -450,12 +449,10 @@ class HttpDownloadService implements DownloadService {
     return value.replaceAll(RegExp(r'[\\/:*?"<>|]+'), '_');
   }
 
-  String? _unsupportedMessage(DownloadKind kind) {
+  bool _isUnsupportedKind(DownloadKind kind) {
     return switch (kind) {
-      DownloadKind.directFile => null,
-      DownloadKind.hls => 'HLS offline download is not implemented yet.',
-      DownloadKind.bt => 'BT download is not implemented yet.',
-      DownloadKind.unknown => 'This download URL type is not supported yet.',
+      DownloadKind.directFile => false,
+      DownloadKind.hls || DownloadKind.bt || DownloadKind.unknown => true,
     };
   }
 

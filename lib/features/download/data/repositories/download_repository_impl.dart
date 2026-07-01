@@ -38,26 +38,27 @@ class DownloadRepositoryImpl implements DownloadRepository {
 
   @override
   Future<void> upsertTask(DownloadTask task) {
+    final normalizedTask = normalizeDownloadTask(task);
     return _database.into(_database.downloadTaskTable).insertOnConflictUpdate(
           DownloadTaskTableCompanion.insert(
-            id: task.id,
-            animeId: task.animeId,
-            episodeId: task.episodeId,
-            sourceId: Value(task.sourceId),
-            title: task.title,
-            episodeTitle: task.episodeTitle,
-            url: task.url,
-            kind: Value(task.kind.name),
-            headersJson: Value(jsonEncode(task.headers)),
-            localPath: Value(task.localPath),
-            status: task.status.name,
-            failureReason: Value(task.failureReason.name),
-            failureMessage: Value(task.failureMessage),
-            progress: task.progress,
-            totalBytes: Value(task.totalBytes),
-            downloadedBytes: Value(task.downloadedBytes),
-            createdAt: task.createdAt,
-            updatedAt: task.updatedAt,
+            id: normalizedTask.id,
+            animeId: normalizedTask.animeId,
+            episodeId: normalizedTask.episodeId,
+            sourceId: Value(normalizedTask.sourceId),
+            title: normalizedTask.title,
+            episodeTitle: normalizedTask.episodeTitle,
+            url: normalizedTask.url,
+            kind: Value(normalizedTask.kind.name),
+            headersJson: Value(jsonEncode(normalizedTask.headers)),
+            localPath: Value(normalizedTask.localPath),
+            status: normalizedTask.status.name,
+            failureReason: Value(normalizedTask.failureReason.name),
+            failureMessage: Value(normalizedTask.failureMessage),
+            progress: normalizedTask.progress,
+            totalBytes: Value(normalizedTask.totalBytes),
+            downloadedBytes: Value(normalizedTask.downloadedBytes),
+            createdAt: normalizedTask.createdAt,
+            updatedAt: normalizedTask.updatedAt,
           ),
         );
   }
@@ -70,25 +71,27 @@ class DownloadRepositoryImpl implements DownloadRepository {
   }
 
   DownloadTask _taskFromRow(DownloadTaskRow row) {
-    return DownloadTask(
-      id: row.id,
-      animeId: row.animeId,
-      episodeId: row.episodeId,
-      sourceId: row.sourceId,
-      title: row.title,
-      episodeTitle: row.episodeTitle,
-      url: row.url,
-      kind: downloadKindFromName(row.kind),
-      headers: _headersFromJson(row.headersJson),
-      localPath: row.localPath,
-      status: downloadStatusFromName(row.status),
-      failureReason: downloadFailureReasonFromName(row.failureReason),
-      failureMessage: row.failureMessage,
-      progress: row.progress,
-      totalBytes: row.totalBytes,
-      downloadedBytes: row.downloadedBytes,
-      createdAt: row.createdAt,
-      updatedAt: row.updatedAt,
+    return normalizeDownloadTask(
+      DownloadTask(
+        id: row.id,
+        animeId: row.animeId,
+        episodeId: row.episodeId,
+        sourceId: row.sourceId,
+        title: row.title,
+        episodeTitle: row.episodeTitle,
+        url: row.url,
+        kind: downloadKindFromName(row.kind),
+        headers: _headersFromJson(row.headersJson),
+        localPath: row.localPath,
+        status: downloadStatusFromName(row.status),
+        failureReason: downloadFailureReasonFromName(row.failureReason),
+        failureMessage: row.failureMessage,
+        progress: row.progress,
+        totalBytes: row.totalBytes,
+        downloadedBytes: row.downloadedBytes,
+        createdAt: row.createdAt,
+        updatedAt: row.updatedAt,
+      ),
     );
   }
 

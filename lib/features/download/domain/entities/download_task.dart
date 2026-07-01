@@ -104,3 +104,11 @@ DownloadStatus downloadStatusFromName(String value) {
       ),
   };
 }
+
+DownloadTask normalizeDownloadTask(DownloadTask task) {
+  if (task.failureReason != DownloadFailureReason.unsupportedType ||
+      task.failureMessage == null) {
+    return task;
+  }
+  return task.copyWith(failureMessage: null);
+}

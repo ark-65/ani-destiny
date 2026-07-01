@@ -284,7 +284,7 @@ void main() {
             kind: DownloadKind.bt,
             status: DownloadStatus.unsupported,
             failureReason: DownloadFailureReason.unsupportedType,
-            failureMessage: 'BT download is not implemented yet.',
+            failureMessage: null,
             progress: 0,
             downloadedBytes: 0,
             createdAt: now,
