@@ -7,6 +7,7 @@
 ## [Unreleased]
 
 ### 🐛 Fixed
+- Fixed the player and anime-detail download feedback already honestly telling users the next step was Downloads while the attached action still only said the generic `Open`; both entry points now say `Open Downloads` so the message and the follow-up action point to the same place.
 - Fixed failed download tasks already being at the “retry or finish cleaning up” stage while still hiding `Remove from list` as a trash-can icon and never saying plainly what users should do next; failed cards now add a direct next-step note and surface `Remove from list` as the same visible action used by other ended states.
 - Fixed the player and anime-detail download entry points still saying a task was created and even surfacing a technical task ID when the selected line was really just an unsupported HLS / BT / unknown download that AniDestiny cannot save offline yet; those entry messages now say honestly when AniDestiny only added the record to Downloads for later review or removal, while supported lines keep a calmer added-to-Downloads confirmation.
 - Fixed the Japanese downloads status still making settled `Stopped` tasks read almost the same as in-flight `Stopping...`, with only an ellipsis separating the two states; AniDestiny now labels the settled state as `停止済み` so users can tell at a glance whether that direct download is already stopped or still unwinding.

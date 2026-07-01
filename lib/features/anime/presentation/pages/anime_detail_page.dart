@@ -207,7 +207,7 @@ class AnimeDetailPage extends ConsumerWidget {
       SnackBar(
         content: Text(_downloadTaskCreatedMessage(context, result.kind)),
         action: SnackBarAction(
-          label: context.l10n.open,
+          label: context.l10n.openDownloads,
           onPressed: () => context.push('/downloads'),
         ),
       ),

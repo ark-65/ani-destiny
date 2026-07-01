@@ -254,6 +254,20 @@ void main() {
     expect(ja.downloadStoppedStatus, isNot(contains('中')));
   });
 
+  test('download entry action copy points directly to Downloads', () {
+    const zh = AppLocalizations(Locale('zh'));
+    expect(zh.openDownloads, '打开下载列表');
+    expect(zh.openDownloads, contains('下载'));
+
+    const en = AppLocalizations(Locale('en'));
+    expect(en.openDownloads, 'Open Downloads');
+    expect(en.openDownloads, isNot('Open'));
+
+    const ja = AppLocalizations(Locale('ja'));
+    expect(ja.openDownloads, 'ダウンロード一覧を開く');
+    expect(ja.openDownloads, contains('ダウンロード'));
+  });
+
   test('runtime diagnostics helpers keep support copy localized', () {
     const zh = AppLocalizations(Locale('zh'));
     expect(zh.runtimeDiagnosticsSubtitle, isNot(contains('Debug')));

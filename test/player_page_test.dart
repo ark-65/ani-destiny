@@ -3009,7 +3009,7 @@ void main() {
       ),
       findsOneWidget,
     );
-    expect(find.text('Open'), findsOneWidget);
+    expect(find.text('Open Downloads'), findsOneWidget);
   });
 
   testWidgets('invalid playback urls are treated as unavailable before load',
