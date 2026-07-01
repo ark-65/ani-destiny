@@ -247,6 +247,13 @@ void main() {
     expect(ja.sourceHealthUnavailableHint, isNot(contains('fallback')));
   });
 
+  test('download stopped and stopping states stay distinct in Japanese', () {
+    const ja = AppLocalizations(Locale('ja'));
+    expect(ja.downloadStoppingStatus, '停止中...');
+    expect(ja.downloadStoppedStatus, '停止済み');
+    expect(ja.downloadStoppedStatus, isNot(contains('中')));
+  });
+
   test('runtime diagnostics helpers keep support copy localized', () {
     const zh = AppLocalizations(Locale('zh'));
     expect(zh.runtimeDiagnosticsSubtitle, isNot(contains('Debug')));

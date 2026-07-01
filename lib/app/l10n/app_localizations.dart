@@ -1560,7 +1560,7 @@ const _localizedValues = {
     'downloadManualCleanupRecheckCleared':
         'この残留ファイルはもうありません。今ならこのタスクを一覧から消せます。',
     'downloadManualCleanupStatus': '残留ファイルを要整理',
-    'downloadStoppedStatus': '停止中',
+    'downloadStoppedStatus': '停止済み',
     'downloadKindDirectFile': '直接ファイル',
     'downloadKindHls': 'HLS / m3u8',
     'downloadKindBt': 'BT / magnet',
