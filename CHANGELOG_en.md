@@ -7,6 +7,7 @@
 ## [Unreleased]
 
 ### 🐛 Fixed
+- Fixed download tiles already showing a spinner right after users tapped `Start` or `Retry` while the card still kept the previous settled state, stale failure details, or old progress on screen, making the handoff into a new transfer feel uncertain; AniDestiny now switches those moments into explicit `Starting...` / `Retrying...` states and hides stale failure or progress details until the transfer really resumes.
 - Fixed newly created and still-preparing download tasks already showing a `0%` progress bar, which blurred together “the transfer has not started yet” and “the transfer started but is stuck”; those `Pending` and `Preparing` states now explain when real progress will appear and wait to show the progress UI until file transfer actually begins.
 - Fixed leftover-file cleanup tasks and copied support summaries still only telling users to go delete a file even when other ended downloads were already ready to finish right now; those touchpoints now also point out the ready `Remove from list` or `Clear N ended tasks from list` action so the next step stays consistent across the page, the task card, and the exported support summary.
 - Fixed active, preparing, and stopped download cards still hiding `Discard download` behind an `X` icon, which made touch users guess whether that action would throw away the current attempt; those states now surface `Discard download` as a visible button so the exit action and its consequence speak the same product truth.

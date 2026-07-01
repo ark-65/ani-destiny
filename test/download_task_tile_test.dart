@@ -214,6 +214,46 @@ void main() {
     },
   );
 
+  testWidgets(
+    'busy pending downloads keep showing an explicit starting state until transfer begins',
+    (tester) async {
+      await tester.pumpWidget(
+        _buildTileApp(
+          DownloadTaskTile(
+            task: _task(status: DownloadStatus.pending),
+            isBusy: true,
+            busyAction: DownloadTaskBusyAction.start,
+            onStart: () {},
+            onPause: () {},
+            onCancel: () {},
+            onRemove: () {},
+          ),
+        ),
+      );
+      await tester.pump();
+
+      expect(find.text('Starting...'), findsOneWidget);
+      expect(
+        find.text(
+          'AniDestiny is starting this download. Progress will appear here after the file transfer begins.',
+        ),
+        findsOneWidget,
+      );
+      expect(find.text('Pending'), findsNothing);
+      expect(
+        find.text(
+          'This download is ready to start. AniDestiny will show progress after the file transfer begins.',
+        ),
+        findsNothing,
+      );
+      expect(
+        find.byKey(const ValueKey('download-task-progress-task-1')),
+        findsNothing,
+      );
+      expect(find.textContaining('Progress:'), findsNothing);
+    },
+  );
+
   testWidgets('canceled download tasks stay removable without error styling', (
     tester,
   ) async {
@@ -403,6 +443,48 @@ void main() {
       await tester.pump();
 
       expect(find.text('Removing...'), findsOneWidget);
+      expect(find.text('Failed'), findsNothing);
+      expect(find.text('Network error'), findsNothing);
+      expect(find.text('The source stopped responding.'), findsNothing);
+      expect(
+        find.byKey(const ValueKey('download-task-progress-task-1')),
+        findsNothing,
+      );
+      expect(find.textContaining('Progress:'), findsNothing);
+      expect(find.byIcon(Icons.error_outline), findsNothing);
+    },
+  );
+
+  testWidgets(
+    'busy failed downloads hide stale failure details while retry is starting',
+    (tester) async {
+      await tester.pumpWidget(
+        _buildTileApp(
+          DownloadTaskTile(
+            task: _task(
+              status: DownloadStatus.failed,
+              failureReason: DownloadFailureReason.networkError,
+              failureMessage: 'The source stopped responding.',
+              progress: 0.42,
+            ),
+            isBusy: true,
+            busyAction: DownloadTaskBusyAction.start,
+            onStart: () {},
+            onPause: () {},
+            onCancel: () {},
+            onRemove: () {},
+          ),
+        ),
+      );
+      await tester.pump();
+
+      expect(find.text('Retrying...'), findsOneWidget);
+      expect(
+        find.text(
+          'AniDestiny is retrying this download. Progress will appear here after the file transfer resumes.',
+        ),
+        findsOneWidget,
+      );
       expect(find.text('Failed'), findsNothing);
       expect(find.text('Network error'), findsNothing);
       expect(find.text('The source stopped responding.'), findsNothing);

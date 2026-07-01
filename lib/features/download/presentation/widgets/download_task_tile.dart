@@ -149,6 +149,12 @@ class DownloadTaskTile extends StatelessWidget {
           ? context.l10n.downloadRemovingListOnlyNote
           : context.l10n.downloadRemovingNote;
     }
+    if (_isStartingTask(task)) {
+      return context.l10n.downloadStartingNote;
+    }
+    if (_isRetryingTask(task)) {
+      return context.l10n.downloadRetryingNote;
+    }
     return switch (task.status) {
       DownloadStatus.pending => context.l10n.downloadPendingNote,
       DownloadStatus.preparing => context.l10n.downloadPreparingNote,
@@ -188,7 +194,7 @@ class DownloadTaskTile extends StatelessWidget {
   }
 
   bool _showFailureReason(DownloadTask task, bool isRemovingFromList) {
-    if (isRemovingFromList) {
+    if (isRemovingFromList || _isStartingOrRetrying(task)) {
       return false;
     }
     if (task.failureReason == DownloadFailureReason.unsupportedType) {
@@ -203,7 +209,7 @@ class DownloadTaskTile extends StatelessWidget {
   }
 
   String? _failureMessage(BuildContext context, DownloadTask task) {
-    if (_isRemovingFromList(task)) {
+    if (_isRemovingFromList(task) || _isStartingOrRetrying(task)) {
       return null;
     }
     if (task.status == DownloadStatus.canceled) {
@@ -221,7 +227,7 @@ class DownloadTaskTile extends StatelessWidget {
   }
 
   bool _showProgress(DownloadTask task, bool isRemovingFromList) {
-    if (isRemovingFromList) {
+    if (isRemovingFromList || _isStartingOrRetrying(task)) {
       return false;
     }
     if (task.status == DownloadStatus.canceled) {
@@ -257,6 +263,21 @@ class DownloadTaskTile extends StatelessWidget {
       DownloadStatus.paused =>
         false,
     };
+  }
+
+  bool _isStartingTask(DownloadTask task) {
+    return busyAction == DownloadTaskBusyAction.start &&
+        task.status == DownloadStatus.pending;
+  }
+
+  bool _isRetryingTask(DownloadTask task) {
+    return busyAction == DownloadTaskBusyAction.start &&
+        (task.status == DownloadStatus.paused ||
+            task.status == DownloadStatus.failed);
+  }
+
+  bool _isStartingOrRetrying(DownloadTask task) {
+    return _isStartingTask(task) || _isRetryingTask(task);
   }
 
   List<Widget> _actions(BuildContext context) {
@@ -444,6 +465,12 @@ class _StatusChip extends StatelessWidget {
     if (_isRemovingFromList(task)) {
       return context.l10n.downloadRemovingStatus;
     }
+    if (_isStartingTask(task)) {
+      return context.l10n.downloadStartingStatus;
+    }
+    if (_isRetryingTask(task)) {
+      return context.l10n.downloadRetryingStatus;
+    }
     return switch (task.status) {
       DownloadStatus.pending => context.l10n.pending,
       DownloadStatus.preparing => context.l10n.preparing,
@@ -477,5 +504,16 @@ class _StatusChip extends StatelessWidget {
       DownloadStatus.paused =>
         false,
     };
+  }
+
+  bool _isStartingTask(DownloadTask task) {
+    return busyAction == DownloadTaskBusyAction.start &&
+        task.status == DownloadStatus.pending;
+  }
+
+  bool _isRetryingTask(DownloadTask task) {
+    return busyAction == DownloadTaskBusyAction.start &&
+        (task.status == DownloadStatus.paused ||
+            task.status == DownloadStatus.failed);
   }
 }

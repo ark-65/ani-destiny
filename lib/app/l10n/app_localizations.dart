@@ -229,8 +229,10 @@ class AppLocalizations {
   String get remove => _t('remove');
   String get downloadProgress => _t('downloadProgress');
   String get downloadPendingNote => _t('downloadPendingNote');
+  String get downloadStartingNote => _t('downloadStartingNote');
   String get downloadPreparingNote => _t('downloadPreparingNote');
   String get downloadLocalPath => _t('downloadLocalPath');
+  String get downloadRetryingNote => _t('downloadRetryingNote');
   String get downloadStoppingNote => _t('downloadStoppingNote');
   String get downloadStopMayRestartNote => _t('downloadStopMayRestartNote');
   String get downloadPausedRetryNote => _t('downloadPausedRetryNote');
@@ -297,6 +299,8 @@ class AppLocalizations {
     );
   }
 
+  String get downloadStartingStatus => _t('downloadStartingStatus');
+  String get downloadRetryingStatus => _t('downloadRetryingStatus');
   String get downloadStoppingStatus => _t('downloadStoppingStatus');
   String get downloadDiscardingStatus => _t('downloadDiscardingStatus');
   String get downloadRemovingStatus => _t('downloadRemovingStatus');
@@ -945,9 +949,10 @@ const _localizedValues = {
     'remove': '移除',
     'downloadProgress': '进度',
     'downloadPendingNote': '这个下载已经准备好开始；等文件真正开始传输后，这里才会显示进度。',
-    'downloadPreparingNote':
-        'AniDestiny 正在为这个下载做开始前准备；等文件真正开始传输后，这里才会显示进度。',
+    'downloadStartingNote': 'AniDestiny 正在开始这个下载；等文件真正开始传输后，这里就会显示进度。',
+    'downloadPreparingNote': 'AniDestiny 正在为这个下载做开始前准备；等文件真正开始传输后，这里才会显示进度。',
     'downloadLocalPath': '本地路径',
+    'downloadRetryingNote': 'AniDestiny 正在重新开始这个下载；等文件真正重新传输后，这里就会显示进度。',
     'downloadStoppingNote':
         'AniDestiny 还在停下这个下载，并清理这次未完成内容；清理完成后，这里会更新成可重试的已停下状态。',
     'downloadStopMayRestartNote':
@@ -964,6 +969,8 @@ const _localizedValues = {
     'downloadUnsupportedListReviewNote': '这条记录仍会留在下载列表里，方便你稍后查看或移除。',
     'downloadDiscardedNeedsManualCleanupNote':
         '这个下载已放弃，但 AniDestiny 没能自动清掉残留的未完成文件；如果你不再需要它，请按下面的本地路径手动删除，删完后回到这里点一下“重新检查”。',
+    'downloadStartingStatus': '正在开始',
+    'downloadRetryingStatus': '正在重试',
     'downloadStoppingStatus': '正在停下',
     'downloadDiscardingStatus': '正在放弃',
     'downloadRemovingStatus': '正在移除',
@@ -1279,9 +1286,13 @@ const _localizedValues = {
     'downloadProgress': 'Progress',
     'downloadPendingNote':
         'This download is ready to start. AniDestiny will show progress after the file transfer begins.',
+    'downloadStartingNote':
+        'AniDestiny is starting this download. Progress will appear here after the file transfer begins.',
     'downloadPreparingNote':
         'AniDestiny is preparing this download. Progress will appear here after the file transfer begins.',
     'downloadLocalPath': 'Local path',
+    'downloadRetryingNote':
+        'AniDestiny is retrying this download. Progress will appear here after the file transfer resumes.',
     'downloadStoppingNote':
         'AniDestiny is still stopping this download and clearing its partial file. This task will show Stopped when that cleanup finishes.',
     'downloadStopMayRestartNote':
@@ -1304,6 +1315,8 @@ const _localizedValues = {
         'This entry still stays in Downloads so you can review it or remove it later.',
     'downloadDiscardedNeedsManualCleanupNote':
         'This download was discarded, but AniDestiny could not clear the partial file automatically. Remove the leftover file from your device if you no longer need it, then return here and tap Check again.',
+    'downloadStartingStatus': 'Starting...',
+    'downloadRetryingStatus': 'Retrying...',
     'downloadStoppingStatus': 'Stopping...',
     'downloadDiscardingStatus': 'Discarding...',
     'downloadRemovingStatus': 'Removing...',
@@ -1627,11 +1640,14 @@ const _localizedValues = {
     'removeFromList': '一覧から削除',
     'remove': '削除',
     'downloadProgress': '進捗',
-    'downloadPendingNote':
-        'このダウンロードは開始できる状態です。実際に転送が始まってから、ここに進捗を表示します。',
+    'downloadPendingNote': 'このダウンロードは開始できる状態です。実際に転送が始まってから、ここに進捗を表示します。',
+    'downloadStartingNote':
+        'AniDestiny はこのダウンロードを開始中です。実際に転送が始まってから、ここに進捗を表示します。',
     'downloadPreparingNote':
         'AniDestiny はこのダウンロードを開始する準備中です。実際に転送が始まってから、ここに進捗を表示します。',
     'downloadLocalPath': 'ローカルパス',
+    'downloadRetryingNote':
+        'AniDestiny はこのダウンロードを再試行中です。実際に転送が再開してから、ここに進捗を表示します。',
     'downloadStoppingNote':
         'AniDestiny はこのダウンロードをまだ停止中で、未完了ファイルも整理しています。整理が終わると、ここは再試行できる停止状態に切り替わります。',
     'downloadStopMayRestartNote':
@@ -1653,6 +1669,8 @@ const _localizedValues = {
         'この記録は、あとで確認したり一覧から消したりできるように、ダウンロード一覧に残してあります。',
     'downloadDiscardedNeedsManualCleanupNote':
         'このダウンロードは破棄されましたが、AniDestiny は未完了ファイルを自動で削除できませんでした。不要なら下のローカルパスをもとに手動で削除し、戻ってきたら「再確認」を押してください。',
+    'downloadStartingStatus': '開始中...',
+    'downloadRetryingStatus': '再試行中...',
     'downloadStoppingStatus': '停止中...',
     'downloadDiscardingStatus': '破棄中',
     'downloadRemovingStatus': '削除中...',

@@ -639,6 +639,65 @@ void main() {
     },
   );
 
+  testWidgets(
+    'retry action keeps failed downloads in an explicit retrying state until transfer resumes',
+    (tester) async {
+      final settleStart = Completer<void>();
+      final repository = _FakeDownloadRepository([
+        _task('failed', DownloadStatus.failed).copyWith(
+          failureReason: DownloadFailureReason.networkError,
+          failureMessage: 'The source stopped responding.',
+          progress: 0.42,
+          totalBytes: 100,
+          downloadedBytes: 42,
+        ),
+      ]);
+      final service = _StartInFlightDownloadService(
+        repository,
+        settleStart.future,
+      );
+
+      await _pumpDownloadPage(
+        tester,
+        repository,
+        downloadService: service,
+      );
+
+      await tester.tap(
+        find.byKey(const ValueKey('download-task-retry-failed')),
+      );
+      await tester.pump();
+
+      expect(find.text('Retrying...'), findsOneWidget);
+      expect(
+        find.text(
+          'AniDestiny is retrying this download. Progress will appear here after the file transfer resumes.',
+        ),
+        findsOneWidget,
+      );
+      expect(find.text('Failed'), findsNothing);
+      expect(find.text('Network error'), findsNothing);
+      expect(find.text('The source stopped responding.'), findsNothing);
+      expect(
+        find.byKey(const ValueKey('download-task-progress-failed')),
+        findsNothing,
+      );
+
+      settleStart.complete();
+      await tester.pump();
+      await tester.pump();
+
+      expect(find.text('Preparing'), findsOneWidget);
+      expect(find.text('Retrying...'), findsNothing);
+      expect(
+        find.text(
+          'AniDestiny is preparing this download. Progress will appear here after the file transfer begins.',
+        ),
+        findsOneWidget,
+      );
+    },
+  );
+
   testWidgets('direct downloads use honest stop and retry wording', (
     tester,
   ) async {
@@ -1673,6 +1732,34 @@ class _PauseInFlightDownloadService extends _FakeDownloadService {
       ),
     );
     await settleFuture;
+  }
+}
+
+class _StartInFlightDownloadService extends _FakeDownloadService {
+  _StartInFlightDownloadService(
+    super.repository,
+    this.settleFuture,
+  );
+
+  final Future<void> settleFuture;
+
+  @override
+  Future<void> start(String taskId) async {
+    await settleFuture;
+    final task = await repository.getTask(taskId);
+    if (task == null) {
+      return;
+    }
+    await repository.upsertTask(
+      task.copyWith(
+        status: DownloadStatus.preparing,
+        failureReason: DownloadFailureReason.none,
+        failureMessage: null,
+        progress: 0,
+        totalBytes: null,
+        downloadedBytes: 0,
+      ),
+    );
   }
 }
 
