@@ -233,11 +233,12 @@ class FeedbackPackageCollector {
       final manualCleanupActionLabel = manualCleanupCount > 1
           ? l10n.recheckLeftoverFilesCount(manualCleanupCount)
           : null;
+      final latestIssueReason = _downloadLatestIssueReason(task);
       lines.add(
         '- ${l10n.feedbackPackageLatestIssue}: '
         '${needsManualCleanup ? l10n.downloadManualCleanupStatus : _downloadStatusLabel(task.status)}'
         ' · ${l10n.feedbackPackageReason}: '
-        '${_downloadFailureReasonLabel(task.failureReason)}',
+        '$latestIssueReason',
       );
       final localPath = task.localPath;
       if (needsManualCleanup && localPath != null && localPath.isNotEmpty) {
@@ -248,7 +249,7 @@ class FeedbackPackageCollector {
         );
       }
       final failureMessage = _downloadFailureMessage(task);
-      if (failureMessage != null) {
+      if (failureMessage != null && failureMessage != latestIssueReason) {
         lines.add(
           '  ${l10n.feedbackPackageMessage}: $failureMessage',
         );
@@ -311,6 +312,16 @@ class FeedbackPackageCollector {
       DownloadFailureReason.canceled => l10n.downloadDiscardedStatus,
       DownloadFailureReason.unknown => l10n.downloadFailureUnknown,
     };
+  }
+
+  String _downloadLatestIssueReason(DownloadTask task) {
+    final failureMessage = _downloadFailureMessage(task);
+    if (task.failureReason == DownloadFailureReason.unsupportedType &&
+        failureMessage != null &&
+        failureMessage.isNotEmpty) {
+      return failureMessage;
+    }
+    return _downloadFailureReasonLabel(task.failureReason);
   }
 
   String? _downloadFailureMessage(DownloadTask task) {

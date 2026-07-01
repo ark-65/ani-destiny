@@ -301,13 +301,15 @@ void main() {
       expect(
         markdown,
         contains(
-          '- Latest issue: Unsupported · Reason: Unsupported type',
+          '- Latest issue: Unsupported · Reason: This download currently uses a BT / magnet link, and AniDestiny cannot handle that type directly yet.',
         ),
       );
       expect(
         markdown,
-        contains(
-          'Message: This download currently uses a BT / magnet link, and AniDestiny cannot handle that type directly yet.',
+        isNot(
+          contains(
+            'Message: This download currently uses a BT / magnet link, and AniDestiny cannot handle that type directly yet.',
+          ),
         ),
       );
       expect(
