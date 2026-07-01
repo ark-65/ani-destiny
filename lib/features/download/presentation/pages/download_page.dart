@@ -420,7 +420,7 @@ class _DownloadPageState extends ConsumerState<DownloadPage>
   }
 
   Future<void> _createMockTask(BuildContext context, WidgetRef ref) async {
-    final taskId = await ref.read(downloadTaskCreatorProvider).create(
+    final result = await ref.read(downloadTaskCreatorProvider).create(
           animeId: 'mock-starlight-voyage',
           episodeId: 'mock-starlight-voyage-ep-1',
           sourceId: 'mock',
@@ -430,7 +430,9 @@ class _DownloadPageState extends ConsumerState<DownloadPage>
         );
     if (!context.mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(context.l10n.mockDownloadTaskCreated(taskId))),
+      SnackBar(
+        content: Text(context.l10n.mockDownloadTaskCreated(result.taskId)),
+      ),
     );
   }
 

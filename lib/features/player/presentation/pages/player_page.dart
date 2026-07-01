@@ -13,6 +13,7 @@ import '../../../anime/presentation/providers/anime_providers.dart';
 import '../../../danmaku/domain/entities/danmaku_item.dart';
 import '../../../danmaku/presentation/providers/danmaku_providers.dart';
 import '../../../danmaku/presentation/widgets/danmaku_overlay.dart';
+import '../../../download/domain/entities/download_kind.dart';
 import '../../../download/presentation/providers/download_providers.dart';
 import '../../../history/domain/entities/watch_history.dart';
 import '../../../history/domain/repositories/history_repository.dart';
@@ -941,7 +942,7 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
 
   Future<void> _createDownload() async {
     try {
-      final taskId = await ref.read(downloadTaskCreatorProvider).create(
+      final result = await ref.read(downloadTaskCreatorProvider).create(
             animeId: _args.animeId,
             episodeId: _args.episodeId,
             sourceId: _args.sourceId,
@@ -953,7 +954,7 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(context.l10n.downloadTaskCreated(taskId)),
+          content: Text(_downloadTaskCreatedMessage(context, result.kind)),
           action: SnackBarAction(
             label: context.l10n.open,
             onPressed: () => context.push('/downloads'),
@@ -966,6 +967,22 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
         SnackBar(content: Text(error.toString())),
       );
     }
+  }
+
+  String _downloadTaskCreatedMessage(
+    BuildContext context,
+    DownloadKind kind,
+  ) {
+    if (kind == DownloadKind.directFile) {
+      return context.l10n.downloadTaskAdded;
+    }
+    final unsupportedMessage = switch (kind) {
+      DownloadKind.hls => context.l10n.downloadUnsupportedHlsMessage,
+      DownloadKind.bt => context.l10n.downloadUnsupportedBtMessage,
+      DownloadKind.unknown => context.l10n.downloadUnsupportedUnknownMessage,
+      DownloadKind.directFile => context.l10n.downloadTaskAdded,
+    };
+    return '$unsupportedMessage ${context.l10n.downloadUnsupportedListReviewNote}';
   }
 
   Future<bool> _loadPlayer({

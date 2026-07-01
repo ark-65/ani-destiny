@@ -125,8 +125,7 @@ class AppLocalizations {
   String get noDownloadSource => _t('noDownloadSource');
   String get selectPlaySource => _t('selectPlaySource');
   String get selectDownloadSource => _t('selectDownloadSource');
-  String downloadTaskCreated(String taskId) =>
-      '${_t('downloadTaskCreated')}: $taskId';
+  String get downloadTaskAdded => _t('downloadTaskAdded');
   String get playerNoPlayUrl => _t('playerNoPlayUrl');
   String get playerReadyHint => _t('playerReadyHint');
   String get playerPreparingPlayback => _t('playerPreparingPlayback');
@@ -238,6 +237,8 @@ class AppLocalizations {
   String get downloadRemovingListOnlyNote => _t('downloadRemovingListOnlyNote');
   String get downloadUnsupportedRemoveNote =>
       _t('downloadUnsupportedRemoveNote');
+  String get downloadUnsupportedListReviewNote =>
+      _t('downloadUnsupportedListReviewNote');
   String get downloadDiscardedNeedsManualCleanupNote =>
       _t('downloadDiscardedNeedsManualCleanupNote');
   String downloadDiscardedNeedsManualCleanupBatchNote(String actionLabel) {
@@ -785,7 +786,7 @@ const _localizedValues = {
     'noDownloadSource': '未找到可下载线路，请稍后重试或切换数据源。',
     'selectPlaySource': '选择播放线路',
     'selectDownloadSource': '选择下载线路',
-    'downloadTaskCreated': '已创建下载任务',
+    'downloadTaskAdded': '已加入下载列表。',
     'playerNoPlayUrl': '未找到可播放线路',
     'playerReadyHint': '播放器预览已就绪',
     'playerPreparingPlayback': '正在准备播放…',
@@ -875,6 +876,7 @@ const _localizedValues = {
     'downloadRemovingNote': 'AniDestiny 正在把这条任务从列表移除；这个动作不会改动设备上已有的文件。',
     'downloadRemovingListOnlyNote': 'AniDestiny 正在把这条任务从列表移除，请稍候片刻。',
     'downloadUnsupportedRemoveNote': 'AniDestiny 还不能接管这类下载；确认后可以先把这条任务从列表移除。',
+    'downloadUnsupportedListReviewNote': '这条记录仍会留在下载列表里，方便你稍后查看或移除。',
     'downloadDiscardedNeedsManualCleanupNote':
         '这个下载已放弃，但 AniDestiny 没能自动清掉残留的未完成文件；如果你不再需要它，请按下面的本地路径手动删除，删完后回到这里点一下“重新检查”。',
     'downloadStoppingStatus': '正在停下',
@@ -1103,7 +1105,7 @@ const _localizedValues = {
         'No downloadable source found. Try another source or retry later.',
     'selectPlaySource': 'Select playback line',
     'selectDownloadSource': 'Select download line',
-    'downloadTaskCreated': 'Download task created',
+    'downloadTaskAdded': 'Added to Downloads.',
     'playerNoPlayUrl': 'No playable source found',
     'playerReadyHint': 'Playback preview ready',
     'playerPreparingPlayback': 'Preparing playback...',
@@ -1206,6 +1208,8 @@ const _localizedValues = {
         'AniDestiny is still removing this task from the list. Please give it a moment.',
     'downloadUnsupportedRemoveNote':
         'AniDestiny cannot take over this type of download yet. You can remove this task from the list for now.',
+    'downloadUnsupportedListReviewNote':
+        'This entry still stays in Downloads so you can review it or remove it later.',
     'downloadDiscardedNeedsManualCleanupNote':
         'This download was discarded, but AniDestiny could not clear the partial file automatically. Remove the leftover file from your device if you no longer need it, then return here and tap Check again.',
     'downloadStoppingStatus': 'Stopping...',
@@ -1451,7 +1455,7 @@ const _localizedValues = {
     'noDownloadSource': 'ダウンロード可能なソースが見つかりません。別のソースを試すか、後で再試行してください。',
     'selectPlaySource': '再生ラインを選択',
     'selectDownloadSource': 'ダウンロードラインを選択',
-    'downloadTaskCreated': 'ダウンロードタスクを作成しました',
+    'downloadTaskAdded': 'ダウンロード一覧に追加しました。',
     'playerNoPlayUrl': '再生可能なソースが見つかりません',
     'playerReadyHint': '再生プレビューの準備完了',
     'playerPreparingPlayback': '再生を準備中…',
@@ -1546,6 +1550,8 @@ const _localizedValues = {
     'downloadRemovingListOnlyNote': 'AniDestiny はこのタスクを一覧からまだ削除中です。少しお待ちください。',
     'downloadUnsupportedRemoveNote':
         'AniDestiny はまだこの種類のダウンロードを引き継げません。今はこのタスクを一覧から消せます。',
+    'downloadUnsupportedListReviewNote':
+        'この記録は、あとで確認したり一覧から消したりできるように、ダウンロード一覧に残してあります。',
     'downloadDiscardedNeedsManualCleanupNote':
         'このダウンロードは破棄されましたが、AniDestiny は未完了ファイルを自動で削除できませんでした。不要なら下のローカルパスをもとに手動で削除し、戻ってきたら「再確認」を押してください。',
     'downloadStoppingStatus': '停止中...',

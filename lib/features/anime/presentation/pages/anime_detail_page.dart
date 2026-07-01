@@ -6,6 +6,7 @@ import '../../../../app/l10n/app_localizations.dart';
 import '../../../../core/widgets/app_error_view.dart';
 import '../../../../core/widgets/app_loading_view.dart';
 import '../../../../shared/widgets/adaptive_page.dart';
+import '../../../download/domain/entities/download_kind.dart';
 import '../../../download/presentation/providers/download_providers.dart';
 import '../../../favorite/domain/entities/favorite_anime.dart';
 import '../../../favorite/presentation/providers/favorite_providers.dart';
@@ -192,7 +193,7 @@ class AnimeDetailPage extends ConsumerWidget {
     }
     final source = await _selectDownloadSource(context, sources);
     if (!context.mounted || source == null) return;
-    final taskId = await ref.read(downloadTaskCreatorProvider).create(
+    final result = await ref.read(downloadTaskCreatorProvider).create(
           animeId: detail.id,
           episodeId: episode.id,
           sourceId: sourceResult.sourceId,
@@ -203,8 +204,30 @@ class AnimeDetailPage extends ConsumerWidget {
         );
     if (!context.mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(context.l10n.downloadTaskCreated(taskId))),
+      SnackBar(
+        content: Text(_downloadTaskCreatedMessage(context, result.kind)),
+        action: SnackBarAction(
+          label: context.l10n.open,
+          onPressed: () => context.push('/downloads'),
+        ),
+      ),
     );
+  }
+
+  String _downloadTaskCreatedMessage(
+    BuildContext context,
+    DownloadKind kind,
+  ) {
+    if (kind == DownloadKind.directFile) {
+      return context.l10n.downloadTaskAdded;
+    }
+    final unsupportedMessage = switch (kind) {
+      DownloadKind.hls => context.l10n.downloadUnsupportedHlsMessage,
+      DownloadKind.bt => context.l10n.downloadUnsupportedBtMessage,
+      DownloadKind.unknown => context.l10n.downloadUnsupportedUnknownMessage,
+      DownloadKind.directFile => context.l10n.downloadTaskAdded,
+    };
+    return '$unsupportedMessage ${context.l10n.downloadUnsupportedListReviewNote}';
   }
 
   Future<PlaySource?> _selectPlaySource(
