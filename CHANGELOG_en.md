@@ -7,6 +7,7 @@
 ## [Unreleased]
 
 ### 🐛 Fixed
+- Fixed newly created and still-preparing download tasks already showing a `0%` progress bar, which blurred together “the transfer has not started yet” and “the transfer started but is stuck”; those `Pending` and `Preparing` states now explain when real progress will appear and wait to show the progress UI until file transfer actually begins.
 - Fixed leftover-file cleanup tasks and copied support summaries still only telling users to go delete a file even when other ended downloads were already ready to finish right now; those touchpoints now also point out the ready `Remove from list` or `Clear N ended tasks from list` action so the next step stays consistent across the page, the task card, and the exported support summary.
 - Fixed active, preparing, and stopped download cards still hiding `Discard download` behind an `X` icon, which made touch users guess whether that action would throw away the current attempt; those states now surface `Discard download` as a visible button so the exit action and its consequence speak the same product truth.
 - Fixed the player and anime-detail download feedback already honestly telling users the next step was Downloads while the attached action still only said the generic `Open`; both entry points now say `Open Downloads` so the message and the follow-up action point to the same place.

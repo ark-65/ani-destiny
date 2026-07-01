@@ -63,6 +63,40 @@ void main() {
   });
 
   testWidgets(
+    'pending and preparing downloads wait to show progress until transfer begins',
+    (tester) async {
+      final repository = _FakeDownloadRepository([
+        _task('pending', DownloadStatus.pending),
+        _task('preparing', DownloadStatus.preparing),
+      ]);
+
+      await _pumpDownloadPage(tester, repository);
+
+      expect(
+        find.text(
+          'This download is ready to start. AniDestiny will show progress after the file transfer begins.',
+        ),
+        findsOneWidget,
+      );
+      expect(
+        find.text(
+          'AniDestiny is preparing this download. Progress will appear here after the file transfer begins.',
+        ),
+        findsOneWidget,
+      );
+      expect(
+        find.byKey(const ValueKey('download-task-progress-pending')),
+        findsNothing,
+      );
+      expect(
+        find.byKey(const ValueKey('download-task-progress-preparing')),
+        findsNothing,
+      );
+      expect(find.textContaining('Progress:'), findsNothing);
+    },
+  );
+
+  testWidgets(
     'single ended task keeps page-level clear hidden',
     (tester) async {
       final repository = _FakeDownloadRepository([

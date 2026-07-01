@@ -150,6 +150,8 @@ class DownloadTaskTile extends StatelessWidget {
           : context.l10n.downloadRemovingNote;
     }
     return switch (task.status) {
+      DownloadStatus.pending => context.l10n.downloadPendingNote,
+      DownloadStatus.preparing => context.l10n.downloadPreparingNote,
       DownloadStatus.paused
           when task.kind == DownloadKind.directFile &&
               busyAction == DownloadTaskBusyAction.pause =>
@@ -223,6 +225,10 @@ class DownloadTaskTile extends StatelessWidget {
       return false;
     }
     if (task.status == DownloadStatus.canceled) {
+      return false;
+    }
+    if (task.status == DownloadStatus.pending ||
+        task.status == DownloadStatus.preparing) {
       return false;
     }
     if (task.status == DownloadStatus.unsupported) {

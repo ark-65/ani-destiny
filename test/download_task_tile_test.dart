@@ -149,12 +149,70 @@ void main() {
       ),
       findsOneWidget,
     );
+    expect(
+      find.text(
+        'This download is ready to start. AniDestiny will show progress after the file transfer begins.',
+      ),
+      findsOneWidget,
+    );
+    expect(
+      find.byKey(const ValueKey('download-task-progress-task-1')),
+      findsNothing,
+    );
+    expect(find.textContaining('Progress:'), findsNothing);
 
     await tester.tap(discardButton);
     await tester.pump();
 
     expect(cancelTapped, isTrue);
   });
+
+  testWidgets(
+    'preparing downloads explain that progress appears after transfer starts',
+    (tester) async {
+      var cancelTapped = false;
+
+      await tester.pumpWidget(
+        _buildTileApp(
+          DownloadTaskTile(
+            task: _task(status: DownloadStatus.preparing, progress: 0),
+            isBusy: false,
+            onStart: () {},
+            onPause: () {},
+            onCancel: () {
+              cancelTapped = true;
+            },
+            onRemove: () {},
+          ),
+        ),
+      );
+      await tester.pump();
+
+      expect(find.text('Preparing'), findsOneWidget);
+      expect(
+        find.text(
+          'AniDestiny is preparing this download. Progress will appear here after the file transfer begins.',
+        ),
+        findsOneWidget,
+      );
+      expect(
+        find.byKey(const ValueKey('download-task-progress-task-1')),
+        findsNothing,
+      );
+      expect(find.textContaining('Progress:'), findsNothing);
+      expect(
+        find.byKey(const ValueKey('download-task-cancel-task-1')),
+        findsOneWidget,
+      );
+
+      await tester.tap(
+        find.byKey(const ValueKey('download-task-cancel-task-1')),
+      );
+      await tester.pump();
+
+      expect(cancelTapped, isTrue);
+    },
+  );
 
   testWidgets('canceled download tasks stay removable without error styling', (
     tester,

@@ -228,6 +228,8 @@ class AppLocalizations {
   String get removeFromList => _t('removeFromList');
   String get remove => _t('remove');
   String get downloadProgress => _t('downloadProgress');
+  String get downloadPendingNote => _t('downloadPendingNote');
+  String get downloadPreparingNote => _t('downloadPreparingNote');
   String get downloadLocalPath => _t('downloadLocalPath');
   String get downloadStoppingNote => _t('downloadStoppingNote');
   String get downloadStopMayRestartNote => _t('downloadStopMayRestartNote');
@@ -942,6 +944,9 @@ const _localizedValues = {
     'removeFromList': '从列表移除',
     'remove': '移除',
     'downloadProgress': '进度',
+    'downloadPendingNote': '这个下载已经准备好开始；等文件真正开始传输后，这里才会显示进度。',
+    'downloadPreparingNote':
+        'AniDestiny 正在为这个下载做开始前准备；等文件真正开始传输后，这里才会显示进度。',
     'downloadLocalPath': '本地路径',
     'downloadStoppingNote':
         'AniDestiny 还在停下这个下载，并清理这次未完成内容；清理完成后，这里会更新成可重试的已停下状态。',
@@ -1272,6 +1277,10 @@ const _localizedValues = {
     'removeFromList': 'Remove from list',
     'remove': 'Remove',
     'downloadProgress': 'Progress',
+    'downloadPendingNote':
+        'This download is ready to start. AniDestiny will show progress after the file transfer begins.',
+    'downloadPreparingNote':
+        'AniDestiny is preparing this download. Progress will appear here after the file transfer begins.',
     'downloadLocalPath': 'Local path',
     'downloadStoppingNote':
         'AniDestiny is still stopping this download and clearing its partial file. This task will show Stopped when that cleanup finishes.',
@@ -1618,6 +1627,10 @@ const _localizedValues = {
     'removeFromList': '一覧から削除',
     'remove': '削除',
     'downloadProgress': '進捗',
+    'downloadPendingNote':
+        'このダウンロードは開始できる状態です。実際に転送が始まってから、ここに進捗を表示します。',
+    'downloadPreparingNote':
+        'AniDestiny はこのダウンロードを開始する準備中です。実際に転送が始まってから、ここに進捗を表示します。',
     'downloadLocalPath': 'ローカルパス',
     'downloadStoppingNote':
         'AniDestiny はこのダウンロードをまだ停止中で、未完了ファイルも整理しています。整理が終わると、ここは再試行できる停止状態に切り替わります。',
