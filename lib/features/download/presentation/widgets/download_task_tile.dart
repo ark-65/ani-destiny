@@ -158,6 +158,7 @@ class DownloadTaskTile extends StatelessWidget {
         context.l10n.downloadStopMayRestartNote,
       DownloadStatus.paused when task.kind == DownloadKind.directFile =>
         context.l10n.downloadPausedRetryNote,
+      DownloadStatus.failed => context.l10n.downloadFailedRetryOrRemoveNote,
       DownloadStatus.canceled when task.kind == DownloadKind.directFile =>
         downloadTaskNeedsManualCleanup(task)
             ? manualCleanupBatchRecheckLabel == null
@@ -307,12 +308,7 @@ class DownloadTaskTile extends StatelessWidget {
             onPressed: isBusy ? null : onStart,
             icon: const Icon(Icons.refresh),
           ),
-          IconButton(
-            key: ValueKey('download-task-remove-${task.id}'),
-            tooltip: context.l10n.removeFromList,
-            onPressed: isBusy ? null : onRemove,
-            icon: const Icon(Icons.delete_outline),
-          ),
+          _removeTextAction(context),
         ],
       DownloadStatus.completed => [
           _removeTextAction(context),

@@ -89,6 +89,19 @@ void main() {
     expect(find.byTooltip('Remove from list'), findsOneWidget);
     expect(find.byIcon(Icons.refresh), findsOneWidget);
     expect(
+      find.descendant(
+        of: removeButton,
+        matching: find.text('Remove from list'),
+      ),
+      findsOneWidget,
+    );
+    expect(
+      find.text(
+        'This download did not finish successfully. You can retry it now, or remove it from the list if you no longer need this record.',
+      ),
+      findsOneWidget,
+    );
+    expect(
       find.text(
         'Pause is basic support and may restart the download when resumed.',
       ),
@@ -798,7 +811,7 @@ void main() {
       findsOneWidget,
     );
     expect(tester.widget<IconButton>(retryButton).onPressed, isNull);
-    expect(tester.widget<IconButton>(removeButton).onPressed, isNull);
+    expect(tester.widget<TextButton>(removeButton).onPressed, isNull);
   });
 }
 

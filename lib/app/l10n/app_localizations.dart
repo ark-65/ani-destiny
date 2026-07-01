@@ -231,6 +231,8 @@ class AppLocalizations {
   String get downloadStoppingNote => _t('downloadStoppingNote');
   String get downloadStopMayRestartNote => _t('downloadStopMayRestartNote');
   String get downloadPausedRetryNote => _t('downloadPausedRetryNote');
+  String get downloadFailedRetryOrRemoveNote =>
+      _t('downloadFailedRetryOrRemoveNote');
   String get downloadDiscardingNote => _t('downloadDiscardingNote');
   String get downloadDiscardedNote => _t('downloadDiscardedNote');
   String get downloadRemovingNote => _t('downloadRemovingNote');
@@ -871,6 +873,8 @@ const _localizedValues = {
         '当前下载只能先停下；下次重试时可能会从头开始。放弃这个任务会丢掉未完成内容，并清掉临时文件。',
     'downloadPausedRetryNote':
         '这个下载已先停下；再次开始会按重试处理，可能从头开始。放弃这个任务会丢掉未完成内容，并清掉临时文件。',
+    'downloadFailedRetryOrRemoveNote':
+        '这个下载这次没能完成；如果你还想继续，可以直接重试。确认不再需要这条记录后，也可以把它从列表移除。',
     'downloadDiscardingNote': 'AniDestiny 还在放弃这个下载，并清理这次未完成内容；清理完成后，这里会更新最终结果。',
     'downloadDiscardedNote': '这个下载已放弃；未完成内容和临时文件都已清掉。确认无误后，你可以把这条记录从列表移除。',
     'downloadRemovingNote': 'AniDestiny 正在把这条任务从列表移除；这个动作不会改动设备上已有的文件。',
@@ -1198,6 +1202,8 @@ const _localizedValues = {
         'Stopping this download keeps the task, but the next retry may restart from the beginning. Discarding it clears any partial file.',
     'downloadPausedRetryNote':
         'This download is stopped for now. Retrying may restart it from the beginning. Discarding it clears any partial file.',
+    'downloadFailedRetryOrRemoveNote':
+        'This download did not finish successfully. You can retry it now, or remove it from the list if you no longer need this record.',
     'downloadDiscardingNote':
         'AniDestiny is still discarding this download and clearing its partial file. The final cleanup result will appear here when it finishes.',
     'downloadDiscardedNote':
@@ -1541,6 +1547,8 @@ const _localizedValues = {
         'いったん止めることはできますが、次の再試行では最初からやり直す場合があります。破棄すると未完了の内容と一時ファイルが消えます。',
     'downloadPausedRetryNote':
         'このダウンロードはいったん停止しています。再試行時は最初からやり直す場合があります。破棄すると未完了の内容と一時ファイルが消えます。',
+    'downloadFailedRetryOrRemoveNote':
+        'このダウンロードは完了できませんでした。続けたい場合は今すぐ再試行でき、もう不要ならこの記録を一覧から削除できます。',
     'downloadDiscardingNote':
         'AniDestiny はこのダウンロードをまだ破棄中で、未完了ファイルも整理しています。終わったらここに最終結果を表示します。',
     'downloadDiscardedNote':

@@ -89,6 +89,39 @@ void main() {
     },
   );
 
+  testWidgets(
+    'single failed task keeps page-level clear hidden and exposes visible remove copy',
+    (tester) async {
+      final repository = _FakeDownloadRepository([
+        _task('failed', DownloadStatus.failed),
+      ]);
+
+      await _pumpDownloadPage(tester, repository);
+
+      expect(
+        find.byKey(const ValueKey('downloads-clear-ended-tasks')),
+        findsNothing,
+      );
+      expect(
+        find.byKey(const ValueKey('download-task-remove-failed')),
+        findsOneWidget,
+      );
+      expect(
+        find.descendant(
+          of: find.byKey(const ValueKey('download-task-remove-failed')),
+          matching: find.text('Remove from list'),
+        ),
+        findsOneWidget,
+      );
+      expect(
+        find.text(
+          'This download did not finish successfully. You can retry it now, or remove it from the list if you no longer need this record.',
+        ),
+        findsOneWidget,
+      );
+    },
+  );
+
   testWidgets('clear ended tasks explains completed files stay on device', (
     tester,
   ) async {
