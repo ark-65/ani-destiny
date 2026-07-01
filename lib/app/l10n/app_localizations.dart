@@ -188,6 +188,7 @@ class AppLocalizations {
   String get playbackDiagnosticStateError => _t('playbackDiagnosticStateError');
   String get open => _t('open');
   String get openDownloads => _t('openDownloads');
+  String get reviewInDownloads => _t('reviewInDownloads');
   String get loadingFavorites => _t('loadingFavorites');
   String get favoriteEmpty => _t('favoriteEmpty');
   String get removeFavorite => _t('removeFavorite');
@@ -919,6 +920,7 @@ const _localizedValues = {
     'playbackDiagnosticStateError': '播放失败',
     'open': '打开',
     'openDownloads': '打开下载列表',
+    'reviewInDownloads': '去下载列表查看',
     'loadingFavorites': '正在加载收藏',
     'favoriteEmpty': '收藏的番剧会显示在这里',
     'removeFavorite': '移除收藏',
@@ -1254,6 +1256,7 @@ const _localizedValues = {
     'playbackDiagnosticStateError': 'Failed',
     'open': 'Open',
     'openDownloads': 'Open Downloads',
+    'reviewInDownloads': 'Review in Downloads',
     'loadingFavorites': 'Loading favorites',
     'favoriteEmpty': 'Favorite anime will appear here',
     'removeFavorite': 'Remove favorite',
@@ -1610,6 +1613,7 @@ const _localizedValues = {
     'playbackDiagnosticStateError': '再生失敗',
     'open': '開く',
     'openDownloads': 'ダウンロード一覧を開く',
+    'reviewInDownloads': 'ダウンロード一覧で確認',
     'loadingFavorites': 'お気に入りを読み込み中',
     'favoriteEmpty': 'お気に入り作品がここに表示されます',
     'removeFavorite': 'お気に入りから削除',

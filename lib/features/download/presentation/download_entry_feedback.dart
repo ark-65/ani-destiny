@@ -1,0 +1,27 @@
+import '../../../app/l10n/app_localizations.dart';
+import '../domain/entities/download_kind.dart';
+
+String downloadEntryFeedbackMessage(
+  AppLocalizations l10n,
+  DownloadKind kind,
+) {
+  if (kind == DownloadKind.directFile) {
+    return l10n.downloadTaskAdded;
+  }
+  final unsupportedMessage = switch (kind) {
+    DownloadKind.hls => l10n.downloadUnsupportedHlsMessage,
+    DownloadKind.bt => l10n.downloadUnsupportedBtMessage,
+    DownloadKind.unknown => l10n.downloadUnsupportedUnknownMessage,
+    DownloadKind.directFile => l10n.downloadTaskAdded,
+  };
+  return '$unsupportedMessage ${l10n.downloadUnsupportedListReviewNote}';
+}
+
+String downloadEntryFeedbackActionLabel(
+  AppLocalizations l10n,
+  DownloadKind kind,
+) {
+  return kind == DownloadKind.directFile
+      ? l10n.openDownloads
+      : l10n.reviewInDownloads;
+}

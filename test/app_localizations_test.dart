@@ -258,14 +258,20 @@ void main() {
     const zh = AppLocalizations(Locale('zh'));
     expect(zh.openDownloads, '打开下载列表');
     expect(zh.openDownloads, contains('下载'));
+    expect(zh.reviewInDownloads, '去下载列表查看');
+    expect(zh.reviewInDownloads, contains('下载'));
 
     const en = AppLocalizations(Locale('en'));
     expect(en.openDownloads, 'Open Downloads');
     expect(en.openDownloads, isNot('Open'));
+    expect(en.reviewInDownloads, 'Review in Downloads');
+    expect(en.reviewInDownloads, contains('Downloads'));
 
     const ja = AppLocalizations(Locale('ja'));
     expect(ja.openDownloads, 'ダウンロード一覧を開く');
     expect(ja.openDownloads, contains('ダウンロード'));
+    expect(ja.reviewInDownloads, 'ダウンロード一覧で確認');
+    expect(ja.reviewInDownloads, contains('ダウンロード'));
   });
 
   test('runtime diagnostics helpers keep support copy localized', () {
