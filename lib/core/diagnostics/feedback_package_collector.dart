@@ -230,9 +230,16 @@ class FeedbackPackageCollector {
     } else {
       final task = latestIssue.first;
       final needsManualCleanup = manualCleanupTaskIds.contains(task.id);
-      final manualCleanupActionLabel = manualCleanupCount > 1
+      final manualCleanupRecheckActionLabel = manualCleanupCount > 1
           ? l10n.recheckLeftoverFilesCount(manualCleanupCount)
           : null;
+      final clearableTaskCount =
+          downloadTasks.where(_isClearableDownloadTask).length;
+      final readyActionLabel = clearableTaskCount > 1
+          ? l10n.clearEndedDownloadsCount(clearableTaskCount)
+          : clearableTaskCount == 1
+              ? l10n.removeFromList
+              : null;
       final latestIssueReason = _downloadLatestIssueReason(task);
       lines.add(
         '- ${l10n.feedbackPackageLatestIssue}: '
@@ -245,7 +252,11 @@ class FeedbackPackageCollector {
         lines.add('  ${l10n.downloadLocalPath}: $localPath');
         lines.add(
           '  ${l10n.feedbackPackageMessage}: '
-          '${l10n.downloadManualCleanupFeedbackNextStep(actionLabel: manualCleanupActionLabel)}',
+          '${l10n.downloadManualCleanupFeedbackNextStep(
+            readyActionLabel: readyActionLabel,
+            readyActionIsBatch: clearableTaskCount > 1,
+            recheckActionLabel: manualCleanupRecheckActionLabel,
+          )}',
         );
       }
       final failureMessage = _downloadFailureMessage(task);
@@ -311,6 +322,24 @@ class FeedbackPackageCollector {
         l10n.downloadFailureStorageUnavailable,
       DownloadFailureReason.canceled => l10n.downloadDiscardedStatus,
       DownloadFailureReason.unknown => l10n.downloadFailureUnknown,
+    };
+  }
+
+  bool _isClearableDownloadTask(DownloadTask task) {
+    if (downloadTaskNeedsManualCleanup(task)) {
+      return false;
+    }
+    return switch (task.status) {
+      DownloadStatus.completed ||
+      DownloadStatus.failed ||
+      DownloadStatus.canceled ||
+      DownloadStatus.unsupported =>
+        true,
+      DownloadStatus.pending ||
+      DownloadStatus.preparing ||
+      DownloadStatus.downloading ||
+      DownloadStatus.paused =>
+        false,
     };
   }
 

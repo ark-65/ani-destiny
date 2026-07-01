@@ -23,6 +23,8 @@ class DownloadTaskTile extends StatelessWidget {
     required this.onRemove,
     this.onRefreshCleanupStatus,
     this.manualCleanupBatchRecheckLabel,
+    this.manualCleanupReadyActionLabel,
+    this.manualCleanupReadyActionIsBatch = false,
     this.busyAction,
     super.key,
   });
@@ -35,6 +37,8 @@ class DownloadTaskTile extends StatelessWidget {
   final VoidCallback onRemove;
   final VoidCallback? onRefreshCleanupStatus;
   final String? manualCleanupBatchRecheckLabel;
+  final String? manualCleanupReadyActionLabel;
+  final bool manualCleanupReadyActionIsBatch;
   final DownloadTaskBusyAction? busyAction;
 
   @override
@@ -161,11 +165,11 @@ class DownloadTaskTile extends StatelessWidget {
       DownloadStatus.failed => context.l10n.downloadFailedRetryOrRemoveNote,
       DownloadStatus.canceled when task.kind == DownloadKind.directFile =>
         downloadTaskNeedsManualCleanup(task)
-            ? manualCleanupBatchRecheckLabel == null
-                ? context.l10n.downloadDiscardedNeedsManualCleanupNote
-                : context.l10n.downloadDiscardedNeedsManualCleanupBatchNote(
-                    manualCleanupBatchRecheckLabel!,
-                  )
+            ? context.l10n.downloadDiscardedNeedsManualCleanupGuidance(
+                readyActionLabel: manualCleanupReadyActionLabel,
+                readyActionIsBatch: manualCleanupReadyActionIsBatch,
+                recheckActionLabel: manualCleanupBatchRecheckLabel,
+              )
             : context.l10n.downloadDiscardedNote,
       DownloadStatus.unsupported => context.l10n.downloadUnsupportedRemoveNote,
       DownloadStatus.completed when _showLocalPath(task) =>

@@ -184,6 +184,12 @@ void main() {
         ),
         findsOneWidget,
       );
+      expect(
+        find.text(
+          'This download was discarded, but AniDestiny could not clear the partial file automatically. You can use "Remove from list" on the task that is already ready now. For this leftover partial file, remove it from your device if you no longer need it, then return here and tap Check again.',
+        ),
+        findsOneWidget,
+      );
 
       await tester
           .tap(find.byKey(const ValueKey('download-task-remove-completed')));
@@ -1033,6 +1039,14 @@ void main() {
         find.text(
           'Tasks marked Needs cleanup stay in the list until those leftover partial files are gone. You can use "Clear 2 ended tasks from list" above for the other ended tasks now. After you delete the leftover files, use "Check 2 leftover files again" above or tap Check again on each task.',
         ),
+        findsOneWidget,
+      );
+      final tileGuidance = find.textContaining(
+        'For the leftover partial files, remove them from your device if you no longer need them, then use "Check 2 leftover files again" above or tap Check again here.',
+      );
+      await tester.scrollUntilVisible(tileGuidance, 200);
+      expect(
+        tileGuidance,
         findsOneWidget,
       );
     },

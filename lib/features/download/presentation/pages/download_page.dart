@@ -187,6 +187,16 @@ class _DownloadPageState extends ConsumerState<DownloadPage>
                               manualCleanupTaskCount,
                             )
                           : null;
+                  final manualCleanupReadyActionLabel =
+                      clearableTaskIds.length > 1
+                          ? context.l10n.clearEndedDownloadsCount(
+                              clearableTaskIds.length,
+                            )
+                          : clearableTaskIds.length == 1
+                              ? context.l10n.removeFromList
+                              : null;
+                  final manualCleanupReadyActionIsBatch =
+                      clearableTaskIds.length > 1;
                   final hasBusyRemovableTask = removableTaskIds.any(
                     _busyTaskActions.containsKey,
                   );
@@ -355,6 +365,12 @@ class _DownloadPageState extends ConsumerState<DownloadPage>
                                   downloadTaskNeedsManualCleanup(task)
                                       ? manualCleanupBatchRecheckLabel
                                       : null,
+                              manualCleanupReadyActionLabel:
+                                  downloadTaskNeedsManualCleanup(task)
+                                      ? manualCleanupReadyActionLabel
+                                      : null,
+                              manualCleanupReadyActionIsBatch:
+                                  manualCleanupReadyActionIsBatch,
                             );
                           },
                         ),

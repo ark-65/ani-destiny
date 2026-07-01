@@ -7,6 +7,7 @@
 ## [Unreleased]
 
 ### 🐛 Fixed
+- Fixed leftover-file cleanup tasks and copied support summaries still only telling users to go delete a file even when other ended downloads were already ready to finish right now; those touchpoints now also point out the ready `Remove from list` or `Clear N ended tasks from list` action so the next step stays consistent across the page, the task card, and the exported support summary.
 - Fixed active, preparing, and stopped download cards still hiding `Discard download` behind an `X` icon, which made touch users guess whether that action would throw away the current attempt; those states now surface `Discard download` as a visible button so the exit action and its consequence speak the same product truth.
 - Fixed the player and anime-detail download feedback already honestly telling users the next step was Downloads while the attached action still only said the generic `Open`; both entry points now say `Open Downloads` so the message and the follow-up action point to the same place.
 - Fixed failed download tasks already being at the “retry or finish cleaning up” stage while still hiding `Remove from list` as a trash-can icon and never saying plainly what users should do next; failed cards now add a direct next-step note and surface `Remove from list` as the same visible action used by other ended states.

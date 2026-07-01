@@ -244,15 +244,55 @@ class AppLocalizations {
       _t('downloadUnsupportedListReviewNote');
   String get downloadDiscardedNeedsManualCleanupNote =>
       _t('downloadDiscardedNeedsManualCleanupNote');
-  String downloadDiscardedNeedsManualCleanupBatchNote(String actionLabel) {
-    return switch (_languageCode) {
-      'en' =>
-        'This download was discarded, but AniDestiny could not clear the partial file automatically. Remove the leftover file from your device if you no longer need it, then use "$actionLabel" above or tap Check again here.',
-      'ja' =>
-        'このダウンロードは破棄されましたが、AniDestiny は残留する途中ファイルを自動では削除できませんでした。不要なら下のローカルパスを手がかりに端末から削除し、削除後は上の「$actionLabel」を使うか、このカードの「もう一度確認」を押してください。',
-      _ =>
-        '这个下载已放弃，但 AniDestiny 没能自动清掉残留的未完成文件；如果你不再需要它，请按下面的本地路径手动删除。删完后可以先点上面的“$actionLabel”，也可以点这里的“重新检查”。',
+  String downloadDiscardedNeedsManualCleanupGuidance({
+    String? readyActionLabel,
+    bool readyActionIsBatch = false,
+    String? recheckActionLabel,
+  }) {
+    return switch ((
+      _languageCode,
+      readyActionLabel != null,
+      readyActionIsBatch,
+      recheckActionLabel != null,
+    )) {
+      ('en', true, true, true) =>
+        'This download was discarded, but AniDestiny could not clear the partial file automatically. You can use "$readyActionLabel" above for the other ended tasks now. For the leftover partial files, remove them from your device if you no longer need them, then use "$recheckActionLabel" above or tap Check again here.',
+      ('ja', true, true, true) =>
+        'このダウンロードは破棄されましたが、AniDestiny は残留する途中ファイルを自動では削除できませんでした。ほかの終了済みタスクは今すぐ上の「$readyActionLabel」で整理できます。残留ファイルが不要なら端末から削除し、その後は上の「$recheckActionLabel」を使うか、このカードの「もう一度確認」を押してください。',
+      (_, true, true, true) =>
+        '这个下载已放弃，但 AniDestiny 没能自动清掉残留的未完成文件。上面的“$readyActionLabel”可以先清掉其他已经收尾的任务；这些残留文件如果你不再需要，请先在设备上手动删除，再点上面的“$recheckActionLabel”，或点这里的“重新检查”。',
+      ('en', true, false, true) =>
+        'This download was discarded, but AniDestiny could not clear the partial file automatically. You can use "$readyActionLabel" on the task that is already ready now. For the leftover partial files, remove them from your device if you no longer need them, then use "$recheckActionLabel" above or tap Check again here.',
+      ('ja', true, false, true) =>
+        'このダウンロードは破棄されましたが、AniDestiny は残留する途中ファイルを自動では削除できませんでした。すでに整理できるタスクは「$readyActionLabel」で片付けられます。残留ファイルが不要なら端末から削除し、その後は上の「$recheckActionLabel」を使うか、このカードの「もう一度確認」を押してください。',
+      (_, true, false, true) =>
+        '这个下载已放弃，但 AniDestiny 没能自动清掉残留的未完成文件。已经可以收尾的那条任务，现在可以直接点“$readyActionLabel”；这些残留文件如果你不再需要，请先在设备上手动删除，再点上面的“$recheckActionLabel”，或点这里的“重新检查”。',
+      ('en', false, _, true) =>
+        'This download was discarded, but AniDestiny could not clear the partial file automatically. Remove the leftover file from your device if you no longer need it, then use "$recheckActionLabel" above or tap Check again here.',
+      ('ja', false, _, true) =>
+        'このダウンロードは破棄されましたが、AniDestiny は残留する途中ファイルを自動では削除できませんでした。不要なら下のローカルパスを手がかりに端末から削除し、削除後は上の「$recheckActionLabel」を使うか、このカードの「もう一度確認」を押してください。',
+      (_, false, _, true) =>
+        '这个下载已放弃，但 AniDestiny 没能自动清掉残留的未完成文件；如果你不再需要它，请按下面的本地路径手动删除。删完后可以先点上面的“$recheckActionLabel”，也可以点这里的“重新检查”。',
+      ('en', true, true, false) =>
+        'This download was discarded, but AniDestiny could not clear the partial file automatically. You can use "$readyActionLabel" above for the other ended tasks now. For this leftover partial file, remove it from your device if you no longer need it, then return here and tap Check again.',
+      ('ja', true, true, false) =>
+        'このダウンロードは破棄されましたが、AniDestiny は残留する途中ファイルを自動では削除できませんでした。ほかの終了済みタスクは今すぐ上の「$readyActionLabel」で整理できます。この残留ファイルが不要なら端末から削除し、その後このカードの「もう一度確認」を押してください。',
+      (_, true, true, false) =>
+        '这个下载已放弃，但 AniDestiny 没能自动清掉残留的未完成文件。上面的“$readyActionLabel”可以先清掉其他已经收尾的任务；这份残留文件如果你不再需要，请先在设备上手动删除，再回来点这里的“重新检查”。',
+      ('en', true, false, false) =>
+        'This download was discarded, but AniDestiny could not clear the partial file automatically. You can use "$readyActionLabel" on the task that is already ready now. For this leftover partial file, remove it from your device if you no longer need it, then return here and tap Check again.',
+      ('ja', true, false, false) =>
+        'このダウンロードは破棄されましたが、AniDestiny は残留する途中ファイルを自動では削除できませんでした。すでに整理できるタスクは「$readyActionLabel」で片付けられます。この残留ファイルが不要なら端末から削除し、その後このカードの「もう一度確認」を押してください。',
+      (_, true, false, false) =>
+        '这个下载已放弃，但 AniDestiny 没能自动清掉残留的未完成文件。已经可以收尾的那条任务，现在可以直接点“$readyActionLabel”；这份残留文件如果你不再需要，请先在设备上手动删除，再回来点这里的“重新检查”。',
+      _ => downloadDiscardedNeedsManualCleanupNote,
     };
+  }
+
+  String downloadDiscardedNeedsManualCleanupBatchNote(String actionLabel) {
+    return downloadDiscardedNeedsManualCleanupGuidance(
+      recheckActionLabel: actionLabel,
+    );
   }
 
   String get downloadStoppingStatus => _t('downloadStoppingStatus');
@@ -339,16 +379,50 @@ class AppLocalizations {
       _t('downloadManualCleanupRecheckStillNeeded');
   String get downloadManualCleanupRecheckCleared =>
       _t('downloadManualCleanupRecheckCleared');
-  String downloadManualCleanupFeedbackNextStep({String? actionLabel}) {
-    return switch ((_languageCode, actionLabel != null)) {
-      ('en', true) =>
-        'Delete the leftover partial file from your device first. Then return to Downloads and use "$actionLabel", or tap Check again on that task.',
-      ('ja', true) =>
-        '先にその残留ファイルを端末から削除してから、ダウンロード画面に戻って上の「$actionLabel」を使うか、そのタスクの「もう一度確認」を押してください。',
-      (_, true) => '先在设备上删掉这份残留文件，再回到下载列表，点“$actionLabel”，或在对应任务上点“重新检查”。',
-      ('en', false) =>
+  String downloadManualCleanupFeedbackNextStep({
+    String? readyActionLabel,
+    bool readyActionIsBatch = false,
+    String? recheckActionLabel,
+  }) {
+    return switch ((
+      _languageCode,
+      readyActionLabel != null,
+      readyActionIsBatch,
+      recheckActionLabel != null,
+    )) {
+      ('en', true, true, true) =>
+        'You can use "$readyActionLabel" above for the other ended tasks now. For the leftover partial files, delete them from your device first. Then return to Downloads and use "$recheckActionLabel", or tap Check again on that task.',
+      ('ja', true, true, true) =>
+        'ほかの終了済みタスクは今すぐ上の「$readyActionLabel」で整理できます。残留ファイルは先に端末から削除し、その後ダウンロード画面に戻って上の「$recheckActionLabel」を使うか、そのタスクの「もう一度確認」を押してください。',
+      (_, true, true, true) =>
+        '上面的“$readyActionLabel”可以先清掉其他已经收尾的任务；这些残留文件请先在设备上删掉，再回到下载列表点“$recheckActionLabel”，或在对应任务上点“重新检查”。',
+      ('en', true, false, true) =>
+        'You can use "$readyActionLabel" on the task that is already ready now. For the leftover partial files, delete them from your device first. Then return to Downloads and use "$recheckActionLabel", or tap Check again on that task.',
+      ('ja', true, false, true) =>
+        'すでに整理できるタスクは「$readyActionLabel」で片付けられます。残留ファイルは先に端末から削除し、その後ダウンロード画面に戻って上の「$recheckActionLabel」を使うか、そのタスクの「もう一度確認」を押してください。',
+      (_, true, false, true) =>
+        '已经可以收尾的那条任务，现在可以直接点“$readyActionLabel”；这些残留文件请先在设备上删掉，再回到下载列表点“$recheckActionLabel”，或在对应任务上点“重新检查”。',
+      ('en', false, _, true) =>
+        'Delete the leftover partial file from your device first. Then return to Downloads and use "$recheckActionLabel", or tap Check again on that task.',
+      ('ja', false, _, true) =>
+        '先にその残留ファイルを端末から削除してから、ダウンロード画面に戻って上の「$recheckActionLabel」を使うか、そのタスクの「もう一度確認」を押してください。',
+      (_, false, _, true) =>
+        '先在设备上删掉这份残留文件，再回到下载列表点“$recheckActionLabel”，或在对应任务上点“重新检查”。',
+      ('en', true, true, false) =>
+        'You can use "$readyActionLabel" above for the other ended tasks now. For this leftover partial file, delete it from your device first. Then return to Downloads and tap Check again on that task.',
+      ('ja', true, true, false) =>
+        'ほかの終了済みタスクは今すぐ上の「$readyActionLabel」で整理できます。この残留ファイルは先に端末から削除し、その後ダウンロード画面に戻ってそのタスクの「もう一度確認」を押してください。',
+      (_, true, true, false) =>
+        '上面的“$readyActionLabel”可以先清掉其他已经收尾的任务；这份残留文件请先在设备上删掉，再回到下载列表，在对应任务上点“重新检查”。',
+      ('en', true, false, false) =>
+        'You can use "$readyActionLabel" on the task that is already ready now. For this leftover partial file, delete it from your device first. Then return to Downloads and tap Check again on that task.',
+      ('ja', true, false, false) =>
+        'すでに整理できるタスクは「$readyActionLabel」で片付けられます。この残留ファイルは先に端末から削除し、その後ダウンロード画面に戻ってそのタスクの「もう一度確認」を押してください。',
+      (_, true, false, false) =>
+        '已经可以收尾的那条任务，现在可以直接点“$readyActionLabel”；这份残留文件请先在设备上删掉，再回到下载列表，在对应任务上点“重新检查”。',
+      ('en', false, _, false) =>
         'Delete the leftover partial file from your device first. Then return to Downloads and tap Check again on that task.',
-      ('ja', false) =>
+      ('ja', false, _, false) =>
         '先にその残留ファイルを端末から削除してから、ダウンロード画面に戻ってそのタスクの「もう一度確認」を押してください。',
       _ => '先在设备上删掉这份残留文件，再回到下载列表，在对应任务上点“重新检查”。',
     };

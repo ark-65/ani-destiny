@@ -504,6 +504,192 @@ void main() {
   });
 
   test(
+      'collector points single manual cleanup summaries at the ready remove action too',
+      () {
+    const leftoverPath = '/tmp/manual-cleanup-partial.mp4';
+    debugSetDownloadCleanupPathExists(
+      (localPath) => localPath == leftoverPath,
+    );
+    addTearDown(() => debugSetDownloadCleanupPathExists(null));
+
+    final now = DateTime.utc(2026, 7, 1, 1, 0, 0);
+    const l10n = AppLocalizations(Locale('en'));
+    final package = FeedbackPackageCollector(
+      l10n: l10n,
+      appName: 'AniDestiny',
+      appVersion: '1.0.4',
+      platform: 'Windows',
+      currentSourceId: 'sakura',
+      sourceHealth: const [],
+      sourceDiagnostics: const [],
+      fallbackEvents: const [],
+      playbackDiagnostics: null,
+      danmakuEnabled: false,
+      dandanplayAppIdConfigured: false,
+      dandanplayAppSecretConfigured: false,
+      downloadTasks: [
+        DownloadTask(
+          id: 'task-complete',
+          animeId: 'anime-1',
+          episodeId: 'episode-1',
+          sourceId: 'sakura',
+          title: 'Anime',
+          episodeTitle: 'Episode 1',
+          url: 'https://cdn.example.test/video-complete.mp4',
+          kind: DownloadKind.directFile,
+          status: DownloadStatus.completed,
+          failureReason: DownloadFailureReason.none,
+          progress: 1,
+          downloadedBytes: 1024,
+          localPath: '/downloads/anime-episode-1.mp4',
+          createdAt: now,
+          updatedAt: now,
+        ),
+        DownloadTask(
+          id: 'task-cleanup',
+          animeId: 'anime-2',
+          episodeId: 'episode-2',
+          sourceId: 'sakura',
+          title: 'Anime 2',
+          episodeTitle: 'Episode 2',
+          url: 'https://cdn.example.test/video-partial.mp4',
+          kind: DownloadKind.directFile,
+          status: DownloadStatus.canceled,
+          failureReason: DownloadFailureReason.canceled,
+          progress: 0,
+          downloadedBytes: 0,
+          localPath: leftoverPath,
+          createdAt: now,
+          updatedAt: now.add(const Duration(minutes: 1)),
+        ),
+      ],
+    ).collect(generatedAt: now);
+
+    final markdown = const FeedbackPackageFormatter(l10n: l10n).format(package);
+
+    expect(
+      markdown,
+      contains(
+        'Message: You can use "Remove from list" on the task that is already ready now. For this leftover partial file, delete it from your device first. Then return to Downloads and tap Check again on that task.',
+      ),
+    );
+  });
+
+  test(
+      'collector keeps ready batch clear visible alongside multi-task manual cleanup guidance',
+      () {
+    const firstLeftoverPath = '/tmp/manual-cleanup-partial-1.mp4';
+    const secondLeftoverPath = '/tmp/manual-cleanup-partial-2.mp4';
+    debugSetDownloadCleanupPathExists(
+      (localPath) =>
+          localPath == firstLeftoverPath || localPath == secondLeftoverPath,
+    );
+    addTearDown(() => debugSetDownloadCleanupPathExists(null));
+
+    final now = DateTime.utc(2026, 7, 1, 2, 0, 0);
+    const l10n = AppLocalizations(Locale('en'));
+    final package = FeedbackPackageCollector(
+      l10n: l10n,
+      appName: 'AniDestiny',
+      appVersion: '1.0.4',
+      platform: 'Windows',
+      currentSourceId: 'sakura',
+      sourceHealth: const [],
+      sourceDiagnostics: const [],
+      fallbackEvents: const [],
+      playbackDiagnostics: null,
+      danmakuEnabled: false,
+      dandanplayAppIdConfigured: false,
+      dandanplayAppSecretConfigured: false,
+      downloadTasks: [
+        DownloadTask(
+          id: 'task-complete-1',
+          animeId: 'anime-1',
+          episodeId: 'episode-1',
+          sourceId: 'sakura',
+          title: 'Anime',
+          episodeTitle: 'Episode 1',
+          url: 'https://cdn.example.test/video-complete-1.mp4',
+          kind: DownloadKind.directFile,
+          status: DownloadStatus.completed,
+          failureReason: DownloadFailureReason.none,
+          progress: 1,
+          downloadedBytes: 1024,
+          localPath: '/downloads/anime-1-episode-1.mp4',
+          createdAt: now,
+          updatedAt: now,
+        ),
+        DownloadTask(
+          id: 'task-complete-2',
+          animeId: 'anime-2',
+          episodeId: 'episode-2',
+          sourceId: 'sakura',
+          title: 'Anime 2',
+          episodeTitle: 'Episode 2',
+          url: 'https://cdn.example.test/video-complete-2.mp4',
+          kind: DownloadKind.directFile,
+          status: DownloadStatus.completed,
+          failureReason: DownloadFailureReason.none,
+          progress: 1,
+          downloadedBytes: 1024,
+          localPath: '/downloads/anime-2-episode-2.mp4',
+          createdAt: now,
+          updatedAt: now,
+        ),
+        DownloadTask(
+          id: 'task-cleanup-1',
+          animeId: 'anime-3',
+          episodeId: 'episode-3',
+          sourceId: 'sakura',
+          title: 'Anime 3',
+          episodeTitle: 'Episode 3',
+          url: 'https://cdn.example.test/video-1.mp4',
+          kind: DownloadKind.directFile,
+          status: DownloadStatus.canceled,
+          failureReason: DownloadFailureReason.canceled,
+          progress: 0,
+          downloadedBytes: 0,
+          localPath: firstLeftoverPath,
+          createdAt: now,
+          updatedAt: now.add(const Duration(minutes: 2)),
+        ),
+        DownloadTask(
+          id: 'task-cleanup-2',
+          animeId: 'anime-4',
+          episodeId: 'episode-4',
+          sourceId: 'sakura',
+          title: 'Anime 4',
+          episodeTitle: 'Episode 4',
+          url: 'https://cdn.example.test/video-2.mp4',
+          kind: DownloadKind.directFile,
+          status: DownloadStatus.canceled,
+          failureReason: DownloadFailureReason.canceled,
+          progress: 0,
+          downloadedBytes: 0,
+          localPath: secondLeftoverPath,
+          createdAt: now,
+          updatedAt: now,
+        ),
+      ],
+    ).collect(generatedAt: now);
+
+    final markdown = const FeedbackPackageFormatter(l10n: l10n).format(package);
+
+    expect(
+      markdown,
+      contains(
+        'Message: You can use "Clear 2 ended tasks from list" above for the other ended tasks now.',
+      ),
+    );
+    expect(
+      markdown,
+      contains(
+        'For the leftover partial files, delete them from your device first.',
+      ),
+    );
+  });
+
+  test(
       'collector adds selected app source to playback summary only for divergent playback context',
       () {
     final now = DateTime.utc(2026, 6, 8, 1, 2, 3);
