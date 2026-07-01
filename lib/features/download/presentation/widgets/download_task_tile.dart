@@ -113,29 +113,32 @@ class DownloadTaskTile extends StatelessWidget {
               ),
             ],
             const SizedBox(height: 8),
-            Row(
-              children: [
-                if (supportNote != null)
-                  Expanded(
-                    child: Text(
-                      supportNote,
-                      style: Theme.of(context).textTheme.bodySmall,
+            if (supportNote != null) ...[
+              Text(
+                supportNote,
+                style: Theme.of(context).textTheme.bodySmall,
+              ),
+              const SizedBox(height: 8),
+            ],
+            Align(
+              alignment: Alignment.centerRight,
+              child: Wrap(
+                alignment: WrapAlignment.end,
+                crossAxisAlignment: WrapCrossAlignment.center,
+                spacing: 8,
+                runSpacing: 8,
+                children: [
+                  if (isBusy)
+                    SizedBox.square(
+                      dimension: 18,
+                      child: CircularProgressIndicator(
+                        key: ValueKey('download-task-busy-${task.id}'),
+                        strokeWidth: 2,
+                      ),
                     ),
-                  )
-                else
-                  const Spacer(),
-                if (isBusy) ...[
-                  SizedBox.square(
-                    dimension: 18,
-                    child: CircularProgressIndicator(
-                      key: ValueKey('download-task-busy-${task.id}'),
-                      strokeWidth: 2,
-                    ),
-                  ),
-                  const SizedBox(width: 8),
+                  ..._actions(context),
                 ],
-                ..._actions(context),
-              ],
+              ),
             ),
           ],
         ),
@@ -283,11 +286,12 @@ class DownloadTaskTile extends StatelessWidget {
   List<Widget> _actions(BuildContext context) {
     return switch (task.status) {
       DownloadStatus.pending => [
-          IconButton(
+          _textAction(
+            context,
             key: ValueKey('download-task-start-${task.id}'),
-            tooltip: context.l10n.start,
+            label: context.l10n.start,
             onPressed: isBusy ? null : onStart,
-            icon: const Icon(Icons.play_arrow),
+            icon: Icons.play_arrow,
           ),
           _discardTextAction(context),
         ],
@@ -295,29 +299,32 @@ class DownloadTaskTile extends StatelessWidget {
           _discardTextAction(context),
         ],
       DownloadStatus.downloading => [
-          IconButton(
+          _textAction(
+            context,
             key: ValueKey('download-task-pause-${task.id}'),
-            tooltip: context.l10n.stopForNow,
+            label: context.l10n.stopForNow,
             onPressed: isBusy ? null : onPause,
-            icon: const Icon(Icons.stop_circle_outlined),
+            icon: Icons.stop_circle_outlined,
           ),
           _discardTextAction(context),
         ],
       DownloadStatus.paused => [
-          IconButton(
+          _textAction(
+            context,
             key: ValueKey('download-task-retry-${task.id}'),
-            tooltip: context.l10n.retry,
+            label: context.l10n.retry,
             onPressed: isBusy ? null : onStart,
-            icon: const Icon(Icons.refresh),
+            icon: Icons.refresh,
           ),
           _discardTextAction(context),
         ],
       DownloadStatus.failed => [
-          IconButton(
+          _textAction(
+            context,
             key: ValueKey('download-task-retry-${task.id}'),
-            tooltip: context.l10n.retry,
+            label: context.l10n.retry,
             onPressed: isBusy ? null : onStart,
-            icon: const Icon(Icons.refresh),
+            icon: Icons.refresh,
           ),
           _removeTextAction(context),
         ],
@@ -343,25 +350,39 @@ class DownloadTaskTile extends StatelessWidget {
   }
 
   Widget _removeTextAction(BuildContext context) {
-    return Tooltip(
-      message: context.l10n.removeFromList,
-      child: TextButton.icon(
-        key: ValueKey('download-task-remove-${task.id}'),
-        onPressed: isBusy ? null : onRemove,
-        icon: const Icon(Icons.delete_outline, size: 18),
-        label: Text(context.l10n.removeFromList),
-      ),
+    return _textAction(
+      context,
+      key: ValueKey('download-task-remove-${task.id}'),
+      label: context.l10n.removeFromList,
+      onPressed: isBusy ? null : onRemove,
+      icon: Icons.delete_outline,
     );
   }
 
   Widget _discardTextAction(BuildContext context) {
+    return _textAction(
+      context,
+      key: ValueKey('download-task-cancel-${task.id}'),
+      label: context.l10n.downloadDiscardTooltip,
+      onPressed: isBusy ? null : onCancel,
+      icon: Icons.close,
+    );
+  }
+
+  Widget _textAction(
+    BuildContext context, {
+    required Key key,
+    required String label,
+    required VoidCallback? onPressed,
+    required IconData icon,
+  }) {
     return Tooltip(
-      message: context.l10n.downloadDiscardTooltip,
+      message: label,
       child: TextButton.icon(
-        key: ValueKey('download-task-cancel-${task.id}'),
-        onPressed: isBusy ? null : onCancel,
-        icon: const Icon(Icons.close, size: 18),
-        label: Text(context.l10n.downloadDiscardTooltip),
+        key: key,
+        onPressed: onPressed,
+        icon: Icon(icon, size: 18),
+        label: Text(label),
       ),
     );
   }

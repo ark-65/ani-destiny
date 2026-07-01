@@ -90,6 +90,13 @@ void main() {
     expect(find.byIcon(Icons.refresh), findsOneWidget);
     expect(
       find.descendant(
+        of: retryButton,
+        matching: find.text('Retry'),
+      ),
+      findsOneWidget,
+    );
+    expect(
+      find.descendant(
         of: removeButton,
         matching: find.text('Remove from list'),
       ),
@@ -140,6 +147,17 @@ void main() {
 
     final discardButton =
         find.byKey(const ValueKey('download-task-cancel-task-1'));
+    final startButton =
+        find.byKey(const ValueKey('download-task-start-task-1'));
+    expect(startButton, findsOneWidget);
+    expect(find.byTooltip('Start'), findsOneWidget);
+    expect(
+      find.descendant(
+        of: startButton,
+        matching: find.text('Start'),
+      ),
+      findsOneWidget,
+    );
     expect(discardButton, findsOneWidget);
     expect(find.byTooltip('Discard download'), findsOneWidget);
     expect(
@@ -901,6 +919,9 @@ void main() {
     expect(find.byTooltip('Retry'), findsOneWidget);
     expect(find.byTooltip('Discard download'), findsNWidgets(2));
     expect(find.byTooltip('Pause'), findsNothing);
+    expect(find.text('Stop for now'), findsOneWidget);
+    expect(find.text('Retry'), findsOneWidget);
+    expect(find.text('Discard download'), findsNWidgets(2));
     expect(find.text('Stopped'), findsOneWidget);
     expect(
       find.text(
@@ -952,6 +973,12 @@ void main() {
     );
     await tester.pumpAndSettle();
 
+    await tester.scrollUntilVisible(
+      find.text('Local path: /tmp/video.mp4'),
+      200,
+    );
+    await tester.pumpAndSettle();
+
     expect(find.text('Local path: /tmp/video.mp4'), findsOneWidget);
     expect(
       find.text(
@@ -989,8 +1016,36 @@ void main() {
       find.byKey(const ValueKey('download-task-busy-task-1')),
       findsOneWidget,
     );
-    expect(tester.widget<IconButton>(retryButton).onPressed, isNull);
+    expect(tester.widget<TextButton>(retryButton).onPressed, isNull);
     expect(tester.widget<TextButton>(removeButton).onPressed, isNull);
+  });
+
+  testWidgets('download card actions wrap cleanly on narrow widths', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      _buildTileApp(
+        Align(
+          alignment: Alignment.topLeft,
+          child: SizedBox(
+            width: 220,
+            child: DownloadTaskTile(
+              task: _task(status: DownloadStatus.failed),
+              isBusy: false,
+              onStart: () {},
+              onPause: () {},
+              onCancel: () {},
+              onRemove: () {},
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('Retry'), findsOneWidget);
+    expect(find.text('Remove from list'), findsOneWidget);
+    expect(tester.takeException(), isNull);
   });
 }
 
