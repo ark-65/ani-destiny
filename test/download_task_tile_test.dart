@@ -117,6 +117,45 @@ void main() {
     expect(removeTapped, isTrue);
   });
 
+  testWidgets('pending downloads expose discard as a visible action label', (
+    tester,
+  ) async {
+    var cancelTapped = false;
+
+    await tester.pumpWidget(
+      _buildTileApp(
+        DownloadTaskTile(
+          task: _task(status: DownloadStatus.pending),
+          isBusy: false,
+          onStart: () {},
+          onPause: () {},
+          onCancel: () {
+            cancelTapped = true;
+          },
+          onRemove: () {},
+        ),
+      ),
+    );
+    await tester.pump();
+
+    final discardButton =
+        find.byKey(const ValueKey('download-task-cancel-task-1'));
+    expect(discardButton, findsOneWidget);
+    expect(find.byTooltip('Discard download'), findsOneWidget);
+    expect(
+      find.descendant(
+        of: discardButton,
+        matching: find.text('Discard download'),
+      ),
+      findsOneWidget,
+    );
+
+    await tester.tap(discardButton);
+    await tester.pump();
+
+    expect(cancelTapped, isTrue);
+  });
+
   testWidgets('canceled download tasks stay removable without error styling', (
     tester,
   ) async {

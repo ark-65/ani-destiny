@@ -611,6 +611,7 @@ void main() {
 
     expect(find.byTooltip('Stop for now'), findsOneWidget);
     expect(find.byTooltip('Discard download'), findsNWidgets(2));
+    expect(find.text('Discard download'), findsNWidgets(2));
     expect(
       find.text(
         'Stopping this download keeps the task, but the next retry may restart from the beginning. Discarding it clears any partial file.',

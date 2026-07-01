@@ -258,20 +258,10 @@ class DownloadTaskTile extends StatelessWidget {
             onPressed: isBusy ? null : onStart,
             icon: const Icon(Icons.play_arrow),
           ),
-          IconButton(
-            key: ValueKey('download-task-cancel-${task.id}'),
-            tooltip: context.l10n.downloadDiscardTooltip,
-            onPressed: isBusy ? null : onCancel,
-            icon: const Icon(Icons.close),
-          ),
+          _discardTextAction(context),
         ],
       DownloadStatus.preparing => [
-          IconButton(
-            key: ValueKey('download-task-cancel-${task.id}'),
-            tooltip: context.l10n.downloadDiscardTooltip,
-            onPressed: isBusy ? null : onCancel,
-            icon: const Icon(Icons.close),
-          ),
+          _discardTextAction(context),
         ],
       DownloadStatus.downloading => [
           IconButton(
@@ -280,12 +270,7 @@ class DownloadTaskTile extends StatelessWidget {
             onPressed: isBusy ? null : onPause,
             icon: const Icon(Icons.stop_circle_outlined),
           ),
-          IconButton(
-            key: ValueKey('download-task-cancel-${task.id}'),
-            tooltip: context.l10n.downloadDiscardTooltip,
-            onPressed: isBusy ? null : onCancel,
-            icon: const Icon(Icons.close),
-          ),
+          _discardTextAction(context),
         ],
       DownloadStatus.paused => [
           IconButton(
@@ -294,12 +279,7 @@ class DownloadTaskTile extends StatelessWidget {
             onPressed: isBusy ? null : onStart,
             icon: const Icon(Icons.refresh),
           ),
-          IconButton(
-            key: ValueKey('download-task-cancel-${task.id}'),
-            tooltip: context.l10n.downloadDiscardTooltip,
-            onPressed: isBusy ? null : onCancel,
-            icon: const Icon(Icons.close),
-          ),
+          _discardTextAction(context),
         ],
       DownloadStatus.failed => [
           IconButton(
@@ -339,6 +319,18 @@ class DownloadTaskTile extends StatelessWidget {
         onPressed: isBusy ? null : onRemove,
         icon: const Icon(Icons.delete_outline, size: 18),
         label: Text(context.l10n.removeFromList),
+      ),
+    );
+  }
+
+  Widget _discardTextAction(BuildContext context) {
+    return Tooltip(
+      message: context.l10n.downloadDiscardTooltip,
+      child: TextButton.icon(
+        key: ValueKey('download-task-cancel-${task.id}'),
+        onPressed: isBusy ? null : onCancel,
+        icon: const Icon(Icons.close, size: 18),
+        label: Text(context.l10n.downloadDiscardTooltip),
       ),
     );
   }
