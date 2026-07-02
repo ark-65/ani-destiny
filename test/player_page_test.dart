@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:ani_destiny/app/l10n/app_localizations.dart';
+import 'package:ani_destiny/core/error/app_exception.dart';
 import 'package:ani_destiny/features/anime/domain/entities/anime_detail.dart';
 import 'package:ani_destiny/features/anime/domain/entities/anime.dart';
 import 'package:ani_destiny/features/anime/domain/entities/episode.dart';
@@ -3012,6 +3013,41 @@ void main() {
     expect(find.text('Review in Downloads'), findsOneWidget);
   });
 
+  testWidgets('download action surfaces player creation errors calmly', (
+    tester,
+  ) async {
+    const failureMessage = 'Downloads are temporarily unavailable.';
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          playerRepositoryProvider
+              .overrideWithValue(const _FakePlayerRepository()),
+          historyRepositoryProvider.overrideWithValue(_FakeHistoryRepository()),
+          danmakuRepositoryProvider.overrideWithValue(_FakeDanmakuRepository()),
+          downloadTaskCreatorProvider.overrideWithValue(
+            _FakeDownloadTaskCreator(
+              onCreate: () {},
+              createError: const AppException(
+                failureMessage,
+                code: 'download_busy',
+              ),
+            ),
+          ),
+        ],
+        child: _buildPlayerApp(_args),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.widgetWithIcon(IconButton, Icons.download_outlined));
+    await tester.pump();
+
+    expect(find.text(failureMessage), findsOneWidget);
+    expect(find.textContaining('AppException'), findsNothing);
+    expect(find.text('Open Downloads'), findsNothing);
+  });
+
   testWidgets('invalid playback urls are treated as unavailable before load',
       (tester) async {
     await tester.pumpWidget(
@@ -3490,10 +3526,12 @@ class _FakeDownloadTaskCreator extends DownloadTaskCreator {
   _FakeDownloadTaskCreator({
     required this.onCreate,
     this.kind = DownloadKind.directFile,
+    this.createError,
   }) : super(_FakeDownloadService());
 
   final void Function() onCreate;
   final DownloadKind kind;
+  final Object? createError;
 
   @override
   Future<CreatedDownloadTask> create({
@@ -3508,6 +3546,9 @@ class _FakeDownloadTaskCreator extends DownloadTaskCreator {
     String? mimeType,
   }) async {
     onCreate();
+    if (createError != null) {
+      throw createError!;
+    }
     return CreatedDownloadTask(taskId: 'task-1', kind: kind);
   }
 }

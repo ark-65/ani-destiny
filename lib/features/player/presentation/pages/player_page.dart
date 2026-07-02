@@ -9,6 +9,7 @@ import 'package:go_router/go_router.dart';
 import '../../../../app/l10n/app_localizations.dart';
 import '../../../../core/diagnostics/playback_diagnostic_snapshot_preview.dart';
 import '../../../../core/diagnostics/playback_diagnostic_summary.dart';
+import '../../../../core/error/app_exception.dart';
 import '../../../anime/presentation/providers/anime_providers.dart';
 import '../../../danmaku/domain/entities/danmaku_item.dart';
 import '../../../danmaku/presentation/providers/danmaku_providers.dart';
@@ -964,8 +965,9 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
       );
     } catch (error) {
       if (!mounted) return;
+      final message = error is AppException ? error.message : error.toString();
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(error.toString())),
+        SnackBar(content: Text(message)),
       );
     }
   }
