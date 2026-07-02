@@ -202,7 +202,7 @@ class _DownloadPageState extends ConsumerState<DownloadPage>
                 loading: () =>
                     AppLoadingView(message: context.l10n.loadingDownloads),
                 error: (error, stackTrace) => AppErrorView(
-                  message: error.toString(),
+                  message: _pageErrorMessage(error),
                   onRetry: () => ref.invalidate(downloadTasksProvider),
                 ),
                 data: (items) {
@@ -721,6 +721,13 @@ class _DownloadPageState extends ConsumerState<DownloadPage>
       return error.message;
     }
     return context.l10n.downloadActionFailedMessage;
+  }
+
+  String _pageErrorMessage(Object error) {
+    if (error is AppException && error.message.trim().isNotEmpty) {
+      return error.message;
+    }
+    return error.toString();
   }
 }
 

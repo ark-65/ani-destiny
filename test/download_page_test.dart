@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:ani_destiny/app/l10n/app_localizations.dart';
+import 'package:ani_destiny/core/error/app_exception.dart';
 import 'package:ani_destiny/features/download/domain/entities/download_failure_reason.dart';
 import 'package:ani_destiny/features/download/domain/entities/download_kind.dart';
 import 'package:ani_destiny/features/download/domain/entities/download_progress.dart';
@@ -60,6 +61,24 @@ void main() {
       findsNothing,
     );
     expect(repository.deletedTaskIds, isEmpty);
+  });
+
+  testWidgets('download page load surfaces repository errors calmly', (
+    tester,
+  ) async {
+    const failureMessage = 'Downloads are temporarily unavailable.';
+
+    await _pumpDownloadPage(
+      tester,
+      _FakeDownloadRepository(const []),
+      downloadTasksStream: Stream<List<DownloadTask>>.error(
+        const AppException(failureMessage, code: 'download_busy'),
+      ),
+    );
+
+    expect(find.text(failureMessage), findsOneWidget);
+    expect(find.textContaining('AppException'), findsNothing);
+    expect(find.text('Retry'), findsOneWidget);
   });
 
   testWidgets(
@@ -1002,9 +1021,8 @@ void main() {
     },
   );
 
-  testWidgets(
-    'remove action failures keep raw errors out of the snackbar',
-    (tester) async {
+  testWidgets('remove action failures keep raw errors out of the snackbar',
+      (tester) async {
     final repository = _FakeDownloadRepository(
       [
         _task('completed', DownloadStatus.completed),
@@ -1680,6 +1698,7 @@ Future<void> _pumpDownloadPage(
   DownloadRepository repository, {
   bool showDebugMockAction = true,
   DownloadService? downloadService,
+  Stream<List<DownloadTask>>? downloadTasksStream,
   Locale locale = const Locale('en'),
 }) async {
   await tester.pumpWidget(
@@ -1687,6 +1706,7 @@ Future<void> _pumpDownloadPage(
       repository: repository,
       showDebugMockAction: showDebugMockAction,
       downloadService: downloadService,
+      downloadTasksStream: downloadTasksStream,
       locale: locale,
     ),
   );
@@ -1698,12 +1718,14 @@ class _TestApp extends StatelessWidget {
     required this.repository,
     required this.showDebugMockAction,
     this.downloadService,
+    this.downloadTasksStream,
     required this.locale,
   });
 
   final DownloadRepository repository;
   final bool showDebugMockAction;
   final DownloadService? downloadService;
+  final Stream<List<DownloadTask>>? downloadTasksStream;
   final Locale locale;
 
   @override
@@ -1714,6 +1736,8 @@ class _TestApp extends StatelessWidget {
       overrides: [
         downloadRepositoryProvider.overrideWithValue(repository),
         httpDownloadServiceProvider.overrideWithValue(effectiveDownloadService),
+        if (downloadTasksStream != null)
+          downloadTasksProvider.overrideWith((ref) => downloadTasksStream!),
       ],
       child: MaterialApp(
         locale: locale,
