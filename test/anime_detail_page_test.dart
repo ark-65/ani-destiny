@@ -90,6 +90,44 @@ void main() {
     expect(find.textContaining('AppException'), findsNothing);
     expect(find.text('Open Downloads'), findsNothing);
   });
+
+  testWidgets(
+    'anime detail download hides raw non-app creation errors behind calm fallback copy',
+    (tester) async {
+      const repository = _FakeAnimeRepository(
+        detail: _detail,
+        playSources: [
+          PlaySource(
+            id: 'source-1',
+            episodeId: 'episode-1',
+            title: 'Direct file',
+            url: 'https://cdn.example.com/episode-1.mp4',
+          ),
+        ],
+      );
+
+      await _pumpPage(
+        tester,
+        animeRepository: repository,
+        downloadService: _FakeDownloadService(
+          createError: StateError('database handshake failed'),
+        ),
+      );
+
+      await tester.tap(find.byTooltip('Download'));
+      await tester.pump();
+
+      expect(
+        find.text(
+          'AniDestiny could not finish that download action right now. Try again in a moment.',
+        ),
+        findsOneWidget,
+      );
+      expect(find.textContaining('database handshake failed'), findsNothing);
+      expect(find.textContaining('StateError'), findsNothing);
+      expect(find.text('Open Downloads'), findsNothing);
+    },
+  );
 }
 
 const _detail = AnimeDetail(

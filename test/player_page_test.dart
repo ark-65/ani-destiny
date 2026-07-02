@@ -3080,6 +3080,48 @@ void main() {
     expect(find.text('Open Downloads'), findsNothing);
   });
 
+  testWidgets(
+    'download action hides raw non-app player creation errors behind calm fallback copy',
+    (tester) async {
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            playerRepositoryProvider
+                .overrideWithValue(const _FakePlayerRepository()),
+            historyRepositoryProvider.overrideWithValue(
+              _FakeHistoryRepository(),
+            ),
+            danmakuRepositoryProvider.overrideWithValue(
+              _FakeDanmakuRepository(),
+            ),
+            downloadTaskCreatorProvider.overrideWithValue(
+              _FakeDownloadTaskCreator(
+                onCreate: () {},
+                createError: StateError('filesystem sync failed'),
+              ),
+            ),
+          ],
+          child: _buildPlayerApp(_args),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      await tester
+          .tap(find.widgetWithIcon(IconButton, Icons.download_outlined));
+      await tester.pump();
+
+      expect(
+        find.text(
+          'AniDestiny could not finish that download action right now. Try again in a moment.',
+        ),
+        findsOneWidget,
+      );
+      expect(find.textContaining('filesystem sync failed'), findsNothing);
+      expect(find.textContaining('StateError'), findsNothing);
+      expect(find.text('Open Downloads'), findsNothing);
+    },
+  );
+
   testWidgets('invalid playback urls are treated as unavailable before load',
       (tester) async {
     await tester.pumpWidget(

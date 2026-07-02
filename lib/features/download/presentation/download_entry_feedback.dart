@@ -1,3 +1,4 @@
+import '../../../core/error/app_exception.dart';
 import '../../../app/l10n/app_localizations.dart';
 import '../domain/entities/download_kind.dart';
 
@@ -24,4 +25,14 @@ String downloadEntryFeedbackActionLabel(
   return kind == DownloadKind.directFile
       ? l10n.openDownloads
       : l10n.reviewInDownloads;
+}
+
+String downloadEntryFeedbackErrorMessage(
+  AppLocalizations l10n,
+  Object error,
+) {
+  if (error is AppException && error.message.trim().isNotEmpty) {
+    return error.message;
+  }
+  return l10n.downloadActionFailedMessage;
 }

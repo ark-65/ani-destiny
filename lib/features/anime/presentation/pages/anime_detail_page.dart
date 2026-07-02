@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../app/l10n/app_localizations.dart';
-import '../../../../core/error/app_exception.dart';
 import '../../../../core/widgets/app_error_view.dart';
 import '../../../../core/widgets/app_loading_view.dart';
 import '../../../../shared/widgets/adaptive_page.dart';
@@ -217,9 +216,10 @@ class AnimeDetailPage extends ConsumerWidget {
       );
     } catch (error) {
       if (!context.mounted) return;
-      final message = error is AppException ? error.message : error.toString();
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(message)),
+        SnackBar(
+          content: Text(downloadEntryFeedbackErrorMessage(context.l10n, error)),
+        ),
       );
     }
   }
