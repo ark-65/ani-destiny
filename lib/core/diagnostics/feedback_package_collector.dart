@@ -265,6 +265,12 @@ class FeedbackPackageCollector {
           '  ${l10n.feedbackPackageMessage}: $failureMessage',
         );
       }
+      final nextStepMessage = _downloadNextStepMessage(task);
+      if (nextStepMessage != null && nextStepMessage != failureMessage) {
+        lines.add(
+          '  ${l10n.feedbackPackageMessage}: $nextStepMessage',
+        );
+      }
       if (task.status == DownloadStatus.unsupported) {
         lines.add(
           '  ${l10n.feedbackPackageMessage}: ${l10n.downloadUnsupportedRemoveNote}',
@@ -367,5 +373,22 @@ class FeedbackPackageCollector {
     return task.failureMessage == null
         ? null
         : sanitizeError(task.failureMessage!);
+  }
+
+  String? _downloadNextStepMessage(DownloadTask task) {
+    if (task.status != DownloadStatus.failed) {
+      return null;
+    }
+    return _failedTaskHasPartialFile(task)
+        ? l10n.downloadFailedRetryOrDiscardPartialNote
+        : l10n.downloadFailedRetryOrRemoveNote;
+  }
+
+  bool _failedTaskHasPartialFile(DownloadTask task) {
+    final localPath = task.localPath;
+    return task.status == DownloadStatus.failed &&
+        task.kind == DownloadKind.directFile &&
+        localPath != null &&
+        localPath.isNotEmpty;
   }
 }
