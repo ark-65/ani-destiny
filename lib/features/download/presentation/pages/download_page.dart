@@ -717,10 +717,10 @@ class _DownloadPageState extends ConsumerState<DownloadPage>
         error.code == 'download_manual_cleanup_required') {
       return context.l10n.downloadManualCleanupRequiredError;
     }
-    if (error is AppException) {
+    if (error is AppException && error.message.trim().isNotEmpty) {
       return error.message;
     }
-    return error.toString();
+    return context.l10n.downloadActionFailedMessage;
   }
 }
 

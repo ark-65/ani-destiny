@@ -253,6 +253,7 @@ class AppLocalizations {
       _t('downloadUnsupportedListReviewNote');
   String get downloadDiscardedNeedsManualCleanupNote =>
       _t('downloadDiscardedNeedsManualCleanupNote');
+  String get downloadActionFailedMessage => _t('downloadActionFailedMessage');
   String downloadDiscardedNeedsManualCleanupGuidance({
     String? readyActionLabel,
     bool readyActionIsBatch = false,
@@ -979,6 +980,7 @@ const _localizedValues = {
     'downloadUnsupportedListReviewNote': '这条记录仍会留在下载列表里，方便你稍后查看或移除。',
     'downloadDiscardedNeedsManualCleanupNote':
         '这个下载已放弃，但 AniDestiny 没能自动清掉残留的未完成文件；如果你不再需要它，请按下面的本地路径手动删除，删完后回到这里点一下“重新检查”。',
+    'downloadActionFailedMessage': 'AniDestiny 暂时没能完成这一步下载操作；请稍后再试。',
     'downloadStartingStatus': '正在开始',
     'downloadRetryingStatus': '正在重试',
     'downloadStoppingStatus': '正在停下',
@@ -1330,6 +1332,8 @@ const _localizedValues = {
         'This entry still stays in Downloads so you can review it or remove it later.',
     'downloadDiscardedNeedsManualCleanupNote':
         'This download was discarded, but AniDestiny could not clear the partial file automatically. Remove the leftover file from your device if you no longer need it, then return here and tap Check again.',
+    'downloadActionFailedMessage':
+        'AniDestiny could not finish that download action right now. Try again in a moment.',
     'downloadStartingStatus': 'Starting...',
     'downloadRetryingStatus': 'Retrying...',
     'downloadStoppingStatus': 'Stopping...',
@@ -1689,6 +1693,8 @@ const _localizedValues = {
         'この記録は、あとで確認したり一覧から消したりできるように、ダウンロード一覧に残してあります。',
     'downloadDiscardedNeedsManualCleanupNote':
         'このダウンロードは破棄されましたが、AniDestiny は未完了ファイルを自動で削除できませんでした。不要なら下のローカルパスをもとに手動で削除し、戻ってきたら「再確認」を押してください。',
+    'downloadActionFailedMessage':
+        'AniDestiny はこのダウンロード操作を今は完了できませんでした。少し待ってからもう一度お試しください。',
     'downloadStartingStatus': '開始中...',
     'downloadRetryingStatus': '再試行中...',
     'downloadStoppingStatus': '停止中...',

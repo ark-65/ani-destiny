@@ -1002,7 +1002,9 @@ void main() {
     },
   );
 
-  testWidgets('remove action failures surface a snackbar', (tester) async {
+  testWidgets(
+    'remove action failures keep raw errors out of the snackbar',
+    (tester) async {
     final repository = _FakeDownloadRepository(
       [
         _task('completed', DownloadStatus.completed),
@@ -1017,7 +1019,14 @@ void main() {
     await tester.pump();
 
     expect(repository.deleteAttempts, ['completed']);
-    expect(find.text('Bad state: delete failed for completed'), findsOneWidget);
+    expect(
+      find.text(
+        'AniDestiny could not finish that download action right now. Try again in a moment.',
+      ),
+      findsOneWidget,
+    );
+    expect(find.textContaining('Bad state'), findsNothing);
+    expect(find.textContaining('delete failed'), findsNothing);
   });
 
   testWidgets(
