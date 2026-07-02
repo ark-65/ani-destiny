@@ -274,6 +274,32 @@ void main() {
     expect(ja.reviewInDownloads, contains('ダウンロード'));
   });
 
+  test('failed partial download guidance uses discard wording', () {
+    const zh = AppLocalizations(Locale('zh'));
+    expect(zh.downloadFailedRetryOrDiscardPartialNote, contains('放弃这个下载'));
+    expect(
+      zh.downloadFailedRetryOrDiscardPartialNote,
+      isNot(contains('从列表移除')),
+    );
+
+    const en = AppLocalizations(Locale('en'));
+    expect(
+      en.downloadFailedRetryOrDiscardPartialNote,
+      contains('discard this download'),
+    );
+    expect(
+      en.downloadFailedRetryOrDiscardPartialNote,
+      isNot(contains('remove it from the list')),
+    );
+
+    const ja = AppLocalizations(Locale('ja'));
+    expect(ja.downloadFailedRetryOrDiscardPartialNote, contains('破棄'));
+    expect(
+      ja.downloadFailedRetryOrDiscardPartialNote,
+      isNot(contains('一覧から削除')),
+    );
+  });
+
   test('runtime diagnostics helpers keep support copy localized', () {
     const zh = AppLocalizations(Locale('zh'));
     expect(zh.runtimeDiagnosticsSubtitle, isNot(contains('Debug')));

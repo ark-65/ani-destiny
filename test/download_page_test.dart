@@ -124,7 +124,7 @@ void main() {
   );
 
   testWidgets(
-    'single failed task keeps page-level clear hidden and exposes visible remove copy',
+    'single failed task with a partial file keeps page-level clear hidden and exposes discard copy',
     (tester) async {
       final repository = _FakeDownloadRepository([
         _task('failed', DownloadStatus.failed).copyWith(
@@ -142,16 +142,18 @@ void main() {
         find.byKey(const ValueKey('download-task-remove-failed')),
         findsOneWidget,
       );
+      expect(find.byTooltip('Discard download'), findsOneWidget);
+      expect(find.byTooltip('Remove from list'), findsNothing);
       expect(
         find.descendant(
           of: find.byKey(const ValueKey('download-task-remove-failed')),
-          matching: find.text('Remove from list'),
+          matching: find.text('Discard download'),
         ),
         findsOneWidget,
       );
       expect(
         find.text(
-          'This download did not finish successfully. You can retry it now, or remove it from the list to clear the partial file from this failed attempt.',
+          'This download did not finish successfully. You can retry it now, or discard this download to clear the partial file from this failed attempt.',
         ),
         findsOneWidget,
       );

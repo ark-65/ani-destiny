@@ -54,7 +54,9 @@ void main() {
     expect(removeTapped, isTrue);
   });
 
-  testWidgets('failed download tasks expose retry and remove actions', (
+  testWidgets(
+      'failed download tasks with partial files expose retry and discard actions',
+      (
     tester,
   ) async {
     var startTapped = false;
@@ -88,8 +90,8 @@ void main() {
 
     expect(retryButton, findsOneWidget);
     expect(removeButton, findsOneWidget);
-    expect(find.byTooltip('Discard download'), findsNothing);
-    expect(find.byTooltip('Remove from list'), findsOneWidget);
+    expect(find.byTooltip('Discard download'), findsOneWidget);
+    expect(find.byTooltip('Remove from list'), findsNothing);
     expect(find.byIcon(Icons.refresh), findsOneWidget);
     expect(
       find.descendant(
@@ -101,13 +103,13 @@ void main() {
     expect(
       find.descendant(
         of: removeButton,
-        matching: find.text('Remove from list'),
+        matching: find.text('Discard download'),
       ),
       findsOneWidget,
     );
     expect(
       find.text(
-        'This download did not finish successfully. You can retry it now, or remove it from the list to clear the partial file from this failed attempt.',
+        'This download did not finish successfully. You can retry it now, or discard this download to clear the partial file from this failed attempt.',
       ),
       findsOneWidget,
     );
@@ -125,6 +127,46 @@ void main() {
 
     expect(startTapped, isTrue);
     expect(removeTapped, isTrue);
+  });
+
+  testWidgets(
+      'failed download tasks without partial files stay removable from the list',
+      (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      _buildTileApp(
+        DownloadTaskTile(
+          task: _task(status: DownloadStatus.failed),
+          isBusy: false,
+          onStart: () {},
+          onPause: () {},
+          onCancel: () {},
+          onRemove: () {},
+        ),
+      ),
+    );
+    await tester.pump();
+
+    final removeButton =
+        find.byKey(const ValueKey('download-task-remove-task-1'));
+
+    expect(removeButton, findsOneWidget);
+    expect(find.byTooltip('Remove from list'), findsOneWidget);
+    expect(find.byTooltip('Discard download'), findsNothing);
+    expect(
+      find.descendant(
+        of: removeButton,
+        matching: find.text('Remove from list'),
+      ),
+      findsOneWidget,
+    );
+    expect(
+      find.text(
+        'This download did not finish successfully. You can retry it now, or remove it from the list if you no longer need this record.',
+      ),
+      findsOneWidget,
+    );
   });
 
   testWidgets('pending downloads expose discard as a visible action label', (

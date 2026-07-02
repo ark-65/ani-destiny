@@ -339,7 +339,9 @@ class DownloadTaskTile extends StatelessWidget {
             onPressed: isBusy ? null : onStart,
             icon: Icons.refresh,
           ),
-          _removeTextAction(context),
+          _failedTaskHasPartialFile(task)
+              ? _discardFailedPartialTextAction(context)
+              : _removeTextAction(context),
         ],
       DownloadStatus.completed => [
           _removeTextAction(context),
@@ -378,6 +380,16 @@ class DownloadTaskTile extends StatelessWidget {
       key: ValueKey('download-task-cancel-${task.id}'),
       label: context.l10n.downloadDiscardTooltip,
       onPressed: isBusy ? null : onCancel,
+      icon: Icons.close,
+    );
+  }
+
+  Widget _discardFailedPartialTextAction(BuildContext context) {
+    return _textAction(
+      context,
+      key: ValueKey('download-task-remove-${task.id}'),
+      label: context.l10n.downloadDiscardTooltip,
+      onPressed: isBusy ? null : onRemove,
       icon: Icons.close,
     );
   }

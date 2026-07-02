@@ -968,7 +968,7 @@ const _localizedValues = {
     'downloadFailedRetryOrRemoveNote':
         '这个下载这次没能完成；如果你还想继续，可以直接重试。确认不再需要这条记录后，也可以把它从列表移除。',
     'downloadFailedRetryOrDiscardPartialNote':
-        '这个下载这次没能完成；如果你还想继续，可以直接重试。确认不再需要时，把它从列表移除也会一起清掉这次失败留下的未完成文件。',
+        '这个下载这次没能完成；如果你不再需要这次失败留下的未完成文件，可以直接放弃这个下载，把这次残局一起清掉。',
     'downloadDiscardingNote': 'AniDestiny 还在放弃这个下载，并清理这次未完成内容；清理完成后，这里会更新最终结果。',
     'downloadDiscardedNote': '这个下载已放弃；未完成内容和临时文件都已清掉。确认无误后，你可以把这条记录从列表移除。',
     'downloadRemovingNote': 'AniDestiny 正在把这条任务从列表移除；这个动作不会改动设备上已有的文件。',
@@ -1313,7 +1313,7 @@ const _localizedValues = {
     'downloadFailedRetryOrRemoveNote':
         'This download did not finish successfully. You can retry it now, or remove it from the list if you no longer need this record.',
     'downloadFailedRetryOrDiscardPartialNote':
-        'This download did not finish successfully. You can retry it now, or remove it from the list to clear the partial file from this failed attempt.',
+        'This download did not finish successfully. You can retry it now, or discard this download to clear the partial file from this failed attempt.',
     'downloadDiscardingNote':
         'AniDestiny is still discarding this download and clearing its partial file. The final cleanup result will appear here when it finishes.',
     'downloadDiscardedNote':
@@ -1673,7 +1673,7 @@ const _localizedValues = {
     'downloadFailedRetryOrRemoveNote':
         'このダウンロードは完了できませんでした。続けたい場合は今すぐ再試行でき、もう不要ならこの記録を一覧から削除できます。',
     'downloadFailedRetryOrDiscardPartialNote':
-        'このダウンロードは完了できませんでした。続けたい場合は今すぐ再試行でき、不要なら一覧から削除してこの失敗で残った途中ファイルも整理できます。',
+        'このダウンロードは完了できませんでした。続けたい場合は今すぐ再試行でき、不要ならこのダウンロードを破棄して、この失敗で残った途中ファイルも整理できます。',
     'downloadDiscardingNote':
         'AniDestiny はこのダウンロードをまだ破棄中で、未完了ファイルも整理しています。終わったらここに最終結果を表示します。',
     'downloadDiscardedNote':
