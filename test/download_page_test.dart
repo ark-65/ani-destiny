@@ -82,6 +82,29 @@ void main() {
   });
 
   testWidgets(
+    'download page load hides raw non-app exceptions behind calm fallback copy',
+    (tester) async {
+      await _pumpDownloadPage(
+        tester,
+        _FakeDownloadRepository(const []),
+        downloadTasksStream: Stream<List<DownloadTask>>.error(
+          StateError('database handshake failed'),
+        ),
+      );
+
+      expect(
+        find.text(
+          'Downloads are temporarily unavailable. Try again in a moment.',
+        ),
+        findsOneWidget,
+      );
+      expect(find.textContaining('database handshake failed'), findsNothing);
+      expect(find.textContaining('StateError'), findsNothing);
+      expect(find.text('Retry'), findsOneWidget);
+    },
+  );
+
+  testWidgets(
     'pending and preparing downloads wait to show progress until transfer begins',
     (tester) async {
       final repository = _FakeDownloadRepository([
