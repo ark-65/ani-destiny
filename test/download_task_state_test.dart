@@ -584,6 +584,72 @@ void main() {
     expect(partialFile.existsSync(), isFalse);
   });
 
+  test('unexpected direct-download failures stay calm in stored task state',
+      () async {
+    final database = AppDatabase(NativeDatabase.memory());
+    addTearDown(database.close);
+    final tempDir =
+        await Directory.systemTemp.createTemp('ani-destiny-download-unexpected');
+    addTearDown(() async {
+      if (tempDir.existsSync()) {
+        await tempDir.delete(recursive: true);
+      }
+    });
+
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMethodCallHandler(pathProviderChannel, (call) async {
+      if (call.method == 'getApplicationDocumentsDirectory') {
+        return tempDir.path;
+      }
+      return null;
+    });
+
+    final repository = DownloadRepositoryImpl(database);
+    final service = HttpDownloadService(
+      dio: _UnexpectedFailureDio(),
+      repository: repository,
+    );
+
+    final taskId = await service.createTask(
+      animeId: 'anime-1',
+      episodeId: 'episode-1',
+      sourceId: 'sakura',
+      source: const DownloadSource(
+        url: 'https://cdn.example.test/video.mp4',
+        kind: DownloadKind.directFile,
+      ),
+      title: 'Direct Test',
+      episodeTitle: 'Episode 1',
+    );
+
+    await expectLater(
+      service.start(taskId),
+      throwsA(
+        isA<AppException>()
+            .having(
+              (error) => error.code,
+              'code',
+              'download_unexpected_error',
+            )
+            .having(
+              (error) => error.message,
+              'message',
+              'AniDestiny could not finish this download because of an unexpected error.',
+            ),
+      ),
+    );
+
+    final task = await repository.getTask(taskId);
+
+    expect(task, isNotNull);
+    expect(task!.status, DownloadStatus.failed);
+    expect(task.failureReason, DownloadFailureReason.unknown);
+    expect(
+      task.failureMessage,
+      'AniDestiny could not finish this download because of an unexpected error.',
+    );
+  });
+
   test(
       'retrying a stopped direct download resets stale progress before restart',
       () async {
@@ -699,5 +765,23 @@ class _BlockingCancelDio extends DioForNative {
       requestOptions: RequestOptions(path: urlPath),
       reason: 'canceled',
     );
+  }
+}
+
+class _UnexpectedFailureDio extends DioForNative {
+  @override
+  Future<Response> download(
+    String urlPath,
+    dynamic savePath, {
+    ProgressCallback? onReceiveProgress,
+    Map<String, dynamic>? queryParameters,
+    CancelToken? cancelToken,
+    bool deleteOnError = true,
+    FileAccessMode fileAccessMode = FileAccessMode.write,
+    String lengthHeader = Headers.contentLengthHeader,
+    Object? data,
+    Options? options,
+  }) async {
+    throw StateError('filesystem sync failed');
   }
 }

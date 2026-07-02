@@ -21,6 +21,9 @@ class HttpDownloadService implements DownloadService {
   })  : _dio = dio,
         _repository = repository;
 
+  static const _unexpectedDownloadFailureMessage =
+      'AniDestiny could not finish this download because of an unexpected error.';
+
   final Dio _dio;
   final DownloadRepository _repository;
   final Map<String, CancelToken> _tokens = {};
@@ -218,12 +221,16 @@ class HttpDownloadService implements DownloadService {
       final failed = latest.copyWith(
         status: DownloadStatus.failed,
         failureReason: DownloadFailureReason.unknown,
-        failureMessage: error.toString(),
+        failureMessage: _unexpectedDownloadFailureMessage,
         updatedAt: DateTime.now(),
       );
       await _repository.upsertTask(failed);
       _emitTask(failed);
-      rethrow;
+      throw AppException(
+        _unexpectedDownloadFailureMessage,
+        code: 'download_unexpected_error',
+        cause: error,
+      );
     } finally {
       _tokens.remove(taskId);
       if (identical(_settleCompleters[taskId], settleCompleter)) {
