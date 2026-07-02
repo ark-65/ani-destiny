@@ -126,6 +126,7 @@ void main() {
   testWidgets(
     'single failed task with a partial file keeps page-level clear hidden and exposes discard copy',
     (tester) async {
+      _stubCleanupPathExists({'/tmp/failed-partial.mp4'});
       final repository = _FakeDownloadRepository([
         _task('failed', DownloadStatus.failed).copyWith(
           localPath: '/tmp/failed-partial.mp4',
@@ -154,6 +155,44 @@ void main() {
       expect(
         find.text(
           'This download did not finish successfully. You can retry it now, or discard this download to clear the partial file from this failed attempt.',
+        ),
+        findsOneWidget,
+      );
+    },
+  );
+
+  testWidgets(
+    'single failed task with a stale partial path falls back to remove copy',
+    (tester) async {
+      _stubCleanupPathExists(const {});
+      final repository = _FakeDownloadRepository([
+        _task('failed', DownloadStatus.failed).copyWith(
+          localPath: '/tmp/failed-partial-missing.mp4',
+        ),
+      ]);
+
+      await _pumpDownloadPage(tester, repository);
+
+      expect(
+        find.byKey(const ValueKey('downloads-clear-ended-tasks')),
+        findsNothing,
+      );
+      expect(
+        find.byKey(const ValueKey('download-task-remove-failed')),
+        findsOneWidget,
+      );
+      expect(find.byTooltip('Remove from list'), findsOneWidget);
+      expect(find.byTooltip('Discard download'), findsNothing);
+      expect(
+        find.descendant(
+          of: find.byKey(const ValueKey('download-task-remove-failed')),
+          matching: find.text('Remove from list'),
+        ),
+        findsOneWidget,
+      );
+      expect(
+        find.text(
+          'This download did not finish successfully. You can retry it now, or remove it from the list if you no longer need this record.',
         ),
         findsOneWidget,
       );

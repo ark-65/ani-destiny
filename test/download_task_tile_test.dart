@@ -59,6 +59,7 @@ void main() {
       (
     tester,
   ) async {
+    _stubCleanupPathExists({'/tmp/failed-partial.mp4'});
     var startTapped = false;
     var removeTapped = false;
 
@@ -138,6 +139,51 @@ void main() {
       _buildTileApp(
         DownloadTaskTile(
           task: _task(status: DownloadStatus.failed),
+          isBusy: false,
+          onStart: () {},
+          onPause: () {},
+          onCancel: () {},
+          onRemove: () {},
+        ),
+      ),
+    );
+    await tester.pump();
+
+    final removeButton =
+        find.byKey(const ValueKey('download-task-remove-task-1'));
+
+    expect(removeButton, findsOneWidget);
+    expect(find.byTooltip('Remove from list'), findsOneWidget);
+    expect(find.byTooltip('Discard download'), findsNothing);
+    expect(
+      find.descendant(
+        of: removeButton,
+        matching: find.text('Remove from list'),
+      ),
+      findsOneWidget,
+    );
+    expect(
+      find.text(
+        'This download did not finish successfully. You can retry it now, or remove it from the list if you no longer need this record.',
+      ),
+      findsOneWidget,
+    );
+  });
+
+  testWidgets(
+      'failed download tasks with stale partial paths fall back to remove copy',
+      (
+    tester,
+  ) async {
+    _stubCleanupPathExists(const {});
+
+    await tester.pumpWidget(
+      _buildTileApp(
+        DownloadTaskTile(
+          task: _task(
+            status: DownloadStatus.failed,
+            localPath: '/tmp/failed-partial-missing.mp4',
+          ),
           isBusy: false,
           onStart: () {},
           onPause: () {},
@@ -485,6 +531,7 @@ void main() {
   testWidgets(
     'busy remove actions hide stale failed-state details while the card is leaving',
     (tester) async {
+      _stubCleanupPathExists({'/tmp/failed-partial.mp4'});
       await tester.pumpWidget(
         _buildTileApp(
           DownloadTaskTile(

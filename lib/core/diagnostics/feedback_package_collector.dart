@@ -385,10 +385,7 @@ class FeedbackPackageCollector {
   }
 
   bool _failedTaskHasPartialFile(DownloadTask task) {
-    final localPath = task.localPath;
     return task.status == DownloadStatus.failed &&
-        task.kind == DownloadKind.directFile &&
-        localPath != null &&
-        localPath.isNotEmpty;
+        downloadTaskHasRetainedPartialFile(task);
   }
 }

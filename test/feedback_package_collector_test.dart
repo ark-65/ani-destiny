@@ -326,6 +326,12 @@ void main() {
   test(
     'collector adds failed-download next steps when a partial file is left behind',
     () {
+      const partialPath = '/downloads/anime-episode-1.part';
+      debugSetDownloadCleanupPathExists(
+        (localPath) => localPath == partialPath,
+      );
+      addTearDown(() => debugSetDownloadCleanupPathExists(null));
+
       final now = DateTime.utc(2026, 7, 3, 1, 0, 0);
       const l10n = AppLocalizations(Locale('en'));
       final package = FeedbackPackageCollector(
@@ -357,7 +363,7 @@ void main() {
             progress: 0.4,
             totalBytes: 2048,
             downloadedBytes: 768,
-            localPath: '/downloads/anime-episode-1.part',
+            localPath: partialPath,
             createdAt: now,
             updatedAt: now,
           ),
@@ -378,6 +384,71 @@ void main() {
         markdown,
         contains(
           'Message: This download did not finish successfully. You can retry it now, or discard this download to clear the partial file from this failed attempt.',
+        ),
+      );
+    },
+  );
+
+  test(
+    'collector drops failed partial cleanup wording once the leftover file is already gone',
+    () {
+      debugSetDownloadCleanupPathExists((_) => false);
+      addTearDown(() => debugSetDownloadCleanupPathExists(null));
+
+      final now = DateTime.utc(2026, 7, 3, 1, 30, 0);
+      const l10n = AppLocalizations(Locale('en'));
+      final package = FeedbackPackageCollector(
+        l10n: l10n,
+        appName: 'AniDestiny',
+        appVersion: '1.0.4',
+        platform: 'Windows',
+        currentSourceId: 'sakura',
+        sourceHealth: const [],
+        sourceDiagnostics: const [],
+        fallbackEvents: const [],
+        playbackDiagnostics: null,
+        danmakuEnabled: false,
+        dandanplayAppIdConfigured: false,
+        dandanplayAppSecretConfigured: false,
+        downloadTasks: [
+          DownloadTask(
+            id: 'task-failed-stale-partial',
+            animeId: 'anime-1',
+            episodeId: 'episode-1',
+            sourceId: 'sakura',
+            title: 'Anime',
+            episodeTitle: 'Episode 1',
+            url: 'https://cdn.example.test/video.mp4',
+            kind: DownloadKind.directFile,
+            status: DownloadStatus.failed,
+            failureReason: DownloadFailureReason.networkError,
+            failureMessage: 'Socket closed unexpectedly',
+            progress: 0.4,
+            totalBytes: 2048,
+            downloadedBytes: 768,
+            localPath: '/downloads/anime-episode-1.part',
+            createdAt: now,
+            updatedAt: now,
+          ),
+        ],
+      ).collect(generatedAt: now);
+
+      final markdown = const FeedbackPackageFormatter(l10n: l10n).format(
+        package,
+      );
+
+      expect(
+        markdown,
+        contains(
+          'Message: This download did not finish successfully. You can retry it now, or remove it from the list if you no longer need this record.',
+        ),
+      );
+      expect(
+        markdown,
+        isNot(
+          contains(
+            'Message: This download did not finish successfully. You can retry it now, or discard this download to clear the partial file from this failed attempt.',
+          ),
         ),
       );
     },

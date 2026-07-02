@@ -217,11 +217,8 @@ class DownloadTaskTile extends StatelessWidget {
   }
 
   bool _failedTaskHasPartialFile(DownloadTask task) {
-    final localPath = task.localPath;
     return task.status == DownloadStatus.failed &&
-        task.kind == DownloadKind.directFile &&
-        localPath != null &&
-        localPath.isNotEmpty;
+        downloadTaskHasRetainedPartialFile(task);
   }
 
   String? _failureMessage(BuildContext context, DownloadTask task) {
