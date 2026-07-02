@@ -127,7 +127,9 @@ void main() {
     'single failed task keeps page-level clear hidden and exposes visible remove copy',
     (tester) async {
       final repository = _FakeDownloadRepository([
-        _task('failed', DownloadStatus.failed),
+        _task('failed', DownloadStatus.failed).copyWith(
+          localPath: '/tmp/failed-partial.mp4',
+        ),
       ]);
 
       await _pumpDownloadPage(tester, repository);
@@ -149,7 +151,7 @@ void main() {
       );
       expect(
         find.text(
-          'This download did not finish successfully. You can retry it now, or remove it from the list if you no longer need this record.',
+          'This download did not finish successfully. You can retry it now, or remove it from the list to clear the partial file from this failed attempt.',
         ),
         findsOneWidget,
       );

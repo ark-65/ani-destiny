@@ -308,15 +308,15 @@ class HttpDownloadService implements DownloadService {
       );
     }
 
-    if (_requiresManualCleanupBeforeRemoval(task)) {
+    if (_requiresLocalCleanupBeforeRemoval(task)) {
       final clearedLocalPath = await _clearDiscardedDownload(
         localPath: task.localPath,
         clearNow: true,
       );
       if (clearedLocalPath != null) {
-        final updated = task.copyWith(
-          localPath: clearedLocalPath,
-          updatedAt: DateTime.now(),
+        final updated = _manualCleanupBlockedRemovalTask(
+          task,
+          clearedLocalPath,
         );
         await _repository.upsertTask(updated);
         _emitTask(updated);
@@ -427,8 +427,38 @@ class HttpDownloadService implements DownloadService {
     };
   }
 
-  bool _requiresManualCleanupBeforeRemoval(DownloadTask task) {
-    return task.status == DownloadStatus.canceled && task.localPath != null;
+  bool _requiresLocalCleanupBeforeRemoval(DownloadTask task) {
+    final localPath = task.localPath;
+    if (localPath == null || localPath.isEmpty) {
+      return false;
+    }
+    return task.status == DownloadStatus.canceled ||
+        (task.status == DownloadStatus.failed &&
+            task.kind == DownloadKind.directFile);
+  }
+
+  DownloadTask _manualCleanupBlockedRemovalTask(
+    DownloadTask task,
+    String localPath,
+  ) {
+    final updatedAt = DateTime.now();
+    if (task.status == DownloadStatus.failed &&
+        task.kind == DownloadKind.directFile) {
+      return task.copyWith(
+        localPath: localPath,
+        status: DownloadStatus.canceled,
+        failureReason: DownloadFailureReason.canceled,
+        failureMessage: null,
+        progress: 0,
+        totalBytes: null,
+        downloadedBytes: 0,
+        updatedAt: updatedAt,
+      );
+    }
+    return task.copyWith(
+      localPath: localPath,
+      updatedAt: updatedAt,
+    );
   }
 
   bool _shouldWaitForSettlement(DownloadTask task) {

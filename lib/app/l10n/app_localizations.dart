@@ -239,9 +239,13 @@ class AppLocalizations {
   String get downloadPausedRetryNote => _t('downloadPausedRetryNote');
   String get downloadFailedRetryOrRemoveNote =>
       _t('downloadFailedRetryOrRemoveNote');
+  String get downloadFailedRetryOrDiscardPartialNote =>
+      _t('downloadFailedRetryOrDiscardPartialNote');
   String get downloadDiscardingNote => _t('downloadDiscardingNote');
   String get downloadDiscardedNote => _t('downloadDiscardedNote');
   String get downloadRemovingNote => _t('downloadRemovingNote');
+  String get downloadRemovingFailedPartialFileNote =>
+      _t('downloadRemovingFailedPartialFileNote');
   String get downloadRemovingListOnlyNote => _t('downloadRemovingListOnlyNote');
   String get downloadUnsupportedRemoveNote =>
       _t('downloadUnsupportedRemoveNote');
@@ -963,9 +967,13 @@ const _localizedValues = {
         '这个下载已先停下；再次开始会按重试处理，可能从头开始。放弃这个任务会丢掉未完成内容，并清掉临时文件。',
     'downloadFailedRetryOrRemoveNote':
         '这个下载这次没能完成；如果你还想继续，可以直接重试。确认不再需要这条记录后，也可以把它从列表移除。',
+    'downloadFailedRetryOrDiscardPartialNote':
+        '这个下载这次没能完成；如果你还想继续，可以直接重试。确认不再需要时，把它从列表移除也会一起清掉这次失败留下的未完成文件。',
     'downloadDiscardingNote': 'AniDestiny 还在放弃这个下载，并清理这次未完成内容；清理完成后，这里会更新最终结果。',
     'downloadDiscardedNote': '这个下载已放弃；未完成内容和临时文件都已清掉。确认无误后，你可以把这条记录从列表移除。',
     'downloadRemovingNote': 'AniDestiny 正在把这条任务从列表移除；这个动作不会改动设备上已有的文件。',
+    'downloadRemovingFailedPartialFileNote':
+        'AniDestiny 正在移除这条失败的下载记录，并清掉这次失败留下的未完成文件。',
     'downloadRemovingListOnlyNote': 'AniDestiny 正在把这条任务从列表移除，请稍候片刻。',
     'downloadUnsupportedRemoveNote': 'AniDestiny 还不能接管这类下载；确认后可以先把这条任务从列表移除。',
     'downloadUnsupportedListReviewNote': '这条记录仍会留在下载列表里，方便你稍后查看或移除。',
@@ -1304,12 +1312,16 @@ const _localizedValues = {
         'This download is stopped for now. Retrying may restart it from the beginning. Discarding it clears any partial file.',
     'downloadFailedRetryOrRemoveNote':
         'This download did not finish successfully. You can retry it now, or remove it from the list if you no longer need this record.',
+    'downloadFailedRetryOrDiscardPartialNote':
+        'This download did not finish successfully. You can retry it now, or remove it from the list to clear the partial file from this failed attempt.',
     'downloadDiscardingNote':
         'AniDestiny is still discarding this download and clearing its partial file. The final cleanup result will appear here when it finishes.',
     'downloadDiscardedNote':
         'This download was discarded. Any partial file was cleared. You can remove this task from the list when you are done.',
     'downloadRemovingNote':
         'AniDestiny is still removing this task from the list. Any file already on your device will stay there.',
+    'downloadRemovingFailedPartialFileNote':
+        'AniDestiny is still removing this failed task and clearing its partial file from the device.',
     'downloadRemovingListOnlyNote':
         'AniDestiny is still removing this task from the list. Please give it a moment.',
     'downloadUnsupportedRemoveNote':
@@ -1660,12 +1672,16 @@ const _localizedValues = {
         'このダウンロードはいったん停止しています。再試行時は最初からやり直す場合があります。破棄すると未完了の内容と一時ファイルが消えます。',
     'downloadFailedRetryOrRemoveNote':
         'このダウンロードは完了できませんでした。続けたい場合は今すぐ再試行でき、もう不要ならこの記録を一覧から削除できます。',
+    'downloadFailedRetryOrDiscardPartialNote':
+        'このダウンロードは完了できませんでした。続けたい場合は今すぐ再試行でき、不要なら一覧から削除してこの失敗で残った途中ファイルも整理できます。',
     'downloadDiscardingNote':
         'AniDestiny はこのダウンロードをまだ破棄中で、未完了ファイルも整理しています。終わったらここに最終結果を表示します。',
     'downloadDiscardedNote':
         'このダウンロードは破棄され、未完了の内容と一時ファイルは削除されました。確認できたら、このタスクを一覧から消せます。',
     'downloadRemovingNote':
         'AniDestiny はこのタスクを一覧からまだ削除中です。この操作で端末上の既存ファイルは変更されません。',
+    'downloadRemovingFailedPartialFileNote':
+        'AniDestiny はこの失敗したタスクを一覧から削除中で、端末に残った途中ファイルも整理しています。',
     'downloadRemovingListOnlyNote': 'AniDestiny はこのタスクを一覧からまだ削除中です。少しお待ちください。',
     'downloadUnsupportedRemoveNote':
         'AniDestiny はまだこの種類のダウンロードを引き継げません。今はこのタスクを一覧から消せます。',

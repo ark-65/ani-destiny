@@ -63,7 +63,10 @@ void main() {
     await tester.pumpWidget(
       _buildTileApp(
         DownloadTaskTile(
-          task: _task(status: DownloadStatus.failed),
+          task: _task(
+            status: DownloadStatus.failed,
+            localPath: '/tmp/failed-partial.mp4',
+          ),
           isBusy: false,
           onStart: () {
             startTapped = true;
@@ -104,7 +107,7 @@ void main() {
     );
     expect(
       find.text(
-        'This download did not finish successfully. You can retry it now, or remove it from the list if you no longer need this record.',
+        'This download did not finish successfully. You can retry it now, or remove it from the list to clear the partial file from this failed attempt.',
       ),
       findsOneWidget,
     );
@@ -448,6 +451,7 @@ void main() {
               failureReason: DownloadFailureReason.networkError,
               failureMessage: 'The source stopped responding.',
               progress: 0.42,
+              localPath: '/tmp/failed-partial.mp4',
             ),
             isBusy: true,
             busyAction: DownloadTaskBusyAction.remove,
@@ -461,6 +465,12 @@ void main() {
       await tester.pump();
 
       expect(find.text('Removing...'), findsOneWidget);
+      expect(
+        find.text(
+          'AniDestiny is still removing this failed task and clearing its partial file from the device.',
+        ),
+        findsOneWidget,
+      );
       expect(find.text('Failed'), findsNothing);
       expect(find.text('Network error'), findsNothing);
       expect(find.text('The source stopped responding.'), findsNothing);

@@ -148,6 +148,9 @@ class DownloadTaskTile extends StatelessWidget {
 
   String? _supportNote(BuildContext context) {
     if (_isRemovingFromList(task)) {
+      if (_failedTaskHasPartialFile(task)) {
+        return context.l10n.downloadRemovingFailedPartialFileNote;
+      }
       return task.status == DownloadStatus.unsupported
           ? context.l10n.downloadRemovingListOnlyNote
           : context.l10n.downloadRemovingNote;
@@ -173,7 +176,9 @@ class DownloadTaskTile extends StatelessWidget {
         context.l10n.downloadStopMayRestartNote,
       DownloadStatus.paused when task.kind == DownloadKind.directFile =>
         context.l10n.downloadPausedRetryNote,
-      DownloadStatus.failed => context.l10n.downloadFailedRetryOrRemoveNote,
+      DownloadStatus.failed => _failedTaskHasPartialFile(task)
+          ? context.l10n.downloadFailedRetryOrDiscardPartialNote
+          : context.l10n.downloadFailedRetryOrRemoveNote,
       DownloadStatus.canceled when task.kind == DownloadKind.directFile =>
         downloadTaskNeedsManualCleanup(task)
             ? context.l10n.downloadDiscardedNeedsManualCleanupGuidance(
@@ -209,6 +214,14 @@ class DownloadTaskTile extends StatelessWidget {
 
   bool _showLocalPath(DownloadTask task) {
     return downloadTaskShowsLocalPath(task);
+  }
+
+  bool _failedTaskHasPartialFile(DownloadTask task) {
+    final localPath = task.localPath;
+    return task.status == DownloadStatus.failed &&
+        task.kind == DownloadKind.directFile &&
+        localPath != null &&
+        localPath.isNotEmpty;
   }
 
   String? _failureMessage(BuildContext context, DownloadTask task) {
