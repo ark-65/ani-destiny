@@ -700,6 +700,61 @@ void main() {
     },
   );
 
+  testWidgets(
+    'start handoff unlocks task actions once the download reaches preparing',
+    (tester) async {
+      final startPreparing = Completer<void>();
+      final finishStart = Completer<void>();
+      final repository = _FakeDownloadRepository([
+        _task('pending', DownloadStatus.pending),
+      ]);
+      final service = _PreparingInFlightDownloadService(
+        repository,
+        startPreparing.future,
+        finishStart.future,
+      );
+
+      await _pumpDownloadPage(
+        tester,
+        repository,
+        downloadService: service,
+      );
+
+      await tester.tap(
+        find.byKey(const ValueKey('download-task-start-pending')),
+      );
+      await tester.pump();
+
+      expect(find.text('Starting...'), findsOneWidget);
+      expect(
+        find.byKey(const ValueKey('download-task-busy-pending')),
+        findsOneWidget,
+      );
+
+      startPreparing.complete();
+      await service.enteredPreparing.future;
+      await tester.pump();
+
+      expect(find.text('Preparing'), findsOneWidget);
+      expect(find.text('Starting...'), findsNothing);
+      expect(
+        find.byKey(const ValueKey('download-task-busy-pending')),
+        findsNothing,
+      );
+      expect(
+        tester
+            .widget<TextButton>(
+              find.byKey(const ValueKey('download-task-cancel-pending')),
+            )
+            .onPressed,
+        isNotNull,
+      );
+
+      finishStart.complete();
+      await tester.pump();
+    },
+  );
+
   testWidgets('direct downloads use honest stop and retry wording', (
     tester,
   ) async {
@@ -1762,6 +1817,41 @@ class _StartInFlightDownloadService extends _FakeDownloadService {
         downloadedBytes: 0,
       ),
     );
+  }
+}
+
+class _PreparingInFlightDownloadService extends _FakeDownloadService {
+  _PreparingInFlightDownloadService(
+    super.repository,
+    this.startPreparingFuture,
+    this.finishFuture,
+  );
+
+  final Future<void> startPreparingFuture;
+  final Future<void> finishFuture;
+  final Completer<void> enteredPreparing = Completer<void>();
+
+  @override
+  Future<void> start(String taskId) async {
+    await startPreparingFuture;
+    final task = await repository.getTask(taskId);
+    if (task == null) {
+      return;
+    }
+    await repository.upsertTask(
+      task.copyWith(
+        status: DownloadStatus.preparing,
+        failureReason: DownloadFailureReason.none,
+        failureMessage: null,
+        progress: 0,
+        totalBytes: null,
+        downloadedBytes: 0,
+      ),
+    );
+    if (!enteredPreparing.isCompleted) {
+      enteredPreparing.complete();
+    }
+    await finishFuture;
   }
 }
 

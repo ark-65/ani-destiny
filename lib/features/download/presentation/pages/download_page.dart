@@ -34,6 +34,7 @@ class _DownloadPageState extends ConsumerState<DownloadPage>
   final Map<String, DownloadTaskBusyAction> _busyTaskActions =
       <String, DownloadTaskBusyAction>{};
   Set<String> _manualCleanupTaskIdsBeforeBackground = const <String>{};
+  StreamSubscription<List<DownloadTask>>? _downloadTaskSubscription;
 
   _DownloadSnackBarAction? _followUpSnackBarAction(List<DownloadTask>? tasks) {
     if (tasks == null) {
@@ -74,12 +75,43 @@ class _DownloadPageState extends ConsumerState<DownloadPage>
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+    _downloadTaskSubscription =
+        ref.read(downloadRepositoryProvider).watchTasks().listen(
+              _handleDownloadTaskUpdates,
+            );
   }
 
   @override
   void dispose() {
+    _downloadTaskSubscription?.cancel();
     WidgetsBinding.instance.removeObserver(this);
     super.dispose();
+  }
+
+  void _handleDownloadTaskUpdates(List<DownloadTask> tasks) {
+    if (!mounted || _busyTaskActions.isEmpty) {
+      return;
+    }
+
+    final settledStartTaskIds = tasks
+        .where(
+          (task) =>
+              _busyTaskActions[task.id] == DownloadTaskBusyAction.start &&
+              (task.status == DownloadStatus.preparing ||
+                  task.status == DownloadStatus.downloading ||
+                  task.status == DownloadStatus.completed),
+        )
+        .map((task) => task.id)
+        .toList(growable: false);
+    if (settledStartTaskIds.isEmpty) {
+      return;
+    }
+
+    setState(() {
+      for (final taskId in settledStartTaskIds) {
+        _busyTaskActions.remove(taskId);
+      }
+    });
   }
 
   @override
