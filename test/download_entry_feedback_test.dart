@@ -10,7 +10,7 @@ void main() {
 
     expect(
       downloadEntryFeedbackMessage(l10n, DownloadKind.directFile),
-      'Added to Downloads.',
+      'Added to Downloads. Open Downloads to start it.',
     );
     expect(
       downloadEntryFeedbackActionLabel(l10n, DownloadKind.directFile),

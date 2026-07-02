@@ -3013,6 +3013,38 @@ void main() {
     expect(find.text('Review in Downloads'), findsOneWidget);
   });
 
+  testWidgets('download action says direct downloads still need a start step', (
+    tester,
+  ) async {
+    var createdDownloads = 0;
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          playerRepositoryProvider
+              .overrideWithValue(const _FakePlayerRepository()),
+          historyRepositoryProvider.overrideWithValue(_FakeHistoryRepository()),
+          danmakuRepositoryProvider.overrideWithValue(_FakeDanmakuRepository()),
+          downloadTaskCreatorProvider.overrideWithValue(
+            _FakeDownloadTaskCreator(onCreate: () => createdDownloads++),
+          ),
+        ],
+        child: _buildPlayerApp(_args),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.widgetWithIcon(IconButton, Icons.download_outlined));
+    await tester.pump();
+
+    expect(createdDownloads, 1);
+    expect(
+      find.text('Added to Downloads. Open Downloads to start it.'),
+      findsOneWidget,
+    );
+    expect(find.text('Open Downloads'), findsOneWidget);
+  });
+
   testWidgets('download action surfaces player creation errors calmly', (
     tester,
   ) async {
