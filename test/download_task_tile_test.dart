@@ -35,6 +35,13 @@ void main() {
     expect(removeButton, findsOneWidget);
     expect(find.byTooltip('Remove from list'), findsOneWidget);
     expect(
+      find.descendant(
+        of: removeButton,
+        matching: find.text('Remove from list'),
+      ),
+      findsOneWidget,
+    );
+    expect(
       find.text(
         'Removing this task only clears it from the list. The downloaded file stays on your device.',
       ),
@@ -47,7 +54,9 @@ void main() {
     expect(removeTapped, isTrue);
   });
 
-  testWidgets('failed download tasks expose retry and remove actions', (
+  testWidgets(
+      'failed download tasks with partial files expose retry and discard actions',
+      (
     tester,
   ) async {
     var startTapped = false;
@@ -56,7 +65,10 @@ void main() {
     await tester.pumpWidget(
       _buildTileApp(
         DownloadTaskTile(
-          task: _task(status: DownloadStatus.failed),
+          task: _task(
+            status: DownloadStatus.failed,
+            localPath: '/tmp/failed-partial.mp4',
+          ),
           isBusy: false,
           onStart: () {
             startTapped = true;
@@ -78,9 +90,29 @@ void main() {
 
     expect(retryButton, findsOneWidget);
     expect(removeButton, findsOneWidget);
-    expect(find.byTooltip('Discard download'), findsNothing);
-    expect(find.byTooltip('Remove from list'), findsOneWidget);
+    expect(find.byTooltip('Discard download'), findsOneWidget);
+    expect(find.byTooltip('Remove from list'), findsNothing);
     expect(find.byIcon(Icons.refresh), findsOneWidget);
+    expect(
+      find.descendant(
+        of: retryButton,
+        matching: find.text('Retry'),
+      ),
+      findsOneWidget,
+    );
+    expect(
+      find.descendant(
+        of: removeButton,
+        matching: find.text('Discard download'),
+      ),
+      findsOneWidget,
+    );
+    expect(
+      find.text(
+        'This download did not finish successfully. You can retry it now, or discard this download to clear the partial file from this failed attempt.',
+      ),
+      findsOneWidget,
+    );
     expect(
       find.text(
         'Pause is basic support and may restart the download when resumed.',
@@ -96,6 +128,194 @@ void main() {
     expect(startTapped, isTrue);
     expect(removeTapped, isTrue);
   });
+
+  testWidgets(
+      'failed download tasks without partial files stay removable from the list',
+      (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      _buildTileApp(
+        DownloadTaskTile(
+          task: _task(status: DownloadStatus.failed),
+          isBusy: false,
+          onStart: () {},
+          onPause: () {},
+          onCancel: () {},
+          onRemove: () {},
+        ),
+      ),
+    );
+    await tester.pump();
+
+    final removeButton =
+        find.byKey(const ValueKey('download-task-remove-task-1'));
+
+    expect(removeButton, findsOneWidget);
+    expect(find.byTooltip('Remove from list'), findsOneWidget);
+    expect(find.byTooltip('Discard download'), findsNothing);
+    expect(
+      find.descendant(
+        of: removeButton,
+        matching: find.text('Remove from list'),
+      ),
+      findsOneWidget,
+    );
+    expect(
+      find.text(
+        'This download did not finish successfully. You can retry it now, or remove it from the list if you no longer need this record.',
+      ),
+      findsOneWidget,
+    );
+  });
+
+  testWidgets('pending downloads expose discard as a visible action label', (
+    tester,
+  ) async {
+    var cancelTapped = false;
+
+    await tester.pumpWidget(
+      _buildTileApp(
+        DownloadTaskTile(
+          task: _task(status: DownloadStatus.pending),
+          isBusy: false,
+          onStart: () {},
+          onPause: () {},
+          onCancel: () {
+            cancelTapped = true;
+          },
+          onRemove: () {},
+        ),
+      ),
+    );
+    await tester.pump();
+
+    final discardButton =
+        find.byKey(const ValueKey('download-task-cancel-task-1'));
+    final startButton =
+        find.byKey(const ValueKey('download-task-start-task-1'));
+    expect(startButton, findsOneWidget);
+    expect(find.byTooltip('Start'), findsOneWidget);
+    expect(
+      find.descendant(
+        of: startButton,
+        matching: find.text('Start'),
+      ),
+      findsOneWidget,
+    );
+    expect(discardButton, findsOneWidget);
+    expect(find.byTooltip('Discard download'), findsOneWidget);
+    expect(
+      find.descendant(
+        of: discardButton,
+        matching: find.text('Discard download'),
+      ),
+      findsOneWidget,
+    );
+    expect(
+      find.text(
+        'This download is ready to start. AniDestiny will show progress after the file transfer begins.',
+      ),
+      findsOneWidget,
+    );
+    expect(
+      find.byKey(const ValueKey('download-task-progress-task-1')),
+      findsNothing,
+    );
+    expect(find.textContaining('Progress:'), findsNothing);
+
+    await tester.tap(discardButton);
+    await tester.pump();
+
+    expect(cancelTapped, isTrue);
+  });
+
+  testWidgets(
+    'preparing downloads explain that progress appears after transfer starts',
+    (tester) async {
+      var cancelTapped = false;
+
+      await tester.pumpWidget(
+        _buildTileApp(
+          DownloadTaskTile(
+            task: _task(status: DownloadStatus.preparing, progress: 0),
+            isBusy: false,
+            onStart: () {},
+            onPause: () {},
+            onCancel: () {
+              cancelTapped = true;
+            },
+            onRemove: () {},
+          ),
+        ),
+      );
+      await tester.pump();
+
+      expect(find.text('Preparing'), findsOneWidget);
+      expect(
+        find.text(
+          'AniDestiny is preparing this download. Progress will appear here after the file transfer begins.',
+        ),
+        findsOneWidget,
+      );
+      expect(
+        find.byKey(const ValueKey('download-task-progress-task-1')),
+        findsNothing,
+      );
+      expect(find.textContaining('Progress:'), findsNothing);
+      expect(
+        find.byKey(const ValueKey('download-task-cancel-task-1')),
+        findsOneWidget,
+      );
+
+      await tester.tap(
+        find.byKey(const ValueKey('download-task-cancel-task-1')),
+      );
+      await tester.pump();
+
+      expect(cancelTapped, isTrue);
+    },
+  );
+
+  testWidgets(
+    'busy pending downloads keep showing an explicit starting state until transfer begins',
+    (tester) async {
+      await tester.pumpWidget(
+        _buildTileApp(
+          DownloadTaskTile(
+            task: _task(status: DownloadStatus.pending),
+            isBusy: true,
+            busyAction: DownloadTaskBusyAction.start,
+            onStart: () {},
+            onPause: () {},
+            onCancel: () {},
+            onRemove: () {},
+          ),
+        ),
+      );
+      await tester.pump();
+
+      expect(find.text('Starting...'), findsOneWidget);
+      expect(
+        find.text(
+          'AniDestiny is starting this download. Progress will appear here after the file transfer begins.',
+        ),
+        findsOneWidget,
+      );
+      expect(find.text('Pending'), findsNothing);
+      expect(
+        find.text(
+          'This download is ready to start. AniDestiny will show progress after the file transfer begins.',
+        ),
+        findsNothing,
+      );
+      expect(
+        find.byKey(const ValueKey('download-task-progress-task-1')),
+        findsNothing,
+      );
+      expect(find.textContaining('Progress:'), findsNothing);
+    },
+  );
 
   testWidgets('canceled download tasks stay removable without error styling', (
     tester,
@@ -130,6 +350,13 @@ void main() {
     expect(find.text('Download canceled.'), findsNothing);
     expect(find.byTooltip('Remove from list'), findsOneWidget);
     expect(
+      find.descendant(
+        of: removeButton,
+        matching: find.text('Remove from list'),
+      ),
+      findsOneWidget,
+    );
+    expect(
       find.text(
         'This download was discarded. Any partial file was cleared. You can remove this task from the list when you are done.',
       ),
@@ -147,6 +374,246 @@ void main() {
 
     expect(removeTapped, isTrue);
   });
+
+  testWidgets(
+    'unsupported BT downloads replace placeholder copy with honest guidance',
+    (tester) async {
+      var removeTapped = false;
+      await tester.pumpWidget(
+        _buildTileApp(
+          DownloadTaskTile(
+            task: _task(
+              status: DownloadStatus.unsupported,
+              kind: DownloadKind.bt,
+              failureReason: DownloadFailureReason.unsupportedType,
+              failureMessage: 'BT download is not implemented yet.',
+            ),
+            isBusy: false,
+            onStart: () {},
+            onPause: () {},
+            onCancel: () {},
+            onRemove: () {
+              removeTapped = true;
+            },
+          ),
+        ),
+      );
+      await tester.pump();
+
+      expect(find.text('BT / magnet'), findsOneWidget);
+      expect(find.text('BT placeholder'), findsNothing);
+      expect(
+        find.text(
+          'This download currently uses a BT / magnet link, and AniDestiny cannot handle that type directly yet.',
+        ),
+        findsOneWidget,
+      );
+      expect(
+        find.text(
+          'AniDestiny cannot take over this type of download yet. You can remove this task from the list for now.',
+        ),
+        findsOneWidget,
+      );
+      expect(
+        find.descendant(
+          of: find.byKey(const ValueKey('download-task-remove-task-1')),
+          matching: find.text('Remove from list'),
+        ),
+        findsOneWidget,
+      );
+      expect(find.text('Unsupported type'), findsNothing);
+      expect(find.byIcon(Icons.error_outline), findsNothing);
+      expect(find.text('BT download is not implemented yet.'), findsNothing);
+      expect(
+        find.byKey(const ValueKey('download-task-progress-task-1')),
+        findsNothing,
+      );
+      expect(find.textContaining('Progress:'), findsNothing);
+
+      await tester
+          .tap(find.byKey(const ValueKey('download-task-remove-task-1')));
+      await tester.pump();
+
+      expect(removeTapped, isTrue);
+    },
+  );
+
+  testWidgets(
+    'busy remove actions keep ended downloads in an explicit removing state until the task is gone',
+    (tester) async {
+      await tester.pumpWidget(
+        _buildTileApp(
+          DownloadTaskTile(
+            task: _task(status: DownloadStatus.completed),
+            isBusy: true,
+            busyAction: DownloadTaskBusyAction.remove,
+            onStart: () {},
+            onPause: () {},
+            onCancel: () {},
+            onRemove: () {},
+          ),
+        ),
+      );
+      await tester.pump();
+
+      expect(find.text('Removing...'), findsOneWidget);
+      expect(
+        find.text(
+          'AniDestiny is still removing this task from the list. Any file already on your device will stay there.',
+        ),
+        findsOneWidget,
+      );
+      expect(find.text('Completed'), findsNothing);
+      expect(
+        find.text(
+          'Removing this task only clears it from the list. The downloaded file stays on your device.',
+        ),
+        findsNothing,
+      );
+      expect(
+        find.byKey(const ValueKey('download-task-busy-task-1')),
+        findsOneWidget,
+      );
+      expect(
+        find.byKey(const ValueKey('download-task-progress-task-1')),
+        findsNothing,
+      );
+      expect(find.textContaining('Progress:'), findsNothing);
+    },
+  );
+
+  testWidgets(
+    'busy remove actions hide stale failed-state details while the card is leaving',
+    (tester) async {
+      await tester.pumpWidget(
+        _buildTileApp(
+          DownloadTaskTile(
+            task: _task(
+              status: DownloadStatus.failed,
+              failureReason: DownloadFailureReason.networkError,
+              failureMessage: 'The source stopped responding.',
+              progress: 0.42,
+              localPath: '/tmp/failed-partial.mp4',
+            ),
+            isBusy: true,
+            busyAction: DownloadTaskBusyAction.remove,
+            onStart: () {},
+            onPause: () {},
+            onCancel: () {},
+            onRemove: () {},
+          ),
+        ),
+      );
+      await tester.pump();
+
+      expect(find.text('Removing...'), findsOneWidget);
+      expect(
+        find.text(
+          'AniDestiny is still removing this failed task and clearing its partial file from the device.',
+        ),
+        findsOneWidget,
+      );
+      expect(find.text('Failed'), findsNothing);
+      expect(find.text('Network error'), findsNothing);
+      expect(find.text('The source stopped responding.'), findsNothing);
+      expect(
+        find.byKey(const ValueKey('download-task-progress-task-1')),
+        findsNothing,
+      );
+      expect(find.textContaining('Progress:'), findsNothing);
+      expect(find.byIcon(Icons.error_outline), findsNothing);
+    },
+  );
+
+  testWidgets(
+    'busy failed downloads hide stale failure details while retry is starting',
+    (tester) async {
+      await tester.pumpWidget(
+        _buildTileApp(
+          DownloadTaskTile(
+            task: _task(
+              status: DownloadStatus.failed,
+              failureReason: DownloadFailureReason.networkError,
+              failureMessage: 'The source stopped responding.',
+              progress: 0.42,
+            ),
+            isBusy: true,
+            busyAction: DownloadTaskBusyAction.start,
+            onStart: () {},
+            onPause: () {},
+            onCancel: () {},
+            onRemove: () {},
+          ),
+        ),
+      );
+      await tester.pump();
+
+      expect(find.text('Retrying...'), findsOneWidget);
+      expect(
+        find.text(
+          'AniDestiny is retrying this download. Progress will appear here after the file transfer resumes.',
+        ),
+        findsOneWidget,
+      );
+      expect(find.text('Failed'), findsNothing);
+      expect(find.text('Network error'), findsNothing);
+      expect(find.text('The source stopped responding.'), findsNothing);
+      expect(
+        find.byKey(const ValueKey('download-task-progress-task-1')),
+        findsNothing,
+      );
+      expect(find.textContaining('Progress:'), findsNothing);
+      expect(find.byIcon(Icons.error_outline), findsNothing);
+    },
+  );
+
+  testWidgets(
+    'busy remove actions hide unsupported-state details while the card is leaving',
+    (tester) async {
+      await tester.pumpWidget(
+        _buildTileApp(
+          DownloadTaskTile(
+            task: _task(
+              status: DownloadStatus.unsupported,
+              kind: DownloadKind.bt,
+              failureReason: DownloadFailureReason.unsupportedType,
+              failureMessage: 'BT download is not implemented yet.',
+            ),
+            isBusy: true,
+            busyAction: DownloadTaskBusyAction.remove,
+            onStart: () {},
+            onPause: () {},
+            onCancel: () {},
+            onRemove: () {},
+          ),
+        ),
+      );
+      await tester.pump();
+
+      expect(find.text('Removing...'), findsOneWidget);
+      expect(find.text('Unsupported'), findsNothing);
+      expect(find.text('Unsupported type'), findsNothing);
+      expect(
+        find.text(
+          'This download currently uses a BT / magnet link, and AniDestiny cannot handle that type directly yet.',
+        ),
+        findsNothing,
+      );
+      expect(
+        find.text(
+          'AniDestiny cannot take over this type of download yet. You can remove this task from the list for now.',
+        ),
+        findsNothing,
+      );
+      expect(
+        find.text(
+          'AniDestiny is still removing this task from the list. Please give it a moment.',
+        ),
+        findsOneWidget,
+      );
+      expect(find.byIcon(Icons.error_outline), findsNothing);
+    },
+  );
 
   testWidgets(
     'busy stopped downloads keep showing an in-flight stopping state until cleanup settles',
@@ -504,6 +971,9 @@ void main() {
     expect(find.byTooltip('Retry'), findsOneWidget);
     expect(find.byTooltip('Discard download'), findsNWidgets(2));
     expect(find.byTooltip('Pause'), findsNothing);
+    expect(find.text('Stop for now'), findsOneWidget);
+    expect(find.text('Retry'), findsOneWidget);
+    expect(find.text('Discard download'), findsNWidgets(2));
     expect(find.text('Stopped'), findsOneWidget);
     expect(
       find.text(
@@ -555,6 +1025,12 @@ void main() {
     );
     await tester.pumpAndSettle();
 
+    await tester.scrollUntilVisible(
+      find.text('Local path: /tmp/video.mp4'),
+      200,
+    );
+    await tester.pumpAndSettle();
+
     expect(find.text('Local path: /tmp/video.mp4'), findsOneWidget);
     expect(
       find.text(
@@ -592,8 +1068,36 @@ void main() {
       find.byKey(const ValueKey('download-task-busy-task-1')),
       findsOneWidget,
     );
-    expect(tester.widget<IconButton>(retryButton).onPressed, isNull);
-    expect(tester.widget<IconButton>(removeButton).onPressed, isNull);
+    expect(tester.widget<TextButton>(retryButton).onPressed, isNull);
+    expect(tester.widget<TextButton>(removeButton).onPressed, isNull);
+  });
+
+  testWidgets('download card actions wrap cleanly on narrow widths', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      _buildTileApp(
+        Align(
+          alignment: Alignment.topLeft,
+          child: SizedBox(
+            width: 220,
+            child: DownloadTaskTile(
+              task: _task(status: DownloadStatus.failed),
+              isBusy: false,
+              onStart: () {},
+              onPause: () {},
+              onCancel: () {},
+              onRemove: () {},
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('Retry'), findsOneWidget);
+    expect(find.text('Remove from list'), findsOneWidget);
+    expect(tester.takeException(), isNull);
   });
 }
 
@@ -614,6 +1118,7 @@ Widget _buildTileApp(Widget child) {
 DownloadTask _task({
   required DownloadStatus status,
   double progress = 1,
+  DownloadKind kind = DownloadKind.directFile,
   DownloadFailureReason failureReason = DownloadFailureReason.none,
   String? failureMessage,
   String? localPath,
@@ -626,8 +1131,10 @@ DownloadTask _task({
     sourceId: 'sakura',
     title: 'AniDestiny',
     episodeTitle: 'Episode 1',
-    url: 'https://cdn.example.test/video.mp4',
-    kind: DownloadKind.directFile,
+    url: kind == DownloadKind.bt
+        ? 'magnet:?xt=urn:btih:abc123'
+        : 'https://cdn.example.test/video.mp4',
+    kind: kind,
     status: status,
     failureReason: failureReason,
     failureMessage: failureMessage,

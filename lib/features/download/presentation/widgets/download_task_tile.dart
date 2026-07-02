@@ -23,6 +23,8 @@ class DownloadTaskTile extends StatelessWidget {
     required this.onRemove,
     this.onRefreshCleanupStatus,
     this.manualCleanupBatchRecheckLabel,
+    this.manualCleanupReadyActionLabel,
+    this.manualCleanupReadyActionIsBatch = false,
     this.busyAction,
     super.key,
   });
@@ -35,11 +37,15 @@ class DownloadTaskTile extends StatelessWidget {
   final VoidCallback onRemove;
   final VoidCallback? onRefreshCleanupStatus;
   final String? manualCleanupBatchRecheckLabel;
+  final String? manualCleanupReadyActionLabel;
+  final bool manualCleanupReadyActionIsBatch;
   final DownloadTaskBusyAction? busyAction;
 
   @override
   Widget build(BuildContext context) {
+    final isRemovingFromList = _isRemovingFromList(task);
     final supportNote = _supportNote(context);
+    final failureMessage = _failureMessage(context, task);
 
     return Card(
       child: Padding(
@@ -72,14 +78,14 @@ class DownloadTaskTile extends StatelessWidget {
                   icon: Icons.category_outlined,
                   label: _kindLabel(context, task.kind),
                 ),
-                if (_showFailureReason(task))
+                if (_showFailureReason(task, isRemovingFromList))
                   _InfoChip(
                     icon: Icons.error_outline,
                     label: _failureLabel(context, task.failureReason),
                   ),
               ],
             ),
-            if (_showProgress(task)) ...[
+            if (_showProgress(task, isRemovingFromList)) ...[
               const SizedBox(height: 12),
               LinearProgressIndicator(
                 value: task.progress.clamp(0, 1).toDouble(),
@@ -90,10 +96,10 @@ class DownloadTaskTile extends StatelessWidget {
                 key: ValueKey('download-task-progress-${task.id}'),
               ),
             ],
-            if (_showFailureMessage(task)) ...[
+            if (failureMessage != null) ...[
               const SizedBox(height: 6),
               Text(
-                task.failureMessage!,
+                failureMessage,
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
                       color: Theme.of(context).colorScheme.error,
                     ),
@@ -107,29 +113,32 @@ class DownloadTaskTile extends StatelessWidget {
               ),
             ],
             const SizedBox(height: 8),
-            Row(
-              children: [
-                if (supportNote != null)
-                  Expanded(
-                    child: Text(
-                      supportNote,
-                      style: Theme.of(context).textTheme.bodySmall,
+            if (supportNote != null) ...[
+              Text(
+                supportNote,
+                style: Theme.of(context).textTheme.bodySmall,
+              ),
+              const SizedBox(height: 8),
+            ],
+            Align(
+              alignment: Alignment.centerRight,
+              child: Wrap(
+                alignment: WrapAlignment.end,
+                crossAxisAlignment: WrapCrossAlignment.center,
+                spacing: 8,
+                runSpacing: 8,
+                children: [
+                  if (isBusy)
+                    SizedBox.square(
+                      dimension: 18,
+                      child: CircularProgressIndicator(
+                        key: ValueKey('download-task-busy-${task.id}'),
+                        strokeWidth: 2,
+                      ),
                     ),
-                  )
-                else
-                  const Spacer(),
-                if (isBusy) ...[
-                  SizedBox.square(
-                    dimension: 18,
-                    child: CircularProgressIndicator(
-                      key: ValueKey('download-task-busy-${task.id}'),
-                      strokeWidth: 2,
-                    ),
-                  ),
-                  const SizedBox(width: 8),
+                  ..._actions(context),
                 ],
-                ..._actions(context),
-              ],
+              ),
             ),
           ],
         ),
@@ -138,7 +147,23 @@ class DownloadTaskTile extends StatelessWidget {
   }
 
   String? _supportNote(BuildContext context) {
+    if (_isRemovingFromList(task)) {
+      if (_failedTaskHasPartialFile(task)) {
+        return context.l10n.downloadRemovingFailedPartialFileNote;
+      }
+      return task.status == DownloadStatus.unsupported
+          ? context.l10n.downloadRemovingListOnlyNote
+          : context.l10n.downloadRemovingNote;
+    }
+    if (_isStartingTask(task)) {
+      return context.l10n.downloadStartingNote;
+    }
+    if (_isRetryingTask(task)) {
+      return context.l10n.downloadRetryingNote;
+    }
     return switch (task.status) {
+      DownloadStatus.pending => context.l10n.downloadPendingNote,
+      DownloadStatus.preparing => context.l10n.downloadPreparingNote,
       DownloadStatus.paused
           when task.kind == DownloadKind.directFile &&
               busyAction == DownloadTaskBusyAction.pause =>
@@ -151,21 +176,24 @@ class DownloadTaskTile extends StatelessWidget {
         context.l10n.downloadStopMayRestartNote,
       DownloadStatus.paused when task.kind == DownloadKind.directFile =>
         context.l10n.downloadPausedRetryNote,
+      DownloadStatus.failed => _failedTaskHasPartialFile(task)
+          ? context.l10n.downloadFailedRetryOrDiscardPartialNote
+          : context.l10n.downloadFailedRetryOrRemoveNote,
       DownloadStatus.canceled when task.kind == DownloadKind.directFile =>
         downloadTaskNeedsManualCleanup(task)
-            ? manualCleanupBatchRecheckLabel == null
-                ? context.l10n.downloadDiscardedNeedsManualCleanupNote
-                : context.l10n.downloadDiscardedNeedsManualCleanupBatchNote(
-                    manualCleanupBatchRecheckLabel!,
-                  )
+            ? context.l10n.downloadDiscardedNeedsManualCleanupGuidance(
+                readyActionLabel: manualCleanupReadyActionLabel,
+                readyActionIsBatch: manualCleanupReadyActionIsBatch,
+                recheckActionLabel: manualCleanupBatchRecheckLabel,
+              )
             : context.l10n.downloadDiscardedNote,
+      DownloadStatus.unsupported => context.l10n.downloadUnsupportedRemoveNote,
       DownloadStatus.completed when _showLocalPath(task) =>
         context.l10n.downloadRemoveKeepsFileNote,
       DownloadStatus.pending ||
       DownloadStatus.preparing ||
       DownloadStatus.failed ||
       DownloadStatus.canceled ||
-      DownloadStatus.unsupported ||
       DownloadStatus.downloading ||
       DownloadStatus.paused ||
       DownloadStatus.completed =>
@@ -173,13 +201,14 @@ class DownloadTaskTile extends StatelessWidget {
     };
   }
 
-  bool _showFailureReason(DownloadTask task) {
+  bool _showFailureReason(DownloadTask task, bool isRemovingFromList) {
+    if (isRemovingFromList || _isStartingOrRetrying(task)) {
+      return false;
+    }
+    if (task.failureReason == DownloadFailureReason.unsupportedType) {
+      return false;
+    }
     return task.failureReason != DownloadFailureReason.none &&
-        task.status != DownloadStatus.canceled;
-  }
-
-  bool _showFailureMessage(DownloadTask task) {
-    return task.failureMessage != null &&
         task.status != DownloadStatus.canceled;
   }
 
@@ -187,8 +216,44 @@ class DownloadTaskTile extends StatelessWidget {
     return downloadTaskShowsLocalPath(task);
   }
 
-  bool _showProgress(DownloadTask task) {
+  bool _failedTaskHasPartialFile(DownloadTask task) {
+    final localPath = task.localPath;
+    return task.status == DownloadStatus.failed &&
+        task.kind == DownloadKind.directFile &&
+        localPath != null &&
+        localPath.isNotEmpty;
+  }
+
+  String? _failureMessage(BuildContext context, DownloadTask task) {
+    if (_isRemovingFromList(task) || _isStartingOrRetrying(task)) {
+      return null;
+    }
     if (task.status == DownloadStatus.canceled) {
+      return null;
+    }
+    if (task.failureReason == DownloadFailureReason.unsupportedType) {
+      return switch (task.kind) {
+        DownloadKind.hls => context.l10n.downloadUnsupportedHlsMessage,
+        DownloadKind.bt => context.l10n.downloadUnsupportedBtMessage,
+        DownloadKind.unknown => context.l10n.downloadUnsupportedUnknownMessage,
+        DownloadKind.directFile => task.failureMessage,
+      };
+    }
+    return task.failureMessage;
+  }
+
+  bool _showProgress(DownloadTask task, bool isRemovingFromList) {
+    if (isRemovingFromList || _isStartingOrRetrying(task)) {
+      return false;
+    }
+    if (task.status == DownloadStatus.canceled) {
+      return false;
+    }
+    if (task.status == DownloadStatus.pending ||
+        task.status == DownloadStatus.preparing) {
+      return false;
+    }
+    if (task.status == DownloadStatus.unsupported) {
       return false;
     }
     if (task.status == DownloadStatus.paused &&
@@ -198,79 +263,91 @@ class DownloadTaskTile extends StatelessWidget {
     return true;
   }
 
+  bool _isRemovingFromList(DownloadTask task) {
+    if (busyAction != DownloadTaskBusyAction.remove) {
+      return false;
+    }
+    return switch (task.status) {
+      DownloadStatus.completed ||
+      DownloadStatus.failed ||
+      DownloadStatus.unsupported =>
+        true,
+      DownloadStatus.canceled => !downloadTaskNeedsManualCleanup(task),
+      DownloadStatus.pending ||
+      DownloadStatus.preparing ||
+      DownloadStatus.downloading ||
+      DownloadStatus.paused =>
+        false,
+    };
+  }
+
+  bool _isStartingTask(DownloadTask task) {
+    return busyAction == DownloadTaskBusyAction.start &&
+        task.status == DownloadStatus.pending;
+  }
+
+  bool _isRetryingTask(DownloadTask task) {
+    return busyAction == DownloadTaskBusyAction.start &&
+        (task.status == DownloadStatus.paused ||
+            task.status == DownloadStatus.failed);
+  }
+
+  bool _isStartingOrRetrying(DownloadTask task) {
+    return _isStartingTask(task) || _isRetryingTask(task);
+  }
+
   List<Widget> _actions(BuildContext context) {
     return switch (task.status) {
       DownloadStatus.pending => [
-          IconButton(
+          _textAction(
+            context,
             key: ValueKey('download-task-start-${task.id}'),
-            tooltip: context.l10n.start,
+            label: context.l10n.start,
             onPressed: isBusy ? null : onStart,
-            icon: const Icon(Icons.play_arrow),
+            icon: Icons.play_arrow,
           ),
-          IconButton(
-            key: ValueKey('download-task-cancel-${task.id}'),
-            tooltip: context.l10n.downloadDiscardTooltip,
-            onPressed: isBusy ? null : onCancel,
-            icon: const Icon(Icons.close),
-          ),
+          _discardTextAction(context),
         ],
       DownloadStatus.preparing => [
-          IconButton(
-            key: ValueKey('download-task-cancel-${task.id}'),
-            tooltip: context.l10n.downloadDiscardTooltip,
-            onPressed: isBusy ? null : onCancel,
-            icon: const Icon(Icons.close),
-          ),
+          _discardTextAction(context),
         ],
       DownloadStatus.downloading => [
-          IconButton(
+          _textAction(
+            context,
             key: ValueKey('download-task-pause-${task.id}'),
-            tooltip: context.l10n.stopForNow,
+            label: context.l10n.stopForNow,
             onPressed: isBusy ? null : onPause,
-            icon: const Icon(Icons.stop_circle_outlined),
+            icon: Icons.stop_circle_outlined,
           ),
-          IconButton(
-            key: ValueKey('download-task-cancel-${task.id}'),
-            tooltip: context.l10n.downloadDiscardTooltip,
-            onPressed: isBusy ? null : onCancel,
-            icon: const Icon(Icons.close),
-          ),
+          _discardTextAction(context),
         ],
       DownloadStatus.paused => [
-          IconButton(
+          _textAction(
+            context,
             key: ValueKey('download-task-retry-${task.id}'),
-            tooltip: context.l10n.retry,
+            label: context.l10n.retry,
             onPressed: isBusy ? null : onStart,
-            icon: const Icon(Icons.refresh),
+            icon: Icons.refresh,
           ),
-          IconButton(
-            key: ValueKey('download-task-cancel-${task.id}'),
-            tooltip: context.l10n.downloadDiscardTooltip,
-            onPressed: isBusy ? null : onCancel,
-            icon: const Icon(Icons.close),
-          ),
+          _discardTextAction(context),
         ],
       DownloadStatus.failed => [
-          IconButton(
+          _textAction(
+            context,
             key: ValueKey('download-task-retry-${task.id}'),
-            tooltip: context.l10n.retry,
+            label: context.l10n.retry,
             onPressed: isBusy ? null : onStart,
-            icon: const Icon(Icons.refresh),
+            icon: Icons.refresh,
           ),
-          IconButton(
-            key: ValueKey('download-task-remove-${task.id}'),
-            tooltip: context.l10n.removeFromList,
-            onPressed: isBusy ? null : onRemove,
-            icon: const Icon(Icons.delete_outline),
-          ),
+          _failedTaskHasPartialFile(task)
+              ? _discardFailedPartialTextAction(context)
+              : _removeTextAction(context),
         ],
-      DownloadStatus.completed || DownloadStatus.unsupported => [
-          IconButton(
-            key: ValueKey('download-task-remove-${task.id}'),
-            tooltip: context.l10n.removeFromList,
-            onPressed: isBusy ? null : onRemove,
-            icon: const Icon(Icons.delete_outline),
-          ),
+      DownloadStatus.completed => [
+          _removeTextAction(context),
+        ],
+      DownloadStatus.unsupported => [
+          _removeTextAction(context),
         ],
       DownloadStatus.canceled => downloadTaskNeedsManualCleanup(task)
           ? [
@@ -282,14 +359,57 @@ class DownloadTaskTile extends StatelessWidget {
               ),
             ]
           : [
-              IconButton(
-                key: ValueKey('download-task-remove-${task.id}'),
-                tooltip: context.l10n.removeFromList,
-                onPressed: isBusy ? null : onRemove,
-                icon: const Icon(Icons.delete_outline),
-              ),
+              _removeTextAction(context),
             ],
     };
+  }
+
+  Widget _removeTextAction(BuildContext context) {
+    return _textAction(
+      context,
+      key: ValueKey('download-task-remove-${task.id}'),
+      label: context.l10n.removeFromList,
+      onPressed: isBusy ? null : onRemove,
+      icon: Icons.delete_outline,
+    );
+  }
+
+  Widget _discardTextAction(BuildContext context) {
+    return _textAction(
+      context,
+      key: ValueKey('download-task-cancel-${task.id}'),
+      label: context.l10n.downloadDiscardTooltip,
+      onPressed: isBusy ? null : onCancel,
+      icon: Icons.close,
+    );
+  }
+
+  Widget _discardFailedPartialTextAction(BuildContext context) {
+    return _textAction(
+      context,
+      key: ValueKey('download-task-remove-${task.id}'),
+      label: context.l10n.downloadDiscardTooltip,
+      onPressed: isBusy ? null : onRemove,
+      icon: Icons.close,
+    );
+  }
+
+  Widget _textAction(
+    BuildContext context, {
+    required Key key,
+    required String label,
+    required VoidCallback? onPressed,
+    required IconData icon,
+  }) {
+    return Tooltip(
+      message: label,
+      child: TextButton.icon(
+        key: key,
+        onPressed: onPressed,
+        icon: Icon(icon, size: 18),
+        label: Text(label),
+      ),
+    );
   }
 
   String _progressLabel(BuildContext context, DownloadTask task) {
@@ -388,6 +508,15 @@ class _StatusChip extends StatelessWidget {
     if (downloadTaskNeedsManualCleanup(task)) {
       return context.l10n.downloadManualCleanupStatus;
     }
+    if (_isRemovingFromList(task)) {
+      return context.l10n.downloadRemovingStatus;
+    }
+    if (_isStartingTask(task)) {
+      return context.l10n.downloadStartingStatus;
+    }
+    if (_isRetryingTask(task)) {
+      return context.l10n.downloadRetryingStatus;
+    }
     return switch (task.status) {
       DownloadStatus.pending => context.l10n.pending,
       DownloadStatus.preparing => context.l10n.preparing,
@@ -403,5 +532,34 @@ class _StatusChip extends StatelessWidget {
       DownloadStatus.canceled => context.l10n.downloadDiscardedStatus,
       DownloadStatus.unsupported => context.l10n.unsupported,
     };
+  }
+
+  bool _isRemovingFromList(DownloadTask task) {
+    if (busyAction != DownloadTaskBusyAction.remove) {
+      return false;
+    }
+    return switch (task.status) {
+      DownloadStatus.completed ||
+      DownloadStatus.failed ||
+      DownloadStatus.unsupported =>
+        true,
+      DownloadStatus.canceled => !downloadTaskNeedsManualCleanup(task),
+      DownloadStatus.pending ||
+      DownloadStatus.preparing ||
+      DownloadStatus.downloading ||
+      DownloadStatus.paused =>
+        false,
+    };
+  }
+
+  bool _isStartingTask(DownloadTask task) {
+    return busyAction == DownloadTaskBusyAction.start &&
+        task.status == DownloadStatus.pending;
+  }
+
+  bool _isRetryingTask(DownloadTask task) {
+    return busyAction == DownloadTaskBusyAction.start &&
+        (task.status == DownloadStatus.paused ||
+            task.status == DownloadStatus.failed);
   }
 }

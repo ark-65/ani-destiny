@@ -21,7 +21,7 @@ void main() {
       );
     });
 
-    test('detects magnet URLs as BT placeholder tasks', () {
+    test('detects magnet URLs as BT downloads', () {
       expect(
         detectDownloadKind('magnet:?xt=urn:btih:abc123'),
         DownloadKind.bt,

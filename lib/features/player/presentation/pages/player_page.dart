@@ -9,10 +9,12 @@ import 'package:go_router/go_router.dart';
 import '../../../../app/l10n/app_localizations.dart';
 import '../../../../core/diagnostics/playback_diagnostic_snapshot_preview.dart';
 import '../../../../core/diagnostics/playback_diagnostic_summary.dart';
+import '../../../../core/error/app_exception.dart';
 import '../../../anime/presentation/providers/anime_providers.dart';
 import '../../../danmaku/domain/entities/danmaku_item.dart';
 import '../../../danmaku/presentation/providers/danmaku_providers.dart';
 import '../../../danmaku/presentation/widgets/danmaku_overlay.dart';
+import '../../../download/presentation/download_entry_feedback.dart';
 import '../../../download/presentation/providers/download_providers.dart';
 import '../../../history/domain/entities/watch_history.dart';
 import '../../../history/domain/repositories/history_repository.dart';
@@ -941,7 +943,7 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
 
   Future<void> _createDownload() async {
     try {
-      final taskId = await ref.read(downloadTaskCreatorProvider).create(
+      final result = await ref.read(downloadTaskCreatorProvider).create(
             animeId: _args.animeId,
             episodeId: _args.episodeId,
             sourceId: _args.sourceId,
@@ -953,17 +955,19 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(context.l10n.downloadTaskCreated(taskId)),
+          content:
+              Text(downloadEntryFeedbackMessage(context.l10n, result.kind)),
           action: SnackBarAction(
-            label: context.l10n.open,
+            label: downloadEntryFeedbackActionLabel(context.l10n, result.kind),
             onPressed: () => context.push('/downloads'),
           ),
         ),
       );
     } catch (error) {
       if (!mounted) return;
+      final message = error is AppException ? error.message : error.toString();
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(error.toString())),
+        SnackBar(content: Text(message)),
       );
     }
   }

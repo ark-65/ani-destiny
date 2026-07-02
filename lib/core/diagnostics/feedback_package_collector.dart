@@ -230,27 +230,50 @@ class FeedbackPackageCollector {
     } else {
       final task = latestIssue.first;
       final needsManualCleanup = manualCleanupTaskIds.contains(task.id);
-      final manualCleanupActionLabel = manualCleanupCount > 1
+      final manualCleanupRecheckActionLabel = manualCleanupCount > 1
           ? l10n.recheckLeftoverFilesCount(manualCleanupCount)
           : null;
+      final clearableTaskCount =
+          downloadTasks.where(_isClearableDownloadTask).length;
+      final readyActionLabel = clearableTaskCount > 1
+          ? l10n.clearEndedDownloadsCount(clearableTaskCount)
+          : clearableTaskCount == 1
+              ? l10n.removeFromList
+              : null;
+      final latestIssueReason = _downloadLatestIssueReason(task);
       lines.add(
         '- ${l10n.feedbackPackageLatestIssue}: '
         '${needsManualCleanup ? l10n.downloadManualCleanupStatus : _downloadStatusLabel(task.status)}'
         ' · ${l10n.feedbackPackageReason}: '
-        '${_downloadFailureReasonLabel(task.failureReason)}',
+        '$latestIssueReason',
       );
       final localPath = task.localPath;
       if (needsManualCleanup && localPath != null && localPath.isNotEmpty) {
         lines.add('  ${l10n.downloadLocalPath}: $localPath');
         lines.add(
           '  ${l10n.feedbackPackageMessage}: '
-          '${l10n.downloadManualCleanupFeedbackNextStep(actionLabel: manualCleanupActionLabel)}',
+          '${l10n.downloadManualCleanupFeedbackNextStep(
+            readyActionLabel: readyActionLabel,
+            readyActionIsBatch: clearableTaskCount > 1,
+            recheckActionLabel: manualCleanupRecheckActionLabel,
+          )}',
         );
       }
-      if (task.failureMessage != null) {
+      final failureMessage = _downloadFailureMessage(task);
+      if (failureMessage != null && failureMessage != latestIssueReason) {
         lines.add(
-          '  ${l10n.feedbackPackageMessage}: '
-          '${sanitizeError(task.failureMessage!)}',
+          '  ${l10n.feedbackPackageMessage}: $failureMessage',
+        );
+      }
+      final nextStepMessage = _downloadNextStepMessage(task);
+      if (nextStepMessage != null && nextStepMessage != failureMessage) {
+        lines.add(
+          '  ${l10n.feedbackPackageMessage}: $nextStepMessage',
+        );
+      }
+      if (task.status == DownloadStatus.unsupported) {
+        lines.add(
+          '  ${l10n.feedbackPackageMessage}: ${l10n.downloadUnsupportedRemoveNote}',
         );
       }
     }
@@ -306,5 +329,66 @@ class FeedbackPackageCollector {
       DownloadFailureReason.canceled => l10n.downloadDiscardedStatus,
       DownloadFailureReason.unknown => l10n.downloadFailureUnknown,
     };
+  }
+
+  bool _isClearableDownloadTask(DownloadTask task) {
+    if (downloadTaskNeedsManualCleanup(task)) {
+      return false;
+    }
+    return switch (task.status) {
+      DownloadStatus.completed ||
+      DownloadStatus.failed ||
+      DownloadStatus.canceled ||
+      DownloadStatus.unsupported =>
+        true,
+      DownloadStatus.pending ||
+      DownloadStatus.preparing ||
+      DownloadStatus.downloading ||
+      DownloadStatus.paused =>
+        false,
+    };
+  }
+
+  String _downloadLatestIssueReason(DownloadTask task) {
+    final failureMessage = _downloadFailureMessage(task);
+    if (task.failureReason == DownloadFailureReason.unsupportedType &&
+        failureMessage != null &&
+        failureMessage.isNotEmpty) {
+      return failureMessage;
+    }
+    return _downloadFailureReasonLabel(task.failureReason);
+  }
+
+  String? _downloadFailureMessage(DownloadTask task) {
+    if (task.failureReason == DownloadFailureReason.unsupportedType) {
+      return switch (task.kind) {
+        DownloadKind.hls => l10n.downloadUnsupportedHlsMessage,
+        DownloadKind.bt => l10n.downloadUnsupportedBtMessage,
+        DownloadKind.unknown => l10n.downloadUnsupportedUnknownMessage,
+        DownloadKind.directFile => task.failureMessage == null
+            ? null
+            : sanitizeError(task.failureMessage!),
+      };
+    }
+    return task.failureMessage == null
+        ? null
+        : sanitizeError(task.failureMessage!);
+  }
+
+  String? _downloadNextStepMessage(DownloadTask task) {
+    if (task.status != DownloadStatus.failed) {
+      return null;
+    }
+    return _failedTaskHasPartialFile(task)
+        ? l10n.downloadFailedRetryOrDiscardPartialNote
+        : l10n.downloadFailedRetryOrRemoveNote;
+  }
+
+  bool _failedTaskHasPartialFile(DownloadTask task) {
+    final localPath = task.localPath;
+    return task.status == DownloadStatus.failed &&
+        task.kind == DownloadKind.directFile &&
+        localPath != null &&
+        localPath.isNotEmpty;
   }
 }

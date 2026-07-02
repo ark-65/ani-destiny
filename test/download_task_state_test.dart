@@ -53,7 +53,42 @@ void main() {
     expect(task, isNotNull);
     expect(task!.status, DownloadStatus.unsupported);
     expect(task.failureReason, DownloadFailureReason.unsupportedType);
-    expect(task.failureMessage, contains('HLS offline download'));
+    expect(task.failureMessage, isNull);
+  });
+
+  test('unsupported tasks drop implementation placeholder messages on read',
+      () async {
+    final database = AppDatabase(NativeDatabase.memory());
+    addTearDown(database.close);
+
+    final repository = DownloadRepositoryImpl(database);
+    final now = DateTime.utc(2026, 7, 1, 12);
+
+    await repository.upsertTask(
+      DownloadTask(
+        id: 'task-unsupported-bt',
+        animeId: 'anime-1',
+        episodeId: 'episode-1',
+        sourceId: 'sakura',
+        title: 'BT Test',
+        episodeTitle: 'Episode 1',
+        url: 'magnet:?xt=urn:btih:abc123',
+        kind: DownloadKind.bt,
+        status: DownloadStatus.unsupported,
+        failureReason: DownloadFailureReason.unsupportedType,
+        failureMessage: 'BT download is not implemented yet.',
+        progress: 0,
+        downloadedBytes: 0,
+        createdAt: now,
+        updatedAt: now,
+      ),
+    );
+
+    final task = await repository.getTask('task-unsupported-bt');
+
+    expect(task, isNotNull);
+    expect(task!.failureReason, DownloadFailureReason.unsupportedType);
+    expect(task.failureMessage, isNull);
   });
 
   test('direct file progress maps downloaded and total bytes', () {
@@ -495,6 +530,56 @@ void main() {
     await service.removeEndedTask('task-remove-discarded');
 
     final task = await repository.getTask('task-remove-discarded');
+    expect(task, isNull);
+    expect(partialFile.existsSync(), isFalse);
+  });
+
+  test('removing a failed task clears any leftover partial file first',
+      () async {
+    final database = AppDatabase(NativeDatabase.memory());
+    addTearDown(database.close);
+    final tempDir =
+        await Directory.systemTemp.createTemp('ani-destiny-remove-failed');
+    addTearDown(() async {
+      if (tempDir.existsSync()) {
+        await tempDir.delete(recursive: true);
+      }
+    });
+
+    final repository = DownloadRepositoryImpl(database);
+    final service = HttpDownloadService(
+      dio: Dio(),
+      repository: repository,
+    );
+    final partialFile = File(p.join(tempDir.path, 'partial-failed-remove.mp4'));
+    await partialFile.writeAsString('partial');
+    final now = DateTime(2026, 7, 2, 0, 0);
+
+    await repository.upsertTask(
+      DownloadTask(
+        id: 'task-remove-failed',
+        animeId: 'anime-1',
+        episodeId: 'episode-1',
+        sourceId: 'sakura',
+        title: 'Direct Test',
+        episodeTitle: 'Episode 1',
+        url: 'https://cdn.example.test/video.mp4',
+        kind: DownloadKind.directFile,
+        status: DownloadStatus.failed,
+        failureReason: DownloadFailureReason.networkError,
+        failureMessage: 'offline',
+        progress: 0.4,
+        downloadedBytes: 400,
+        totalBytes: 1000,
+        localPath: partialFile.path,
+        createdAt: now,
+        updatedAt: now,
+      ),
+    );
+
+    await service.removeEndedTask('task-remove-failed');
+
+    final task = await repository.getTask('task-remove-failed');
     expect(task, isNull);
     expect(partialFile.existsSync(), isFalse);
   });
