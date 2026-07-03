@@ -91,6 +91,40 @@ void main() {
     expect(task.failureMessage, isNull);
   });
 
+  test('old raw unexpected failure messages are normalized on read', () async {
+    final database = AppDatabase(NativeDatabase.memory());
+    addTearDown(database.close);
+
+    final repository = DownloadRepositoryImpl(database);
+    final now = DateTime.utc(2026, 7, 3, 12);
+
+    await repository.upsertTask(
+      DownloadTask(
+        id: 'task-raw-failure',
+        animeId: 'anime-1',
+        episodeId: 'episode-1',
+        sourceId: 'sakura',
+        title: 'Direct Test',
+        episodeTitle: 'Episode 1',
+        url: 'https://cdn.example.test/video.mp4',
+        kind: DownloadKind.directFile,
+        status: DownloadStatus.failed,
+        failureReason: DownloadFailureReason.unknown,
+        failureMessage: 'StateError: filesystem sync failed',
+        progress: 0.2,
+        downloadedBytes: 200,
+        createdAt: now,
+        updatedAt: now,
+      ),
+    );
+
+    final task = await repository.getTask('task-raw-failure');
+
+    expect(task, isNotNull);
+    expect(task!.failureReason, DownloadFailureReason.unknown);
+    expect(task.failureMessage, unexpectedDownloadFailureMessage);
+  });
+
   test('direct file progress maps downloaded and total bytes', () {
     const progress = DownloadProgress(
       taskId: 'task-1',
@@ -588,8 +622,8 @@ void main() {
       () async {
     final database = AppDatabase(NativeDatabase.memory());
     addTearDown(database.close);
-    final tempDir =
-        await Directory.systemTemp.createTemp('ani-destiny-download-unexpected');
+    final tempDir = await Directory.systemTemp
+        .createTemp('ani-destiny-download-unexpected');
     addTearDown(() async {
       if (tempDir.existsSync()) {
         await tempDir.delete(recursive: true);

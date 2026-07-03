@@ -3,6 +3,9 @@ import 'download_kind.dart';
 
 const _unset = Object();
 
+const unexpectedDownloadFailureMessage =
+    'AniDestiny could not finish this download because of an unexpected error.';
+
 enum DownloadStatus {
   pending,
   preparing,
@@ -106,9 +109,29 @@ DownloadStatus downloadStatusFromName(String value) {
 }
 
 DownloadTask normalizeDownloadTask(DownloadTask task) {
-  if (task.failureReason != DownloadFailureReason.unsupportedType ||
-      task.failureMessage == null) {
+  final failureMessage = task.failureMessage;
+  if (failureMessage == null) {
     return task;
   }
-  return task.copyWith(failureMessage: null);
+  if (task.failureReason == DownloadFailureReason.unsupportedType) {
+    return task.copyWith(failureMessage: null);
+  }
+  if (task.status == DownloadStatus.failed &&
+      task.failureReason == DownloadFailureReason.unknown &&
+      _looksLikeRawException(failureMessage)) {
+    return task.copyWith(failureMessage: unexpectedDownloadFailureMessage);
+  }
+  return task;
+}
+
+bool _looksLikeRawException(String message) {
+  final trimmed = message.trimLeft();
+  return trimmed.startsWith('AppException') ||
+      trimmed.startsWith('Bad state:') ||
+      trimmed.startsWith('DioException') ||
+      trimmed.startsWith('Exception:') ||
+      trimmed.startsWith('FileSystemException') ||
+      trimmed.startsWith('FormatException') ||
+      trimmed.startsWith('Instance of ') ||
+      trimmed.startsWith('StateError:');
 }
