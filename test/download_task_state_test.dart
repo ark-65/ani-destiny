@@ -229,6 +229,7 @@ void main() {
       'IOException: write failed',
       'NetworkException: connection aborted',
       'UnknownHostException: cdn.example.test',
+      'XMLHttpRequest error.',
     ];
 
     for (final message in rawMessages) {

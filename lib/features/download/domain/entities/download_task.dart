@@ -167,5 +167,6 @@ bool _looksLikeRawException(String message) {
       trimmed.startsWith('TlsException') ||
       trimmed.startsWith('UnknownHostException') ||
       trimmed.startsWith('UnimplementedError:') ||
-      trimmed.startsWith('Unsupported operation:');
+      trimmed.startsWith('Unsupported operation:') ||
+      trimmed.startsWith('XMLHttpRequest error');
 }
