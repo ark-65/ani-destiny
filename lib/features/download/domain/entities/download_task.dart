@@ -129,11 +129,14 @@ bool _looksLikeRawException(String message) {
       trimmed.startsWith('ArgumentError') ||
       trimmed.startsWith('AssertionError') ||
       trimmed.startsWith('Bad state:') ||
+      trimmed.startsWith('CERTIFICATE_VERIFY_FAILED') ||
+      trimmed.startsWith('CertificateException') ||
       trimmed.startsWith('ClientException') ||
       trimmed.startsWith('ConcurrentModificationError') ||
       trimmed.startsWith('Connection closed') ||
       trimmed.startsWith('Connection refused') ||
       trimmed.startsWith('Connection reset') ||
+      trimmed.startsWith('Connection timed out') ||
       trimmed.startsWith('DioException') ||
       trimmed.startsWith('Exception:') ||
       trimmed.startsWith('Failed host lookup') ||
@@ -142,9 +145,12 @@ bool _looksLikeRawException(String message) {
       trimmed.startsWith('HttpException') ||
       trimmed.startsWith('IntegerDivisionByZeroException') ||
       trimmed.startsWith('Instance of ') ||
+      trimmed.startsWith('IOException') ||
+      trimmed.startsWith('NetworkException') ||
       trimmed.startsWith('NoSuchMethodError') ||
       trimmed.startsWith('Network is unreachable') ||
       trimmed.startsWith('No route to host') ||
+      trimmed.startsWith('No space left on device') ||
       trimmed.startsWith('HandshakeException') ||
       trimmed.startsWith('Operation timed out') ||
       trimmed.startsWith('OS Error:') ||
@@ -152,11 +158,13 @@ bool _looksLikeRawException(String message) {
       trimmed.startsWith('PathExistsException') ||
       trimmed.startsWith('PathNotFoundException') ||
       trimmed.startsWith('PlatformException') ||
+      trimmed.startsWith('Permission denied') ||
       trimmed.startsWith('RangeError') ||
       trimmed.startsWith('SocketException') ||
       trimmed.startsWith('StateError:') ||
       trimmed.startsWith('TimeoutException') ||
       trimmed.startsWith('TlsException') ||
+      trimmed.startsWith('UnknownHostException') ||
       trimmed.startsWith('UnimplementedError:') ||
       trimmed.startsWith('Unsupported operation:');
 }

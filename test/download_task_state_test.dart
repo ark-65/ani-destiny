@@ -220,6 +220,14 @@ void main() {
       'No route to host, errno = 65',
       'Operation timed out, errno = 60',
       'OS Error: No space left on device, errno = 28',
+      'Connection timed out, errno = 110',
+      'No space left on device, errno = 28',
+      'Permission denied, errno = 13',
+      'CERTIFICATE_VERIFY_FAILED: unable to get local issuer certificate',
+      'CertificateException: certificate has expired',
+      'IOException: write failed',
+      'NetworkException: connection aborted',
+      'UnknownHostException: cdn.example.test',
     ];
 
     for (final message in rawMessages) {

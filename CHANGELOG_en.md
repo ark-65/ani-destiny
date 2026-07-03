@@ -7,6 +7,7 @@
 ## [Unreleased]
 
 ### 🐛 Fixed
+- Fixed older download tasks that had already saved system-level messages like `Connection timed out`, `No space left on device`, `Permission denied`, or certificate verification failures still bringing low-level error text back into Downloads or copied support summaries; those historical failures now normalize into the same calm retryable download-failure message.
 - Fixed older download tasks that had already saved system or network-layer messages like `Connection refused`, `Failed host lookup`, or `OS Error` still bringing device-level failure text back into Downloads or copied support summaries; those historical failures now normalize into the same calm retryable download-failure message.
 - Fixed new direct-file download network failures still being able to save Dio's low-level `offline`, socket, or connection text as the task failure message, which could immediately leak implementation details into the download card and copied support summary; new network failures now store one calm retryable message, while HTTP status failures still keep the source response understandable.
 - Fixed older download tasks that had already saved HTTP / TLS failures like `ClientException`, `HttpException`, or `TlsException` as failure messages still bringing those internal details back into Downloads or copied support summaries; those historical failures now normalize into the same calm retryable download-failure message.
