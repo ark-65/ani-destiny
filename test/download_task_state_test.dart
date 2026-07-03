@@ -206,8 +206,11 @@ void main() {
       'ArgumentError: Invalid argument(s): missing download directory',
       'PathNotFoundException: Cannot open file, path = /tmp/missing.mp4',
       'PlatformException(download_failed, Channel call failed, null, null)',
+      'ClientException: Connection closed before full header was received',
+      'HttpException: Connection closed while receiving data',
       'SocketException: Connection reset by peer',
       'HandshakeException: Connection terminated during handshake',
+      'TlsException: Failure trusting builtin roots',
       'TimeoutException after 0:00:30.000000: download stalled',
     ];
 

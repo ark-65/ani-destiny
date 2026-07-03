@@ -129,11 +129,13 @@ bool _looksLikeRawException(String message) {
       trimmed.startsWith('ArgumentError') ||
       trimmed.startsWith('AssertionError') ||
       trimmed.startsWith('Bad state:') ||
+      trimmed.startsWith('ClientException') ||
       trimmed.startsWith('ConcurrentModificationError') ||
       trimmed.startsWith('DioException') ||
       trimmed.startsWith('Exception:') ||
       trimmed.startsWith('FileSystemException') ||
       trimmed.startsWith('FormatException') ||
+      trimmed.startsWith('HttpException') ||
       trimmed.startsWith('IntegerDivisionByZeroException') ||
       trimmed.startsWith('Instance of ') ||
       trimmed.startsWith('NoSuchMethodError') ||
@@ -146,6 +148,7 @@ bool _looksLikeRawException(String message) {
       trimmed.startsWith('SocketException') ||
       trimmed.startsWith('StateError:') ||
       trimmed.startsWith('TimeoutException') ||
+      trimmed.startsWith('TlsException') ||
       trimmed.startsWith('UnimplementedError:') ||
       trimmed.startsWith('Unsupported operation:');
 }
