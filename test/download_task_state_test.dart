@@ -160,6 +160,40 @@ void main() {
     expect(task.failureMessage, unexpectedDownloadFailureMessage);
   });
 
+  test('old raw network failure messages are normalized on read', () async {
+    final database = AppDatabase(NativeDatabase.memory());
+    addTearDown(database.close);
+
+    final repository = DownloadRepositoryImpl(database);
+    final now = DateTime.utc(2026, 7, 3, 21);
+
+    await repository.upsertTask(
+      DownloadTask(
+        id: 'task-raw-network-failure',
+        animeId: 'anime-1',
+        episodeId: 'episode-1',
+        sourceId: 'sakura',
+        title: 'Direct Test',
+        episodeTitle: 'Episode 1',
+        url: 'https://cdn.example.test/video.mp4',
+        kind: DownloadKind.directFile,
+        status: DownloadStatus.failed,
+        failureReason: DownloadFailureReason.networkError,
+        failureMessage: 'DioException [connection timeout]: socket closed',
+        progress: 0.1,
+        downloadedBytes: 100,
+        createdAt: now,
+        updatedAt: now,
+      ),
+    );
+
+    final task = await repository.getTask('task-raw-network-failure');
+
+    expect(task, isNotNull);
+    expect(task!.failureReason, DownloadFailureReason.networkError);
+    expect(task.failureMessage, unexpectedDownloadFailureMessage);
+  });
+
   test('direct file progress maps downloaded and total bytes', () {
     const progress = DownloadProgress(
       taskId: 'task-1',

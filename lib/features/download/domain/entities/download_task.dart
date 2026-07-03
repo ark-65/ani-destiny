@@ -117,7 +117,6 @@ DownloadTask normalizeDownloadTask(DownloadTask task) {
     return task.copyWith(failureMessage: null);
   }
   if (task.status == DownloadStatus.failed &&
-      task.failureReason == DownloadFailureReason.unknown &&
       _looksLikeRawException(failureMessage)) {
     return task.copyWith(failureMessage: unexpectedDownloadFailureMessage);
   }
