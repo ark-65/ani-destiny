@@ -7,6 +7,7 @@
 ## [Unreleased]
 
 ### 🐛 修复
+- 修复旧版本下载任务如果已经把 `PlatformException`、`SocketException`、`HandshakeException` 或 `TimeoutException` 这类 Flutter / 网络底层异常保存成失败说明，下载页和反馈摘要仍可能把这些内部细节带回来的问题；现在这些历史失败也会归一化成同一条冷静、可重试的下载失败提示。
 - 修复旧版本下载任务如果已经把 `RangeError`、`NoSuchMethodError` 或 `PathNotFoundException` 这类 Dart / 文件系统原始异常保存成失败原因，下载页和反馈摘要仍可能把这些内部细节带回来的问题；现在这些历史失败也会归一化成同一条冷静、可重试的下载失败提示。
 - 修复旧版本下载任务如果已经把 `DioException: ...`、`FileSystemException: ...` 这类底层异常保存成网络或存储失败，下载页和反馈摘要仍可能把内部错误带回来的问题；现在所有失败状态里的原始异常都会归一化成同一条冷静、可重试的下载失败提示。
 - 修复旧版本下载任务如果已经把 `UnimplementedError: ...` 或 `Unsupported operation: ...` 这类 Dart 底层异常保存成未知失败，重新打开下载页或复制反馈摘要时仍可能把这些内部口吻带回来的问题；现在这些历史失败也会归一化成同一条冷静、可重试的下载失败提示。

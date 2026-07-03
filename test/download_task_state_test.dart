@@ -205,6 +205,10 @@ void main() {
       'NoSuchMethodError: The method length was called on null.',
       'ArgumentError: Invalid argument(s): missing download directory',
       'PathNotFoundException: Cannot open file, path = /tmp/missing.mp4',
+      'PlatformException(download_failed, Channel call failed, null, null)',
+      'SocketException: Connection reset by peer',
+      'HandshakeException: Connection terminated during handshake',
+      'TimeoutException after 0:00:30.000000: download stalled',
     ];
 
     for (final message in rawMessages) {

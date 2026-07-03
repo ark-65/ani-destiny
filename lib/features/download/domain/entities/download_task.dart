@@ -137,11 +137,15 @@ bool _looksLikeRawException(String message) {
       trimmed.startsWith('IntegerDivisionByZeroException') ||
       trimmed.startsWith('Instance of ') ||
       trimmed.startsWith('NoSuchMethodError') ||
+      trimmed.startsWith('HandshakeException') ||
       trimmed.startsWith('PathAccessException') ||
       trimmed.startsWith('PathExistsException') ||
       trimmed.startsWith('PathNotFoundException') ||
+      trimmed.startsWith('PlatformException') ||
       trimmed.startsWith('RangeError') ||
+      trimmed.startsWith('SocketException') ||
       trimmed.startsWith('StateError:') ||
+      trimmed.startsWith('TimeoutException') ||
       trimmed.startsWith('UnimplementedError:') ||
       trimmed.startsWith('Unsupported operation:');
 }
