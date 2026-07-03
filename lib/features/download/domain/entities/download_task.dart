@@ -126,12 +126,21 @@ DownloadTask normalizeDownloadTask(DownloadTask task) {
 bool _looksLikeRawException(String message) {
   final trimmed = message.trimLeft();
   return trimmed.startsWith('AppException') ||
+      trimmed.startsWith('ArgumentError') ||
+      trimmed.startsWith('AssertionError') ||
       trimmed.startsWith('Bad state:') ||
+      trimmed.startsWith('ConcurrentModificationError') ||
       trimmed.startsWith('DioException') ||
       trimmed.startsWith('Exception:') ||
       trimmed.startsWith('FileSystemException') ||
       trimmed.startsWith('FormatException') ||
+      trimmed.startsWith('IntegerDivisionByZeroException') ||
       trimmed.startsWith('Instance of ') ||
+      trimmed.startsWith('NoSuchMethodError') ||
+      trimmed.startsWith('PathAccessException') ||
+      trimmed.startsWith('PathExistsException') ||
+      trimmed.startsWith('PathNotFoundException') ||
+      trimmed.startsWith('RangeError') ||
       trimmed.startsWith('StateError:') ||
       trimmed.startsWith('UnimplementedError:') ||
       trimmed.startsWith('Unsupported operation:');

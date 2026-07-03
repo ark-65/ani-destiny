@@ -194,6 +194,50 @@ void main() {
     expect(task.failureMessage, unexpectedDownloadFailureMessage);
   });
 
+  test('old raw Dart and IO failure messages are normalized on read', () async {
+    final database = AppDatabase(NativeDatabase.memory());
+    addTearDown(database.close);
+
+    final repository = DownloadRepositoryImpl(database);
+    final now = DateTime.utc(2026, 7, 3, 22);
+    const rawMessages = <String>[
+      'RangeError (index): Invalid value: Not in inclusive range 0..1',
+      'NoSuchMethodError: The method length was called on null.',
+      'ArgumentError: Invalid argument(s): missing download directory',
+      'PathNotFoundException: Cannot open file, path = /tmp/missing.mp4',
+    ];
+
+    for (final message in rawMessages) {
+      await repository.upsertTask(
+        DownloadTask(
+          id: 'task-${rawMessages.indexOf(message)}',
+          animeId: 'anime-1',
+          episodeId: 'episode-1',
+          sourceId: 'sakura',
+          title: 'Direct Test',
+          episodeTitle: 'Episode 1',
+          url: 'https://cdn.example.test/video.mp4',
+          kind: DownloadKind.directFile,
+          status: DownloadStatus.failed,
+          failureReason: DownloadFailureReason.unknown,
+          failureMessage: message,
+          progress: 0.1,
+          downloadedBytes: 100,
+          createdAt: now,
+          updatedAt: now,
+        ),
+      );
+    }
+
+    for (var index = 0; index < rawMessages.length; index += 1) {
+      final task = await repository.getTask('task-$index');
+
+      expect(task, isNotNull);
+      expect(task!.failureReason, DownloadFailureReason.unknown);
+      expect(task.failureMessage, unexpectedDownloadFailureMessage);
+    }
+  });
+
   test('direct file progress maps downloaded and total bytes', () {
     const progress = DownloadProgress(
       taskId: 'task-1',

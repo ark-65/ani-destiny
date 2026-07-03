@@ -7,6 +7,7 @@
 ## [Unreleased]
 
 ### 🐛 Fixed
+- Fixed older download tasks that had already saved Dart or filesystem failures like `RangeError`, `NoSuchMethodError`, or `PathNotFoundException` as failure messages still bringing those internal details back into Downloads or copied support summaries; those historical failures now normalize into the same calm retryable download-failure message.
 - Fixed older download tasks that had already saved lower-level failures like `DioException: ...` or `FileSystemException: ...` as network or storage failures still bringing internal error text back into Downloads or copied support summaries; raw exception-shaped messages in any failed download task now normalize into the same calm retryable download-failure message.
 - Fixed older download tasks that had already saved Dart runtime failures like `UnimplementedError: ...` or `Unsupported operation: ...` as unknown failures still bringing that internal wording back when users reopened Downloads or copied a support summary; those historical failures now normalize into the same calm retryable download-failure message.
 - Fixed older unexpected download failures that were already saved with raw details like `StateError: ...` or `Exception: ...` still bringing that internal text back when users reopened Downloads or copied a support summary; AniDestiny now normalizes those stored failures on read into the same calm retryable product-facing message, so historical failed tasks no longer leak implementation details back into the user flow.
