@@ -131,15 +131,23 @@ bool _looksLikeRawException(String message) {
       trimmed.startsWith('Bad state:') ||
       trimmed.startsWith('ClientException') ||
       trimmed.startsWith('ConcurrentModificationError') ||
+      trimmed.startsWith('Connection closed') ||
+      trimmed.startsWith('Connection refused') ||
+      trimmed.startsWith('Connection reset') ||
       trimmed.startsWith('DioException') ||
       trimmed.startsWith('Exception:') ||
+      trimmed.startsWith('Failed host lookup') ||
       trimmed.startsWith('FileSystemException') ||
       trimmed.startsWith('FormatException') ||
       trimmed.startsWith('HttpException') ||
       trimmed.startsWith('IntegerDivisionByZeroException') ||
       trimmed.startsWith('Instance of ') ||
       trimmed.startsWith('NoSuchMethodError') ||
+      trimmed.startsWith('Network is unreachable') ||
+      trimmed.startsWith('No route to host') ||
       trimmed.startsWith('HandshakeException') ||
+      trimmed.startsWith('Operation timed out') ||
+      trimmed.startsWith('OS Error:') ||
       trimmed.startsWith('PathAccessException') ||
       trimmed.startsWith('PathExistsException') ||
       trimmed.startsWith('PathNotFoundException') ||

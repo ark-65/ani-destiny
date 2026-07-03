@@ -212,6 +212,14 @@ void main() {
       'HandshakeException: Connection terminated during handshake',
       'TlsException: Failure trusting builtin roots',
       'TimeoutException after 0:00:30.000000: download stalled',
+      'Connection refused, errno = 61',
+      'Connection reset by peer',
+      'Connection closed before full header was received',
+      'Failed host lookup: cdn.example.test',
+      'Network is unreachable, errno = 51',
+      'No route to host, errno = 65',
+      'Operation timed out, errno = 60',
+      'OS Error: No space left on device, errno = 28',
     ];
 
     for (final message in rawMessages) {
