@@ -14,6 +14,9 @@ import '../../domain/entities/download_task.dart';
 import '../../domain/repositories/download_repository.dart';
 import '../../domain/services/download_service.dart';
 
+const _downloadNetworkFailureMessage =
+    'AniDestiny could not finish this download because the source could not be reached. Retry when the connection is stable.';
+
 class HttpDownloadService implements DownloadService {
   HttpDownloadService({
     required Dio dio,
@@ -493,9 +496,9 @@ class HttpDownloadService implements DownloadService {
   String _messageFromError(DioException error) {
     final statusCode = error.response?.statusCode;
     if (statusCode != null) {
-      return 'Download failed with HTTP $statusCode.';
+      return 'AniDestiny could not finish this download because the source returned HTTP $statusCode.';
     }
-    return error.message ?? 'Network request could not be completed.';
+    return _downloadNetworkFailureMessage;
   }
 
   Future<void> _finalizeCanceledDownload(

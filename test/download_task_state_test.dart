@@ -883,7 +883,11 @@ void main() {
     expect(p.basename(task.localPath!), 'Direct Test-Episode 1.mp4');
     expect(p.basename(p.dirname(task.localPath!)), 'downloads');
     expect(task.failureReason, DownloadFailureReason.networkError);
-    expect(task.failureMessage, 'offline');
+    expect(
+      task.failureMessage,
+      'AniDestiny could not finish this download because the source could not be reached. Retry when the connection is stable.',
+    );
+    expect(task.failureMessage, isNot(contains('offline')));
   });
 }
 
