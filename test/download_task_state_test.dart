@@ -125,6 +125,41 @@ void main() {
     expect(task.failureMessage, unexpectedDownloadFailureMessage);
   });
 
+  test('old raw unsupported operation failures are normalized on read',
+      () async {
+    final database = AppDatabase(NativeDatabase.memory());
+    addTearDown(database.close);
+
+    final repository = DownloadRepositoryImpl(database);
+    final now = DateTime.utc(2026, 7, 3, 12);
+
+    await repository.upsertTask(
+      DownloadTask(
+        id: 'task-raw-unsupported-operation',
+        animeId: 'anime-1',
+        episodeId: 'episode-1',
+        sourceId: 'sakura',
+        title: 'Direct Test',
+        episodeTitle: 'Episode 1',
+        url: 'https://cdn.example.test/video.mp4',
+        kind: DownloadKind.directFile,
+        status: DownloadStatus.failed,
+        failureReason: DownloadFailureReason.unknown,
+        failureMessage: 'Unsupported operation: background transfer disabled',
+        progress: 0,
+        downloadedBytes: 0,
+        createdAt: now,
+        updatedAt: now,
+      ),
+    );
+
+    final task = await repository.getTask('task-raw-unsupported-operation');
+
+    expect(task, isNotNull);
+    expect(task!.failureReason, DownloadFailureReason.unknown);
+    expect(task.failureMessage, unexpectedDownloadFailureMessage);
+  });
+
   test('direct file progress maps downloaded and total bytes', () {
     const progress = DownloadProgress(
       taskId: 'task-1',

@@ -133,5 +133,7 @@ bool _looksLikeRawException(String message) {
       trimmed.startsWith('FileSystemException') ||
       trimmed.startsWith('FormatException') ||
       trimmed.startsWith('Instance of ') ||
-      trimmed.startsWith('StateError:');
+      trimmed.startsWith('StateError:') ||
+      trimmed.startsWith('UnimplementedError:') ||
+      trimmed.startsWith('Unsupported operation:');
 }
