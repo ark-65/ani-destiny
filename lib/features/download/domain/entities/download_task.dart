@@ -144,6 +144,7 @@ bool _looksLikeRawException(String message) {
       trimmed.startsWith('FormatException') ||
       trimmed.startsWith('HttpException') ||
       trimmed.startsWith('IntegerDivisionByZeroException') ||
+      trimmed.startsWith('Invalid argument(s):') ||
       trimmed.startsWith('Instance of ') ||
       trimmed.startsWith('IOException') ||
       trimmed.startsWith('NetworkException') ||

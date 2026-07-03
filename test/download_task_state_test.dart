@@ -204,6 +204,7 @@ void main() {
       'RangeError (index): Invalid value: Not in inclusive range 0..1',
       'NoSuchMethodError: The method length was called on null.',
       'ArgumentError: Invalid argument(s): missing download directory',
+      'Invalid argument(s): missing download directory',
       'PathNotFoundException: Cannot open file, path = /tmp/missing.mp4',
       'PlatformException(download_failed, Channel call failed, null, null)',
       'ClientException: Connection closed before full header was received',
