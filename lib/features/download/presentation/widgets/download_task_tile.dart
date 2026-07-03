@@ -236,7 +236,7 @@ class DownloadTaskTile extends StatelessWidget {
         DownloadKind.directFile => task.failureMessage,
       };
     }
-    return task.failureMessage;
+    return normalizeDownloadTask(task).failureMessage;
   }
 
   bool _showProgress(DownloadTask task, bool isRemovingFromList) {

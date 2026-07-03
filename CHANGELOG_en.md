@@ -7,6 +7,7 @@
 ## [Unreleased]
 
 ### 🐛 Fixed
+- Fixed download cards still being able to show raw runtime-shaped failures like `StateError: ...` when a failed task reached the UI before the repository normalization path; the card display layer now collapses those messages into the same calm retryable download-failure copy, so the Downloads list no longer depends on only one cleanup path.
 - Fixed older download tasks that had already saved system-level messages like `Connection timed out`, `No space left on device`, `Permission denied`, or certificate verification failures still bringing low-level error text back into Downloads or copied support summaries; those historical failures now normalize into the same calm retryable download-failure message.
 - Fixed older download tasks that had already saved system or network-layer messages like `Connection refused`, `Failed host lookup`, or `OS Error` still bringing device-level failure text back into Downloads or copied support summaries; those historical failures now normalize into the same calm retryable download-failure message.
 - Fixed new direct-file download network failures still being able to save Dio's low-level `offline`, socket, or connection text as the task failure message, which could immediately leak implementation details into the download card and copied support summary; new network failures now store one calm retryable message, while HTTP status failures still keep the source response understandable.

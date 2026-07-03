@@ -170,6 +170,34 @@ void main() {
     );
   });
 
+  testWidgets('failed download cards hide raw exception-shaped messages', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      _buildTileApp(
+        DownloadTaskTile(
+          task: _task(
+            status: DownloadStatus.failed,
+            failureReason: DownloadFailureReason.unknown,
+            failureMessage: 'StateError: stream controller already closed',
+          ),
+          isBusy: false,
+          onStart: () {},
+          onPause: () {},
+          onCancel: () {},
+          onRemove: () {},
+        ),
+      ),
+    );
+    await tester.pump();
+
+    expect(find.textContaining('StateError'), findsNothing);
+    expect(
+      find.text(unexpectedDownloadFailureMessage),
+      findsOneWidget,
+    );
+  });
+
   testWidgets(
       'failed download tasks with stale partial paths fall back to remove copy',
       (
