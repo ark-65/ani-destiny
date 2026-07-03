@@ -7,6 +7,7 @@
 ## [Unreleased]
 
 ### 🐛 Fixed
+- Fixed older saved download tasks with raw Web / JavaScript runtime failures like `TypeError: ...` or `Error: ...` still being able to bring low-level error text back into Downloads or copied feedback summaries; those historical failures now normalize into the same calm retryable download-failure message.
 - Fixed older saved download tasks with raw Web network failures like `XMLHttpRequest error` still being able to bring low-level error text back into Downloads or copied feedback summaries; those historical failures now normalize into the same calm retryable download-failure message.
 - Fixed older saved download tasks with raw Dart argument failures like `Invalid argument(s): ...` still being able to bring internal exception wording back into Downloads or copied feedback summaries; those historical failures now normalize into the same calm retryable download-failure message.
 - Fixed download cards still being able to show raw runtime-shaped failures like `StateError: ...` when a failed task reached the UI before the repository normalization path; the card display layer now collapses those messages into the same calm retryable download-failure copy, so the Downloads list no longer depends on only one cleanup path.

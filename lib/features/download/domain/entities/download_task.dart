@@ -138,6 +138,7 @@ bool _looksLikeRawException(String message) {
       trimmed.startsWith('Connection reset') ||
       trimmed.startsWith('Connection timed out') ||
       trimmed.startsWith('DioException') ||
+      trimmed.startsWith('Error:') ||
       trimmed.startsWith('Exception:') ||
       trimmed.startsWith('Failed host lookup') ||
       trimmed.startsWith('FileSystemException') ||
@@ -165,6 +166,7 @@ bool _looksLikeRawException(String message) {
       trimmed.startsWith('StateError:') ||
       trimmed.startsWith('TimeoutException') ||
       trimmed.startsWith('TlsException') ||
+      trimmed.startsWith('TypeError:') ||
       trimmed.startsWith('UnknownHostException') ||
       trimmed.startsWith('UnimplementedError:') ||
       trimmed.startsWith('Unsupported operation:') ||

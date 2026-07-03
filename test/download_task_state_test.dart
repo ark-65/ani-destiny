@@ -213,6 +213,8 @@ void main() {
       'HandshakeException: Connection terminated during handshake',
       'TlsException: Failure trusting builtin roots',
       'TimeoutException after 0:00:30.000000: download stalled',
+      'TypeError: Failed to fetch',
+      'Error: Network request failed',
       'Connection refused, errno = 61',
       'Connection reset by peer',
       'Connection closed before full header was received',
