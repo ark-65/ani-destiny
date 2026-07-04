@@ -1,4 +1,5 @@
 import 'package:ani_destiny/app/l10n/app_localizations.dart';
+import 'package:ani_destiny/core/error/app_exception.dart';
 import 'package:ani_destiny/features/download/domain/entities/download_kind.dart';
 import 'package:ani_destiny/features/download/presentation/download_entry_feedback.dart';
 import 'package:flutter/widgets.dart';
@@ -28,6 +29,28 @@ void main() {
     expect(
       downloadEntryFeedbackActionLabel(l10n, DownloadKind.hls),
       'Review in Downloads',
+    );
+  });
+
+  test('download action errors keep raw app-exception wrappers out of copy',
+      () {
+    const l10n = AppLocalizations(Locale('en'));
+
+    expect(
+      downloadActionErrorMessage(
+        l10n,
+        const AppException(
+          'AppException: [download_failed] DioException: socket closed',
+        ),
+      ),
+      'AniDestiny could not finish that download action right now. Try again in a moment.',
+    );
+    expect(
+      downloadActionErrorMessage(
+        l10n,
+        const AppException('The selected download source is unavailable.'),
+      ),
+      'The selected download source is unavailable.',
     );
   });
 }

@@ -1,6 +1,7 @@
 import '../../../core/error/app_exception.dart';
 import '../../../app/l10n/app_localizations.dart';
 import '../domain/entities/download_kind.dart';
+import '../domain/entities/download_task.dart';
 
 String downloadEntryFeedbackMessage(
   AppLocalizations l10n,
@@ -31,7 +32,16 @@ String downloadEntryFeedbackErrorMessage(
   AppLocalizations l10n,
   Object error,
 ) {
-  if (error is AppException && error.message.trim().isNotEmpty) {
+  return downloadActionErrorMessage(l10n, error);
+}
+
+String downloadActionErrorMessage(
+  AppLocalizations l10n,
+  Object error,
+) {
+  if (error is AppException &&
+      error.message.trim().isNotEmpty &&
+      !looksLikeRawDownloadFailureMessage(error.message)) {
     return error.message;
   }
   return l10n.downloadActionFailedMessage;

@@ -12,6 +12,7 @@ import '../../../../core/widgets/app_error_view.dart';
 import '../../../../core/widgets/app_loading_view.dart';
 import '../../../../shared/widgets/adaptive_page.dart';
 import '../../domain/entities/download_task.dart';
+import '../download_entry_feedback.dart';
 import '../download_task_cleanup_state.dart';
 import '../providers/download_providers.dart';
 import '../widgets/download_task_tile.dart';
@@ -717,10 +718,7 @@ class _DownloadPageState extends ConsumerState<DownloadPage>
         error.code == 'download_manual_cleanup_required') {
       return context.l10n.downloadManualCleanupRequiredError;
     }
-    if (error is AppException && error.message.trim().isNotEmpty) {
-      return error.message;
-    }
-    return context.l10n.downloadActionFailedMessage;
+    return downloadActionErrorMessage(context.l10n, error);
   }
 
   String _pageErrorMessage(Object error) {

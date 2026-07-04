@@ -7,6 +7,7 @@
 ## [Unreleased]
 
 ### 🐛 Fixed
+- Fixed download-task actions on the Downloads page still being able to show app-level errors that already contained raw wrappers like `AppException: ...` or `DioException: ...`; those action failures now fall back to the same calm retryable download-action message while still preserving genuinely user-facing app error copy.
 - Fixed older saved download tasks with raw Web / JavaScript runtime failures like `TypeError: ...` or `Error: ...` still being able to bring low-level error text back into Downloads or copied feedback summaries; those historical failures now normalize into the same calm retryable download-failure message.
 - Fixed older saved download tasks with raw Web network failures like `XMLHttpRequest error` still being able to bring low-level error text back into Downloads or copied feedback summaries; those historical failures now normalize into the same calm retryable download-failure message.
 - Fixed older saved download tasks with raw Dart argument failures like `Invalid argument(s): ...` still being able to bring internal exception wording back into Downloads or copied feedback summaries; those historical failures now normalize into the same calm retryable download-failure message.

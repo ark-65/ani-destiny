@@ -117,13 +117,13 @@ DownloadTask normalizeDownloadTask(DownloadTask task) {
     return task.copyWith(failureMessage: null);
   }
   if (task.status == DownloadStatus.failed &&
-      _looksLikeRawException(failureMessage)) {
+      looksLikeRawDownloadFailureMessage(failureMessage)) {
     return task.copyWith(failureMessage: unexpectedDownloadFailureMessage);
   }
   return task;
 }
 
-bool _looksLikeRawException(String message) {
+bool looksLikeRawDownloadFailureMessage(String message) {
   final trimmed = message.trimLeft();
   return trimmed.startsWith('AppException') ||
       trimmed.startsWith('ArgumentError') ||

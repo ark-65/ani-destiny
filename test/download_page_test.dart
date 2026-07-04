@@ -1071,6 +1071,69 @@ void main() {
   });
 
   testWidgets(
+    'remove action failures hide raw app-exception wrappers from the snackbar',
+    (tester) async {
+      final repository = _FakeDownloadRepository([
+        _task('completed', DownloadStatus.completed),
+      ]);
+      final service = _RemoveEndedTaskFailureDownloadService(
+        repository,
+        const AppException(
+          'AppException: [download_failed] DioException: socket closed',
+        ),
+      );
+
+      await _pumpDownloadPage(
+        tester,
+        repository,
+        downloadService: service,
+      );
+
+      await tester
+          .tap(find.byKey(const ValueKey('download-task-remove-completed')));
+      await tester.pump();
+
+      expect(
+        find.text(
+          'AniDestiny could not finish that download action right now. Try again in a moment.',
+        ),
+        findsOneWidget,
+      );
+      expect(find.textContaining('AppException'), findsNothing);
+      expect(find.textContaining('DioException'), findsNothing);
+      expect(find.textContaining('socket closed'), findsNothing);
+    },
+  );
+
+  testWidgets(
+    'remove action failures keep product-facing app exceptions visible',
+    (tester) async {
+      final repository = _FakeDownloadRepository([
+        _task('completed', DownloadStatus.completed),
+      ]);
+      final service = _RemoveEndedTaskFailureDownloadService(
+        repository,
+        const AppException('Downloads are temporarily locked. Try again.'),
+      );
+
+      await _pumpDownloadPage(
+        tester,
+        repository,
+        downloadService: service,
+      );
+
+      await tester
+          .tap(find.byKey(const ValueKey('download-task-remove-completed')));
+      await tester.pump();
+
+      expect(
+        find.text('Downloads are temporarily locked. Try again.'),
+        findsOneWidget,
+      );
+    },
+  );
+
+  testWidgets(
     'retained discarded leftovers do not expose a single-item remove action',
     (tester) async {
       const partialPath = '/tmp/partial-video.mp4';
@@ -1857,6 +1920,20 @@ class _RemoveEndedTaskInFlightDownloadService extends _FakeDownloadService {
   Future<void> removeEndedTask(String taskId) async {
     await settleFuture;
     return super.removeEndedTask(taskId);
+  }
+}
+
+class _RemoveEndedTaskFailureDownloadService extends _FakeDownloadService {
+  _RemoveEndedTaskFailureDownloadService(
+    super.repository,
+    this.error,
+  );
+
+  final Object error;
+
+  @override
+  Future<void> removeEndedTask(String taskId) async {
+    throw error;
   }
 }
 
