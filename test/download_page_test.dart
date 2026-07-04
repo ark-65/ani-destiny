@@ -82,6 +82,32 @@ void main() {
   });
 
   testWidgets(
+    'download page load hides raw app-exception wrappers behind calm fallback copy',
+    (tester) async {
+      await _pumpDownloadPage(
+        tester,
+        _FakeDownloadRepository(const []),
+        downloadTasksStream: Stream<List<DownloadTask>>.error(
+          const AppException(
+            'AppException: [download_failed] DioException: socket closed',
+          ),
+        ),
+      );
+
+      expect(
+        find.text(
+          'Downloads are temporarily unavailable. Try again in a moment.',
+        ),
+        findsOneWidget,
+      );
+      expect(find.textContaining('AppException'), findsNothing);
+      expect(find.textContaining('DioException'), findsNothing);
+      expect(find.textContaining('socket closed'), findsNothing);
+      expect(find.text('Retry'), findsOneWidget);
+    },
+  );
+
+  testWidgets(
     'download page load hides raw non-app exceptions behind calm fallback copy',
     (tester) async {
       await _pumpDownloadPage(
