@@ -249,7 +249,7 @@ class FeedbackPackageCollector {
       );
       final localPath = task.localPath;
       if (needsManualCleanup && localPath != null && localPath.isNotEmpty) {
-        lines.add('  ${l10n.downloadLocalPath}: $localPath');
+        lines.add('  ${l10n.downloadLocalPath}: ${sanitizePath(localPath)}');
         lines.add(
           '  ${l10n.feedbackPackageMessage}: '
           '${l10n.downloadManualCleanupFeedbackNextStep(

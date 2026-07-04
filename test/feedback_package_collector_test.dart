@@ -499,7 +499,8 @@ void main() {
 
   test('collector keeps manual-cleanup download wording aligned with the page',
       () {
-    const leftoverPath = '/tmp/manual-cleanup-partial.mp4';
+    const leftoverPath =
+        '/Users/ark/Downloads/AniDestiny/manual-cleanup-partial.mp4';
     debugSetDownloadCleanupPathExists(
       (localPath) => localPath == leftoverPath,
     );
@@ -549,7 +550,13 @@ void main() {
       markdown,
       contains('- Latest issue: Needs cleanup · Reason: Discarded'),
     );
-    expect(markdown, contains('Local path: /tmp/manual-cleanup-partial.mp4'));
+    expect(
+      markdown,
+      contains(
+        'Local path: /Users/<user>/Downloads/AniDestiny/manual-cleanup-partial.mp4',
+      ),
+    );
+    expect(markdown, isNot(contains('/Users/ark/Downloads')));
     expect(
       markdown,
       contains(
