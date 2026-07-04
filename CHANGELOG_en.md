@@ -7,6 +7,7 @@
 ## [Unreleased]
 
 ### 🐛 Fixed
+- Fixed the Downloads page already telling users they could use `Remove from list` when exactly one ended task was ready beside a `Needs cleanup` leftover, while still making them go back to the matching card to find that final action; that mixed cleanup state now exposes `Remove from list` at the top of the page so the ready task can close immediately.
 - Fixed the BT / magnet download service boundary still carrying a placeholder implementation that could throw `UnimplementedError` and `not implemented yet` wording if accidentally reached; that unsupported path now returns the same product-facing “cannot save this offline yet” message and keeps its progress stream quietly closed.
 - Fixed Downloads page load failures still being able to show app-level errors that already contained raw wrappers like `AppException: ...` or `DioException: ...` in the error panel; those page-level failures now fall back to the same calm retryable “Downloads are temporarily unavailable” message.
 - Fixed download-task actions on the Downloads page still being able to show app-level errors that already contained raw wrappers like `AppException: ...` or `DioException: ...`; those action failures now fall back to the same calm retryable download-action message while still preserving genuinely user-facing app error copy.

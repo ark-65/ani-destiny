@@ -212,6 +212,9 @@ class _DownloadPageState extends ConsumerState<DownloadPage>
                   final manualCleanupTaskIds = _manualCleanupTaskIds(items);
                   final manualCleanupTaskCount = manualCleanupTaskIds.length;
                   final showClearEndedTasksAction = clearableTaskIds.length > 1;
+                  final showSingleReadyTaskAction =
+                      clearableTaskIds.length == 1 &&
+                          manualCleanupTaskCount > 0;
                   final showRecheckManualCleanupAction =
                       manualCleanupTaskCount > 1;
                   final manualCleanupBatchRecheckLabel =
@@ -253,7 +256,8 @@ class _DownloadPageState extends ConsumerState<DownloadPage>
                     children: [
                       if (showCleanupGuidance) ...[
                         if (showRecheckManualCleanupAction ||
-                            showClearEndedTasksAction)
+                            showClearEndedTasksAction ||
+                            showSingleReadyTaskAction)
                           Wrap(
                             spacing: 8,
                             runSpacing: 8,
@@ -308,6 +312,20 @@ class _DownloadPageState extends ConsumerState<DownloadPage>
                                       clearableTaskIds.length,
                                     ),
                                   ),
+                                ),
+                              if (showSingleReadyTaskAction)
+                                OutlinedButton.icon(
+                                  key: const ValueKey(
+                                    'downloads-remove-ready-task',
+                                  ),
+                                  onPressed: _isClearingEndedTasks ||
+                                          hasBusyRemovableTask
+                                      ? null
+                                      : () => _handleRemoveSingleReadyTask(
+                                            clearableTaskIds.single,
+                                          ),
+                                  icon: const Icon(Icons.delete_outline),
+                                  label: Text(context.l10n.removeFromList),
                                 ),
                             ],
                           ),

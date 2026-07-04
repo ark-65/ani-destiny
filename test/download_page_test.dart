@@ -324,6 +324,10 @@ void main() {
         findsNothing,
       );
       expect(
+        find.byKey(const ValueKey('downloads-remove-ready-task')),
+        findsOneWidget,
+      );
+      expect(
         find.text(
           'Tasks marked Needs cleanup stay in the list until that leftover partial file is gone. You can use "Remove from list" on the task that is already ready now. After you delete that file, return here and tap Check again on this task.',
         ),
@@ -337,7 +341,7 @@ void main() {
       );
 
       await tester
-          .tap(find.byKey(const ValueKey('download-task-remove-completed')));
+          .tap(find.byKey(const ValueKey('downloads-remove-ready-task')));
       await tester.pump();
 
       expect(repository.deleteAttempts, ['completed']);
