@@ -7,6 +7,7 @@
 ## [Unreleased]
 
 ### 🐛 Fixed
+- Fixed the BT / magnet download service boundary still carrying a placeholder implementation that could throw `UnimplementedError` and `not implemented yet` wording if accidentally reached; that unsupported path now returns the same product-facing “cannot save this offline yet” message and keeps its progress stream quietly closed.
 - Fixed Downloads page load failures still being able to show app-level errors that already contained raw wrappers like `AppException: ...` or `DioException: ...` in the error panel; those page-level failures now fall back to the same calm retryable “Downloads are temporarily unavailable” message.
 - Fixed download-task actions on the Downloads page still being able to show app-level errors that already contained raw wrappers like `AppException: ...` or `DioException: ...`; those action failures now fall back to the same calm retryable download-action message while still preserving genuinely user-facing app error copy.
 - Fixed older saved download tasks with raw Web / JavaScript runtime failures like `TypeError: ...` or `Error: ...` still being able to bring low-level error text back into Downloads or copied feedback summaries; those historical failures now normalize into the same calm retryable download-failure message.
