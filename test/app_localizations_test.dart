@@ -247,6 +247,59 @@ void main() {
     expect(ja.sourceHealthUnavailableHint, isNot(contains('fallback')));
   });
 
+  test('download stopped and stopping states stay distinct in Japanese', () {
+    const ja = AppLocalizations(Locale('ja'));
+    expect(ja.downloadStoppingStatus, '停止中...');
+    expect(ja.downloadStoppedStatus, '停止済み');
+    expect(ja.downloadStoppedStatus, isNot(contains('中')));
+  });
+
+  test('download entry action copy points directly to Downloads', () {
+    const zh = AppLocalizations(Locale('zh'));
+    expect(zh.openDownloads, '打开下载列表');
+    expect(zh.openDownloads, contains('下载'));
+    expect(zh.reviewInDownloads, '去下载列表查看');
+    expect(zh.reviewInDownloads, contains('下载'));
+
+    const en = AppLocalizations(Locale('en'));
+    expect(en.openDownloads, 'Open Downloads');
+    expect(en.openDownloads, isNot('Open'));
+    expect(en.reviewInDownloads, 'Review in Downloads');
+    expect(en.reviewInDownloads, contains('Downloads'));
+
+    const ja = AppLocalizations(Locale('ja'));
+    expect(ja.openDownloads, 'ダウンロード一覧を開く');
+    expect(ja.openDownloads, contains('ダウンロード'));
+    expect(ja.reviewInDownloads, 'ダウンロード一覧で確認');
+    expect(ja.reviewInDownloads, contains('ダウンロード'));
+  });
+
+  test('failed partial download guidance uses discard wording', () {
+    const zh = AppLocalizations(Locale('zh'));
+    expect(zh.downloadFailedRetryOrDiscardPartialNote, contains('放弃这个下载'));
+    expect(
+      zh.downloadFailedRetryOrDiscardPartialNote,
+      isNot(contains('从列表移除')),
+    );
+
+    const en = AppLocalizations(Locale('en'));
+    expect(
+      en.downloadFailedRetryOrDiscardPartialNote,
+      contains('discard this download'),
+    );
+    expect(
+      en.downloadFailedRetryOrDiscardPartialNote,
+      isNot(contains('remove it from the list')),
+    );
+
+    const ja = AppLocalizations(Locale('ja'));
+    expect(ja.downloadFailedRetryOrDiscardPartialNote, contains('破棄'));
+    expect(
+      ja.downloadFailedRetryOrDiscardPartialNote,
+      isNot(contains('一覧から削除')),
+    );
+  });
+
   test('runtime diagnostics helpers keep support copy localized', () {
     const zh = AppLocalizations(Locale('zh'));
     expect(zh.runtimeDiagnosticsSubtitle, isNot(contains('Debug')));

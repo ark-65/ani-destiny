@@ -3,9 +3,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/network/dio_provider.dart';
 import '../../../../core/storage/database_provider.dart';
 import '../../data/repositories/download_repository_impl.dart';
-import '../../data/services/bt_download_service_placeholder.dart';
 import '../../data/services/download_task_creator.dart';
 import '../../data/services/http_download_service.dart';
+import '../../data/services/unsupported_bt_download_service.dart';
 import '../../domain/entities/download_progress.dart';
 import '../../domain/entities/download_task.dart';
 import '../../domain/repositories/download_repository.dart';
@@ -27,7 +27,7 @@ final downloadTaskCreatorProvider = Provider<DownloadTaskCreator>((ref) {
 });
 
 final btDownloadServiceProvider = Provider<DownloadService>((ref) {
-  return const BtDownloadServicePlaceholder();
+  return const UnsupportedBtDownloadService();
 });
 
 final downloadTasksProvider =

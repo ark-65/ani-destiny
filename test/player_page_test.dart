@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:ani_destiny/app/l10n/app_localizations.dart';
+import 'package:ani_destiny/core/error/app_exception.dart';
 import 'package:ani_destiny/features/anime/domain/entities/anime_detail.dart';
 import 'package:ani_destiny/features/anime/domain/entities/anime.dart';
 import 'package:ani_destiny/features/anime/domain/entities/episode.dart';
@@ -14,6 +15,7 @@ import 'package:ani_destiny/features/danmaku/domain/repositories/danmaku_reposit
 import 'package:ani_destiny/features/danmaku/presentation/providers/danmaku_providers.dart';
 import 'package:ani_destiny/features/danmaku/presentation/widgets/danmaku_overlay.dart';
 import 'package:ani_destiny/features/download/data/services/download_task_creator.dart';
+import 'package:ani_destiny/features/download/domain/entities/download_kind.dart';
 import 'package:ani_destiny/features/download/domain/entities/download_progress.dart';
 import 'package:ani_destiny/features/download/domain/entities/download_source.dart';
 import 'package:ani_destiny/features/download/domain/services/download_service.dart';
@@ -2974,6 +2976,152 @@ void main() {
     expect(find.text('Retry'), findsNothing);
   });
 
+  testWidgets('download action explains unsupported streams honestly', (
+    tester,
+  ) async {
+    var createdDownloads = 0;
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          playerRepositoryProvider
+              .overrideWithValue(const _FakePlayerRepository()),
+          historyRepositoryProvider.overrideWithValue(_FakeHistoryRepository()),
+          danmakuRepositoryProvider.overrideWithValue(_FakeDanmakuRepository()),
+          downloadTaskCreatorProvider.overrideWithValue(
+            _FakeDownloadTaskCreator(
+              kind: DownloadKind.hls,
+              onCreate: () => createdDownloads++,
+            ),
+          ),
+        ],
+        child: _buildPlayerApp(_args),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.widgetWithIcon(IconButton, Icons.download_outlined));
+    await tester.pump();
+
+    expect(createdDownloads, 1);
+    expect(
+      find.text(
+        'This download currently uses an HLS / m3u8 stream, and AniDestiny cannot save that type offline yet. This entry still stays in Downloads so you can review it or remove it later.',
+      ),
+      findsOneWidget,
+    );
+    expect(find.text('Review in Downloads'), findsOneWidget);
+  });
+
+  testWidgets('download action says direct downloads still need a start step', (
+    tester,
+  ) async {
+    var createdDownloads = 0;
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          playerRepositoryProvider
+              .overrideWithValue(const _FakePlayerRepository()),
+          historyRepositoryProvider.overrideWithValue(_FakeHistoryRepository()),
+          danmakuRepositoryProvider.overrideWithValue(_FakeDanmakuRepository()),
+          downloadTaskCreatorProvider.overrideWithValue(
+            _FakeDownloadTaskCreator(onCreate: () => createdDownloads++),
+          ),
+        ],
+        child: _buildPlayerApp(_args),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.widgetWithIcon(IconButton, Icons.download_outlined));
+    await tester.pump();
+
+    expect(createdDownloads, 1);
+    expect(
+      find.text('Added to Downloads. Open Downloads to start it.'),
+      findsOneWidget,
+    );
+    expect(find.text('Open Downloads'), findsOneWidget);
+  });
+
+  testWidgets('download action surfaces player creation errors calmly', (
+    tester,
+  ) async {
+    const failureMessage = 'Downloads are temporarily unavailable.';
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          playerRepositoryProvider
+              .overrideWithValue(const _FakePlayerRepository()),
+          historyRepositoryProvider.overrideWithValue(_FakeHistoryRepository()),
+          danmakuRepositoryProvider.overrideWithValue(_FakeDanmakuRepository()),
+          downloadTaskCreatorProvider.overrideWithValue(
+            _FakeDownloadTaskCreator(
+              onCreate: () {},
+              createError: const AppException(
+                failureMessage,
+                code: 'download_busy',
+              ),
+            ),
+          ),
+        ],
+        child: _buildPlayerApp(_args),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.widgetWithIcon(IconButton, Icons.download_outlined));
+    await tester.pump();
+
+    expect(find.text(failureMessage), findsOneWidget);
+    expect(find.textContaining('AppException'), findsNothing);
+    expect(find.text('Open Downloads'), findsNothing);
+  });
+
+  testWidgets(
+    'download action hides raw non-app player creation errors behind calm fallback copy',
+    (tester) async {
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            playerRepositoryProvider
+                .overrideWithValue(const _FakePlayerRepository()),
+            historyRepositoryProvider.overrideWithValue(
+              _FakeHistoryRepository(),
+            ),
+            danmakuRepositoryProvider.overrideWithValue(
+              _FakeDanmakuRepository(),
+            ),
+            downloadTaskCreatorProvider.overrideWithValue(
+              _FakeDownloadTaskCreator(
+                onCreate: () {},
+                createError: StateError('filesystem sync failed'),
+              ),
+            ),
+          ],
+          child: _buildPlayerApp(_args),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      await tester
+          .tap(find.widgetWithIcon(IconButton, Icons.download_outlined));
+      await tester.pump();
+
+      expect(
+        find.text(
+          'AniDestiny could not finish that download action right now. Try again in a moment.',
+        ),
+        findsOneWidget,
+      );
+      expect(find.textContaining('filesystem sync failed'), findsNothing);
+      expect(find.textContaining('StateError'), findsNothing);
+      expect(find.text('Open Downloads'), findsNothing);
+    },
+  );
+
   testWidgets('invalid playback urls are treated as unavailable before load',
       (tester) async {
     await tester.pumpWidget(
@@ -3449,13 +3597,18 @@ class _PendingPlayableNextEpisodeAnimeRepository
 }
 
 class _FakeDownloadTaskCreator extends DownloadTaskCreator {
-  _FakeDownloadTaskCreator({required this.onCreate})
-      : super(_FakeDownloadService());
+  _FakeDownloadTaskCreator({
+    required this.onCreate,
+    this.kind = DownloadKind.directFile,
+    this.createError,
+  }) : super(_FakeDownloadService());
 
   final void Function() onCreate;
+  final DownloadKind kind;
+  final Object? createError;
 
   @override
-  Future<String> create({
+  Future<CreatedDownloadTask> create({
     required String animeId,
     required String episodeId,
     required String sourceId,
@@ -3467,7 +3620,10 @@ class _FakeDownloadTaskCreator extends DownloadTaskCreator {
     String? mimeType,
   }) async {
     onCreate();
-    return 'task-1';
+    if (createError != null) {
+      throw createError!;
+    }
+    return CreatedDownloadTask(taskId: 'task-1', kind: kind);
   }
 }
 

@@ -1,0 +1,48 @@
+import '../../../core/error/app_exception.dart';
+import '../../../app/l10n/app_localizations.dart';
+import '../domain/entities/download_kind.dart';
+import '../domain/entities/download_task.dart';
+
+String downloadEntryFeedbackMessage(
+  AppLocalizations l10n,
+  DownloadKind kind,
+) {
+  if (kind == DownloadKind.directFile) {
+    return l10n.downloadTaskAdded;
+  }
+  final unsupportedMessage = switch (kind) {
+    DownloadKind.hls => l10n.downloadUnsupportedHlsMessage,
+    DownloadKind.bt => l10n.downloadUnsupportedBtMessage,
+    DownloadKind.unknown => l10n.downloadUnsupportedUnknownMessage,
+    DownloadKind.directFile => l10n.downloadTaskAdded,
+  };
+  return '$unsupportedMessage ${l10n.downloadUnsupportedListReviewNote}';
+}
+
+String downloadEntryFeedbackActionLabel(
+  AppLocalizations l10n,
+  DownloadKind kind,
+) {
+  return kind == DownloadKind.directFile
+      ? l10n.openDownloads
+      : l10n.reviewInDownloads;
+}
+
+String downloadEntryFeedbackErrorMessage(
+  AppLocalizations l10n,
+  Object error,
+) {
+  return downloadActionErrorMessage(l10n, error);
+}
+
+String downloadActionErrorMessage(
+  AppLocalizations l10n,
+  Object error,
+) {
+  if (error is AppException &&
+      error.message.trim().isNotEmpty &&
+      !looksLikeRawDownloadFailureMessage(error.message)) {
+    return error.message;
+  }
+  return l10n.downloadActionFailedMessage;
+}

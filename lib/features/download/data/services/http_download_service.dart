@@ -14,6 +14,9 @@ import '../../domain/entities/download_task.dart';
 import '../../domain/repositories/download_repository.dart';
 import '../../domain/services/download_service.dart';
 
+const _downloadNetworkFailureMessage =
+    'AniDestiny could not finish this download because the source could not be reached. Retry when the connection is stable.';
+
 class HttpDownloadService implements DownloadService {
   HttpDownloadService({
     required Dio dio,
@@ -38,10 +41,9 @@ class HttpDownloadService implements DownloadService {
   }) async {
     final now = DateTime.now();
     final taskId = 'download-${now.microsecondsSinceEpoch}';
-    final unsupportedMessage = _unsupportedMessage(source.kind);
-    final status = unsupportedMessage == null
-        ? DownloadStatus.pending
-        : DownloadStatus.unsupported;
+    final isUnsupported = _isUnsupportedKind(source.kind);
+    final status =
+        isUnsupported ? DownloadStatus.unsupported : DownloadStatus.pending;
     await _repository.upsertTask(
       DownloadTask(
         id: taskId,
@@ -54,10 +56,10 @@ class HttpDownloadService implements DownloadService {
         kind: source.kind,
         headers: source.headers,
         status: status,
-        failureReason: unsupportedMessage == null
-            ? DownloadFailureReason.none
-            : DownloadFailureReason.unsupportedType,
-        failureMessage: unsupportedMessage,
+        failureReason: isUnsupported
+            ? DownloadFailureReason.unsupportedType
+            : DownloadFailureReason.none,
+        failureMessage: null,
         progress: 0,
         createdAt: now,
         updatedAt: now,
@@ -90,7 +92,7 @@ class HttpDownloadService implements DownloadService {
       final updated = existingTask.copyWith(
         status: DownloadStatus.unsupported,
         failureReason: DownloadFailureReason.unsupportedType,
-        failureMessage: _unsupportedMessage(existingTask.kind),
+        failureMessage: null,
         updatedAt: DateTime.now(),
       );
       await _repository.upsertTask(updated);
@@ -219,12 +221,16 @@ class HttpDownloadService implements DownloadService {
       final failed = latest.copyWith(
         status: DownloadStatus.failed,
         failureReason: DownloadFailureReason.unknown,
-        failureMessage: error.toString(),
+        failureMessage: unexpectedDownloadFailureMessage,
         updatedAt: DateTime.now(),
       );
       await _repository.upsertTask(failed);
       _emitTask(failed);
-      rethrow;
+      throw AppException(
+        unexpectedDownloadFailureMessage,
+        code: 'download_unexpected_error',
+        cause: error,
+      );
     } finally {
       _tokens.remove(taskId);
       if (identical(_settleCompleters[taskId], settleCompleter)) {
@@ -309,15 +315,15 @@ class HttpDownloadService implements DownloadService {
       );
     }
 
-    if (_requiresManualCleanupBeforeRemoval(task)) {
+    if (_requiresLocalCleanupBeforeRemoval(task)) {
       final clearedLocalPath = await _clearDiscardedDownload(
         localPath: task.localPath,
         clearNow: true,
       );
       if (clearedLocalPath != null) {
-        final updated = task.copyWith(
-          localPath: clearedLocalPath,
-          updatedAt: DateTime.now(),
+        final updated = _manualCleanupBlockedRemovalTask(
+          task,
+          clearedLocalPath,
         );
         await _repository.upsertTask(updated);
         _emitTask(updated);
@@ -428,8 +434,38 @@ class HttpDownloadService implements DownloadService {
     };
   }
 
-  bool _requiresManualCleanupBeforeRemoval(DownloadTask task) {
-    return task.status == DownloadStatus.canceled && task.localPath != null;
+  bool _requiresLocalCleanupBeforeRemoval(DownloadTask task) {
+    final localPath = task.localPath;
+    if (localPath == null || localPath.isEmpty) {
+      return false;
+    }
+    return task.status == DownloadStatus.canceled ||
+        (task.status == DownloadStatus.failed &&
+            task.kind == DownloadKind.directFile);
+  }
+
+  DownloadTask _manualCleanupBlockedRemovalTask(
+    DownloadTask task,
+    String localPath,
+  ) {
+    final updatedAt = DateTime.now();
+    if (task.status == DownloadStatus.failed &&
+        task.kind == DownloadKind.directFile) {
+      return task.copyWith(
+        localPath: localPath,
+        status: DownloadStatus.canceled,
+        failureReason: DownloadFailureReason.canceled,
+        failureMessage: null,
+        progress: 0,
+        totalBytes: null,
+        downloadedBytes: 0,
+        updatedAt: updatedAt,
+      );
+    }
+    return task.copyWith(
+      localPath: localPath,
+      updatedAt: updatedAt,
+    );
   }
 
   bool _shouldWaitForSettlement(DownloadTask task) {
@@ -450,21 +486,19 @@ class HttpDownloadService implements DownloadService {
     return value.replaceAll(RegExp(r'[\\/:*?"<>|]+'), '_');
   }
 
-  String? _unsupportedMessage(DownloadKind kind) {
+  bool _isUnsupportedKind(DownloadKind kind) {
     return switch (kind) {
-      DownloadKind.directFile => null,
-      DownloadKind.hls => 'HLS offline download is not implemented yet.',
-      DownloadKind.bt => 'BT download is not implemented yet.',
-      DownloadKind.unknown => 'This download URL type is not supported yet.',
+      DownloadKind.directFile => false,
+      DownloadKind.hls || DownloadKind.bt || DownloadKind.unknown => true,
     };
   }
 
   String _messageFromError(DioException error) {
     final statusCode = error.response?.statusCode;
     if (statusCode != null) {
-      return 'Download failed with HTTP $statusCode.';
+      return 'AniDestiny could not finish this download because the source returned HTTP $statusCode.';
     }
-    return error.message ?? 'Network request could not be completed.';
+    return _downloadNetworkFailureMessage;
   }
 
   Future<void> _finalizeCanceledDownload(

@@ -254,6 +254,206 @@ void main() {
     expect(markdown, isNot(contains('Download canceled.')));
   });
 
+  test(
+    'collector uses honest localized copy for unsupported BT downloads',
+    () {
+      final now = DateTime.utc(2026, 6, 30, 15, 0, 0);
+      const l10n = AppLocalizations(Locale('en'));
+      final package = FeedbackPackageCollector(
+        l10n: l10n,
+        appName: 'AniDestiny',
+        appVersion: '1.0.4',
+        platform: 'Windows',
+        currentSourceId: 'sakura',
+        sourceHealth: const [],
+        sourceDiagnostics: const [],
+        fallbackEvents: const [],
+        playbackDiagnostics: null,
+        danmakuEnabled: false,
+        dandanplayAppIdConfigured: false,
+        dandanplayAppSecretConfigured: false,
+        downloadTasks: [
+          DownloadTask(
+            id: 'task-bt',
+            animeId: 'anime-1',
+            episodeId: 'episode-1',
+            sourceId: 'sakura',
+            title: 'Anime',
+            episodeTitle: 'Episode 1',
+            url: 'magnet:?xt=urn:btih:abc123',
+            kind: DownloadKind.bt,
+            status: DownloadStatus.unsupported,
+            failureReason: DownloadFailureReason.unsupportedType,
+            failureMessage: null,
+            progress: 0,
+            downloadedBytes: 0,
+            createdAt: now,
+            updatedAt: now,
+          ),
+        ],
+      ).collect(generatedAt: now);
+
+      final markdown = const FeedbackPackageFormatter(l10n: l10n).format(
+        package,
+      );
+
+      expect(markdown, contains('- BT / magnet: 1'));
+      expect(
+        markdown,
+        contains(
+          '- Latest issue: Unsupported · Reason: This download currently uses a BT / magnet link, and AniDestiny cannot handle that type directly yet.',
+        ),
+      );
+      expect(
+        markdown,
+        isNot(
+          contains(
+            'Message: This download currently uses a BT / magnet link, and AniDestiny cannot handle that type directly yet.',
+          ),
+        ),
+      );
+      expect(
+        markdown,
+        contains(
+          'Message: AniDestiny cannot take over this type of download yet. You can remove this task from the list for now.',
+        ),
+      );
+      expect(markdown, isNot(contains('BT placeholder')));
+      expect(markdown, isNot(contains('BT download is not implemented yet.')));
+    },
+  );
+
+  test(
+    'collector adds failed-download next steps when a partial file is left behind',
+    () {
+      const partialPath = '/downloads/anime-episode-1.part';
+      debugSetDownloadCleanupPathExists(
+        (localPath) => localPath == partialPath,
+      );
+      addTearDown(() => debugSetDownloadCleanupPathExists(null));
+
+      final now = DateTime.utc(2026, 7, 3, 1, 0, 0);
+      const l10n = AppLocalizations(Locale('en'));
+      final package = FeedbackPackageCollector(
+        l10n: l10n,
+        appName: 'AniDestiny',
+        appVersion: '1.0.4',
+        platform: 'Windows',
+        currentSourceId: 'sakura',
+        sourceHealth: const [],
+        sourceDiagnostics: const [],
+        fallbackEvents: const [],
+        playbackDiagnostics: null,
+        danmakuEnabled: false,
+        dandanplayAppIdConfigured: false,
+        dandanplayAppSecretConfigured: false,
+        downloadTasks: [
+          DownloadTask(
+            id: 'task-failed-partial',
+            animeId: 'anime-1',
+            episodeId: 'episode-1',
+            sourceId: 'sakura',
+            title: 'Anime',
+            episodeTitle: 'Episode 1',
+            url: 'https://cdn.example.test/video.mp4',
+            kind: DownloadKind.directFile,
+            status: DownloadStatus.failed,
+            failureReason: DownloadFailureReason.networkError,
+            failureMessage: 'Socket closed unexpectedly',
+            progress: 0.4,
+            totalBytes: 2048,
+            downloadedBytes: 768,
+            localPath: partialPath,
+            createdAt: now,
+            updatedAt: now,
+          ),
+        ],
+      ).collect(generatedAt: now);
+
+      final markdown = const FeedbackPackageFormatter(l10n: l10n).format(
+        package,
+      );
+
+      expect(markdown, contains('- Failed: 1'));
+      expect(
+        markdown,
+        contains('- Latest issue: Failed · Reason: Network error'),
+      );
+      expect(markdown, contains('Message: Socket closed unexpectedly'));
+      expect(
+        markdown,
+        contains(
+          'Message: This download did not finish successfully. You can retry it now, or discard this download to clear the partial file from this failed attempt.',
+        ),
+      );
+    },
+  );
+
+  test(
+    'collector drops failed partial cleanup wording once the leftover file is already gone',
+    () {
+      debugSetDownloadCleanupPathExists((_) => false);
+      addTearDown(() => debugSetDownloadCleanupPathExists(null));
+
+      final now = DateTime.utc(2026, 7, 3, 1, 30, 0);
+      const l10n = AppLocalizations(Locale('en'));
+      final package = FeedbackPackageCollector(
+        l10n: l10n,
+        appName: 'AniDestiny',
+        appVersion: '1.0.4',
+        platform: 'Windows',
+        currentSourceId: 'sakura',
+        sourceHealth: const [],
+        sourceDiagnostics: const [],
+        fallbackEvents: const [],
+        playbackDiagnostics: null,
+        danmakuEnabled: false,
+        dandanplayAppIdConfigured: false,
+        dandanplayAppSecretConfigured: false,
+        downloadTasks: [
+          DownloadTask(
+            id: 'task-failed-stale-partial',
+            animeId: 'anime-1',
+            episodeId: 'episode-1',
+            sourceId: 'sakura',
+            title: 'Anime',
+            episodeTitle: 'Episode 1',
+            url: 'https://cdn.example.test/video.mp4',
+            kind: DownloadKind.directFile,
+            status: DownloadStatus.failed,
+            failureReason: DownloadFailureReason.networkError,
+            failureMessage: 'Socket closed unexpectedly',
+            progress: 0.4,
+            totalBytes: 2048,
+            downloadedBytes: 768,
+            localPath: '/downloads/anime-episode-1.part',
+            createdAt: now,
+            updatedAt: now,
+          ),
+        ],
+      ).collect(generatedAt: now);
+
+      final markdown = const FeedbackPackageFormatter(l10n: l10n).format(
+        package,
+      );
+
+      expect(
+        markdown,
+        contains(
+          'Message: This download did not finish successfully. You can retry it now, or remove it from the list if you no longer need this record.',
+        ),
+      );
+      expect(
+        markdown,
+        isNot(
+          contains(
+            'Message: This download did not finish successfully. You can retry it now, or discard this download to clear the partial file from this failed attempt.',
+          ),
+        ),
+      );
+    },
+  );
+
   test('collector uses stopped download wording in support summaries', () {
     final now = DateTime.utc(2026, 6, 25, 15, 0, 0);
     const l10n = AppLocalizations(Locale('en'));
@@ -299,7 +499,8 @@ void main() {
 
   test('collector keeps manual-cleanup download wording aligned with the page',
       () {
-    const leftoverPath = '/tmp/manual-cleanup-partial.mp4';
+    const leftoverPath =
+        '/Users/ark/Downloads/AniDestiny/manual-cleanup-partial.mp4';
     debugSetDownloadCleanupPathExists(
       (localPath) => localPath == leftoverPath,
     );
@@ -349,7 +550,13 @@ void main() {
       markdown,
       contains('- Latest issue: Needs cleanup · Reason: Discarded'),
     );
-    expect(markdown, contains('Local path: /tmp/manual-cleanup-partial.mp4'));
+    expect(
+      markdown,
+      contains(
+        'Local path: /Users/<user>/Downloads/AniDestiny/manual-cleanup-partial.mp4',
+      ),
+    );
+    expect(markdown, isNot(contains('/Users/ark/Downloads')));
     expect(
       markdown,
       contains(
@@ -430,6 +637,192 @@ void main() {
       markdown,
       contains(
         'Message: Delete the leftover partial file from your device first. Then return to Downloads and use "Check 2 leftover files again", or tap Check again on that task.',
+      ),
+    );
+  });
+
+  test(
+      'collector points single manual cleanup summaries at the ready remove action too',
+      () {
+    const leftoverPath = '/tmp/manual-cleanup-partial.mp4';
+    debugSetDownloadCleanupPathExists(
+      (localPath) => localPath == leftoverPath,
+    );
+    addTearDown(() => debugSetDownloadCleanupPathExists(null));
+
+    final now = DateTime.utc(2026, 7, 1, 1, 0, 0);
+    const l10n = AppLocalizations(Locale('en'));
+    final package = FeedbackPackageCollector(
+      l10n: l10n,
+      appName: 'AniDestiny',
+      appVersion: '1.0.4',
+      platform: 'Windows',
+      currentSourceId: 'sakura',
+      sourceHealth: const [],
+      sourceDiagnostics: const [],
+      fallbackEvents: const [],
+      playbackDiagnostics: null,
+      danmakuEnabled: false,
+      dandanplayAppIdConfigured: false,
+      dandanplayAppSecretConfigured: false,
+      downloadTasks: [
+        DownloadTask(
+          id: 'task-complete',
+          animeId: 'anime-1',
+          episodeId: 'episode-1',
+          sourceId: 'sakura',
+          title: 'Anime',
+          episodeTitle: 'Episode 1',
+          url: 'https://cdn.example.test/video-complete.mp4',
+          kind: DownloadKind.directFile,
+          status: DownloadStatus.completed,
+          failureReason: DownloadFailureReason.none,
+          progress: 1,
+          downloadedBytes: 1024,
+          localPath: '/downloads/anime-episode-1.mp4',
+          createdAt: now,
+          updatedAt: now,
+        ),
+        DownloadTask(
+          id: 'task-cleanup',
+          animeId: 'anime-2',
+          episodeId: 'episode-2',
+          sourceId: 'sakura',
+          title: 'Anime 2',
+          episodeTitle: 'Episode 2',
+          url: 'https://cdn.example.test/video-partial.mp4',
+          kind: DownloadKind.directFile,
+          status: DownloadStatus.canceled,
+          failureReason: DownloadFailureReason.canceled,
+          progress: 0,
+          downloadedBytes: 0,
+          localPath: leftoverPath,
+          createdAt: now,
+          updatedAt: now.add(const Duration(minutes: 1)),
+        ),
+      ],
+    ).collect(generatedAt: now);
+
+    final markdown = const FeedbackPackageFormatter(l10n: l10n).format(package);
+
+    expect(
+      markdown,
+      contains(
+        'Message: You can use "Remove from list" on the task that is already ready now. For this leftover partial file, delete it from your device first. Then return to Downloads and tap Check again on that task.',
+      ),
+    );
+  });
+
+  test(
+      'collector keeps ready batch clear visible alongside multi-task manual cleanup guidance',
+      () {
+    const firstLeftoverPath = '/tmp/manual-cleanup-partial-1.mp4';
+    const secondLeftoverPath = '/tmp/manual-cleanup-partial-2.mp4';
+    debugSetDownloadCleanupPathExists(
+      (localPath) =>
+          localPath == firstLeftoverPath || localPath == secondLeftoverPath,
+    );
+    addTearDown(() => debugSetDownloadCleanupPathExists(null));
+
+    final now = DateTime.utc(2026, 7, 1, 2, 0, 0);
+    const l10n = AppLocalizations(Locale('en'));
+    final package = FeedbackPackageCollector(
+      l10n: l10n,
+      appName: 'AniDestiny',
+      appVersion: '1.0.4',
+      platform: 'Windows',
+      currentSourceId: 'sakura',
+      sourceHealth: const [],
+      sourceDiagnostics: const [],
+      fallbackEvents: const [],
+      playbackDiagnostics: null,
+      danmakuEnabled: false,
+      dandanplayAppIdConfigured: false,
+      dandanplayAppSecretConfigured: false,
+      downloadTasks: [
+        DownloadTask(
+          id: 'task-complete-1',
+          animeId: 'anime-1',
+          episodeId: 'episode-1',
+          sourceId: 'sakura',
+          title: 'Anime',
+          episodeTitle: 'Episode 1',
+          url: 'https://cdn.example.test/video-complete-1.mp4',
+          kind: DownloadKind.directFile,
+          status: DownloadStatus.completed,
+          failureReason: DownloadFailureReason.none,
+          progress: 1,
+          downloadedBytes: 1024,
+          localPath: '/downloads/anime-1-episode-1.mp4',
+          createdAt: now,
+          updatedAt: now,
+        ),
+        DownloadTask(
+          id: 'task-complete-2',
+          animeId: 'anime-2',
+          episodeId: 'episode-2',
+          sourceId: 'sakura',
+          title: 'Anime 2',
+          episodeTitle: 'Episode 2',
+          url: 'https://cdn.example.test/video-complete-2.mp4',
+          kind: DownloadKind.directFile,
+          status: DownloadStatus.completed,
+          failureReason: DownloadFailureReason.none,
+          progress: 1,
+          downloadedBytes: 1024,
+          localPath: '/downloads/anime-2-episode-2.mp4',
+          createdAt: now,
+          updatedAt: now,
+        ),
+        DownloadTask(
+          id: 'task-cleanup-1',
+          animeId: 'anime-3',
+          episodeId: 'episode-3',
+          sourceId: 'sakura',
+          title: 'Anime 3',
+          episodeTitle: 'Episode 3',
+          url: 'https://cdn.example.test/video-1.mp4',
+          kind: DownloadKind.directFile,
+          status: DownloadStatus.canceled,
+          failureReason: DownloadFailureReason.canceled,
+          progress: 0,
+          downloadedBytes: 0,
+          localPath: firstLeftoverPath,
+          createdAt: now,
+          updatedAt: now.add(const Duration(minutes: 2)),
+        ),
+        DownloadTask(
+          id: 'task-cleanup-2',
+          animeId: 'anime-4',
+          episodeId: 'episode-4',
+          sourceId: 'sakura',
+          title: 'Anime 4',
+          episodeTitle: 'Episode 4',
+          url: 'https://cdn.example.test/video-2.mp4',
+          kind: DownloadKind.directFile,
+          status: DownloadStatus.canceled,
+          failureReason: DownloadFailureReason.canceled,
+          progress: 0,
+          downloadedBytes: 0,
+          localPath: secondLeftoverPath,
+          createdAt: now,
+          updatedAt: now,
+        ),
+      ],
+    ).collect(generatedAt: now);
+
+    final markdown = const FeedbackPackageFormatter(l10n: l10n).format(package);
+
+    expect(
+      markdown,
+      contains(
+        'Message: You can use "Clear 2 ended tasks from list" above for the other ended tasks now.',
+      ),
+    );
+    expect(
+      markdown,
+      contains(
+        'For the leftover partial files, delete them from your device first.',
       ),
     );
   });

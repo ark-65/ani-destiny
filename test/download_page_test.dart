@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:ani_destiny/app/l10n/app_localizations.dart';
+import 'package:ani_destiny/core/error/app_exception.dart';
 import 'package:ani_destiny/features/download/domain/entities/download_failure_reason.dart';
 import 'package:ani_destiny/features/download/domain/entities/download_kind.dart';
 import 'package:ani_destiny/features/download/domain/entities/download_progress.dart';
@@ -62,6 +63,107 @@ void main() {
     expect(repository.deletedTaskIds, isEmpty);
   });
 
+  testWidgets('download page load surfaces repository errors calmly', (
+    tester,
+  ) async {
+    const failureMessage = 'Downloads are temporarily unavailable.';
+
+    await _pumpDownloadPage(
+      tester,
+      _FakeDownloadRepository(const []),
+      downloadTasksStream: Stream<List<DownloadTask>>.error(
+        const AppException(failureMessage, code: 'download_busy'),
+      ),
+    );
+
+    expect(find.text(failureMessage), findsOneWidget);
+    expect(find.textContaining('AppException'), findsNothing);
+    expect(find.text('Retry'), findsOneWidget);
+  });
+
+  testWidgets(
+    'download page load hides raw app-exception wrappers behind calm fallback copy',
+    (tester) async {
+      await _pumpDownloadPage(
+        tester,
+        _FakeDownloadRepository(const []),
+        downloadTasksStream: Stream<List<DownloadTask>>.error(
+          const AppException(
+            'AppException: [download_failed] DioException: socket closed',
+          ),
+        ),
+      );
+
+      expect(
+        find.text(
+          'Downloads are temporarily unavailable. Try again in a moment.',
+        ),
+        findsOneWidget,
+      );
+      expect(find.textContaining('AppException'), findsNothing);
+      expect(find.textContaining('DioException'), findsNothing);
+      expect(find.textContaining('socket closed'), findsNothing);
+      expect(find.text('Retry'), findsOneWidget);
+    },
+  );
+
+  testWidgets(
+    'download page load hides raw non-app exceptions behind calm fallback copy',
+    (tester) async {
+      await _pumpDownloadPage(
+        tester,
+        _FakeDownloadRepository(const []),
+        downloadTasksStream: Stream<List<DownloadTask>>.error(
+          StateError('database handshake failed'),
+        ),
+      );
+
+      expect(
+        find.text(
+          'Downloads are temporarily unavailable. Try again in a moment.',
+        ),
+        findsOneWidget,
+      );
+      expect(find.textContaining('database handshake failed'), findsNothing);
+      expect(find.textContaining('StateError'), findsNothing);
+      expect(find.text('Retry'), findsOneWidget);
+    },
+  );
+
+  testWidgets(
+    'pending and preparing downloads wait to show progress until transfer begins',
+    (tester) async {
+      final repository = _FakeDownloadRepository([
+        _task('pending', DownloadStatus.pending),
+        _task('preparing', DownloadStatus.preparing),
+      ]);
+
+      await _pumpDownloadPage(tester, repository);
+
+      expect(
+        find.text(
+          'This download is ready to start. AniDestiny will show progress after the file transfer begins.',
+        ),
+        findsOneWidget,
+      );
+      expect(
+        find.text(
+          'AniDestiny is preparing this download. Progress will appear here after the file transfer begins.',
+        ),
+        findsOneWidget,
+      );
+      expect(
+        find.byKey(const ValueKey('download-task-progress-pending')),
+        findsNothing,
+      );
+      expect(
+        find.byKey(const ValueKey('download-task-progress-preparing')),
+        findsNothing,
+      );
+      expect(find.textContaining('Progress:'), findsNothing);
+    },
+  );
+
   testWidgets(
     'single ended task keeps page-level clear hidden',
     (tester) async {
@@ -77,6 +179,89 @@ void main() {
       );
       expect(
         find.byKey(const ValueKey('download-task-remove-completed')),
+        findsOneWidget,
+      );
+      expect(
+        find.descendant(
+          of: find.byKey(const ValueKey('download-task-remove-completed')),
+          matching: find.text('Remove from list'),
+        ),
+        findsOneWidget,
+      );
+    },
+  );
+
+  testWidgets(
+    'single failed task with a partial file keeps page-level clear hidden and exposes discard copy',
+    (tester) async {
+      _stubCleanupPathExists({'/tmp/failed-partial.mp4'});
+      final repository = _FakeDownloadRepository([
+        _task('failed', DownloadStatus.failed).copyWith(
+          localPath: '/tmp/failed-partial.mp4',
+        ),
+      ]);
+
+      await _pumpDownloadPage(tester, repository);
+
+      expect(
+        find.byKey(const ValueKey('downloads-clear-ended-tasks')),
+        findsNothing,
+      );
+      expect(
+        find.byKey(const ValueKey('download-task-remove-failed')),
+        findsOneWidget,
+      );
+      expect(find.byTooltip('Discard download'), findsOneWidget);
+      expect(find.byTooltip('Remove from list'), findsNothing);
+      expect(
+        find.descendant(
+          of: find.byKey(const ValueKey('download-task-remove-failed')),
+          matching: find.text('Discard download'),
+        ),
+        findsOneWidget,
+      );
+      expect(
+        find.text(
+          'This download did not finish successfully. You can retry it now, or discard this download to clear the partial file from this failed attempt.',
+        ),
+        findsOneWidget,
+      );
+    },
+  );
+
+  testWidgets(
+    'single failed task with a stale partial path falls back to remove copy',
+    (tester) async {
+      _stubCleanupPathExists(const {});
+      final repository = _FakeDownloadRepository([
+        _task('failed', DownloadStatus.failed).copyWith(
+          localPath: '/tmp/failed-partial-missing.mp4',
+        ),
+      ]);
+
+      await _pumpDownloadPage(tester, repository);
+
+      expect(
+        find.byKey(const ValueKey('downloads-clear-ended-tasks')),
+        findsNothing,
+      );
+      expect(
+        find.byKey(const ValueKey('download-task-remove-failed')),
+        findsOneWidget,
+      );
+      expect(find.byTooltip('Remove from list'), findsOneWidget);
+      expect(find.byTooltip('Discard download'), findsNothing);
+      expect(
+        find.descendant(
+          of: find.byKey(const ValueKey('download-task-remove-failed')),
+          matching: find.text('Remove from list'),
+        ),
+        findsOneWidget,
+      );
+      expect(
+        find.text(
+          'This download did not finish successfully. You can retry it now, or remove it from the list if you no longer need this record.',
+        ),
         findsOneWidget,
       );
     },
@@ -139,14 +324,24 @@ void main() {
         findsNothing,
       );
       expect(
+        find.byKey(const ValueKey('downloads-remove-ready-task')),
+        findsOneWidget,
+      );
+      expect(
         find.text(
-          'Tasks marked Needs cleanup stay in the list until that leftover partial file is gone. After you delete it, return here and tap Check again on that task.',
+          'Tasks marked Needs cleanup stay in the list until that leftover partial file is gone. You can use "Remove from list" on the task that is already ready now. After you delete that file, return here and tap Check again on this task.',
+        ),
+        findsOneWidget,
+      );
+      expect(
+        find.text(
+          'This download was discarded, but AniDestiny could not clear the partial file automatically. You can use "Remove from list" on the task that is already ready now. For this leftover partial file, remove it from your device if you no longer need it, then return here and tap Check again.',
         ),
         findsOneWidget,
       );
 
       await tester
-          .tap(find.byKey(const ValueKey('download-task-remove-completed')));
+          .tap(find.byKey(const ValueKey('downloads-remove-ready-task')));
       await tester.pump();
 
       expect(repository.deleteAttempts, ['completed']);
@@ -274,10 +469,16 @@ void main() {
         findsOneWidget,
       );
       expect(find.text('Check again'), findsNothing);
-
-      await tester
-          .tap(find.byKey(const ValueKey('download-task-remove-canceled')));
-      await tester.pump();
+      expect(
+        find.widgetWithText(SnackBarAction, 'Remove from list'),
+        findsOneWidget,
+      );
+      tester
+          .widget<SnackBarAction>(
+            find.widgetWithText(SnackBarAction, 'Remove from list'),
+          )
+          .onPressed();
+      await tester.pumpAndSettle();
 
       expect(repository.deletedTaskIds, ['canceled']);
     },
@@ -416,7 +617,7 @@ void main() {
 
       expect(
         find.text(
-          'AniDestiny confirmed that 1 leftover partial file is gone. 1 still needs cleanup. Delete that leftover file first, then tap Check again on that task.',
+          'AniDestiny confirmed that 1 leftover partial file is gone. You can use "Remove from list" on the task that is already ready now. 1 still needs cleanup. Delete that leftover file first, then tap Check again on that task.',
         ),
         findsOneWidget,
       );
@@ -553,6 +754,120 @@ void main() {
     },
   );
 
+  testWidgets(
+    'retry action keeps failed downloads in an explicit retrying state until transfer resumes',
+    (tester) async {
+      final settleStart = Completer<void>();
+      final repository = _FakeDownloadRepository([
+        _task('failed', DownloadStatus.failed).copyWith(
+          failureReason: DownloadFailureReason.networkError,
+          failureMessage: 'The source stopped responding.',
+          progress: 0.42,
+          totalBytes: 100,
+          downloadedBytes: 42,
+        ),
+      ]);
+      final service = _StartInFlightDownloadService(
+        repository,
+        settleStart.future,
+      );
+
+      await _pumpDownloadPage(
+        tester,
+        repository,
+        downloadService: service,
+      );
+
+      await tester.tap(
+        find.byKey(const ValueKey('download-task-retry-failed')),
+      );
+      await tester.pump();
+
+      expect(find.text('Retrying...'), findsOneWidget);
+      expect(
+        find.text(
+          'AniDestiny is retrying this download. Progress will appear here after the file transfer resumes.',
+        ),
+        findsOneWidget,
+      );
+      expect(find.text('Failed'), findsNothing);
+      expect(find.text('Network error'), findsNothing);
+      expect(find.text('The source stopped responding.'), findsNothing);
+      expect(
+        find.byKey(const ValueKey('download-task-progress-failed')),
+        findsNothing,
+      );
+
+      settleStart.complete();
+      await tester.pump();
+      await tester.pump();
+
+      expect(find.text('Preparing'), findsOneWidget);
+      expect(find.text('Retrying...'), findsNothing);
+      expect(
+        find.text(
+          'AniDestiny is preparing this download. Progress will appear here after the file transfer begins.',
+        ),
+        findsOneWidget,
+      );
+    },
+  );
+
+  testWidgets(
+    'start handoff unlocks task actions once the download reaches preparing',
+    (tester) async {
+      final startPreparing = Completer<void>();
+      final finishStart = Completer<void>();
+      final repository = _FakeDownloadRepository([
+        _task('pending', DownloadStatus.pending),
+      ]);
+      final service = _PreparingInFlightDownloadService(
+        repository,
+        startPreparing.future,
+        finishStart.future,
+      );
+
+      await _pumpDownloadPage(
+        tester,
+        repository,
+        downloadService: service,
+      );
+
+      await tester.tap(
+        find.byKey(const ValueKey('download-task-start-pending')),
+      );
+      await tester.pump();
+
+      expect(find.text('Starting...'), findsOneWidget);
+      expect(
+        find.byKey(const ValueKey('download-task-busy-pending')),
+        findsOneWidget,
+      );
+
+      startPreparing.complete();
+      await service.enteredPreparing.future;
+      await tester.pump();
+
+      expect(find.text('Preparing'), findsOneWidget);
+      expect(find.text('Starting...'), findsNothing);
+      expect(
+        find.byKey(const ValueKey('download-task-busy-pending')),
+        findsNothing,
+      );
+      expect(
+        tester
+            .widget<TextButton>(
+              find.byKey(const ValueKey('download-task-cancel-pending')),
+            )
+            .onPressed,
+        isNotNull,
+      );
+
+      finishStart.complete();
+      await tester.pump();
+    },
+  );
+
   testWidgets('direct downloads use honest stop and retry wording', (
     tester,
   ) async {
@@ -565,6 +880,7 @@ void main() {
 
     expect(find.byTooltip('Stop for now'), findsOneWidget);
     expect(find.byTooltip('Discard download'), findsNWidgets(2));
+    expect(find.text('Discard download'), findsNWidgets(2));
     expect(
       find.text(
         'Stopping this download keeps the task, but the next retry may restart from the beginning. Discarding it clears any partial file.',
@@ -716,7 +1032,50 @@ void main() {
     },
   );
 
-  testWidgets('remove action failures surface a snackbar', (tester) async {
+  testWidgets(
+    'batch clear keeps each ended task in an explicit removing state until deletion finishes',
+    (tester) async {
+      final deleteBlocker = Completer<void>();
+      final repository = _FakeDownloadRepository([
+        _task('completed', DownloadStatus.completed),
+        _task('failed', DownloadStatus.failed),
+      ]);
+      final service = _RemoveEndedTaskInFlightDownloadService(
+        repository,
+        deleteBlocker.future,
+      );
+
+      await _pumpDownloadPage(
+        tester,
+        repository,
+        downloadService: service,
+      );
+
+      await tester
+          .tap(find.byKey(const ValueKey('downloads-clear-ended-tasks')));
+      await tester.pump();
+
+      expect(find.text('Removing...'), findsNWidgets(2));
+      expect(find.text('Completed'), findsNothing);
+      expect(find.text('Failed'), findsNothing);
+      expect(
+        find.text(
+          'AniDestiny is still removing this task from the list. Any file already on your device will stay there.',
+        ),
+        findsNWidgets(2),
+      );
+
+      deleteBlocker.complete();
+      await tester.pump();
+      await tester.pump();
+
+      expect(find.text('Removing...'), findsNothing);
+      expect(repository.deletedTaskIds, ['completed', 'failed']);
+    },
+  );
+
+  testWidgets('remove action failures keep raw errors out of the snackbar',
+      (tester) async {
     final repository = _FakeDownloadRepository(
       [
         _task('completed', DownloadStatus.completed),
@@ -731,8 +1090,78 @@ void main() {
     await tester.pump();
 
     expect(repository.deleteAttempts, ['completed']);
-    expect(find.text('Bad state: delete failed for completed'), findsOneWidget);
+    expect(
+      find.text(
+        'AniDestiny could not finish that download action right now. Try again in a moment.',
+      ),
+      findsOneWidget,
+    );
+    expect(find.textContaining('Bad state'), findsNothing);
+    expect(find.textContaining('delete failed'), findsNothing);
   });
+
+  testWidgets(
+    'remove action failures hide raw app-exception wrappers from the snackbar',
+    (tester) async {
+      final repository = _FakeDownloadRepository([
+        _task('completed', DownloadStatus.completed),
+      ]);
+      final service = _RemoveEndedTaskFailureDownloadService(
+        repository,
+        const AppException(
+          'AppException: [download_failed] DioException: socket closed',
+        ),
+      );
+
+      await _pumpDownloadPage(
+        tester,
+        repository,
+        downloadService: service,
+      );
+
+      await tester
+          .tap(find.byKey(const ValueKey('download-task-remove-completed')));
+      await tester.pump();
+
+      expect(
+        find.text(
+          'AniDestiny could not finish that download action right now. Try again in a moment.',
+        ),
+        findsOneWidget,
+      );
+      expect(find.textContaining('AppException'), findsNothing);
+      expect(find.textContaining('DioException'), findsNothing);
+      expect(find.textContaining('socket closed'), findsNothing);
+    },
+  );
+
+  testWidgets(
+    'remove action failures keep product-facing app exceptions visible',
+    (tester) async {
+      final repository = _FakeDownloadRepository([
+        _task('completed', DownloadStatus.completed),
+      ]);
+      final service = _RemoveEndedTaskFailureDownloadService(
+        repository,
+        const AppException('Downloads are temporarily locked. Try again.'),
+      );
+
+      await _pumpDownloadPage(
+        tester,
+        repository,
+        downloadService: service,
+      );
+
+      await tester
+          .tap(find.byKey(const ValueKey('download-task-remove-completed')));
+      await tester.pump();
+
+      expect(
+        find.text('Downloads are temporarily locked. Try again.'),
+        findsOneWidget,
+      );
+    },
+  );
 
   testWidgets(
     'retained discarded leftovers do not expose a single-item remove action',
@@ -894,7 +1323,7 @@ void main() {
 
       expect(
         find.text(
-          'AniDestiny confirmed that 1 leftover partial file is gone. 1 still needs cleanup. Delete that leftover file first, then tap Check again on that task.',
+          'AniDestiny confirmed that 1 leftover partial file is gone. You can use "Remove from list" on the task that is already ready now. 1 still needs cleanup. Delete that leftover file first, then tap Check again on that task.',
         ),
         findsOneWidget,
       );
@@ -902,6 +1331,18 @@ void main() {
         find.byKey(const ValueKey('download-task-remove-canceled-a')),
         findsOneWidget,
       );
+      expect(
+        find.widgetWithText(SnackBarAction, 'Remove from list'),
+        findsOneWidget,
+      );
+      tester
+          .widget<SnackBarAction>(
+            find.widgetWithText(SnackBarAction, 'Remove from list'),
+          )
+          .onPressed();
+      await tester.pumpAndSettle();
+
+      expect(repository.deletedTaskIds, ['canceled-a']);
     },
   );
 
@@ -934,11 +1375,19 @@ void main() {
         ),
         findsOneWidget,
       );
+      final tileGuidance = find.textContaining(
+        'For the leftover partial files, remove them from your device if you no longer need them, then use "Check 2 leftover files again" above or tap Check again here.',
+      );
+      await tester.scrollUntilVisible(tileGuidance, 200);
+      expect(
+        tileGuidance,
+        findsOneWidget,
+      );
     },
   );
 
   testWidgets(
-    'partial batch recheck keeps the remaining next step explicit',
+    'partial batch recheck keeps direct remove available for the task that is already ready',
     (tester) async {
       const partialPathA = '/tmp/partial-video-a.mp4';
       const partialPathB = '/tmp/partial-video-b.mp4';
@@ -969,11 +1418,24 @@ void main() {
 
       expect(
         find.text(
-          'AniDestiny confirmed that 1 leftover partial file is gone. 2 still need cleanup. After you delete them, use "Check 2 leftover files again" above or tap Check again on each task.',
+          'AniDestiny confirmed that 1 leftover partial file is gone. You can use "Remove from list" on the task that is already ready now. 2 still need cleanup. After you delete them, use "Check 2 leftover files again" above or tap Check again on each task.',
         ),
         findsOneWidget,
       );
+      expect(
+        find.widgetWithText(SnackBarAction, 'Remove from list'),
+        findsOneWidget,
+      );
       expect(find.text('Check 2 leftover files again'), findsOneWidget);
+
+      tester
+          .widget<SnackBarAction>(
+            find.widgetWithText(SnackBarAction, 'Remove from list'),
+          )
+          .onPressed();
+      await tester.pumpAndSettle();
+
+      expect(repository.deletedTaskIds, ['canceled-a']);
     },
   );
 
@@ -1196,6 +1658,59 @@ void main() {
     },
   );
 
+  testWidgets(
+    'resume keeps direct remove available when one recovered task is ready but other leftovers remain',
+    (tester) async {
+      const partialPathA = '/tmp/partial-video-a.mp4';
+      const partialPathB = '/tmp/partial-video-b.mp4';
+      const partialPathC = '/tmp/partial-video-c.mp4';
+      _stubCleanupPathExists({partialPathA, partialPathB, partialPathC});
+      final repository = _FakeDownloadRepository([
+        _task('canceled-a', DownloadStatus.canceled).copyWith(
+          localPath: partialPathA,
+          failureReason: DownloadFailureReason.canceled,
+        ),
+        _task('canceled-b', DownloadStatus.canceled).copyWith(
+          localPath: partialPathB,
+          failureReason: DownloadFailureReason.canceled,
+        ),
+        _task('canceled-c', DownloadStatus.canceled).copyWith(
+          localPath: partialPathC,
+          failureReason: DownloadFailureReason.canceled,
+        ),
+      ]);
+
+      await _pumpDownloadPage(tester, repository);
+
+      tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.paused);
+      await tester.pump();
+
+      _stubCleanupPathExists({partialPathB, partialPathC});
+      tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
+      await tester.pump();
+
+      expect(
+        find.text(
+          'AniDestiny confirmed that 1 leftover partial file is gone. You can use "Remove from list" on the task that is already ready now. 2 still need cleanup. After you delete them, use "Check 2 leftover files again" above or tap Check again on each task.',
+        ),
+        findsOneWidget,
+      );
+      expect(
+        find.widgetWithText(SnackBarAction, 'Remove from list'),
+        findsOneWidget,
+      );
+
+      tester
+          .widget<SnackBarAction>(
+            find.widgetWithText(SnackBarAction, 'Remove from list'),
+          )
+          .onPressed();
+      await tester.pumpAndSettle();
+
+      expect(repository.deletedTaskIds, ['canceled-a']);
+    },
+  );
+
   testWidgets('remove action stays disabled while deletion is still running', (
     tester,
   ) async {
@@ -1219,7 +1734,7 @@ void main() {
       find.byKey(const ValueKey('download-task-busy-completed')),
       findsOneWidget,
     );
-    expect(tester.widget<IconButton>(removeButton).onPressed, isNull);
+    expect(tester.widget<TextButton>(removeButton).onPressed, isNull);
 
     await tester.tap(removeButton, warnIfMissed: false);
     await tester.pump();
@@ -1299,6 +1814,7 @@ Future<void> _pumpDownloadPage(
   DownloadRepository repository, {
   bool showDebugMockAction = true,
   DownloadService? downloadService,
+  Stream<List<DownloadTask>>? downloadTasksStream,
   Locale locale = const Locale('en'),
 }) async {
   await tester.pumpWidget(
@@ -1306,6 +1822,7 @@ Future<void> _pumpDownloadPage(
       repository: repository,
       showDebugMockAction: showDebugMockAction,
       downloadService: downloadService,
+      downloadTasksStream: downloadTasksStream,
       locale: locale,
     ),
   );
@@ -1317,12 +1834,14 @@ class _TestApp extends StatelessWidget {
     required this.repository,
     required this.showDebugMockAction,
     this.downloadService,
+    this.downloadTasksStream,
     required this.locale,
   });
 
   final DownloadRepository repository;
   final bool showDebugMockAction;
   final DownloadService? downloadService;
+  final Stream<List<DownloadTask>>? downloadTasksStream;
   final Locale locale;
 
   @override
@@ -1333,6 +1852,8 @@ class _TestApp extends StatelessWidget {
       overrides: [
         downloadRepositoryProvider.overrideWithValue(repository),
         httpDownloadServiceProvider.overrideWithValue(effectiveDownloadService),
+        if (downloadTasksStream != null)
+          downloadTasksProvider.overrideWith((ref) => downloadTasksStream!),
       ],
       child: MaterialApp(
         locale: locale,
@@ -1417,6 +1938,35 @@ class _CancelInFlightDownloadService extends _FakeDownloadService {
   }
 }
 
+class _RemoveEndedTaskInFlightDownloadService extends _FakeDownloadService {
+  _RemoveEndedTaskInFlightDownloadService(
+    super.repository,
+    this.settleFuture,
+  );
+
+  final Future<void> settleFuture;
+
+  @override
+  Future<void> removeEndedTask(String taskId) async {
+    await settleFuture;
+    return super.removeEndedTask(taskId);
+  }
+}
+
+class _RemoveEndedTaskFailureDownloadService extends _FakeDownloadService {
+  _RemoveEndedTaskFailureDownloadService(
+    super.repository,
+    this.error,
+  );
+
+  final Object error;
+
+  @override
+  Future<void> removeEndedTask(String taskId) async {
+    throw error;
+  }
+}
+
 class _PauseInFlightDownloadService extends _FakeDownloadService {
   _PauseInFlightDownloadService(
     super.repository,
@@ -1443,6 +1993,69 @@ class _PauseInFlightDownloadService extends _FakeDownloadService {
       ),
     );
     await settleFuture;
+  }
+}
+
+class _StartInFlightDownloadService extends _FakeDownloadService {
+  _StartInFlightDownloadService(
+    super.repository,
+    this.settleFuture,
+  );
+
+  final Future<void> settleFuture;
+
+  @override
+  Future<void> start(String taskId) async {
+    await settleFuture;
+    final task = await repository.getTask(taskId);
+    if (task == null) {
+      return;
+    }
+    await repository.upsertTask(
+      task.copyWith(
+        status: DownloadStatus.preparing,
+        failureReason: DownloadFailureReason.none,
+        failureMessage: null,
+        progress: 0,
+        totalBytes: null,
+        downloadedBytes: 0,
+      ),
+    );
+  }
+}
+
+class _PreparingInFlightDownloadService extends _FakeDownloadService {
+  _PreparingInFlightDownloadService(
+    super.repository,
+    this.startPreparingFuture,
+    this.finishFuture,
+  );
+
+  final Future<void> startPreparingFuture;
+  final Future<void> finishFuture;
+  final Completer<void> enteredPreparing = Completer<void>();
+
+  @override
+  Future<void> start(String taskId) async {
+    await startPreparingFuture;
+    final task = await repository.getTask(taskId);
+    if (task == null) {
+      return;
+    }
+    await repository.upsertTask(
+      task.copyWith(
+        status: DownloadStatus.preparing,
+        failureReason: DownloadFailureReason.none,
+        failureMessage: null,
+        progress: 0,
+        totalBytes: null,
+        downloadedBytes: 0,
+      ),
+    );
+    if (!enteredPreparing.isCompleted) {
+      enteredPreparing.complete();
+    }
+    await finishFuture;
   }
 }
 

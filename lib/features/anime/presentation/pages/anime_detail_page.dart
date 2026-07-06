@@ -6,6 +6,7 @@ import '../../../../app/l10n/app_localizations.dart';
 import '../../../../core/widgets/app_error_view.dart';
 import '../../../../core/widgets/app_loading_view.dart';
 import '../../../../shared/widgets/adaptive_page.dart';
+import '../../../download/presentation/download_entry_feedback.dart';
 import '../../../download/presentation/providers/download_providers.dart';
 import '../../../favorite/domain/entities/favorite_anime.dart';
 import '../../../favorite/presentation/providers/favorite_providers.dart';
@@ -172,39 +173,55 @@ class AnimeDetailPage extends ConsumerWidget {
     AnimeDetail detail,
     Episode episode,
   ) async {
-    final sourceResult = await ref.read(
-      playSourcesBySourceProvider(
-        (sourceId: detail.sourceId, episodeId: episode.id),
-      ).future,
-    );
-    if (!context.mounted) return;
-    final sources = sourceResult.value;
-    if (sources.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(context.l10n.noPlayableSourceFound)),
+    try {
+      final sourceResult = await ref.read(
+        playSourcesBySourceProvider(
+          (sourceId: detail.sourceId, episodeId: episode.id),
+        ).future,
       );
-      return;
-    }
-    if (sourceResult.usedFallback) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(context.l10n.sourceFallbackNotice)),
-      );
-    }
-    final source = await _selectDownloadSource(context, sources);
-    if (!context.mounted || source == null) return;
-    final taskId = await ref.read(downloadTaskCreatorProvider).create(
-          animeId: detail.id,
-          episodeId: episode.id,
-          sourceId: sourceResult.sourceId,
-          url: source.url,
-          title: detail.title,
-          episodeTitle: episode.title,
-          headers: source.headers,
+      if (!context.mounted) return;
+      final sources = sourceResult.value;
+      if (sources.isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(context.l10n.noPlayableSourceFound)),
         );
-    if (!context.mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(context.l10n.downloadTaskCreated(taskId))),
-    );
+        return;
+      }
+      if (sourceResult.usedFallback) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(context.l10n.sourceFallbackNotice)),
+        );
+      }
+      final source = await _selectDownloadSource(context, sources);
+      if (!context.mounted || source == null) return;
+      final result = await ref.read(downloadTaskCreatorProvider).create(
+            animeId: detail.id,
+            episodeId: episode.id,
+            sourceId: sourceResult.sourceId,
+            url: source.url,
+            title: detail.title,
+            episodeTitle: episode.title,
+            headers: source.headers,
+          );
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content:
+              Text(downloadEntryFeedbackMessage(context.l10n, result.kind)),
+          action: SnackBarAction(
+            label: downloadEntryFeedbackActionLabel(context.l10n, result.kind),
+            onPressed: () => context.push('/downloads'),
+          ),
+        ),
+      );
+    } catch (error) {
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(downloadEntryFeedbackErrorMessage(context.l10n, error)),
+        ),
+      );
+    }
   }
 
   Future<PlaySource?> _selectPlaySource(

@@ -53,7 +53,216 @@ void main() {
     expect(task, isNotNull);
     expect(task!.status, DownloadStatus.unsupported);
     expect(task.failureReason, DownloadFailureReason.unsupportedType);
-    expect(task.failureMessage, contains('HLS offline download'));
+    expect(task.failureMessage, isNull);
+  });
+
+  test('unsupported tasks drop implementation placeholder messages on read',
+      () async {
+    final database = AppDatabase(NativeDatabase.memory());
+    addTearDown(database.close);
+
+    final repository = DownloadRepositoryImpl(database);
+    final now = DateTime.utc(2026, 7, 1, 12);
+
+    await repository.upsertTask(
+      DownloadTask(
+        id: 'task-unsupported-bt',
+        animeId: 'anime-1',
+        episodeId: 'episode-1',
+        sourceId: 'sakura',
+        title: 'BT Test',
+        episodeTitle: 'Episode 1',
+        url: 'magnet:?xt=urn:btih:abc123',
+        kind: DownloadKind.bt,
+        status: DownloadStatus.unsupported,
+        failureReason: DownloadFailureReason.unsupportedType,
+        failureMessage: 'BT download is not implemented yet.',
+        progress: 0,
+        downloadedBytes: 0,
+        createdAt: now,
+        updatedAt: now,
+      ),
+    );
+
+    final task = await repository.getTask('task-unsupported-bt');
+
+    expect(task, isNotNull);
+    expect(task!.failureReason, DownloadFailureReason.unsupportedType);
+    expect(task.failureMessage, isNull);
+  });
+
+  test('old raw unexpected failure messages are normalized on read', () async {
+    final database = AppDatabase(NativeDatabase.memory());
+    addTearDown(database.close);
+
+    final repository = DownloadRepositoryImpl(database);
+    final now = DateTime.utc(2026, 7, 3, 12);
+
+    await repository.upsertTask(
+      DownloadTask(
+        id: 'task-raw-failure',
+        animeId: 'anime-1',
+        episodeId: 'episode-1',
+        sourceId: 'sakura',
+        title: 'Direct Test',
+        episodeTitle: 'Episode 1',
+        url: 'https://cdn.example.test/video.mp4',
+        kind: DownloadKind.directFile,
+        status: DownloadStatus.failed,
+        failureReason: DownloadFailureReason.unknown,
+        failureMessage: 'StateError: filesystem sync failed',
+        progress: 0.2,
+        downloadedBytes: 200,
+        createdAt: now,
+        updatedAt: now,
+      ),
+    );
+
+    final task = await repository.getTask('task-raw-failure');
+
+    expect(task, isNotNull);
+    expect(task!.failureReason, DownloadFailureReason.unknown);
+    expect(task.failureMessage, unexpectedDownloadFailureMessage);
+  });
+
+  test('old raw unsupported operation failures are normalized on read',
+      () async {
+    final database = AppDatabase(NativeDatabase.memory());
+    addTearDown(database.close);
+
+    final repository = DownloadRepositoryImpl(database);
+    final now = DateTime.utc(2026, 7, 3, 12);
+
+    await repository.upsertTask(
+      DownloadTask(
+        id: 'task-raw-unsupported-operation',
+        animeId: 'anime-1',
+        episodeId: 'episode-1',
+        sourceId: 'sakura',
+        title: 'Direct Test',
+        episodeTitle: 'Episode 1',
+        url: 'https://cdn.example.test/video.mp4',
+        kind: DownloadKind.directFile,
+        status: DownloadStatus.failed,
+        failureReason: DownloadFailureReason.unknown,
+        failureMessage: 'Unsupported operation: background transfer disabled',
+        progress: 0,
+        downloadedBytes: 0,
+        createdAt: now,
+        updatedAt: now,
+      ),
+    );
+
+    final task = await repository.getTask('task-raw-unsupported-operation');
+
+    expect(task, isNotNull);
+    expect(task!.failureReason, DownloadFailureReason.unknown);
+    expect(task.failureMessage, unexpectedDownloadFailureMessage);
+  });
+
+  test('old raw network failure messages are normalized on read', () async {
+    final database = AppDatabase(NativeDatabase.memory());
+    addTearDown(database.close);
+
+    final repository = DownloadRepositoryImpl(database);
+    final now = DateTime.utc(2026, 7, 3, 21);
+
+    await repository.upsertTask(
+      DownloadTask(
+        id: 'task-raw-network-failure',
+        animeId: 'anime-1',
+        episodeId: 'episode-1',
+        sourceId: 'sakura',
+        title: 'Direct Test',
+        episodeTitle: 'Episode 1',
+        url: 'https://cdn.example.test/video.mp4',
+        kind: DownloadKind.directFile,
+        status: DownloadStatus.failed,
+        failureReason: DownloadFailureReason.networkError,
+        failureMessage: 'DioException [connection timeout]: socket closed',
+        progress: 0.1,
+        downloadedBytes: 100,
+        createdAt: now,
+        updatedAt: now,
+      ),
+    );
+
+    final task = await repository.getTask('task-raw-network-failure');
+
+    expect(task, isNotNull);
+    expect(task!.failureReason, DownloadFailureReason.networkError);
+    expect(task.failureMessage, unexpectedDownloadFailureMessage);
+  });
+
+  test('old raw Dart and IO failure messages are normalized on read', () async {
+    final database = AppDatabase(NativeDatabase.memory());
+    addTearDown(database.close);
+
+    final repository = DownloadRepositoryImpl(database);
+    final now = DateTime.utc(2026, 7, 3, 22);
+    const rawMessages = <String>[
+      'RangeError (index): Invalid value: Not in inclusive range 0..1',
+      'NoSuchMethodError: The method length was called on null.',
+      'ArgumentError: Invalid argument(s): missing download directory',
+      'Invalid argument(s): missing download directory',
+      'PathNotFoundException: Cannot open file, path = /tmp/missing.mp4',
+      'PlatformException(download_failed, Channel call failed, null, null)',
+      'ClientException: Connection closed before full header was received',
+      'HttpException: Connection closed while receiving data',
+      'SocketException: Connection reset by peer',
+      'HandshakeException: Connection terminated during handshake',
+      'TlsException: Failure trusting builtin roots',
+      'TimeoutException after 0:00:30.000000: download stalled',
+      'TypeError: Failed to fetch',
+      'Error: Network request failed',
+      'Connection refused, errno = 61',
+      'Connection reset by peer',
+      'Connection closed before full header was received',
+      'Failed host lookup: cdn.example.test',
+      'Network is unreachable, errno = 51',
+      'No route to host, errno = 65',
+      'Operation timed out, errno = 60',
+      'OS Error: No space left on device, errno = 28',
+      'Connection timed out, errno = 110',
+      'No space left on device, errno = 28',
+      'Permission denied, errno = 13',
+      'CERTIFICATE_VERIFY_FAILED: unable to get local issuer certificate',
+      'CertificateException: certificate has expired',
+      'IOException: write failed',
+      'NetworkException: connection aborted',
+      'UnknownHostException: cdn.example.test',
+      'XMLHttpRequest error.',
+    ];
+
+    for (final message in rawMessages) {
+      await repository.upsertTask(
+        DownloadTask(
+          id: 'task-${rawMessages.indexOf(message)}',
+          animeId: 'anime-1',
+          episodeId: 'episode-1',
+          sourceId: 'sakura',
+          title: 'Direct Test',
+          episodeTitle: 'Episode 1',
+          url: 'https://cdn.example.test/video.mp4',
+          kind: DownloadKind.directFile,
+          status: DownloadStatus.failed,
+          failureReason: DownloadFailureReason.unknown,
+          failureMessage: message,
+          progress: 0.1,
+          downloadedBytes: 100,
+          createdAt: now,
+          updatedAt: now,
+        ),
+      );
+    }
+
+    for (var index = 0; index < rawMessages.length; index += 1) {
+      final task = await repository.getTask('task-$index');
+
+      expect(task, isNotNull);
+      expect(task!.failureReason, DownloadFailureReason.unknown);
+      expect(task.failureMessage, unexpectedDownloadFailureMessage);
+    }
   });
 
   test('direct file progress maps downloaded and total bytes', () {
@@ -499,6 +708,122 @@ void main() {
     expect(partialFile.existsSync(), isFalse);
   });
 
+  test('removing a failed task clears any leftover partial file first',
+      () async {
+    final database = AppDatabase(NativeDatabase.memory());
+    addTearDown(database.close);
+    final tempDir =
+        await Directory.systemTemp.createTemp('ani-destiny-remove-failed');
+    addTearDown(() async {
+      if (tempDir.existsSync()) {
+        await tempDir.delete(recursive: true);
+      }
+    });
+
+    final repository = DownloadRepositoryImpl(database);
+    final service = HttpDownloadService(
+      dio: Dio(),
+      repository: repository,
+    );
+    final partialFile = File(p.join(tempDir.path, 'partial-failed-remove.mp4'));
+    await partialFile.writeAsString('partial');
+    final now = DateTime(2026, 7, 2, 0, 0);
+
+    await repository.upsertTask(
+      DownloadTask(
+        id: 'task-remove-failed',
+        animeId: 'anime-1',
+        episodeId: 'episode-1',
+        sourceId: 'sakura',
+        title: 'Direct Test',
+        episodeTitle: 'Episode 1',
+        url: 'https://cdn.example.test/video.mp4',
+        kind: DownloadKind.directFile,
+        status: DownloadStatus.failed,
+        failureReason: DownloadFailureReason.networkError,
+        failureMessage: 'offline',
+        progress: 0.4,
+        downloadedBytes: 400,
+        totalBytes: 1000,
+        localPath: partialFile.path,
+        createdAt: now,
+        updatedAt: now,
+      ),
+    );
+
+    await service.removeEndedTask('task-remove-failed');
+
+    final task = await repository.getTask('task-remove-failed');
+    expect(task, isNull);
+    expect(partialFile.existsSync(), isFalse);
+  });
+
+  test('unexpected direct-download failures stay calm in stored task state',
+      () async {
+    final database = AppDatabase(NativeDatabase.memory());
+    addTearDown(database.close);
+    final tempDir = await Directory.systemTemp
+        .createTemp('ani-destiny-download-unexpected');
+    addTearDown(() async {
+      if (tempDir.existsSync()) {
+        await tempDir.delete(recursive: true);
+      }
+    });
+
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMethodCallHandler(pathProviderChannel, (call) async {
+      if (call.method == 'getApplicationDocumentsDirectory') {
+        return tempDir.path;
+      }
+      return null;
+    });
+
+    final repository = DownloadRepositoryImpl(database);
+    final service = HttpDownloadService(
+      dio: _UnexpectedFailureDio(),
+      repository: repository,
+    );
+
+    final taskId = await service.createTask(
+      animeId: 'anime-1',
+      episodeId: 'episode-1',
+      sourceId: 'sakura',
+      source: const DownloadSource(
+        url: 'https://cdn.example.test/video.mp4',
+        kind: DownloadKind.directFile,
+      ),
+      title: 'Direct Test',
+      episodeTitle: 'Episode 1',
+    );
+
+    await expectLater(
+      service.start(taskId),
+      throwsA(
+        isA<AppException>()
+            .having(
+              (error) => error.code,
+              'code',
+              'download_unexpected_error',
+            )
+            .having(
+              (error) => error.message,
+              'message',
+              'AniDestiny could not finish this download because of an unexpected error.',
+            ),
+      ),
+    );
+
+    final task = await repository.getTask(taskId);
+
+    expect(task, isNotNull);
+    expect(task!.status, DownloadStatus.failed);
+    expect(task.failureReason, DownloadFailureReason.unknown);
+    expect(
+      task.failureMessage,
+      'AniDestiny could not finish this download because of an unexpected error.',
+    );
+  });
+
   test(
       'retrying a stopped direct download resets stale progress before restart',
       () async {
@@ -578,7 +903,11 @@ void main() {
     expect(p.basename(task.localPath!), 'Direct Test-Episode 1.mp4');
     expect(p.basename(p.dirname(task.localPath!)), 'downloads');
     expect(task.failureReason, DownloadFailureReason.networkError);
-    expect(task.failureMessage, 'offline');
+    expect(
+      task.failureMessage,
+      'AniDestiny could not finish this download because the source could not be reached. Retry when the connection is stable.',
+    );
+    expect(task.failureMessage, isNot(contains('offline')));
   });
 }
 
@@ -614,5 +943,23 @@ class _BlockingCancelDio extends DioForNative {
       requestOptions: RequestOptions(path: urlPath),
       reason: 'canceled',
     );
+  }
+}
+
+class _UnexpectedFailureDio extends DioForNative {
+  @override
+  Future<Response> download(
+    String urlPath,
+    dynamic savePath, {
+    ProgressCallback? onReceiveProgress,
+    Map<String, dynamic>? queryParameters,
+    CancelToken? cancelToken,
+    bool deleteOnError = true,
+    FileAccessMode fileAccessMode = FileAccessMode.write,
+    String lengthHeader = Headers.contentLengthHeader,
+    Object? data,
+    Options? options,
+  }) async {
+    throw StateError('filesystem sync failed');
   }
 }
