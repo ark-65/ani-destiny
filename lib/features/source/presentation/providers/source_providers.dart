@@ -18,6 +18,7 @@ import '../../domain/entities/source_fallback_event.dart';
 import '../../domain/entities/source_health.dart';
 import '../../domain/repositories/source_repository.dart';
 import '../../domain/services/source_diagnostic_recorder.dart';
+import '../../domain/services/source_failure_summary.dart';
 import '../../domain/services/source_fallback_service.dart';
 import '../../domain/services/source_health_service.dart';
 
@@ -147,7 +148,7 @@ class SourceHealthController extends Notifier<List<SourceHealth>>
       status: sourceHealthStatusForFailureCount(failureCount),
       failureCount: failureCount,
       lastFailureAt: DateTime.now(),
-      lastErrorMessage: _summarize(error),
+      lastErrorMessage: summarizeSourceFailure(error),
     );
     _setHealth(next);
   }
@@ -189,16 +190,6 @@ class SourceHealthController extends Notifier<List<SourceHealth>>
       sourceIds: sourceIds,
     );
     service.save(health);
-  }
-
-  String _summarize(Object error) {
-    final text = error
-        .toString()
-        .replaceAll(RegExp(r'(https?://[^\s?]+)\?[^\s]+'), r'$1?[hidden]')
-        .replaceAll(RegExp(r'\s+'), ' ')
-        .trim();
-    if (text.length <= 140) return text;
-    return '${text.substring(0, 137)}...';
   }
 }
 

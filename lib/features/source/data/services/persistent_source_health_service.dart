@@ -1,6 +1,7 @@
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../domain/entities/source_health.dart';
+import '../../domain/services/source_failure_summary.dart';
 import '../../domain/services/source_health_service.dart';
 
 class PersistentSourceHealthService implements SourceHealthService {
@@ -61,7 +62,7 @@ class PersistentSourceHealthService implements SourceHealthService {
       status: sourceHealthStatusForFailureCount(failureCount),
       failureCount: failureCount,
       lastFailureAt: DateTime.now(),
-      lastErrorMessage: _summarize(error),
+      lastErrorMessage: summarizeSourceFailure(error),
     );
     _write(next);
   }
@@ -134,15 +135,5 @@ class PersistentSourceHealthService implements SourceHealthService {
 
   String _key(String sourceId, String field) {
     return '$_prefix.$sourceId.$field';
-  }
-
-  String _summarize(Object error) {
-    final text = error
-        .toString()
-        .replaceAll(RegExp(r'(https?://[^\s?]+)\?[^\s]+'), r'$1?[hidden]')
-        .replaceAll(RegExp(r'\s+'), ' ')
-        .trim();
-    if (text.length <= 140) return text;
-    return '${text.substring(0, 137)}...';
   }
 }

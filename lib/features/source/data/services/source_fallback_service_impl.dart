@@ -6,6 +6,7 @@ import '../../domain/entities/source_fallback_event.dart';
 import '../../domain/entities/source_fallback_result.dart';
 import '../../domain/repositories/source_repository.dart';
 import '../../domain/services/source_diagnostic_recorder.dart';
+import '../../domain/services/source_failure_summary.dart';
 import '../../domain/services/source_fallback_service.dart';
 import '../../domain/services/source_health_service.dart';
 import '../registry/source_registry.dart';
@@ -82,7 +83,9 @@ class SourceFallbackServiceImpl implements SourceFallbackService {
         );
       } on Object catch (error) {
         lastError = error;
-        failures.add('${adapter.id}: ${_summarize(error)}');
+        failures.add(
+          '${adapter.id}: ${summarizeSourceFailure(error, maxLength: 120)}',
+        );
         _healthService.recordFailure(
           sourceId: adapter.id,
           operation: operation,
@@ -96,7 +99,7 @@ class SourceFallbackServiceImpl implements SourceFallbackService {
             message: 'Temporary source issue.',
             exceptionType: error.runtimeType.toString(),
             timestamp: DateTime.now(),
-            reason: _summarize(error),
+            reason: summarizeSourceFailure(error, maxLength: 120),
           ),
         );
       }
@@ -158,15 +161,5 @@ class SourceFallbackServiceImpl implements SourceFallbackService {
         reason: reason,
       ),
     );
-  }
-
-  String _summarize(Object error) {
-    final text = error
-        .toString()
-        .replaceAll(RegExp(r'(https?://[^\s?]+)\?[^\s]+'), r'$1?[hidden]')
-        .replaceAll(RegExp(r'\s+'), ' ')
-        .trim();
-    if (text.length <= 120) return text;
-    return '${text.substring(0, 117)}...';
   }
 }
