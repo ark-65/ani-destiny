@@ -104,6 +104,8 @@ void main() {
 
     expect(result.sourceId, 'mock');
     expect(harness.events.single.reason, contains('https://example.test'));
+    expect(harness.events.single.reason, contains('Source attempt 1:'));
+    expect(harness.events.single.reason, isNot(contains('sakura:')));
     expect(harness.events.single.reason, isNot(contains('token=secret')));
     expect(harness.events.single.reason, contains('/Users/<user>/'));
     expect(harness.events.single.reason, isNot(contains('/Users/ark/')));

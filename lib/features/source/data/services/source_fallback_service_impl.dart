@@ -45,9 +45,11 @@ class SourceFallbackServiceImpl implements SourceFallbackService {
       allowMockFallback: allowMockFallback,
     );
     final failures = <String>[];
+    var attemptCount = 0;
     Object? lastError;
 
     for (final adapter in adapters) {
+      attemptCount += 1;
       try {
         final value = await action(adapter);
         if (isFailureValue?.call(value) ?? false) {
@@ -84,7 +86,8 @@ class SourceFallbackServiceImpl implements SourceFallbackService {
       } on Object catch (error) {
         lastError = error;
         failures.add(
-          '${adapter.id}: ${summarizeSourceFailure(error, maxLength: 120)}',
+          'Source attempt $attemptCount: '
+          '${summarizeSourceFailure(error, maxLength: 120)}',
         );
         _healthService.recordFailure(
           sourceId: adapter.id,

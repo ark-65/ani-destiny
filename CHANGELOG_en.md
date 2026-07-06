@@ -7,6 +7,7 @@
 ## [Unreleased]
 
 ### 🐛 Fixed
+- Fixed fallback events still prefixing grouped source-failure reasons with internal source IDs, which made support summaries read like engineering logs; those reasons now use neutral attempt order while keeping the sanitized failure meaning.
 - Fixed source health records and fallback diagnostics still being able to save failure reasons with tokens, HTML, or local username paths before the display layer sanitized them; those source summaries now reuse the shared sanitizer at capture time, so source-unavailable and fallback support details no longer carry private local context in state.
 - Fixed copied download support summaries still letting the collector hold the full local username path for `Needs cleanup` leftover files before the final Markdown formatter sanitized it; those summaries now sanitize the local path at the source, keeping enough file context for cleanup without carrying a private machine path.
 - Fixed the Downloads page already telling users they could use `Remove from list` when exactly one ended task was ready beside a `Needs cleanup` leftover, while still making them go back to the matching card to find that final action; that mixed cleanup state now exposes `Remove from list` at the top of the page so the ready task can close immediately.
