@@ -11,6 +11,7 @@ enum PlaybackDiagnosticDetailField {
   sourceStatus,
   line,
   state,
+  buffering,
   capturedAt,
   urlType,
   url,
@@ -113,6 +114,13 @@ List<PlaybackDiagnosticDetailEntry> buildPlaybackDiagnosticDetailEntries({
       field: PlaybackDiagnosticDetailField.state,
       label: l10n.playbackDiagnosticState,
       value: _playbackDiagnosticStateLabel(l10n, diagnostics.state),
+    ),
+    PlaybackDiagnosticDetailEntry(
+      field: PlaybackDiagnosticDetailField.buffering,
+      label: l10n.playbackDiagnosticBuffering,
+      value: diagnostics.forceAheadBuffering
+          ? l10n.playbackDiagnosticBufferingStronger
+          : l10n.playbackDiagnosticBufferingDefault,
     ),
     PlaybackDiagnosticDetailEntry(
       field: PlaybackDiagnosticDetailField.capturedAt,

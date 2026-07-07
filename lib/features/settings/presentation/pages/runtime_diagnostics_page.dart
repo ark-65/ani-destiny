@@ -239,6 +239,7 @@ IconData _playbackDiagnosticIcon(PlaybackDiagnosticDetailField field) {
     PlaybackDiagnosticDetailField.sourceStatus => Icons.swap_horiz_outlined,
     PlaybackDiagnosticDetailField.line => Icons.playlist_play_outlined,
     PlaybackDiagnosticDetailField.state => Icons.monitor_heart_outlined,
+    PlaybackDiagnosticDetailField.buffering => Icons.speed_outlined,
     PlaybackDiagnosticDetailField.capturedAt => Icons.schedule_outlined,
     PlaybackDiagnosticDetailField.urlType => Icons.link_outlined,
     PlaybackDiagnosticDetailField.url => Icons.language_outlined,

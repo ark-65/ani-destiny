@@ -23,6 +23,7 @@ void main() {
         sanitizedUrl: 'https://cdn.example.test/.../episode-2.m3u8',
         headerKeys: const ['Referer', 'User-Agent'],
         state: PlaybackDiagnosticState.buffering,
+        forceAheadBuffering: true,
       ),
       sourceLabelForId: _sourceLabelForId,
       includeExactIso: true,
@@ -39,6 +40,7 @@ void main() {
         PlaybackDiagnosticDetailField.sourceStatus,
         PlaybackDiagnosticDetailField.line,
         PlaybackDiagnosticDetailField.state,
+        PlaybackDiagnosticDetailField.buffering,
         PlaybackDiagnosticDetailField.capturedAt,
         PlaybackDiagnosticDetailField.urlType,
         PlaybackDiagnosticDetailField.url,
@@ -48,6 +50,7 @@ void main() {
     expect(entries[2].value, 'Remote Source Proxy');
     expect(entries[3].value, 'Sakura Anime');
     expect(entries[4].value, 'Mock Anime Source');
+    expect(entries[8].value, 'Stronger preloading');
   });
 
   test('detail entries hide redundant selected app source context', () {
@@ -111,6 +114,7 @@ void main() {
       contains('Active playback source: Mock Anime Source\n'),
     );
     expect(preview, contains('Line: Line 1\n'));
+    expect(preview, contains('Playback buffer: Default data saving\n'));
     expect(
       preview,
       isNot(contains('Active playback source: Mock Anime Source · Line 1')),

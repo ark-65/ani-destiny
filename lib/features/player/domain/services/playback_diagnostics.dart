@@ -21,6 +21,7 @@ class PlaybackDiagnostics {
     required this.sanitizedUrl,
     required this.headerKeys,
     required this.state,
+    this.forceAheadBuffering = false,
   });
 
   final DateTime capturedAt;
@@ -34,6 +35,7 @@ class PlaybackDiagnostics {
   final String sanitizedUrl;
   final List<String> headerKeys;
   final PlaybackDiagnosticState state;
+  final bool forceAheadBuffering;
 
   bool get usedSourceFallback {
     final requested = requestedSourceId?.trim();
@@ -53,6 +55,7 @@ class PlaybackDiagnostics {
 
   PlaybackDiagnostics copyWith({
     String? selectedAppSourceId,
+    bool? forceAheadBuffering,
   }) {
     return PlaybackDiagnostics(
       capturedAt: capturedAt,
@@ -66,6 +69,7 @@ class PlaybackDiagnostics {
       sanitizedUrl: sanitizedUrl,
       headerKeys: headerKeys,
       state: state,
+      forceAheadBuffering: forceAheadBuffering ?? this.forceAheadBuffering,
     );
   }
 }
@@ -84,6 +88,7 @@ class PlaybackDiagnosticsBuilder {
     required String playUrl,
     required Map<String, String> headers,
     required PlaybackDiagnosticState state,
+    bool forceAheadBuffering = false,
   }) {
     return PlaybackDiagnostics(
       capturedAt: capturedAt ?? DateTime.now(),
@@ -97,6 +102,7 @@ class PlaybackDiagnosticsBuilder {
       sanitizedUrl: sanitizeUrl(playUrl),
       headerKeys: headers.keys.toList(growable: false)..sort(),
       state: state,
+      forceAheadBuffering: forceAheadBuffering,
     );
   }
 
