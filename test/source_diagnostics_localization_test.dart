@@ -4,6 +4,7 @@ import 'package:ani_destiny/core/diagnostics/playback_diagnostic_summary.dart';
 import 'package:ani_destiny/features/danmaku/domain/entities/danmaku_settings.dart';
 import 'package:ani_destiny/features/danmaku/presentation/providers/danmaku_providers.dart';
 import 'package:ani_destiny/features/player/domain/services/playback_diagnostics.dart';
+import 'package:ani_destiny/features/player/presentation/providers/playback_buffering_providers.dart';
 import 'package:ani_destiny/features/player/presentation/providers/player_providers.dart';
 import 'package:ani_destiny/features/settings/presentation/pages/settings_page.dart';
 import 'package:ani_destiny/features/settings/presentation/pages/runtime_diagnostics_page.dart';
@@ -19,6 +20,7 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
   testWidgets('runtime diagnostics localize source names in user-visible rows',
@@ -106,6 +108,35 @@ void main() {
 
   testWidgets('settings page keeps runtime diagnostics visible for support',
       (tester) async {
+    SharedPreferences.setMockInitialValues({});
+
+    await tester.pumpWidget(
+      _buildApp(
+        home: const SettingsPage(),
+        overrides: _providerOverrides,
+      ),
+    );
+
+    await tester.pumpAndSettle();
+    await tester.scrollUntilVisible(
+      find.text('Runtime diagnostics'),
+      200,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('Runtime diagnostics'), findsOneWidget);
+    expect(
+      find.text('Feedback summary without sensitive values.'),
+      findsOneWidget,
+    );
+    expect(find.text('Copy diagnostics'), findsOneWidget);
+  });
+
+  testWidgets('settings page exposes force-ahead playback buffering',
+      (tester) async {
+    SharedPreferences.setMockInitialValues({});
+
     await tester.pumpWidget(
       _buildApp(
         home: const SettingsPage(),
@@ -115,12 +146,29 @@ void main() {
 
     await tester.pumpAndSettle();
 
-    expect(find.text('Runtime diagnostics'), findsOneWidget);
+    expect(find.text('Stronger playback buffering'), findsOneWidget);
     expect(
-      find.text('Feedback summary without sensitive values.'),
+      find.textContaining('Loads farther ahead during playback'),
       findsOneWidget,
     );
-    expect(find.text('Copy diagnostics'), findsOneWidget);
+    expect(
+      tester.widget<SwitchListTile>(find.byType(SwitchListTile)).value,
+      isFalse,
+    );
+
+    await tester.tap(find.byType(SwitchListTile));
+    await tester.pump();
+
+    expect(
+      tester.widget<SwitchListTile>(find.byType(SwitchListTile)).value,
+      isTrue,
+    );
+    expect(
+      ProviderScope.containerOf(
+        tester.element(find.byType(SettingsPage)),
+      ).read(playbackBufferingSettingsProvider).forceAheadBuffering,
+      isTrue,
+    );
   });
 
   testWidgets('runtime diagnostics page can copy diagnostics in place', (

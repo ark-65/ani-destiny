@@ -611,6 +611,9 @@ class AppLocalizations {
   String get sourceSettings => _t('sourceSettings');
   String get sourceSettingsSubtitle => _t('sourceSettingsSubtitle');
   String get danmakuSettings => _t('danmakuSettings');
+  String get forceAheadPlaybackBuffering => _t('forceAheadPlaybackBuffering');
+  String get forceAheadPlaybackBufferingSubtitle =>
+      _t('forceAheadPlaybackBufferingSubtitle');
   String get appearance => _t('appearance');
   String get system => _t('system');
   String get light => _t('light');
@@ -1018,6 +1021,9 @@ const _localizedValues = {
     'sourceSettings': '数据源设置',
     'sourceSettingsSubtitle': '默认使用 Sakura Anime，可按可用性切换数据源',
     'danmakuSettings': '弹幕设置',
+    'forceAheadPlaybackBuffering': '强化播放缓存',
+    'forceAheadPlaybackBufferingSubtitle':
+        '开启后会在播放时向前多加载内容，弱网更不容易追上缓存边界，但会消耗更多流量。',
     'appearance': '外观',
     'system': '跟随系统',
     'light': '浅色',
@@ -1378,6 +1384,9 @@ const _localizedValues = {
     'sourceSettingsSubtitle':
         'Sakura Anime is the default source. Switch sources when availability changes.',
     'danmakuSettings': 'Danmaku settings',
+    'forceAheadPlaybackBuffering': 'Stronger playback buffering',
+    'forceAheadPlaybackBufferingSubtitle':
+        'Loads farther ahead during playback to reduce stalls on slower networks. This can use more data.',
     'appearance': 'Appearance',
     'system': 'System',
     'light': 'Light',
@@ -1738,6 +1747,9 @@ const _localizedValues = {
     'sourceSettings': 'ソース設定',
     'sourceSettingsSubtitle': 'Sakura Anime を既定ソースとして使用し、可用性に応じて切り替えられます',
     'danmakuSettings': '弾幕設定',
+    'forceAheadPlaybackBuffering': '再生バッファを強化',
+    'forceAheadPlaybackBufferingSubtitle':
+        '再生中に先の内容を多めに読み込み、低速回線での停止を減らします。通信量は増える場合があります。',
     'appearance': '外観',
     'system': 'システム',
     'light': 'ライト',

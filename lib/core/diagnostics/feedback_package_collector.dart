@@ -22,6 +22,7 @@ class FeedbackPackageCollector {
     required this.sourceDiagnostics,
     required this.fallbackEvents,
     required this.playbackDiagnostics,
+    this.forceAheadBuffering = false,
     required this.danmakuEnabled,
     required this.dandanplayAppIdConfigured,
     required this.dandanplayAppSecretConfigured,
@@ -38,6 +39,7 @@ class FeedbackPackageCollector {
   final List<SourceDiagnostic> sourceDiagnostics;
   final List<SourceFallbackEvent> fallbackEvents;
   final PlaybackDiagnostics? playbackDiagnostics;
+  final bool forceAheadBuffering;
   final bool danmakuEnabled;
   final bool dandanplayAppIdConfigured;
   final bool dandanplayAppSecretConfigured;
@@ -131,19 +133,29 @@ class FeedbackPackageCollector {
   }
 
   String _playbackSummary() {
+    final lines = <String>[
+      '- ${l10n.forceAheadPlaybackBuffering}: '
+          '${l10n.yesNo(forceAheadBuffering)}',
+    ];
     final diagnostics = playbackDiagnostics;
     if (diagnostics == null) {
-      return '${l10n.feedbackPackageUnavailable}: '
-          '${l10n.feedbackPackagePlaybackUnavailable}';
+      lines.add(
+        '- ${l10n.feedbackPackageUnavailable}: '
+        '${l10n.feedbackPackagePlaybackUnavailable}',
+      );
+      return lines.join('\n');
     }
 
-    return buildPlaybackDiagnosticDetailLines(
-      l10n: l10n,
-      localeName: l10n.locale.toLanguageTag(),
-      diagnostics: diagnostics,
-      sourceLabelForId: _sourceLabel,
-      includeExactIso: true,
-    ).map((line) => '- $line').join('\n');
+    lines.addAll(
+      buildPlaybackDiagnosticDetailLines(
+        l10n: l10n,
+        localeName: l10n.locale.toLanguageTag(),
+        diagnostics: diagnostics,
+        sourceLabelForId: _sourceLabel,
+        includeExactIso: true,
+      ).map((line) => '- $line'),
+    );
+    return lines.join('\n');
   }
 
   String _danmakuSummary() {

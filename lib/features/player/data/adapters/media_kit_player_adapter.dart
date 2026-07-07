@@ -4,10 +4,17 @@ import 'package:media_kit/media_kit.dart' as media;
 import 'package:media_kit_video/media_kit_video.dart' as video;
 
 import '../../domain/adapters/player_controller_adapter.dart';
+import '../../domain/entities/playback_buffering_settings.dart';
 import '../../domain/entities/player_state.dart';
 
 class MediaKitPlayerAdapter implements PlayerControllerAdapter {
-  MediaKitPlayerAdapter() {
+  MediaKitPlayerAdapter({
+    int bufferSizeBytes = PlaybackBufferingSettings.defaultBufferSizeBytes,
+  }) : _player = media.Player(
+          configuration: media.PlayerConfiguration(
+            bufferSize: bufferSizeBytes,
+          ),
+        ) {
     videoController = video.VideoController(_player);
     _subscriptions.addAll([
       _player.stream.playing.listen(
@@ -36,7 +43,7 @@ class MediaKitPlayerAdapter implements PlayerControllerAdapter {
     _emit(_state);
   }
 
-  final media.Player _player = media.Player();
+  final media.Player _player;
   final _controller = StreamController<PlayerState>.broadcast();
   final _subscriptions = <StreamSubscription<dynamic>>[];
   PlayerState _state = PlayerState.initial();
