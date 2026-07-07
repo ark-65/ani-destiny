@@ -6,6 +6,9 @@
 
 ## [Unreleased]
 
+### ✨ Added
+- Added a stronger playback buffering setting; playback stays data-conscious by default, while newly opened players use a larger read-ahead buffer when enabled, and feedback summaries now record that setting.
+
 ### 🐛 Fixed
 - Fixed fallback events still prefixing grouped source-failure reasons with internal source IDs, which made support summaries read like engineering logs; those reasons now use neutral attempt order while keeping the sanitized failure meaning.
 - Fixed source health records and fallback diagnostics still being able to save failure reasons with tokens, HTML, or local username paths before the display layer sanitized them; those source summaries now reuse the shared sanitizer at capture time, so source-unavailable and fallback support details no longer carry private local context in state.

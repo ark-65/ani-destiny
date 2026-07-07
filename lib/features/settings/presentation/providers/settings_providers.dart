@@ -12,6 +12,7 @@ import '../../../../core/diagnostics/feedback_package_formatter.dart';
 import '../../../danmaku/presentation/providers/danmaku_providers.dart';
 import '../../../download/domain/entities/download_task.dart';
 import '../../../download/presentation/providers/download_providers.dart';
+import '../../../player/presentation/providers/playback_buffering_providers.dart';
 import '../../../player/presentation/providers/player_providers.dart';
 import '../../../source/presentation/providers/source_providers.dart';
 
@@ -50,6 +51,8 @@ final feedbackPackageProvider =
         .reversed
         .toList(growable: false),
     playbackDiagnostics: ref.watch(lastPlaybackDiagnosticsProvider),
+    forceAheadBuffering:
+        ref.watch(playbackBufferingSettingsProvider).forceAheadBuffering,
     danmakuEnabled: ref.watch(danmakuSettingsProvider).enabled,
     dandanplayAppIdConfigured: dandanplayAppId.isNotEmpty,
     dandanplayAppSecretConfigured: dandanplayAppSecret.isNotEmpty,

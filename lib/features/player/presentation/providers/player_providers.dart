@@ -5,12 +5,17 @@ import '../../data/adapters/media_kit_player_adapter.dart';
 import '../../data/repositories/player_repository_impl.dart';
 import '../../domain/repositories/player_repository.dart';
 import '../../domain/services/playback_diagnostics.dart';
+import 'playback_buffering_providers.dart';
 
 typedef ExternalPlayerLauncher = Future<bool> Function(Uri uri);
 
 final playerRepositoryProvider = Provider<PlayerRepository>((ref) {
-  return const PlayerRepositoryImpl(
-    controllerFactory: MediaKitPlayerAdapter.new,
+  final settings = ref.watch(playbackBufferingSettingsProvider);
+  return PlayerRepositoryImpl(
+    settings: settings,
+    controllerFactory: (settings) => MediaKitPlayerAdapter(
+      bufferSizeBytes: settings.bufferSizeBytes,
+    ),
   );
 });
 

@@ -10,6 +10,7 @@ import '../../../../core/constants/app_constants.dart';
 import '../../../../shared/widgets/adaptive_page.dart';
 import '../../../danmaku/presentation/providers/danmaku_providers.dart';
 import '../../../danmaku/presentation/widgets/danmaku_settings_sheet.dart';
+import '../../../player/presentation/providers/playback_buffering_providers.dart';
 import '../providers/settings_providers.dart';
 import '../widgets/settings_section.dart';
 
@@ -20,6 +21,8 @@ class SettingsPage extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final themeMode = ref.watch(themeModeProvider);
     final danmakuSettings = ref.watch(danmakuSettingsProvider);
+    final playbackBufferingSettings =
+        ref.watch(playbackBufferingSettingsProvider);
     final version = ref.watch(appVersionLabelProvider);
 
     return SafeArea(
@@ -61,6 +64,17 @@ class SettingsPage extends ConsumerWidget {
                       },
                     ),
                   ),
+                ),
+                SwitchListTile(
+                  secondary: const Icon(Icons.network_check_outlined),
+                  title: Text(context.l10n.forceAheadPlaybackBuffering),
+                  subtitle: Text(
+                    context.l10n.forceAheadPlaybackBufferingSubtitle,
+                  ),
+                  value: playbackBufferingSettings.forceAheadBuffering,
+                  onChanged: (value) => ref
+                      .read(playbackBufferingSettingsProvider.notifier)
+                      .setForceAheadBuffering(value),
                 ),
               ],
             ),
