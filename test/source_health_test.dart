@@ -99,4 +99,26 @@ void main() {
     expect(health.failureCount, 1);
     expect(health.lastErrorMessage, isNot(contains('token=secret')));
   });
+
+  test('recordFailure stores a sanitized source failure summary', () async {
+    SharedPreferences.setMockInitialValues({});
+    final service = PersistentSourceHealthService(
+      preferences: await SharedPreferences.getInstance(),
+      sourceIds: const ['sakura'],
+    );
+
+    service.recordFailure(
+      sourceId: 'sakura',
+      operation: 'detail',
+      error: Exception(
+        '<html><body>token=secret</body></html> '
+        '/Users/ark/Downloads/AniDestiny/debug.log',
+      ),
+    );
+
+    final message = service.getHealth('sakura').lastErrorMessage!;
+    expect(message, 'HTML document omitted');
+    expect(message, isNot(contains('token=secret')));
+    expect(message, isNot(contains('/Users/ark')));
+  });
 }

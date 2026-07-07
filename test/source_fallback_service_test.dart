@@ -80,6 +80,39 @@ void main() {
     );
   });
 
+  test('fallback events and diagnostics store sanitized failure reasons',
+      () async {
+    final recorder = _FakeDiagnosticRecorder();
+    final harness = await _Harness.create(
+      selectedSourceId: 'sakura',
+      diagnosticRecorder: recorder,
+    );
+
+    final result = await harness.service.run<List<String>>(
+      operation: 'home',
+      action: (adapter) async {
+        harness.calls.add(adapter.id);
+        if (adapter.id == 'sakura') {
+          throw Exception(
+            'Failed https://example.test/watch?id=1&token=secret '
+            '/Users/ark/Downloads/AniDestiny/debug.log',
+          );
+        }
+        return [adapter.id];
+      },
+    );
+
+    expect(result.sourceId, 'mock');
+    expect(harness.events.single.reason, contains('https://example.test'));
+    expect(harness.events.single.reason, contains('Source attempt 1:'));
+    expect(harness.events.single.reason, isNot(contains('sakura:')));
+    expect(harness.events.single.reason, isNot(contains('token=secret')));
+    expect(harness.events.single.reason, contains('/Users/<user>/'));
+    expect(harness.events.single.reason, isNot(contains('/Users/ark/')));
+    expect(recorder.items.first.reason, isNot(contains('token=secret')));
+    expect(recorder.items.last.reason, isNot(contains('token=secret')));
+  });
+
   test('all sources failed throws AppException', () async {
     final harness = await _Harness.create(selectedSourceId: 'sakura');
 
@@ -147,7 +180,10 @@ class _Harness {
   final List<String> calls;
   final List<SourceFallbackEvent> events;
 
-  static Future<_Harness> create({required String selectedSourceId}) async {
+  static Future<_Harness> create({
+    required String selectedSourceId,
+    SourceDiagnosticRecorder? diagnosticRecorder,
+  }) async {
     SharedPreferences.setMockInitialValues({});
     final registry = SourceRegistry(
       adapters: const [
@@ -168,7 +204,7 @@ class _Harness {
         preferences: await SharedPreferences.getInstance(),
         sourceIds: registry.adapters.map((adapter) => adapter.id),
       ),
-      diagnosticRecorder: _FakeDiagnosticRecorder(),
+      diagnosticRecorder: diagnosticRecorder ?? _FakeDiagnosticRecorder(),
       onFallbackEvent: events.add,
     );
     return _Harness(service: service, calls: calls, events: events);
@@ -200,14 +236,23 @@ class _FakeSourceRepository implements SourceRepository {
 }
 
 class _FakeDiagnosticRecorder implements SourceDiagnosticRecorder {
+  final items = <SourceDiagnostic>[];
+
   @override
   void clear({String? sourceId}) {}
 
   @override
-  List<SourceDiagnostic> latest({String? sourceId}) => const [];
+  List<SourceDiagnostic> latest({String? sourceId}) {
+    final values = sourceId == null
+        ? items
+        : items.where((item) => item.sourceId == sourceId);
+    return values.toList(growable: false);
+  }
 
   @override
-  void record(SourceDiagnostic diagnostic) {}
+  void record(SourceDiagnostic diagnostic) {
+    items.add(diagnostic);
+  }
 }
 
 class _FakeAdapter implements AnimeSourceAdapter {
