@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../app/l10n/app_localizations.dart';
@@ -112,23 +113,30 @@ class HomePage extends ConsumerWidget {
                       ),
                     SliverPadding(
                       padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
-                      sliver: SliverGrid.builder(
-                        gridDelegate:
-                            const SliverGridDelegateWithMaxCrossAxisExtent(
-                          maxCrossAxisExtent: 320,
-                          mainAxisSpacing: 12,
-                          crossAxisSpacing: 12,
-                          childAspectRatio: 0.64,
-                        ),
-                        itemCount: items.length,
-                        itemBuilder: (context, index) {
-                          final anime = items[index];
-                          final sourceId = anime.sourceId ?? result.sourceId;
-                          return AnimeCard(
-                            anime: anime,
-                            onTap: () => context.push(
-                              '/anime/${anime.id}?sourceId=${Uri.encodeQueryComponent(sourceId)}',
-                            ),
+                      sliver: SliverLayoutBuilder(
+                        builder: (context, constraints) {
+                          final columnCount = homeMasonryColumnCountForWidth(
+                            constraints.crossAxisExtent,
+                          );
+
+                          return SliverMasonryGrid.count(
+                            crossAxisCount: columnCount,
+                            mainAxisSpacing: 12,
+                            crossAxisSpacing: 12,
+                            childCount: items.length,
+                            itemBuilder: (context, index) {
+                              final anime = items[index];
+                              final sourceId =
+                                  anime.sourceId ?? result.sourceId;
+                              return AnimeCard(
+                                anime: anime,
+                                imageAspectRatio:
+                                    homeAnimeTileAspectRatio(index),
+                                onTap: () => context.push(
+                                  '/anime/${anime.id}?sourceId=${Uri.encodeQueryComponent(sourceId)}',
+                                ),
+                              );
+                            },
                           );
                         },
                       ),
@@ -142,6 +150,30 @@ class HomePage extends ConsumerWidget {
       ),
     );
   }
+}
+
+@visibleForTesting
+int homeMasonryColumnCountForWidth(double width) {
+  if (width >= 1680) return 6;
+  if (width >= 1360) return 5;
+  if (width >= 1024) return 4;
+  if (width >= 720) return 3;
+  return 2;
+}
+
+@visibleForTesting
+double homeAnimeTileAspectRatio(int index) {
+  const ratios = <double>[
+    1.18,
+    0.82,
+    0.62,
+    1.06,
+    0.74,
+    1.30,
+    0.92,
+    0.68,
+  ];
+  return ratios[index % ratios.length];
 }
 
 class _FallbackNotice extends StatelessWidget {

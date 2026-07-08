@@ -10,6 +10,7 @@
 - Added a stronger playback buffering setting; playback stays data-conscious by default, while newly opened players use a larger read-ahead buffer when enabled, and feedback summaries now record that setting.
 
 ### 🐛 Fixed
+- Fixed the home recommendations leaving large empty card bodies when an anime had no description; the feed now uses compact image-led masonry tiles so wide screens show more shows while titles and update status sit directly on the cover.
 - Fixed the full feedback-summary regression test still checking the old playback-summary order after playback buffer diagnostics were added, which made CI fail even though the exported support copy was correct; the feedback package test now covers the new playback buffer line too.
 - Fixed latest playback diagnostics and copied playback summaries recording the playback state and line without saying whether that session used default buffering or stronger preloading; playback snapshots now include the buffer mode so weak-network reports can be understood faster.
 - Fixed fallback events still prefixing grouped source-failure reasons with internal source IDs, which made support summaries read like engineering logs; those reasons now use neutral attempt order while keeping the sanitized failure meaning.
