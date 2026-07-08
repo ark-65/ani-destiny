@@ -7,6 +7,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../../../../app/l10n/app_localizations.dart';
 import '../../../../app/theme/theme_providers.dart';
 import '../../../../core/constants/app_constants.dart';
+import '../../../../core/diagnostics/issue_report_link.dart';
 import '../../../../shared/widgets/adaptive_page.dart';
 import '../../../danmaku/presentation/providers/danmaku_providers.dart';
 import '../../../danmaku/presentation/widgets/danmaku_settings_sheet.dart';
@@ -23,7 +24,8 @@ class SettingsPage extends ConsumerWidget {
     final danmakuSettings = ref.watch(danmakuSettingsProvider);
     final playbackBufferingSettings =
         ref.watch(playbackBufferingSettingsProvider);
-    final version = ref.watch(appVersionLabelProvider);
+    final version = ref.watch(appVersionLabelProvider).valueOrNull ??
+        AppConstants.appVersion;
 
     return SafeArea(
       child: AdaptivePage(
@@ -55,7 +57,10 @@ class SettingsPage extends ConsumerWidget {
                   trailing: const Icon(Icons.tune),
                   onTap: () => showModalBottomSheet<void>(
                     context: context,
+                    isScrollControlled: true,
                     showDragHandle: true,
+                    useRootNavigator: true,
+                    useSafeArea: true,
                     builder: (context) => DanmakuSettingsSheet(
                       settings: danmakuSettings,
                       onChanged: (settings) {
@@ -145,9 +150,9 @@ class SettingsPage extends ConsumerWidget {
                 ListTile(
                   leading: const Icon(Icons.bug_report_outlined),
                   title: Text(context.l10n.reportIssue),
-                  subtitle: const Text(AppConstants.issuesUrl),
+                  subtitle: Text(context.l10n.reportIssueSubtitle),
                   trailing: const Icon(Icons.open_in_new),
-                  onTap: () => _openExternalUrl(AppConstants.issuesUrl),
+                  onTap: () => _reportIssue(context, ref),
                 ),
                 ListTile(
                   leading: const Icon(Icons.code_outlined),
@@ -177,14 +182,16 @@ class SettingsPage extends ConsumerWidget {
   }
 
   Future<void> _openExternalUrl(String url) async {
-    final uri = Uri.parse(url);
+    await _openExternalUri(Uri.parse(url));
+  }
+
+  Future<void> _openExternalUri(Uri uri) async {
     await launchUrl(uri, mode: LaunchMode.externalApplication);
   }
 
   Future<void> _copyDiagnostics(BuildContext context, WidgetRef ref) async {
     try {
-      final markdown = await ref.read(feedbackPackageMarkdownProvider.future);
-      await Clipboard.setData(ClipboardData(text: markdown));
+      await _copyDiagnosticsMarkdown(ref);
       if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(context.l10n.diagnosticsCopied)),
@@ -195,5 +202,34 @@ class SettingsPage extends ConsumerWidget {
         SnackBar(content: Text(context.l10n.diagnosticsCopyFailed)),
       );
     }
+  }
+
+  Future<void> _reportIssue(BuildContext context, WidgetRef ref) async {
+    final l10n = context.l10n;
+    try {
+      final markdown = await _copyDiagnosticsMarkdown(ref);
+      final uri = buildIssueReportUri(
+        title: l10n.issueReportTitle,
+        diagnosticsMarkdown: markdown,
+        intro: l10n.issueReportBodyIntro,
+        truncatedNotice: l10n.issueReportBodyTruncatedNotice,
+      );
+      await _openExternalUri(uri);
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(l10n.issueReportCopied)),
+      );
+    } catch (error) {
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(l10n.issueReportCopyFailed)),
+      );
+    }
+  }
+
+  Future<String> _copyDiagnosticsMarkdown(WidgetRef ref) async {
+    final markdown = await ref.read(feedbackPackageMarkdownProvider.future);
+    await Clipboard.setData(ClipboardData(text: markdown));
+    return markdown;
   }
 }

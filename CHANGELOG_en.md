@@ -6,6 +6,13 @@
 
 ## [Unreleased]
 
+### ✨ Added
+- Added a tighter issue-reporting flow: tapping Report issue copies a sanitized diagnostics summary and opens a prefilled GitHub issue, while users who are not signed in to GitHub can paste the same report into any support channel.
+
+### 🐛 Fixed
+- Fixed About and runtime diagnostics still reading a stale hard-coded version after release; version labels now prefer runtime package metadata and use the constant only as a fallback.
+- Fixed the danmaku settings bottom sheet on macOS / desktop being able to sit behind the main bottom navigation, hiding lower controls such as speed; the sheet now covers the bottom navigation and remains scrollable.
+
 ## [1.0.5] - 2026-07-08
 
 ### ✨ Added

@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../app/l10n/app_localizations.dart';
+import '../../../../core/constants/app_constants.dart';
 import '../../../../core/diagnostics/diagnostic_sanitizer.dart';
 import '../../../../core/diagnostics/playback_diagnostic_snapshot_preview.dart';
 import '../../../../core/diagnostics/playback_diagnostic_summary.dart';
@@ -25,7 +26,8 @@ class RuntimeDiagnosticsPage extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final version = ref.watch(appVersionLabelProvider);
+    final version = ref.watch(appVersionLabelProvider).valueOrNull ??
+        AppConstants.appVersion;
     final currentSourceId = ref.watch(currentSourceIdProvider).valueOrNull;
     final diagnostics = ref
         .watch(sourceDiagnosticsControllerProvider)
