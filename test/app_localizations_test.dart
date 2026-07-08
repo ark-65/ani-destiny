@@ -330,6 +330,9 @@ void main() {
     expect(zh.playbackDiagnosticRequestedSource, '所选播放源');
     expect(zh.playbackDiagnosticSource, '当前播放源');
     expect(zh.playbackDiagnosticSourceStatus, '播放源状态');
+    expect(zh.playbackDiagnosticBuffering, '播放缓存');
+    expect(zh.playbackDiagnosticBufferingDefault, '默认省流量');
+    expect(zh.playbackDiagnosticBufferingStronger, '强化预读');
     expect(zh.sourceFallbackEvents, isNot(contains('fallback')));
     expect(zh.sourceFallbackEventsEmpty, isNot(contains('fallback')));
     expect(zh.playbackDiagnosticHeaders, '请求头名称');
@@ -380,6 +383,9 @@ void main() {
     expect(en.playbackDiagnosticRequestedSource, 'Selected playback source');
     expect(en.playbackDiagnosticSource, 'Active playback source');
     expect(en.playbackDiagnosticSourceStatus, 'Playback source status');
+    expect(en.playbackDiagnosticBuffering, 'Playback buffer');
+    expect(en.playbackDiagnosticBufferingDefault, 'Default data saving');
+    expect(en.playbackDiagnosticBufferingStronger, 'Stronger preloading');
     expect(
       en.copyDiagnosticsPlaybackPendingHint,
       contains('playback section stays unavailable'),
@@ -427,6 +433,9 @@ void main() {
     expect(ja.playbackDiagnosticRequestedSource, '選択した再生ソース');
     expect(ja.playbackDiagnosticSource, '現在の再生ソース');
     expect(ja.playbackDiagnosticSourceStatus, '再生ソース状態');
+    expect(ja.playbackDiagnosticBuffering, '再生バッファ');
+    expect(ja.playbackDiagnosticBufferingDefault, '標準のデータ節約');
+    expect(ja.playbackDiagnosticBufferingStronger, '強化プリロード');
     expect(ja.sourceFallbackEvents, isNot(contains('fallback')));
     expect(ja.sourceFallbackEventsEmpty, isNot(contains('fallback')));
     expect(ja.playbackDiagnosticHeaders, 'リクエストヘッダー名');

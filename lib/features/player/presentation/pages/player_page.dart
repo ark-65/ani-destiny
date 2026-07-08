@@ -25,6 +25,7 @@ import '../../domain/services/playback_diagnostics.dart';
 import '../../domain/services/next_episode_navigation.dart';
 import '../../../source/presentation/providers/source_providers.dart';
 import '../providers/player_providers.dart';
+import '../providers/playback_buffering_providers.dart';
 import '../widgets/playback_speed_sheet.dart';
 import '../widgets/player_controls.dart';
 import '../widgets/player_surface.dart';
@@ -770,6 +771,8 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
       playUrl: routeArgs.playUrl,
       headers: routeArgs.playHeaders,
       state: _currentDiagnosticState(),
+      forceAheadBuffering:
+          ref.read(playbackBufferingSettingsProvider).forceAheadBuffering,
     );
     final previousDiagnostics = ref.read(lastPlaybackDiagnosticsProvider);
     final diagnostics = !force &&
@@ -804,6 +807,7 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
         previous.urlType == next.urlType &&
         previous.sanitizedUrl == next.sanitizedUrl &&
         previous.state == next.state &&
+        previous.forceAheadBuffering == next.forceAheadBuffering &&
         listEquals(previous.headerKeys, next.headerKeys);
   }
 
@@ -839,6 +843,7 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
         previous.urlType == next.urlType &&
         previous.sanitizedUrl == next.sanitizedUrl &&
         previous.state == next.state &&
+        previous.forceAheadBuffering == next.forceAheadBuffering &&
         listEquals(previous.headerKeys, next.headerKeys);
   }
 
@@ -858,6 +863,9 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
       routeArgs.playUrl,
       headerKeys.join(','),
       state.name,
+      ref.read(playbackBufferingSettingsProvider).forceAheadBuffering
+          ? 'force-buffer'
+          : 'default-buffer',
     ].join('|');
   }
 

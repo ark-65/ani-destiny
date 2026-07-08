@@ -10,6 +10,8 @@
 - Added a stronger playback buffering setting; playback stays data-conscious by default, while newly opened players use a larger read-ahead buffer when enabled, and feedback summaries now record that setting.
 
 ### 🐛 Fixed
+- Fixed the full feedback-summary regression test still checking the old playback-summary order after playback buffer diagnostics were added, which made CI fail even though the exported support copy was correct; the feedback package test now covers the new playback buffer line too.
+- Fixed latest playback diagnostics and copied playback summaries recording the playback state and line without saying whether that session used default buffering or stronger preloading; playback snapshots now include the buffer mode so weak-network reports can be understood faster.
 - Fixed fallback events still prefixing grouped source-failure reasons with internal source IDs, which made support summaries read like engineering logs; those reasons now use neutral attempt order while keeping the sanitized failure meaning.
 - Fixed source health records and fallback diagnostics still being able to save failure reasons with tokens, HTML, or local username paths before the display layer sanitized them; those source summaries now reuse the shared sanitizer at capture time, so source-unavailable and fallback support details no longer carry private local context in state.
 - Fixed copied download support summaries still letting the collector hold the full local username path for `Needs cleanup` leftover files before the final Markdown formatter sanitized it; those summaries now sanitize the local path at the source, keeping enough file context for cleanup without carrying a private machine path.

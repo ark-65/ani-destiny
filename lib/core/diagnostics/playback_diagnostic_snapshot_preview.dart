@@ -28,6 +28,7 @@ List<String> _playbackContextLines(
     PlaybackDiagnosticDetailField.selectedAppSource,
     PlaybackDiagnosticDetailField.line,
     PlaybackDiagnosticDetailField.state,
+    PlaybackDiagnosticDetailField.buffering,
   };
 
   return buildPlaybackDiagnosticDetailEntries(

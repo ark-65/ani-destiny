@@ -178,6 +178,11 @@ class AppLocalizations {
   String get playbackDiagnosticUrl => _t('playbackDiagnosticUrl');
   String get playbackDiagnosticHeaders => _t('playbackDiagnosticHeaders');
   String get playbackDiagnosticState => _t('playbackDiagnosticState');
+  String get playbackDiagnosticBuffering => _t('playbackDiagnosticBuffering');
+  String get playbackDiagnosticBufferingDefault =>
+      _t('playbackDiagnosticBufferingDefault');
+  String get playbackDiagnosticBufferingStronger =>
+      _t('playbackDiagnosticBufferingStronger');
   String get playbackDiagnosticStateLoading =>
       _t('playbackDiagnosticStateLoading');
   String get playbackDiagnosticStateReady => _t('playbackDiagnosticStateReady');
@@ -923,6 +928,9 @@ const _localizedValues = {
     'playbackDiagnosticUrl': 'URL',
     'playbackDiagnosticHeaders': '请求头名称',
     'playbackDiagnosticState': '状态',
+    'playbackDiagnosticBuffering': '播放缓存',
+    'playbackDiagnosticBufferingDefault': '默认省流量',
+    'playbackDiagnosticBufferingStronger': '强化预读',
     'playbackDiagnosticStateLoading': '加载中',
     'playbackDiagnosticStateReady': '就绪',
     'playbackDiagnosticStatePlaying': '播放中',
@@ -1268,6 +1276,9 @@ const _localizedValues = {
     'playbackDiagnosticUrl': 'URL',
     'playbackDiagnosticHeaders': 'Request header names',
     'playbackDiagnosticState': 'State',
+    'playbackDiagnosticBuffering': 'Playback buffer',
+    'playbackDiagnosticBufferingDefault': 'Default data saving',
+    'playbackDiagnosticBufferingStronger': 'Stronger preloading',
     'playbackDiagnosticStateLoading': 'Loading',
     'playbackDiagnosticStateReady': 'Ready',
     'playbackDiagnosticStatePlaying': 'Playing',
@@ -1636,6 +1647,9 @@ const _localizedValues = {
     'playbackDiagnosticUrl': 'URL',
     'playbackDiagnosticHeaders': 'リクエストヘッダー名',
     'playbackDiagnosticState': '状態',
+    'playbackDiagnosticBuffering': '再生バッファ',
+    'playbackDiagnosticBufferingDefault': '標準のデータ節約',
+    'playbackDiagnosticBufferingStronger': '強化プリロード',
     'playbackDiagnosticStateLoading': '読み込み中',
     'playbackDiagnosticStateReady': '準備完了',
     'playbackDiagnosticStatePlaying': '再生中',
