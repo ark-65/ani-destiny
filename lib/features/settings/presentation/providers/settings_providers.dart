@@ -3,6 +3,7 @@ import 'dart:ui' as ui;
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 
 import '../../../../app/l10n/app_localizations.dart';
 import '../../../../core/constants/app_constants.dart';
@@ -16,8 +17,8 @@ import '../../../player/presentation/providers/playback_buffering_providers.dart
 import '../../../player/presentation/providers/player_providers.dart';
 import '../../../source/presentation/providers/source_providers.dart';
 
-final appVersionLabelProvider = Provider<String>(
-  (ref) => AppConstants.appVersion,
+final appVersionLabelProvider = FutureProvider<String>(
+  (ref) => _loadAppVersionLabel(),
 );
 
 final feedbackPackageProvider =
@@ -36,7 +37,7 @@ final feedbackPackageProvider =
   return FeedbackPackageCollector(
     l10n: l10n,
     appName: AppConstants.appName,
-    appVersion: ref.watch(appVersionLabelProvider),
+    appVersion: await ref.watch(appVersionLabelProvider.future),
     platform: l10n.platformDisplayName(defaultTargetPlatform.name),
     currentSourceId: currentSourceId,
     sourceHealth: ref.watch(sourceHealthControllerProvider),
@@ -86,4 +87,15 @@ Future<List<DownloadTask>> _downloadTasks(Ref ref) {
         const Duration(milliseconds: 500),
         onTimeout: () => const <DownloadTask>[],
       );
+}
+
+Future<String> _loadAppVersionLabel() async {
+  try {
+    final info = await PackageInfo.fromPlatform();
+    final version = info.version.trim();
+    if (version.isEmpty) return AppConstants.appVersion;
+    return version;
+  } on Object {
+    return AppConstants.appVersion;
+  }
 }

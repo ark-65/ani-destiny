@@ -646,6 +646,13 @@ class AppLocalizations {
   String get copyDiagnosticsPlaybackPendingHint =>
       _t('copyDiagnosticsPlaybackPendingHint');
   String get reportIssue => _t('reportIssue');
+  String get reportIssueSubtitle => _t('reportIssueSubtitle');
+  String get issueReportTitle => _t('issueReportTitle');
+  String get issueReportCopied => _t('issueReportCopied');
+  String get issueReportCopyFailed => _t('issueReportCopyFailed');
+  String get issueReportBodyIntro => _t('issueReportBodyIntro');
+  String get issueReportBodyTruncatedNotice =>
+      _t('issueReportBodyTruncatedNotice');
   String get githubRepository => _t('githubRepository');
   String get openSource => _t('openSource');
   String get releasePage => _t('releasePage');
@@ -1057,6 +1064,13 @@ const _localizedValues = {
     'copyDiagnosticsPlaybackPendingHint':
         '将生成已脱敏的反馈摘要；当前还没有播放快照，播放部分会在当前会话先播放一次后补上。',
     'reportIssue': '反馈问题',
+    'reportIssueSubtitle': '复制已脱敏诊断并打开预填 GitHub issue；未登录时也可直接粘贴到其他反馈渠道。',
+    'issueReportTitle': 'AniDestiny 问题反馈',
+    'issueReportCopied': '已复制诊断信息，并打开 GitHub 反馈页。未登录时可直接粘贴到其他反馈渠道。',
+    'issueReportCopyFailed': '暂时没能准备反馈报告；请先复制诊断信息后再反馈。',
+    'issueReportBodyIntro':
+        '下面是 AniDestiny 自动生成的已脱敏诊断摘要。请在提交前补充复现步骤、预期结果和实际结果。',
+    'issueReportBodyTruncatedNotice': '诊断摘要较长，已在这里截断；完整内容已复制到剪贴板。',
     'githubRepository': 'GitHub 仓库',
     'openSource': '开源地址',
     'releasePage': '发布地址',
@@ -1428,6 +1442,17 @@ const _localizedValues = {
     'copyDiagnosticsPlaybackPendingHint':
         'A sanitized feedback summary will be copied. The playback section stays unavailable until playback runs once in this session.',
     'reportIssue': 'Report issue',
+    'reportIssueSubtitle':
+        'Copy sanitized diagnostics and open a prefilled GitHub issue. If GitHub asks you to sign in, paste the report anywhere you contact support.',
+    'issueReportTitle': 'AniDestiny issue report',
+    'issueReportCopied':
+        'Diagnostics copied and GitHub issue page opened. If you are not signed in, paste the report into any support channel.',
+    'issueReportCopyFailed':
+        'Could not prepare the issue report. Copy diagnostics first, then report the issue.',
+    'issueReportBodyIntro':
+        'AniDestiny generated the sanitized diagnostics below. Before submitting, add reproduction steps, expected result, and actual result.',
+    'issueReportBodyTruncatedNotice':
+        'The diagnostics were long, so this issue body was shortened. The full report was copied to the clipboard.',
     'githubRepository': 'GitHub repository',
     'openSource': 'Open source',
     'releasePage': 'Releases',
@@ -1790,6 +1815,16 @@ const _localizedValues = {
     'copyDiagnosticsPlaybackPendingHint':
         '機密値を含まないフィードバック概要をコピーします。このセッションで一度再生するまでは再生欄は利用できません。',
     'reportIssue': '問題を報告',
+    'reportIssueSubtitle':
+        '診断情報をコピーし、入力済みの GitHub issue を開きます。未ログインの場合は、任意の連絡先に貼り付けてください。',
+    'issueReportTitle': 'AniDestiny 問題報告',
+    'issueReportCopied':
+        '診断情報をコピーし、GitHub の報告ページを開きました。未ログインの場合は任意の連絡先に貼り付けられます。',
+    'issueReportCopyFailed': '報告内容を準備できませんでした。先に診断情報をコピーしてから報告してください。',
+    'issueReportBodyIntro':
+        '以下は AniDestiny が生成した、機密値を含まない診断概要です。送信前に再現手順、期待結果、実際の結果を追記してください。',
+    'issueReportBodyTruncatedNotice':
+        '診断概要が長いため、ここでは一部のみ表示しています。完全な内容はクリップボードにコピー済みです。',
     'githubRepository': 'GitHub リポジトリ',
     'openSource': 'オープンソース',
     'releasePage': 'リリース',

@@ -131,6 +131,16 @@ void main() {
       findsOneWidget,
     );
     expect(find.text('Copy diagnostics'), findsOneWidget);
+    await tester.scrollUntilVisible(
+      find.text('Report issue'),
+      200,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.pumpAndSettle();
+    expect(
+      find.textContaining('Copy sanitized diagnostics and open'),
+      findsOneWidget,
+    );
   });
 
   testWidgets('settings page exposes force-ahead playback buffering',
@@ -169,6 +179,37 @@ void main() {
       ).read(playbackBufferingSettingsProvider).forceAheadBuffering,
       isTrue,
     );
+  });
+
+  testWidgets('danmaku settings sheet stays scrollable on compact heights', (
+    tester,
+  ) async {
+    tester.view.devicePixelRatio = 1;
+    tester.view.physicalSize = const Size(1000, 620);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    addTearDown(tester.view.resetPhysicalSize);
+    SharedPreferences.setMockInitialValues({});
+
+    await tester.pumpWidget(
+      _buildApp(
+        home: const SettingsPage(),
+        overrides: _providerOverrides,
+      ),
+    );
+
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Danmaku settings'));
+    await tester.pumpAndSettle();
+    expect(find.byType(DraggableScrollableSheet), findsOneWidget);
+
+    await tester.scrollUntilVisible(
+      find.text('Speed 1.0x'),
+      120,
+      scrollable: find.byType(Scrollable).last,
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('Speed 1.0x'), findsOneWidget);
   });
 
   testWidgets('runtime diagnostics page can copy diagnostics in place', (
