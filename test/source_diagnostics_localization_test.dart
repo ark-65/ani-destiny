@@ -50,6 +50,7 @@ void main() {
     expect(find.text('sakura'), findsNothing);
     expect(find.text('mock'), findsNothing);
     expect(find.text('detail'), findsNothing);
+    expect(find.textContaining('AppException'), findsNothing);
     expect(
       find.textContaining('Retry later or switch sources'),
       findsOneWidget,
@@ -104,6 +105,7 @@ void main() {
     expect(find.text('sakura'), findsNothing);
     expect(find.text('mock'), findsNothing);
     expect(find.text('detail'), findsNothing);
+    expect(find.textContaining('AppException'), findsNothing);
   });
 
   testWidgets('settings page keeps runtime diagnostics visible for support',
@@ -814,6 +816,7 @@ class _FakeSourceDiagnosticsController extends SourceDiagnosticsController {
         operation: 'detail',
         level: SourceDiagnosticLevel.warning,
         message: 'Detail request failed',
+        exceptionType: 'AppException',
         fromSourceId: 'sakura',
         toSourceId: 'mock',
         usedFallback: true,

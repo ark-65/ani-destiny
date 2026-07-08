@@ -316,7 +316,6 @@ class _SourceDiagnosticTile extends StatelessWidget {
     final details = [
       if (diagnostic.url != null) sanitizeUrlForDiagnostics(diagnostic.url!),
       if (diagnostic.statusCode != null) 'HTTP ${diagnostic.statusCode}',
-      if (diagnostic.exceptionType != null) diagnostic.exceptionType!,
       if (diagnostic.usedFallback &&
           diagnostic.fromSourceId != null &&
           diagnostic.toSourceId != null)
