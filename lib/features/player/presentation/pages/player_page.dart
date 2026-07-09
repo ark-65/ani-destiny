@@ -15,6 +15,8 @@ import '../../../danmaku/presentation/providers/danmaku_providers.dart';
 import '../../../danmaku/presentation/widgets/danmaku_overlay.dart';
 import '../../../download/presentation/download_entry_feedback.dart';
 import '../../../download/presentation/providers/download_providers.dart';
+import '../../../download/domain/entities/download_kind.dart';
+import '../../../download/domain/services/download_type_detector.dart';
 import '../../../history/domain/entities/watch_history.dart';
 import '../../../history/domain/repositories/history_repository.dart';
 import '../../../history/presentation/providers/history_providers.dart';
@@ -619,6 +621,10 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
     }
     if (!_hasPlayableUrl()) {
       return context.l10n.noPlayableSourceFound;
+    }
+    final downloadKind = detectDownloadKind(_args.playUrl);
+    if (downloadKind != DownloadKind.directFile) {
+      return downloadEntryFeedbackMessage(context.l10n, downloadKind);
     }
     return context.l10n.download;
   }
