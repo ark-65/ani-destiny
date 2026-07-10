@@ -973,7 +973,9 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
               Text(downloadEntryFeedbackMessage(context.l10n, result.kind)),
           action: SnackBarAction(
             label: downloadEntryFeedbackActionLabel(context.l10n, result.kind),
-            onPressed: () => context.push('/downloads'),
+            onPressed: () => context.push(
+              '/downloads?taskId=${Uri.encodeComponent(result.taskId)}',
+            ),
           ),
         ),
       );

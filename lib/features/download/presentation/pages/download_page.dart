@@ -20,10 +20,12 @@ import '../widgets/download_task_tile.dart';
 class DownloadPage extends ConsumerStatefulWidget {
   const DownloadPage({
     this.showDebugMockAction = kDebugMode,
+    this.focusTaskId,
     super.key,
   });
 
   final bool showDebugMockAction;
+  final String? focusTaskId;
 
   @override
   ConsumerState<DownloadPage> createState() => _DownloadPageState();
@@ -207,6 +209,20 @@ class _DownloadPageState extends ConsumerState<DownloadPage>
                   onRetry: () => ref.invalidate(downloadTasksProvider),
                 ),
                 data: (items) {
+                  final focusedTaskId = widget.focusTaskId?.trim();
+                  final focusedTask =
+                      focusedTaskId == null || focusedTaskId.isEmpty
+                          ? null
+                          : items.cast<DownloadTask?>().firstWhere(
+                                (task) => task?.id == focusedTaskId,
+                                orElse: () => null,
+                              );
+                  final visibleItems = focusedTask == null
+                      ? items
+                      : [
+                          focusedTask,
+                          ...items.where((task) => task.id != focusedTaskId),
+                        ];
                   final removableTaskIds = _removableTaskIds(items);
                   final clearableTaskIds = _clearableTaskIds(items);
                   final manualCleanupTaskIds = _manualCleanupTaskIds(items);
@@ -351,11 +367,26 @@ class _DownloadPageState extends ConsumerState<DownloadPage>
                         ],
                         const SizedBox(height: 12),
                       ],
+                      if (focusedTask != null) ...[
+                        Align(
+                          alignment: Alignment.centerLeft,
+                          child: Text(
+                            context.l10n.downloadFocusedTaskNotice,
+                            style:
+                                Theme.of(context).textTheme.bodySmall?.copyWith(
+                                      color: Theme.of(
+                                        context,
+                                      ).colorScheme.onSurfaceVariant,
+                                    ),
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                      ],
                       Expanded(
                         child: ListView.builder(
-                          itemCount: items.length,
+                          itemCount: visibleItems.length,
                           itemBuilder: (context, index) {
-                            final task = items[index];
+                            final task = visibleItems[index];
                             final batchRemovingTask = _isClearingEndedTasks &&
                                 clearableTaskIds.contains(task.id);
                             final isBusy =
@@ -364,6 +395,7 @@ class _DownloadPageState extends ConsumerState<DownloadPage>
                             return DownloadTaskTile(
                               task: task,
                               isBusy: isBusy,
+                              isHighlighted: task.id == focusedTaskId,
                               busyAction: _busyTaskActions[task.id] ??
                                   (batchRemovingTask
                                       ? DownloadTaskBusyAction.remove
@@ -499,6 +531,11 @@ class _DownloadPageState extends ConsumerState<DownloadPage>
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(context.l10n.mockDownloadTaskCreated(result.taskId)),
+        action: SnackBarAction(
+          label: context.l10n.openDownloads,
+          onPressed: () => context
+              .push('/downloads?taskId=${Uri.encodeComponent(result.taskId)}'),
+        ),
       ),
     );
   }

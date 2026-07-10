@@ -129,6 +129,7 @@ class AppLocalizations {
   String get downloadSelectionPendingNote => _t('downloadSelectionPendingNote');
   String get downloadTaskWillBeAdded => _t('downloadTaskWillBeAdded');
   String get downloadTaskAdded => _t('downloadTaskAdded');
+  String get downloadFocusedTaskNotice => _t('downloadFocusedTaskNotice');
   String get playerNoPlayUrl => _t('playerNoPlayUrl');
   String get playerReadyHint => _t('playerReadyHint');
   String get playerPreparingPlayback => _t('playerPreparingPlayback');
@@ -909,6 +910,7 @@ const _localizedValues = {
     'downloadSelectionPendingNote': '选择这条线路后，会先加入下载列表。',
     'downloadTaskWillBeAdded': '点这里后，会先加入下载列表。',
     'downloadTaskAdded': '已加入下载列表。打开下载列表后再开始。',
+    'downloadFocusedTaskNotice': '这里先展示你刚刚加入下载列表的那一条，方便你继续处理。',
     'playerNoPlayUrl': '未找到可播放线路',
     'playerReadyHint': '播放器预览已就绪',
     'playerPreparingPlayback': '正在准备播放…',
@@ -1263,6 +1265,8 @@ const _localizedValues = {
         'Choosing this line adds it to Downloads first.',
     'downloadTaskWillBeAdded': 'This adds it to Downloads first.',
     'downloadTaskAdded': 'Added to Downloads. Open Downloads to start it.',
+    'downloadFocusedTaskNotice':
+        'Showing the download you just added first so you can keep going.',
     'playerNoPlayUrl': 'No playable source found',
     'playerReadyHint': 'Playback preview ready',
     'playerPreparingPlayback': 'Preparing playback...',
@@ -1657,6 +1661,7 @@ const _localizedValues = {
     'downloadSelectionPendingNote': 'このラインを選ぶと、先にダウンロード一覧へ追加されます。',
     'downloadTaskWillBeAdded': 'ここを押すと、先にダウンロード一覧へ追加されます。',
     'downloadTaskAdded': 'ダウンロード一覧に追加しました。開始するには一覧を開いてください。',
+    'downloadFocusedTaskNotice': '今追加したダウンロードを先頭に表示しているので、そのまま続けられます。',
     'playerNoPlayUrl': '再生可能なソースが見つかりません',
     'playerReadyHint': '再生プレビューの準備完了',
     'playerPreparingPlayback': '再生を準備中…',
