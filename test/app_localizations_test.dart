@@ -256,18 +256,21 @@ void main() {
 
   test('download entry action copy points directly to Downloads', () {
     const zh = AppLocalizations(Locale('zh'));
+    expect(zh.checkDownloadLines, '查看下载线路');
     expect(zh.openDownloads, '打开下载列表');
     expect(zh.openDownloads, contains('下载'));
     expect(zh.reviewInDownloads, '去下载列表查看');
     expect(zh.reviewInDownloads, contains('下载'));
 
     const en = AppLocalizations(Locale('en'));
+    expect(en.checkDownloadLines, 'Check download lines');
     expect(en.openDownloads, 'Open Downloads');
     expect(en.openDownloads, isNot('Open'));
     expect(en.reviewInDownloads, 'Review in Downloads');
     expect(en.reviewInDownloads, contains('Downloads'));
 
     const ja = AppLocalizations(Locale('ja'));
+    expect(ja.checkDownloadLines, 'ダウンロードラインを確認');
     expect(ja.openDownloads, 'ダウンロード一覧を開く');
     expect(ja.openDownloads, contains('ダウンロード'));
     expect(ja.reviewInDownloads, 'ダウンロード一覧で確認');

@@ -44,7 +44,7 @@ class EpisodeList extends StatelessWidget {
                 spacing: 4,
                 children: [
                   IconButton(
-                    tooltip: context.l10n.downloadTaskWillBeAdded,
+                    tooltip: context.l10n.checkDownloadLines,
                     onPressed: () => onDownload(episode),
                     icon: const Icon(Icons.download_outlined),
                   ),

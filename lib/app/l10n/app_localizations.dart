@@ -125,6 +125,7 @@ class AppLocalizations {
   String get noDownloadSource => _t('noDownloadSource');
   String get selectPlaySource => _t('selectPlaySource');
   String get selectDownloadSource => _t('selectDownloadSource');
+  String get checkDownloadLines => _t('checkDownloadLines');
   String get downloadSelectionPendingNote => _t('downloadSelectionPendingNote');
   String get downloadTaskWillBeAdded => _t('downloadTaskWillBeAdded');
   String get downloadTaskAdded => _t('downloadTaskAdded');
@@ -904,6 +905,7 @@ const _localizedValues = {
     'noDownloadSource': '未找到可下载线路，请稍后重试或切换数据源。',
     'selectPlaySource': '选择播放线路',
     'selectDownloadSource': '选择下载线路',
+    'checkDownloadLines': '查看下载线路',
     'downloadSelectionPendingNote': '选择这条线路后，会先加入下载列表。',
     'downloadTaskWillBeAdded': '点这里后，会先加入下载列表。',
     'downloadTaskAdded': '已加入下载列表。打开下载列表后再开始。',
@@ -1256,6 +1258,7 @@ const _localizedValues = {
         'No downloadable source found. Try another source or retry later.',
     'selectPlaySource': 'Select playback line',
     'selectDownloadSource': 'Select download line',
+    'checkDownloadLines': 'Check download lines',
     'downloadSelectionPendingNote':
         'Choosing this line adds it to Downloads first.',
     'downloadTaskWillBeAdded': 'This adds it to Downloads first.',
@@ -1650,6 +1653,7 @@ const _localizedValues = {
     'noDownloadSource': 'ダウンロード可能なソースが見つかりません。別のソースを試すか、後で再試行してください。',
     'selectPlaySource': '再生ラインを選択',
     'selectDownloadSource': 'ダウンロードラインを選択',
+    'checkDownloadLines': 'ダウンロードラインを確認',
     'downloadSelectionPendingNote': 'このラインを選ぶと、先にダウンロード一覧へ追加されます。',
     'downloadTaskWillBeAdded': 'ここを押すと、先にダウンロード一覧へ追加されます。',
     'downloadTaskAdded': 'ダウンロード一覧に追加しました。開始するには一覧を開いてください。',
