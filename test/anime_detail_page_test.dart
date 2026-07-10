@@ -56,6 +56,18 @@ void main() {
     await tester.tap(find.byTooltip('Download'));
     await tester.pumpAndSettle();
 
+    expect(find.text('Direct line'), findsOneWidget);
+    expect(
+      find.byWidgetPredicate(
+        (widget) =>
+            widget is Text &&
+            (widget.data?.contains(
+                  'Added to Downloads. Open Downloads to start it.',
+                ) ??
+                false),
+      ),
+      findsOneWidget,
+    );
     expect(find.text('HLS line'), findsOneWidget);
     expect(
       find.byWidgetPredicate(
