@@ -3037,10 +3037,18 @@ void main() {
             _FakeDownloadTaskCreator(onCreate: () => createdDownloads++),
           ),
         ],
-        child: _buildPlayerApp(_args),
+        child: _buildPlayerApp(_directDownloadArgs),
       ),
     );
     await tester.pumpAndSettle();
+
+    final downloadButton = tester.widget<IconButton>(
+      find.widgetWithIcon(IconButton, Icons.download_outlined),
+    );
+    expect(
+      downloadButton.tooltip,
+      'Added to Downloads. Open Downloads to start it.',
+    );
 
     await tester.tap(find.widgetWithIcon(IconButton, Icons.download_outlined));
     await tester.pump();
@@ -4368,6 +4376,17 @@ const _args = PlayerRouteArgs(
   sourceId: 'sakura',
   playSourceId: 'line-1',
   playSourceTitle: 'Line 1',
+);
+
+const _directDownloadArgs = PlayerRouteArgs(
+  animeId: 'anime-1',
+  episodeId: 'episode-1',
+  animeTitle: 'Anime 1',
+  episodeTitle: 'Episode 1',
+  playUrl: 'https://cdn.example.test/video.mp4',
+  sourceId: 'sakura',
+  playSourceId: 'line-direct',
+  playSourceTitle: 'Direct Line',
 );
 
 const _failingArgs = PlayerRouteArgs(

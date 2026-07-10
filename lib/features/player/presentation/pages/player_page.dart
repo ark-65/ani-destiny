@@ -626,7 +626,7 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
     if (downloadKind != DownloadKind.directFile) {
       return downloadEntryFeedbackMessage(context.l10n, downloadKind);
     }
-    return context.l10n.download;
+    return context.l10n.downloadTaskAdded;
   }
 
   String _routeBusyExitMessage(BuildContext context) {
