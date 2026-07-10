@@ -749,6 +749,16 @@ class AppLocalizations {
         .replaceFirst('{activeSource}', activeSource);
   }
 
+  String sourceFallbackDownloadNotice(
+    String requestedSource,
+    String activeSource,
+  ) {
+    final template = _t('sourceFallbackDownloadNotice');
+    return template
+        .replaceFirst('{requestedSource}', requestedSource)
+        .replaceFirst('{activeSource}', activeSource);
+  }
+
   String get playbackDiagnosticCapturedAt => _t('playbackDiagnosticCapturedAt');
   String get sourceTemporarilyUnavailable => _t('sourceTemporarilyUnavailable');
   String get sourceUnavailableSuggestion => _t('sourceUnavailableSuggestion');
@@ -1132,6 +1142,8 @@ const _localizedValues = {
         '{animeTitle} · {episodeTitle}\n{playbackContext}\n{capturedAt}',
     'sourceFallbackPlayerNotice':
         '当前所选数据源 {requestedSource} 暂时不可用，已改用 {activeSource} 继续播放。',
+    'sourceFallbackDownloadNotice':
+        '当前所选数据源 {requestedSource} 暂时不可用，下面这些下载线路来自 {activeSource}。',
     'playbackDiagnosticCapturedAt': '采集时间',
     'sourceTemporarilyUnavailable': '数据源暂时不可用',
     'sourceUnavailableSuggestion': '上游数据源可能已变化或暂时不可用，请稍后重试或切换数据源。',
@@ -1521,6 +1533,8 @@ const _localizedValues = {
         '{animeTitle} · {episodeTitle}\n{playbackContext}\n{capturedAt}',
     'sourceFallbackPlayerNotice':
         '{requestedSource} is temporarily unavailable. AniDestiny is playing from {activeSource} instead.',
+    'sourceFallbackDownloadNotice':
+        '{requestedSource} is temporarily unavailable. These download lines are coming from {activeSource} instead.',
     'playbackDiagnosticCapturedAt': 'Captured at',
     'sourceTemporarilyUnavailable': 'Source temporarily unavailable',
     'sourceUnavailableSuggestion':
@@ -1892,6 +1906,8 @@ const _localizedValues = {
         '{animeTitle} · {episodeTitle}\n{playbackContext}\n{capturedAt}',
     'sourceFallbackPlayerNotice':
         '選択していたソース {requestedSource} は一時的に利用できないため、現在は {activeSource} に切り替えて再生しています。',
+    'sourceFallbackDownloadNotice':
+        '選択していたソース {requestedSource} は一時的に利用できないため、以下のダウンロードラインは {activeSource} から取得しています。',
     'playbackDiagnosticCapturedAt': '取得時刻',
     'sourceTemporarilyUnavailable': 'ソースが一時的に利用できません',
     'sourceUnavailableSuggestion':

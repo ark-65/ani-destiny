@@ -153,6 +153,56 @@ void main() {
     },
   );
 
+  testWidgets(
+    'anime detail confirms fallback download lines before adding a single direct download',
+    (tester) async {
+      var createdDownloads = 0;
+      const repository = _FakeAnimeRepository(
+        detail: _detail,
+        playSources: [
+          PlaySource(
+            id: 'source-1',
+            episodeId: 'episode-1',
+            title: 'Direct line',
+            url: 'https://cdn.example.com/episode-1.mp4',
+          ),
+        ],
+        playSourcesUsedFallback: true,
+        playSourcesFromSourceId: 'mock',
+      );
+
+      await _pumpPage(
+        tester,
+        animeRepository: repository,
+        downloadService: _FakeDownloadService(
+          onCreate: () => createdDownloads++,
+        ),
+      );
+
+      await tester.tap(find.byTooltip('This adds it to Downloads first.'));
+      await tester.pumpAndSettle();
+
+      expect(createdDownloads, 0);
+      expect(find.text('Select download line'), findsOneWidget);
+      expect(
+        find.byWidgetPredicate(
+          (widget) =>
+              widget is Text &&
+              (widget.data?.contains('temporarily unavailable') ?? false) &&
+              (widget.data?.contains('Mock') ?? false) &&
+              (widget.data?.contains('Sakura Anime') ?? false),
+        ),
+        findsOneWidget,
+      );
+
+      await tester.tap(find.text('Direct line'));
+      await tester.pumpAndSettle();
+
+      expect(createdDownloads, 1);
+      expect(find.text('Select download line'), findsNothing);
+    },
+  );
+
   testWidgets('anime detail download surfaces creation errors calmly', (
     tester,
   ) async {
@@ -280,10 +330,14 @@ class _FakeAnimeRepository implements AnimeRepository {
   const _FakeAnimeRepository({
     required this.detail,
     required this.playSources,
+    this.playSourcesUsedFallback = false,
+    this.playSourcesFromSourceId,
   });
 
   final AnimeDetail detail;
   final List<PlaySource> playSources;
+  final bool playSourcesUsedFallback;
+  final String? playSourcesFromSourceId;
 
   @override
   Future<SourceFallbackResult<AnimeDetail>> getAnimeDetail(String animeId) {
@@ -322,7 +376,8 @@ class _FakeAnimeRepository implements AnimeRepository {
     return SourceFallbackResult<List<PlaySource>>(
       value: playSources,
       sourceId: sourceId,
-      usedFallback: false,
+      usedFallback: playSourcesUsedFallback,
+      fromSourceId: playSourcesFromSourceId,
     );
   }
 

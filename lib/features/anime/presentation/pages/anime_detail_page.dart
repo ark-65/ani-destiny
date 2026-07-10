@@ -194,7 +194,19 @@ class AnimeDetailPage extends ConsumerWidget {
           SnackBar(content: Text(context.l10n.sourceFallbackNotice)),
         );
       }
-      final source = await _selectDownloadSource(context, sources);
+      final fallbackNotice = sourceResult.usedFallback
+          ? context.l10n.sourceFallbackDownloadNotice(
+              context.l10n.sourceDisplayLabel(
+                sourceResult.fromSourceId ?? detail.sourceId,
+              ),
+              context.l10n.sourceDisplayLabel(sourceResult.sourceId),
+            )
+          : null;
+      final source = await _selectDownloadSource(
+        context,
+        sources,
+        fallbackNotice: fallbackNotice,
+      );
       if (!context.mounted || source == null) return;
       final result = await ref.read(downloadTaskCreatorProvider).create(
             animeId: detail.id,
@@ -241,16 +253,19 @@ class AnimeDetailPage extends ConsumerWidget {
 
   Future<PlaySource?> _selectDownloadSource(
     BuildContext context,
-    List<PlaySource> sources,
-  ) {
+    List<PlaySource> sources, {
+    String? fallbackNotice,
+  }) {
     return _selectSource(
       context,
       sources,
       title: context.l10n.selectDownloadSource,
       actionIcon: Icons.download_outlined,
       subtitleBuilder: (source) => _downloadSourceSubtitle(context, source),
-      forceSheet: sources.length == 1 &&
-          _requiresDownloadSelectionConfirmation(sources.first),
+      topNotice: fallbackNotice,
+      forceSheet: fallbackNotice != null ||
+          (sources.length == 1 &&
+              _requiresDownloadSelectionConfirmation(sources.first)),
     );
   }
 
@@ -260,6 +275,7 @@ class AnimeDetailPage extends ConsumerWidget {
     required String title,
     required IconData actionIcon,
     String? Function(PlaySource source)? subtitleBuilder,
+    String? topNotice,
     bool forceSheet = false,
   }) async {
     if (sources.length == 1 && !forceSheet) return sources.first;
@@ -277,9 +293,26 @@ class AnimeDetailPage extends ConsumerWidget {
               if (index == 0) {
                 return Padding(
                   padding: const EdgeInsets.only(bottom: 8),
-                  child: Text(
-                    title,
-                    style: Theme.of(context).textTheme.titleLarge,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        title,
+                        style: Theme.of(context).textTheme.titleLarge,
+                      ),
+                      if (topNotice != null && topNotice.isNotEmpty) ...[
+                        const SizedBox(height: 8),
+                        Text(
+                          topNotice,
+                          style:
+                              Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                    color: Theme.of(
+                                      context,
+                                    ).colorScheme.onSurfaceVariant,
+                                  ),
+                        ),
+                      ],
+                    ],
                   ),
                 );
               }
