@@ -3000,6 +3000,14 @@ void main() {
     );
     await tester.pumpAndSettle();
 
+    final downloadButton = tester.widget<IconButton>(
+      find.widgetWithIcon(IconButton, Icons.download_outlined),
+    );
+    expect(
+      downloadButton.tooltip,
+      'This download currently uses an HLS / m3u8 stream, and AniDestiny cannot save that type offline yet. This entry still stays in Downloads so you can review it or remove it later.',
+    );
+
     await tester.tap(find.widgetWithIcon(IconButton, Icons.download_outlined));
     await tester.pump();
 
