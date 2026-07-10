@@ -53,7 +53,7 @@ void main() {
       downloadService: const _FakeDownloadService(),
     );
 
-    await tester.tap(find.byTooltip('Download'));
+    await tester.tap(find.byTooltip('This adds it to Downloads first.'));
     await tester.pumpAndSettle();
 
     expect(find.text('Direct line'), findsOneWidget);
@@ -121,7 +121,7 @@ void main() {
         ),
       );
 
-      await tester.tap(find.byTooltip('Download'));
+      await tester.tap(find.byTooltip('This adds it to Downloads first.'));
       await tester.pumpAndSettle();
 
       expect(createdDownloads, 0);
@@ -177,7 +177,7 @@ void main() {
       ),
     );
 
-    await tester.tap(find.byTooltip('Download'));
+    await tester.tap(find.byTooltip('This adds it to Downloads first.'));
     await tester.pump();
 
     expect(find.text(failureMessage), findsOneWidget);
@@ -208,7 +208,7 @@ void main() {
         ),
       );
 
-      await tester.tap(find.byTooltip('Download'));
+      await tester.tap(find.byTooltip('This adds it to Downloads first.'));
       await tester.pump();
 
       expect(

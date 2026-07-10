@@ -10,6 +10,7 @@
 - Added a tighter issue-reporting flow: tapping Report issue copies a sanitized diagnostics summary and opens a prefilled GitHub issue, while users who are not signed in to GitHub can paste the same report into any support channel.
 
 ### 🐛 Fixed
+- Fixed the per-episode download button on the anime-detail page still exposing the generic `Download` tooltip even though that entry point only adds a record to Downloads first; it now says that honest next step up front so starting a transfer no longer looks like the immediate action.
 - Fixed the anime-detail `Select download line` sheet still telling users a supported direct-file line had already been added to Downloads before they tapped it; that pre-selection note now says honestly that choosing the line adds it to Downloads first, so selection no longer pretends the task already exists.
 - Fixed the player download button for supported direct-file playback links still speaking in the past tense before the user tapped it, as if AniDestiny had already added the task to Downloads; that pre-tap tooltip now says honestly that tapping the button adds the line to Downloads first.
 - Fixed anime-detail downloads still skipping the `Select download line` explanation entirely when an episode only had one unsupported review-only line, which made AniDestiny add that record to Downloads before admitting it could not save the line offline; single unsupported lines now show the same honest pre-selection explanation before the task is added.
