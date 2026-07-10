@@ -33,6 +33,12 @@ void main() {
       detail: _detail,
       playSources: [
         PlaySource(
+          id: 'source-0',
+          episodeId: 'episode-1',
+          title: 'Direct line',
+          url: 'https://cdn.example.com/episode-1.mp4',
+        ),
+        PlaySource(
           id: 'source-1',
           episodeId: 'episode-1',
           title: 'HLS line',
@@ -48,6 +54,22 @@ void main() {
     );
 
     await tester.tap(find.byTooltip('Download'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('HLS line'), findsOneWidget);
+    expect(
+      find.byWidgetPredicate(
+        (widget) =>
+            widget is Text &&
+            (widget.data?.contains(
+                  'AniDestiny cannot save that type offline yet',
+                ) ??
+                false),
+      ),
+      findsOneWidget,
+    );
+
+    await tester.tap(find.text('HLS line'));
     await tester.pump();
 
     expect(

@@ -10,6 +10,7 @@
 - Added a tighter issue-reporting flow: tapping Report issue copies a sanitized diagnostics summary and opens a prefilled GitHub issue, while users who are not signed in to GitHub can paste the same report into any support channel.
 
 ### 🐛 Fixed
+- Fixed the anime-detail `Select download line` sheet still showing only the line name and host, which meant users had to commit to a tap before learning that some lines were HLS / m3u8 review-only entries; the download-line picker now labels direct files up front and gives unsupported lines the same honest review-in-Downloads explanation before selection.
 - Fixed the player download entry still showing the same generic `Download` hint for HLS / m3u8, BT / magnet, or otherwise unsupported links, which forced users to tap first before AniDestiny admitted it could only keep a reviewable Downloads record; those player entry points now reuse the same honest supported-vs-unsupported wording before the tap so offline-capable lines and review-only lines no longer blur together.
 - Fixed source failure rows in Runtime diagnostics and the Source diagnostics sheet still exposing internal exception type names like `AppException`; those diagnostics now keep the sanitized failure note, HTTP status, and source switch result without making the support view read like an engineering log.
 - Fixed About and runtime diagnostics still reading a stale hard-coded version after release; version labels now prefer runtime package metadata and use the constant only as a fallback.

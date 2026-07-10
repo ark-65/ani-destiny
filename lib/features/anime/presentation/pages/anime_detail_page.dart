@@ -6,6 +6,8 @@ import '../../../../app/l10n/app_localizations.dart';
 import '../../../../core/widgets/app_error_view.dart';
 import '../../../../core/widgets/app_loading_view.dart';
 import '../../../../shared/widgets/adaptive_page.dart';
+import '../../../download/domain/entities/download_kind.dart';
+import '../../../download/domain/services/download_type_detector.dart';
 import '../../../download/presentation/download_entry_feedback.dart';
 import '../../../download/presentation/providers/download_providers.dart';
 import '../../../favorite/domain/entities/favorite_anime.dart';
@@ -245,6 +247,7 @@ class AnimeDetailPage extends ConsumerWidget {
       sources,
       title: context.l10n.selectDownloadSource,
       actionIcon: Icons.download_outlined,
+      subtitleBuilder: (source) => _downloadSourceSubtitle(context, source),
     );
   }
 
@@ -253,6 +256,7 @@ class AnimeDetailPage extends ConsumerWidget {
     List<PlaySource> sources, {
     required String title,
     required IconData actionIcon,
+    String? Function(PlaySource source)? subtitleBuilder,
   }) async {
     if (sources.length == 1) return sources.first;
     return showModalBottomSheet<PlaySource>(
@@ -277,15 +281,19 @@ class AnimeDetailPage extends ConsumerWidget {
               }
 
               final source = sources[index - 1];
-              final host = Uri.tryParse(source.url)?.host;
-              final subtitle = [
-                if (source.quality != null) source.quality,
-                if (host != null && host.isNotEmpty) host,
-              ].join(' · ');
+              final subtitle =
+                  subtitleBuilder?.call(source) ?? _sourceSubtitle(source);
               return ListTile(
+                isThreeLine: subtitle.contains('\n'),
                 leading: CircleAvatar(child: Text('$index')),
                 title: Text(source.title),
-                subtitle: subtitle.isEmpty ? null : Text(subtitle),
+                subtitle: subtitle.isEmpty
+                    ? null
+                    : Text(
+                        subtitle,
+                        maxLines: 3,
+                        overflow: TextOverflow.ellipsis,
+                      ),
                 trailing: Icon(actionIcon),
                 onTap: () => Navigator.of(context).pop(source),
               );
@@ -294,6 +302,23 @@ class AnimeDetailPage extends ConsumerWidget {
         );
       },
     );
+  }
+
+  String _downloadSourceSubtitle(BuildContext context, PlaySource source) {
+    final baseSubtitle = _sourceSubtitle(source);
+    final kind = detectDownloadKind(source.url);
+    final downloadNote = kind == DownloadKind.directFile
+        ? context.l10n.downloadKindDirectFile
+        : downloadEntryFeedbackMessage(context.l10n, kind);
+    return [if (baseSubtitle.isNotEmpty) baseSubtitle, downloadNote].join('\n');
+  }
+
+  String _sourceSubtitle(PlaySource source) {
+    final host = Uri.tryParse(source.url)?.host;
+    return [
+      if (source.quality != null) source.quality,
+      if (host != null && host.isNotEmpty) host,
+    ].join(' · ');
   }
 }
 
