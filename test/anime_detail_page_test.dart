@@ -62,11 +62,15 @@ void main() {
         (widget) =>
             widget is Text &&
             (widget.data?.contains(
-                  'Added to Downloads. Open Downloads to start it.',
+                  'Choosing this line adds it to Downloads first.',
                 ) ??
                 false),
       ),
       findsOneWidget,
+    );
+    expect(
+      find.text('Added to Downloads. Open Downloads to start it.'),
+      findsNothing,
     );
     expect(find.text('HLS line'), findsOneWidget);
     expect(

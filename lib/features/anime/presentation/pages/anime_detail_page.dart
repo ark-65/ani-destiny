@@ -317,7 +317,7 @@ class AnimeDetailPage extends ConsumerWidget {
     final kind = detectDownloadKind(source.url);
     final downloadNote = kind == DownloadKind.directFile
         ? '${context.l10n.downloadKindDirectFile} · '
-            '${context.l10n.downloadTaskAdded}'
+            '${context.l10n.downloadSelectionPendingNote}'
         : downloadEntryFeedbackMessage(context.l10n, kind);
     return [if (baseSubtitle.isNotEmpty) baseSubtitle, downloadNote].join('\n');
   }
