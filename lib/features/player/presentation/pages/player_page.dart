@@ -963,6 +963,7 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
             url: _args.playUrl,
             title: _args.animeTitle,
             episodeTitle: _args.episodeTitle,
+            lineTitle: _args.playSourceTitle,
             headers: _args.playHeaders,
           );
       if (!mounted) return;

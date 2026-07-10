@@ -27,6 +27,7 @@ class DownloadTaskCreator {
     required String url,
     required String title,
     required String episodeTitle,
+    String? lineTitle,
     Map<String, String> headers = const {},
     String? fileName,
     String? mimeType,
@@ -44,8 +45,26 @@ class DownloadTaskCreator {
         mimeType: mimeType,
       ),
       title: title,
-      episodeTitle: episodeTitle,
+      episodeTitle: _buildEpisodeTitle(
+        episodeTitle: episodeTitle,
+        lineTitle: lineTitle,
+      ),
     );
     return CreatedDownloadTask(taskId: taskId, kind: kind);
+  }
+
+  String _buildEpisodeTitle({
+    required String episodeTitle,
+    String? lineTitle,
+  }) {
+    final trimmedEpisodeTitle = episodeTitle.trim();
+    final trimmedLineTitle = lineTitle?.trim();
+    if (trimmedLineTitle == null || trimmedLineTitle.isEmpty) {
+      return trimmedEpisodeTitle;
+    }
+    if (trimmedEpisodeTitle.contains(trimmedLineTitle)) {
+      return trimmedEpisodeTitle;
+    }
+    return '$trimmedEpisodeTitle - $trimmedLineTitle';
   }
 }

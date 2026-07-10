@@ -203,6 +203,7 @@ class AnimeDetailPage extends ConsumerWidget {
             url: source.url,
             title: detail.title,
             episodeTitle: episode.title,
+            lineTitle: source.title,
             headers: source.headers,
           );
       if (!context.mounted) return;

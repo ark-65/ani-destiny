@@ -3623,6 +3623,7 @@ class _FakeDownloadTaskCreator extends DownloadTaskCreator {
     required String url,
     required String title,
     required String episodeTitle,
+    String? lineTitle,
     Map<String, String> headers = const {},
     String? fileName,
     String? mimeType,
