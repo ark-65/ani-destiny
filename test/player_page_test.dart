@@ -3047,7 +3047,7 @@ void main() {
     );
     expect(
       downloadButton.tooltip,
-      'Added to Downloads. Open Downloads to start it.',
+      'This adds it to Downloads first.',
     );
 
     await tester.tap(find.widgetWithIcon(IconButton, Icons.download_outlined));
