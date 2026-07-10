@@ -93,6 +93,62 @@ void main() {
     expect(find.text('Review in Downloads'), findsOneWidget);
   });
 
+  testWidgets(
+    'anime detail still confirms a single unsupported download line before adding it',
+    (tester) async {
+      var createdDownloads = 0;
+      const repository = _FakeAnimeRepository(
+        detail: _detail,
+        playSources: [
+          PlaySource(
+            id: 'source-1',
+            episodeId: 'episode-1',
+            title: 'HLS line',
+            url: 'https://cdn.example.com/episode-1.m3u8',
+          ),
+        ],
+      );
+
+      await _pumpPage(
+        tester,
+        animeRepository: repository,
+        downloadService: _FakeDownloadService(
+          onCreate: () => createdDownloads++,
+        ),
+      );
+
+      await tester.tap(find.byTooltip('Download'));
+      await tester.pumpAndSettle();
+
+      expect(createdDownloads, 0);
+      expect(find.text('Select download line'), findsOneWidget);
+      expect(find.text('HLS line'), findsOneWidget);
+      expect(
+        find.byWidgetPredicate(
+          (widget) =>
+              widget is Text &&
+              (widget.data?.contains(
+                    'AniDestiny cannot save that type offline yet',
+                  ) ??
+                  false),
+        ),
+        findsOneWidget,
+      );
+
+      await tester.tap(find.text('HLS line'));
+      await tester.pump();
+
+      expect(createdDownloads, 1);
+      expect(
+        find.text(
+          'This download currently uses an HLS / m3u8 stream, and AniDestiny cannot save that type offline yet. This entry still stays in Downloads so you can review it or remove it later.',
+        ),
+        findsOneWidget,
+      );
+      expect(find.text('Review in Downloads'), findsOneWidget);
+    },
+  );
+
   testWidgets('anime detail download surfaces creation errors calmly', (
     tester,
   ) async {
@@ -283,9 +339,11 @@ class _FakeAnimeRepository implements AnimeRepository {
 class _FakeDownloadService implements DownloadService {
   const _FakeDownloadService({
     this.createError,
+    this.onCreate,
   });
 
   final Object? createError;
+  final void Function()? onCreate;
 
   @override
   Future<void> cancel(String taskId) {
@@ -304,6 +362,7 @@ class _FakeDownloadService implements DownloadService {
     if (createError != null) {
       throw createError!;
     }
+    onCreate?.call();
     return 'task-1';
   }
 

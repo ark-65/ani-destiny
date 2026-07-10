@@ -249,6 +249,8 @@ class AnimeDetailPage extends ConsumerWidget {
       title: context.l10n.selectDownloadSource,
       actionIcon: Icons.download_outlined,
       subtitleBuilder: (source) => _downloadSourceSubtitle(context, source),
+      forceSheet: sources.length == 1 &&
+          _requiresDownloadSelectionConfirmation(sources.first),
     );
   }
 
@@ -258,8 +260,9 @@ class AnimeDetailPage extends ConsumerWidget {
     required String title,
     required IconData actionIcon,
     String? Function(PlaySource source)? subtitleBuilder,
+    bool forceSheet = false,
   }) async {
-    if (sources.length == 1) return sources.first;
+    if (sources.length == 1 && !forceSheet) return sources.first;
     return showModalBottomSheet<PlaySource>(
       context: context,
       showDragHandle: true,
@@ -303,6 +306,10 @@ class AnimeDetailPage extends ConsumerWidget {
         );
       },
     );
+  }
+
+  bool _requiresDownloadSelectionConfirmation(PlaySource source) {
+    return detectDownloadKind(source.url) != DownloadKind.directFile;
   }
 
   String _downloadSourceSubtitle(BuildContext context, PlaySource source) {
