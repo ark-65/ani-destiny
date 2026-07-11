@@ -92,6 +92,20 @@ class DownloadTaskCreator {
   String _normalizeEpisodePart(String title) {
     return title
         .toLowerCase()
+        .replaceAll('（', '(')
+        .replaceAll('）', ')')
+        .replaceAll('【', '[')
+        .replaceAll('】', ']')
+        .replaceAll('：', ':')
+        .replaceAll('；', ';')
+        .replaceAll('，', ',')
+        .replaceAll('、', ',')
+        .replaceAll('。', '.')
+        .replaceAll('！', '!')
+        .replaceAll('？', '?')
+        .replaceAll('／', '/')
+        .replaceAll('｜', '|')
+        .replaceAll('\u3000', ' ')
         .replaceAll(RegExp(r'\s+'), ' ')
         .trim();
   }

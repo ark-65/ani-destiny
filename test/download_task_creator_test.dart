@@ -133,6 +133,23 @@ void main() {
 
     expect(service.lastEpisodeTitle, 'Episode 6 - Line 3');
   });
+
+  test('create avoids repeating line title with full-width punctuation', () async {
+    final service = _CapturingDownloadService();
+    final creator = DownloadTaskCreator(service);
+
+    await creator.create(
+      animeId: 'anime-1',
+      episodeId: 'episode-7',
+      sourceId: 'sakura',
+      url: 'https://cdn.example.test/video.mp4',
+      title: 'Anime 1',
+      episodeTitle: 'Episode 7（Line 3）',
+      lineTitle: 'Line 3',
+    );
+
+    expect(service.lastEpisodeTitle, 'Episode 7（Line 3）');
+  });
 }
 
 class _CapturingDownloadService implements DownloadService {
