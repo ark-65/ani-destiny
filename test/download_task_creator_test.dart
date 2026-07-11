@@ -150,6 +150,26 @@ void main() {
 
     expect(service.lastEpisodeTitle, 'Episode 7（Line 3）');
   });
+
+  test(
+    'create avoids repeating the line title with full-width minus separator',
+    () async {
+      final service = _CapturingDownloadService();
+      final creator = DownloadTaskCreator(service);
+
+      await creator.create(
+        animeId: 'anime-1',
+        episodeId: 'episode-8',
+        sourceId: 'sakura',
+        url: 'https://cdn.example.test/video.mp4',
+        title: 'Anime 1',
+        episodeTitle: 'Episode 8－Line 3',
+        lineTitle: 'Line 3',
+      );
+
+      expect(service.lastEpisodeTitle, 'Episode 8－Line 3');
+    },
+  );
 }
 
 class _CapturingDownloadService implements DownloadService {

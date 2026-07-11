@@ -96,6 +96,7 @@ class DownloadTaskCreator {
         .replaceAll('）', ')')
         .replaceAll('【', '[')
         .replaceAll('】', ']')
+        .replaceAll('－', '-')
         .replaceAll('：', ':')
         .replaceAll('；', ';')
         .replaceAll('，', ',')
