@@ -92,6 +92,8 @@ class DownloadTaskCreator {
   String _normalizeEpisodePart(String title) {
     return title
         .toLowerCase()
+        .replaceAll('「', '(')
+        .replaceAll('」', ')')
         .replaceAll('（', '(')
         .replaceAll('）', ')')
         .replaceAll('【', '[')
