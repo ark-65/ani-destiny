@@ -125,7 +125,11 @@ class AppLocalizations {
   String get noDownloadSource => _t('noDownloadSource');
   String get selectPlaySource => _t('selectPlaySource');
   String get selectDownloadSource => _t('selectDownloadSource');
+  String get checkDownloadLines => _t('checkDownloadLines');
+  String get downloadSelectionPendingNote => _t('downloadSelectionPendingNote');
+  String get downloadTaskWillBeAdded => _t('downloadTaskWillBeAdded');
   String get downloadTaskAdded => _t('downloadTaskAdded');
+  String get downloadFocusedTaskNotice => _t('downloadFocusedTaskNotice');
   String get playerNoPlayUrl => _t('playerNoPlayUrl');
   String get playerReadyHint => _t('playerReadyHint');
   String get playerPreparingPlayback => _t('playerPreparingPlayback');
@@ -747,6 +751,16 @@ class AppLocalizations {
         .replaceFirst('{activeSource}', activeSource);
   }
 
+  String sourceFallbackDownloadNotice(
+    String requestedSource,
+    String activeSource,
+  ) {
+    final template = _t('sourceFallbackDownloadNotice');
+    return template
+        .replaceFirst('{requestedSource}', requestedSource)
+        .replaceFirst('{activeSource}', activeSource);
+  }
+
   String get playbackDiagnosticCapturedAt => _t('playbackDiagnosticCapturedAt');
   String get sourceTemporarilyUnavailable => _t('sourceTemporarilyUnavailable');
   String get sourceUnavailableSuggestion => _t('sourceUnavailableSuggestion');
@@ -892,7 +906,11 @@ const _localizedValues = {
     'noDownloadSource': '未找到可下载线路，请稍后重试或切换数据源。',
     'selectPlaySource': '选择播放线路',
     'selectDownloadSource': '选择下载线路',
+    'checkDownloadLines': '查看下载线路',
+    'downloadSelectionPendingNote': '选择这条线路后，会先加入下载列表。',
+    'downloadTaskWillBeAdded': '点这里后，会先加入下载列表。',
     'downloadTaskAdded': '已加入下载列表。打开下载列表后再开始。',
+    'downloadFocusedTaskNotice': '这里先展示你刚刚加入下载列表的那一条，方便你继续处理。',
     'playerNoPlayUrl': '未找到可播放线路',
     'playerReadyHint': '播放器预览已就绪',
     'playerPreparingPlayback': '正在准备播放…',
@@ -1128,6 +1146,8 @@ const _localizedValues = {
         '{animeTitle} · {episodeTitle}\n{playbackContext}\n{capturedAt}',
     'sourceFallbackPlayerNotice':
         '当前所选数据源 {requestedSource} 暂时不可用，已改用 {activeSource} 继续播放。',
+    'sourceFallbackDownloadNotice':
+        '当前所选数据源 {requestedSource} 暂时不可用，下面这些下载线路来自 {activeSource}。',
     'playbackDiagnosticCapturedAt': '采集时间',
     'sourceTemporarilyUnavailable': '数据源暂时不可用',
     'sourceUnavailableSuggestion': '上游数据源可能已变化或暂时不可用，请稍后重试或切换数据源。',
@@ -1240,7 +1260,13 @@ const _localizedValues = {
         'No downloadable source found. Try another source or retry later.',
     'selectPlaySource': 'Select playback line',
     'selectDownloadSource': 'Select download line',
+    'checkDownloadLines': 'Check download lines',
+    'downloadSelectionPendingNote':
+        'Choosing this line adds it to Downloads first.',
+    'downloadTaskWillBeAdded': 'This adds it to Downloads first.',
     'downloadTaskAdded': 'Added to Downloads. Open Downloads to start it.',
+    'downloadFocusedTaskNotice':
+        'Showing the download you just added first so you can keep going.',
     'playerNoPlayUrl': 'No playable source found',
     'playerReadyHint': 'Playback preview ready',
     'playerPreparingPlayback': 'Preparing playback...',
@@ -1514,6 +1540,8 @@ const _localizedValues = {
         '{animeTitle} · {episodeTitle}\n{playbackContext}\n{capturedAt}',
     'sourceFallbackPlayerNotice':
         '{requestedSource} is temporarily unavailable. AniDestiny is playing from {activeSource} instead.',
+    'sourceFallbackDownloadNotice':
+        '{requestedSource} is temporarily unavailable. These download lines are coming from {activeSource} instead.',
     'playbackDiagnosticCapturedAt': 'Captured at',
     'sourceTemporarilyUnavailable': 'Source temporarily unavailable',
     'sourceUnavailableSuggestion':
@@ -1629,7 +1657,11 @@ const _localizedValues = {
     'noDownloadSource': 'ダウンロード可能なソースが見つかりません。別のソースを試すか、後で再試行してください。',
     'selectPlaySource': '再生ラインを選択',
     'selectDownloadSource': 'ダウンロードラインを選択',
+    'checkDownloadLines': 'ダウンロードラインを確認',
+    'downloadSelectionPendingNote': 'このラインを選ぶと、先にダウンロード一覧へ追加されます。',
+    'downloadTaskWillBeAdded': 'ここを押すと、先にダウンロード一覧へ追加されます。',
     'downloadTaskAdded': 'ダウンロード一覧に追加しました。開始するには一覧を開いてください。',
+    'downloadFocusedTaskNotice': '今追加したダウンロードを先頭に表示しているので、そのまま続けられます。',
     'playerNoPlayUrl': '再生可能なソースが見つかりません',
     'playerReadyHint': '再生プレビューの準備完了',
     'playerPreparingPlayback': '再生を準備中…',
@@ -1883,6 +1915,8 @@ const _localizedValues = {
         '{animeTitle} · {episodeTitle}\n{playbackContext}\n{capturedAt}',
     'sourceFallbackPlayerNotice':
         '選択していたソース {requestedSource} は一時的に利用できないため、現在は {activeSource} に切り替えて再生しています。',
+    'sourceFallbackDownloadNotice':
+        '選択していたソース {requestedSource} は一時的に利用できないため、以下のダウンロードラインは {activeSource} から取得しています。',
     'playbackDiagnosticCapturedAt': '取得時刻',
     'sourceTemporarilyUnavailable': 'ソースが一時的に利用できません',
     'sourceUnavailableSuggestion':

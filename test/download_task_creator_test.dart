@@ -23,6 +23,7 @@ void main() {
     expect(result.kind, DownloadKind.directFile);
     expect(result.isSupported, isTrue);
     expect(service.lastSource?.kind, DownloadKind.directFile);
+    expect(service.lastEpisodeTitle, 'Episode 1');
   });
 
   test('create returns unsupported result for HLS urls', () async {
@@ -42,11 +43,47 @@ void main() {
     expect(result.kind, DownloadKind.hls);
     expect(result.isSupported, isFalse);
     expect(service.lastSource?.kind, DownloadKind.hls);
+    expect(service.lastEpisodeTitle, 'Episode 2');
+  });
+
+  test('create appends the selected line title for new download entries', () async {
+    final service = _CapturingDownloadService();
+    final creator = DownloadTaskCreator(service);
+
+    await creator.create(
+      animeId: 'anime-1',
+      episodeId: 'episode-3',
+      sourceId: 'sakura',
+      url: 'https://cdn.example.test/video.mp4',
+      title: 'Anime 1',
+      episodeTitle: 'Episode 3',
+      lineTitle: 'Line 2',
+    );
+
+    expect(service.lastEpisodeTitle, 'Episode 3 - Line 2');
+  });
+
+  test('create avoids repeating the line title when it is already present', () async {
+    final service = _CapturingDownloadService();
+    final creator = DownloadTaskCreator(service);
+
+    await creator.create(
+      animeId: 'anime-1',
+      episodeId: 'episode-4',
+      sourceId: 'sakura',
+      url: 'https://cdn.example.test/video.mp4',
+      title: 'Anime 1',
+      episodeTitle: 'Episode 4 - Line 3',
+      lineTitle: 'Line 3',
+    );
+
+    expect(service.lastEpisodeTitle, 'Episode 4 - Line 3');
   });
 }
 
 class _CapturingDownloadService implements DownloadService {
   DownloadSource? lastSource;
+  String? lastEpisodeTitle;
 
   @override
   Future<void> cancel(String taskId) async {}
@@ -61,6 +98,7 @@ class _CapturingDownloadService implements DownloadService {
     required String episodeTitle,
   }) async {
     lastSource = source;
+    lastEpisodeTitle = episodeTitle;
     return 'task-1';
   }
 

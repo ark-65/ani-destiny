@@ -62,7 +62,9 @@ final appRouter = GoRouter(
         ),
         GoRoute(
           path: '/downloads',
-          builder: (context, state) => const DownloadPage(),
+          builder: (context, state) => DownloadPage(
+            focusTaskId: state.uri.queryParameters['taskId'],
+          ),
         ),
         GoRoute(
           path: '/settings',

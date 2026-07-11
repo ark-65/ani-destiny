@@ -21,6 +21,7 @@ class DownloadTaskTile extends StatelessWidget {
     required this.onPause,
     required this.onCancel,
     required this.onRemove,
+    this.isHighlighted = false,
     this.onRefreshCleanupStatus,
     this.manualCleanupBatchRecheckLabel,
     this.manualCleanupReadyActionLabel,
@@ -35,6 +36,7 @@ class DownloadTaskTile extends StatelessWidget {
   final VoidCallback onPause;
   final VoidCallback onCancel;
   final VoidCallback onRemove;
+  final bool isHighlighted;
   final VoidCallback? onRefreshCleanupStatus;
   final String? manualCleanupBatchRecheckLabel;
   final String? manualCleanupReadyActionLabel;
@@ -48,6 +50,10 @@ class DownloadTaskTile extends StatelessWidget {
     final failureMessage = _failureMessage(context, task);
 
     return Card(
+      key: ValueKey('download-task-card-${task.id}'),
+      color: isHighlighted
+          ? Theme.of(context).colorScheme.secondaryContainer
+          : null,
       child: Padding(
         padding: const EdgeInsets.all(12),
         child: Column(

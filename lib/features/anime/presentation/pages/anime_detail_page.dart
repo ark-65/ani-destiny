@@ -6,6 +6,8 @@ import '../../../../app/l10n/app_localizations.dart';
 import '../../../../core/widgets/app_error_view.dart';
 import '../../../../core/widgets/app_loading_view.dart';
 import '../../../../shared/widgets/adaptive_page.dart';
+import '../../../download/domain/entities/download_kind.dart';
+import '../../../download/domain/services/download_type_detector.dart';
 import '../../../download/presentation/download_entry_feedback.dart';
 import '../../../download/presentation/providers/download_providers.dart';
 import '../../../favorite/domain/entities/favorite_anime.dart';
@@ -192,7 +194,19 @@ class AnimeDetailPage extends ConsumerWidget {
           SnackBar(content: Text(context.l10n.sourceFallbackNotice)),
         );
       }
-      final source = await _selectDownloadSource(context, sources);
+      final fallbackNotice = sourceResult.usedFallback
+          ? context.l10n.sourceFallbackDownloadNotice(
+              context.l10n.sourceDisplayLabel(
+                sourceResult.fromSourceId ?? detail.sourceId,
+              ),
+              context.l10n.sourceDisplayLabel(sourceResult.sourceId),
+            )
+          : null;
+      final source = await _selectDownloadSource(
+        context,
+        sources,
+        fallbackNotice: fallbackNotice,
+      );
       if (!context.mounted || source == null) return;
       final result = await ref.read(downloadTaskCreatorProvider).create(
             animeId: detail.id,
@@ -201,6 +215,7 @@ class AnimeDetailPage extends ConsumerWidget {
             url: source.url,
             title: detail.title,
             episodeTitle: episode.title,
+            lineTitle: source.title,
             headers: source.headers,
           );
       if (!context.mounted) return;
@@ -210,7 +225,9 @@ class AnimeDetailPage extends ConsumerWidget {
               Text(downloadEntryFeedbackMessage(context.l10n, result.kind)),
           action: SnackBarAction(
             label: downloadEntryFeedbackActionLabel(context.l10n, result.kind),
-            onPressed: () => context.push('/downloads'),
+            onPressed: () => context.push(
+              '/downloads?taskId=${Uri.encodeComponent(result.taskId)}',
+            ),
           ),
         ),
       );
@@ -238,13 +255,19 @@ class AnimeDetailPage extends ConsumerWidget {
 
   Future<PlaySource?> _selectDownloadSource(
     BuildContext context,
-    List<PlaySource> sources,
-  ) {
+    List<PlaySource> sources, {
+    String? fallbackNotice,
+  }) {
     return _selectSource(
       context,
       sources,
       title: context.l10n.selectDownloadSource,
       actionIcon: Icons.download_outlined,
+      subtitleBuilder: (source) => _downloadSourceSubtitle(context, source),
+      topNotice: fallbackNotice,
+      forceSheet: fallbackNotice != null ||
+          (sources.length == 1 &&
+              _requiresDownloadSelectionConfirmation(sources.first)),
     );
   }
 
@@ -253,8 +276,11 @@ class AnimeDetailPage extends ConsumerWidget {
     List<PlaySource> sources, {
     required String title,
     required IconData actionIcon,
+    String? Function(PlaySource source)? subtitleBuilder,
+    String? topNotice,
+    bool forceSheet = false,
   }) async {
-    if (sources.length == 1) return sources.first;
+    if (sources.length == 1 && !forceSheet) return sources.first;
     return showModalBottomSheet<PlaySource>(
       context: context,
       showDragHandle: true,
@@ -269,23 +295,44 @@ class AnimeDetailPage extends ConsumerWidget {
               if (index == 0) {
                 return Padding(
                   padding: const EdgeInsets.only(bottom: 8),
-                  child: Text(
-                    title,
-                    style: Theme.of(context).textTheme.titleLarge,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        title,
+                        style: Theme.of(context).textTheme.titleLarge,
+                      ),
+                      if (topNotice != null && topNotice.isNotEmpty) ...[
+                        const SizedBox(height: 8),
+                        Text(
+                          topNotice,
+                          style:
+                              Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                    color: Theme.of(
+                                      context,
+                                    ).colorScheme.onSurfaceVariant,
+                                  ),
+                        ),
+                      ],
+                    ],
                   ),
                 );
               }
 
               final source = sources[index - 1];
-              final host = Uri.tryParse(source.url)?.host;
-              final subtitle = [
-                if (source.quality != null) source.quality,
-                if (host != null && host.isNotEmpty) host,
-              ].join(' · ');
+              final subtitle =
+                  subtitleBuilder?.call(source) ?? _sourceSubtitle(source);
               return ListTile(
+                isThreeLine: subtitle.contains('\n'),
                 leading: CircleAvatar(child: Text('$index')),
                 title: Text(source.title),
-                subtitle: subtitle.isEmpty ? null : Text(subtitle),
+                subtitle: subtitle.isEmpty
+                    ? null
+                    : Text(
+                        subtitle,
+                        maxLines: 3,
+                        overflow: TextOverflow.ellipsis,
+                      ),
                 trailing: Icon(actionIcon),
                 onTap: () => Navigator.of(context).pop(source),
               );
@@ -294,6 +341,28 @@ class AnimeDetailPage extends ConsumerWidget {
         );
       },
     );
+  }
+
+  bool _requiresDownloadSelectionConfirmation(PlaySource source) {
+    return detectDownloadKind(source.url) != DownloadKind.directFile;
+  }
+
+  String _downloadSourceSubtitle(BuildContext context, PlaySource source) {
+    final baseSubtitle = _sourceSubtitle(source);
+    final kind = detectDownloadKind(source.url);
+    final downloadNote = kind == DownloadKind.directFile
+        ? '${context.l10n.downloadKindDirectFile} · '
+            '${context.l10n.downloadSelectionPendingNote}'
+        : downloadEntryFeedbackMessage(context.l10n, kind);
+    return [if (baseSubtitle.isNotEmpty) baseSubtitle, downloadNote].join('\n');
+  }
+
+  String _sourceSubtitle(PlaySource source) {
+    final host = Uri.tryParse(source.url)?.host;
+    return [
+      if (source.quality != null) source.quality,
+      if (host != null && host.isNotEmpty) host,
+    ].join(' · ');
   }
 }
 

@@ -33,6 +33,12 @@ void main() {
       detail: _detail,
       playSources: [
         PlaySource(
+          id: 'source-0',
+          episodeId: 'episode-1',
+          title: 'Direct line',
+          url: 'https://cdn.example.com/episode-1.mp4',
+        ),
+        PlaySource(
           id: 'source-1',
           episodeId: 'episode-1',
           title: 'HLS line',
@@ -47,7 +53,39 @@ void main() {
       downloadService: const _FakeDownloadService(),
     );
 
-    await tester.tap(find.byTooltip('Download'));
+    await tester.tap(find.byTooltip('Check download lines'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Direct line'), findsOneWidget);
+    expect(
+      find.byWidgetPredicate(
+        (widget) =>
+            widget is Text &&
+            (widget.data?.contains(
+                  'Choosing this line adds it to Downloads first.',
+                ) ??
+                false),
+      ),
+      findsOneWidget,
+    );
+    expect(
+      find.text('Added to Downloads. Open Downloads to start it.'),
+      findsNothing,
+    );
+    expect(find.text('HLS line'), findsOneWidget);
+    expect(
+      find.byWidgetPredicate(
+        (widget) =>
+            widget is Text &&
+            (widget.data?.contains(
+                  'AniDestiny cannot save that type offline yet',
+                ) ??
+                false),
+      ),
+      findsOneWidget,
+    );
+
+    await tester.tap(find.text('HLS line'));
     await tester.pump();
 
     expect(
@@ -58,6 +96,112 @@ void main() {
     );
     expect(find.text('Review in Downloads'), findsOneWidget);
   });
+
+  testWidgets(
+    'anime detail still confirms a single unsupported download line before adding it',
+    (tester) async {
+      var createdDownloads = 0;
+      const repository = _FakeAnimeRepository(
+        detail: _detail,
+        playSources: [
+          PlaySource(
+            id: 'source-1',
+            episodeId: 'episode-1',
+            title: 'HLS line',
+            url: 'https://cdn.example.com/episode-1.m3u8',
+          ),
+        ],
+      );
+
+      await _pumpPage(
+        tester,
+        animeRepository: repository,
+        downloadService: _FakeDownloadService(
+          onCreate: () => createdDownloads++,
+        ),
+      );
+
+      await tester.tap(find.byTooltip('Check download lines'));
+      await tester.pumpAndSettle();
+
+      expect(createdDownloads, 0);
+      expect(find.text('Select download line'), findsOneWidget);
+      expect(find.text('HLS line'), findsOneWidget);
+      expect(
+        find.byWidgetPredicate(
+          (widget) =>
+              widget is Text &&
+              (widget.data?.contains(
+                    'AniDestiny cannot save that type offline yet',
+                  ) ??
+                  false),
+        ),
+        findsOneWidget,
+      );
+
+      await tester.tap(find.text('HLS line'));
+      await tester.pump();
+
+      expect(createdDownloads, 1);
+      expect(
+        find.text(
+          'This download currently uses an HLS / m3u8 stream, and AniDestiny cannot save that type offline yet. This entry still stays in Downloads so you can review it or remove it later.',
+        ),
+        findsOneWidget,
+      );
+      expect(find.text('Review in Downloads'), findsOneWidget);
+    },
+  );
+
+  testWidgets(
+    'anime detail confirms fallback download lines before adding a single direct download',
+    (tester) async {
+      var createdDownloads = 0;
+      const repository = _FakeAnimeRepository(
+        detail: _detail,
+        playSources: [
+          PlaySource(
+            id: 'source-1',
+            episodeId: 'episode-1',
+            title: 'Direct line',
+            url: 'https://cdn.example.com/episode-1.mp4',
+          ),
+        ],
+        playSourcesUsedFallback: true,
+        playSourcesFromSourceId: 'mock',
+      );
+
+      await _pumpPage(
+        tester,
+        animeRepository: repository,
+        downloadService: _FakeDownloadService(
+          onCreate: () => createdDownloads++,
+        ),
+      );
+
+      await tester.tap(find.byTooltip('Check download lines'));
+      await tester.pumpAndSettle();
+
+      expect(createdDownloads, 0);
+      expect(find.text('Select download line'), findsOneWidget);
+      expect(
+        find.byWidgetPredicate(
+          (widget) =>
+              widget is Text &&
+              (widget.data?.contains('temporarily unavailable') ?? false) &&
+              (widget.data?.contains('Mock') ?? false) &&
+              (widget.data?.contains('Sakura Anime') ?? false),
+        ),
+        findsOneWidget,
+      );
+
+      await tester.tap(find.text('Direct line'));
+      await tester.pumpAndSettle();
+
+      expect(createdDownloads, 1);
+      expect(find.text('Select download line'), findsNothing);
+    },
+  );
 
   testWidgets('anime detail download surfaces creation errors calmly', (
     tester,
@@ -83,7 +227,7 @@ void main() {
       ),
     );
 
-    await tester.tap(find.byTooltip('Download'));
+    await tester.tap(find.byTooltip('Check download lines'));
     await tester.pump();
 
     expect(find.text(failureMessage), findsOneWidget);
@@ -114,7 +258,7 @@ void main() {
         ),
       );
 
-      await tester.tap(find.byTooltip('Download'));
+      await tester.tap(find.byTooltip('Check download lines'));
       await tester.pump();
 
       expect(
@@ -186,10 +330,14 @@ class _FakeAnimeRepository implements AnimeRepository {
   const _FakeAnimeRepository({
     required this.detail,
     required this.playSources,
+    this.playSourcesUsedFallback = false,
+    this.playSourcesFromSourceId,
   });
 
   final AnimeDetail detail;
   final List<PlaySource> playSources;
+  final bool playSourcesUsedFallback;
+  final String? playSourcesFromSourceId;
 
   @override
   Future<SourceFallbackResult<AnimeDetail>> getAnimeDetail(String animeId) {
@@ -228,7 +376,8 @@ class _FakeAnimeRepository implements AnimeRepository {
     return SourceFallbackResult<List<PlaySource>>(
       value: playSources,
       sourceId: sourceId,
-      usedFallback: false,
+      usedFallback: playSourcesUsedFallback,
+      fromSourceId: playSourcesFromSourceId,
     );
   }
 
@@ -249,9 +398,11 @@ class _FakeAnimeRepository implements AnimeRepository {
 class _FakeDownloadService implements DownloadService {
   const _FakeDownloadService({
     this.createError,
+    this.onCreate,
   });
 
   final Object? createError;
+  final void Function()? onCreate;
 
   @override
   Future<void> cancel(String taskId) {
@@ -270,6 +421,7 @@ class _FakeDownloadService implements DownloadService {
     if (createError != null) {
       throw createError!;
     }
+    onCreate?.call();
     return 'task-1';
   }
 

@@ -626,7 +626,7 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
     if (downloadKind != DownloadKind.directFile) {
       return downloadEntryFeedbackMessage(context.l10n, downloadKind);
     }
-    return context.l10n.download;
+    return context.l10n.downloadTaskWillBeAdded;
   }
 
   String _routeBusyExitMessage(BuildContext context) {
@@ -963,6 +963,7 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
             url: _args.playUrl,
             title: _args.animeTitle,
             episodeTitle: _args.episodeTitle,
+            lineTitle: _args.playSourceTitle,
             headers: _args.playHeaders,
           );
       if (!mounted) return;
@@ -972,7 +973,9 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
               Text(downloadEntryFeedbackMessage(context.l10n, result.kind)),
           action: SnackBarAction(
             label: downloadEntryFeedbackActionLabel(context.l10n, result.kind),
-            onPressed: () => context.push('/downloads'),
+            onPressed: () => context.push(
+              '/downloads?taskId=${Uri.encodeComponent(result.taskId)}',
+            ),
           ),
         ),
       );

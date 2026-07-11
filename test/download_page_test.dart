@@ -191,6 +191,37 @@ void main() {
     },
   );
 
+  testWidgets('download page shows the newly added task first when focused', (
+    tester,
+  ) async {
+    final repository = _FakeDownloadRepository([
+      _task('older-1', DownloadStatus.pending),
+      _task('target', DownloadStatus.unsupported),
+      _task('older-2', DownloadStatus.completed),
+    ]);
+
+    await _pumpDownloadPage(
+      tester,
+      repository,
+      focusedTaskId: 'target',
+    );
+
+    expect(
+      find.text(
+        'Showing the download you just added first so you can keep going.',
+      ),
+      findsOneWidget,
+    );
+
+    final targetTopLeft = tester.getTopLeft(
+      find.byKey(const ValueKey('download-task-card-target')),
+    );
+    final olderTopLeft = tester.getTopLeft(
+      find.byKey(const ValueKey('download-task-card-older-1')),
+    );
+    expect(targetTopLeft.dy, lessThan(olderTopLeft.dy));
+  });
+
   testWidgets(
     'single failed task with a partial file keeps page-level clear hidden and exposes discard copy',
     (tester) async {
@@ -1813,6 +1844,7 @@ Future<void> _pumpDownloadPage(
   WidgetTester tester,
   DownloadRepository repository, {
   bool showDebugMockAction = true,
+  String? focusedTaskId,
   DownloadService? downloadService,
   Stream<List<DownloadTask>>? downloadTasksStream,
   Locale locale = const Locale('en'),
@@ -1821,6 +1853,7 @@ Future<void> _pumpDownloadPage(
     _TestApp(
       repository: repository,
       showDebugMockAction: showDebugMockAction,
+      focusedTaskId: focusedTaskId,
       downloadService: downloadService,
       downloadTasksStream: downloadTasksStream,
       locale: locale,
@@ -1833,6 +1866,7 @@ class _TestApp extends StatelessWidget {
   const _TestApp({
     required this.repository,
     required this.showDebugMockAction,
+    this.focusedTaskId,
     this.downloadService,
     this.downloadTasksStream,
     required this.locale,
@@ -1840,6 +1874,7 @@ class _TestApp extends StatelessWidget {
 
   final DownloadRepository repository;
   final bool showDebugMockAction;
+  final String? focusedTaskId;
   final DownloadService? downloadService;
   final Stream<List<DownloadTask>>? downloadTasksStream;
   final Locale locale;
@@ -1865,7 +1900,10 @@ class _TestApp extends StatelessWidget {
           GlobalWidgetsLocalizations.delegate,
         ],
         home: Scaffold(
-          body: DownloadPage(showDebugMockAction: showDebugMockAction),
+          body: DownloadPage(
+            showDebugMockAction: showDebugMockAction,
+            focusTaskId: focusedTaskId,
+          ),
         ),
       ),
     );
