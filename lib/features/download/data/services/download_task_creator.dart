@@ -62,7 +62,9 @@ class DownloadTaskCreator {
     if (trimmedLineTitle == null || trimmedLineTitle.isEmpty) {
       return trimmedEpisodeTitle;
     }
-    if (trimmedEpisodeTitle.contains(trimmedLineTitle)) {
+    final normalizedEpisodeTitle = trimmedEpisodeTitle.toLowerCase();
+    final normalizedLineTitle = trimmedLineTitle.toLowerCase();
+    if (normalizedEpisodeTitle.contains(normalizedLineTitle)) {
       return trimmedEpisodeTitle;
     }
     return '$trimmedEpisodeTitle - $trimmedLineTitle';
