@@ -90,7 +90,7 @@ void main() {
 
     expect(
       find.text(
-        'This download currently uses an HLS / m3u8 stream, and AniDestiny cannot save that type offline yet. This entry still stays in Downloads so you can review it or remove it later.',
+        'This download currently uses an HLS / m3u8 stream, and AniDestiny cannot save that type offline yet. This entry stays in Downloads so you can review it, try another download source, and decide whether to keep or remove it.',
       ),
       findsOneWidget,
     );
@@ -145,7 +145,7 @@ void main() {
       expect(createdDownloads, 1);
       expect(
         find.text(
-          'This download currently uses an HLS / m3u8 stream, and AniDestiny cannot save that type offline yet. This entry still stays in Downloads so you can review it or remove it later.',
+          'This download currently uses an HLS / m3u8 stream, and AniDestiny cannot save that type offline yet. This entry stays in Downloads so you can review it, try another download source, and decide whether to keep or remove it.',
         ),
         findsOneWidget,
       );
