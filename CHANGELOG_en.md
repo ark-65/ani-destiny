@@ -10,6 +10,7 @@
 - Added a tighter issue-reporting flow: tapping Report issue copies a sanitized diagnostics summary and opens a prefilled GitHub issue, while users who are not signed in to GitHub can paste the same report into any support channel.
 
 ### 🐛 Fixed
+- Fixed player unsupported-download wording to stay consistent with other entry points and avoid claiming a save happened before it does.
 - Fixed unsupported-download copy so download records now explicitly tell users to review and try another source from Downloads before removing a task.
 - Fixed unsupported-download copy to say the same in all locales: keep the record in Downloads, review it, try a different download source, then decide whether to keep or remove it.
 - Fixed the anime detail unsupported-download flow test assertions to align with the updated review-in-Downloads wording, keeping CI coverage aligned with current copy.
