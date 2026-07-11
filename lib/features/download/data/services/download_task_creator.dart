@@ -81,7 +81,7 @@ class DownloadTaskCreator {
       return true;
     }
 
-    const separatorBoundary = r'[\s\-–—·|()/,:;.!?\[\]]';
+    const separatorBoundary = r'[\s\-–—·|()<>/:;.!?\[\]]';
     final boundaryPattern = RegExp(
       '(?:^|$separatorBoundary)${RegExp.escape(normalizedLineTitle)}'
       '(?=${'\$'}|$separatorBoundary)',
@@ -96,6 +96,10 @@ class DownloadTaskCreator {
         .replaceAll('）', ')')
         .replaceAll('【', '[')
         .replaceAll('】', ']')
+        .replaceAll('《', '<')
+        .replaceAll('》', '>')
+        .replaceAll('〈', '<')
+        .replaceAll('〉', '>')
         .replaceAll('－', '-')
         .replaceAll('：', ':')
         .replaceAll('；', ';')
