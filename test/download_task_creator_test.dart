@@ -96,6 +96,26 @@ void main() {
 
     expect(service.lastEpisodeTitle, 'Episode 5 - line 3');
   });
+
+  test(
+    'create avoids repeating line title only for boundary matches',
+    () async {
+      final service = _CapturingDownloadService();
+      final creator = DownloadTaskCreator(service);
+
+      await creator.create(
+        animeId: 'anime-1',
+        episodeId: 'episode-6',
+        sourceId: 'sakura',
+        url: 'https://cdn.example.test/video.mp4',
+        title: 'Anime 1',
+        episodeTitle: 'Episode 6 - Line 3A',
+        lineTitle: 'Line 3',
+      );
+
+      expect(service.lastEpisodeTitle, 'Episode 6 - Line 3A - Line 3');
+    },
+  );
 }
 
 class _CapturingDownloadService implements DownloadService {

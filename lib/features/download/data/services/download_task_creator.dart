@@ -62,11 +62,33 @@ class DownloadTaskCreator {
     if (trimmedLineTitle == null || trimmedLineTitle.isEmpty) {
       return trimmedEpisodeTitle;
     }
-    final normalizedEpisodeTitle = trimmedEpisodeTitle.toLowerCase();
-    final normalizedLineTitle = trimmedLineTitle.toLowerCase();
-    if (normalizedEpisodeTitle.contains(normalizedLineTitle)) {
+    if (_isLineTitleAlreadyIncludedInEpisodeTitle(
+      episodeTitle: trimmedEpisodeTitle,
+      lineTitle: trimmedLineTitle,
+    )) {
       return trimmedEpisodeTitle;
     }
     return '$trimmedEpisodeTitle - $trimmedLineTitle';
+  }
+
+  bool _isLineTitleAlreadyIncludedInEpisodeTitle({
+    required String episodeTitle,
+    required String lineTitle,
+  }) {
+    final normalizedEpisodeTitle = episodeTitle
+        .toLowerCase()
+        .replaceAll(RegExp(r'\s+'), ' ')
+        .trim();
+    final normalizedLineTitle = lineTitle.toLowerCase();
+    if (normalizedEpisodeTitle == normalizedLineTitle) {
+      return true;
+    }
+
+    const separatorBoundary = r'[\s\-–—·|(),:;.!?\[\]]';
+    final boundaryPattern = RegExp(
+      '(?:^|$separatorBoundary)${RegExp.escape(normalizedLineTitle)}'
+      '(?=${'\$'}|$separatorBoundary)',
+    );
+    return boundaryPattern.hasMatch(normalizedEpisodeTitle);
   }
 }
