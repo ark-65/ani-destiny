@@ -10,6 +10,7 @@
 - Added a tighter issue-reporting flow: tapping Report issue copies a sanitized diagnostics summary and opens a prefilled GitHub issue, while users who are not signed in to GitHub can paste the same report into any support channel.
 
 ### 🐛 Fixed
+- Fixed unsupported-download copy so download records now explicitly tell users to review and try another source from Downloads before removing a task.
 - Fixed the focused download entry in the downloads list so it now has an extra layer of depth (border plus shadow), making the task added most recently from the episode/player path easier to spot in long lists.
 - Fixed `Open Downloads` / `Review in Downloads` still dropping users into a long list with no clear way to spot the task they had just created from the player or anime-detail page; AniDestiny now carries that new task into Downloads, brings it to the top, and highlights it lightly so the handoff stays in the same context.
 - Fixed the episode-level download button on the anime-detail page still promising “this adds it to Downloads first” even though that tap often first fetches lines, shows a confirmation sheet, or routes through fallback download choices; it now uses the calmer `Check download lines` label so the first step stays honest before AniDestiny knows the actual path.

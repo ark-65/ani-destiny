@@ -1015,7 +1015,8 @@ const _localizedValues = {
         'AniDestiny 正在移除这条失败的下载记录，并清掉这次失败留下的未完成文件。',
     'downloadRemovingListOnlyNote': 'AniDestiny 正在把这条任务从列表移除，请稍候片刻。',
     'downloadUnsupportedRemoveNote': 'AniDestiny 还不能接管这类下载；确认后可以先把这条任务从列表移除。',
-    'downloadUnsupportedListReviewNote': '这条记录仍会留在下载列表里，方便你稍后查看或移除。',
+    'downloadUnsupportedListReviewNote':
+        '这条记录会留在下载列表，方便你先查看并尝试其他源后再决定是否移除。',
     'downloadDiscardedNeedsManualCleanupNote':
         '这个下载已放弃，但 AniDestiny 没能自动清掉残留的未完成文件；如果你不再需要它，请按下面的本地路径手动删除，删完后回到这里点一下“重新检查”。',
     'downloadActionFailedMessage': 'AniDestiny 暂时没能完成这一步下载操作；请稍后再试。',
@@ -1389,7 +1390,7 @@ const _localizedValues = {
     'downloadUnsupportedRemoveNote':
         'AniDestiny cannot take over this type of download yet. You can remove this task from the list for now.',
     'downloadUnsupportedListReviewNote':
-        'This entry still stays in Downloads so you can review it or remove it later.',
+        'This entry stays in Downloads so you can review it, try another source, or remove it later.',
     'downloadDiscardedNeedsManualCleanupNote':
         'This download was discarded, but AniDestiny could not clear the partial file automatically. Remove the leftover file from your device if you no longer need it, then return here and tap Check again.',
     'downloadActionFailedMessage':
