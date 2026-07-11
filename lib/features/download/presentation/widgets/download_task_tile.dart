@@ -63,6 +63,10 @@ class DownloadTaskTile extends StatelessWidget {
       color: isHighlighted
           ? Theme.of(context).colorScheme.secondaryContainer
           : null,
+      elevation: isHighlighted ? 3 : 0,
+      shadowColor: isHighlighted
+          ? Theme.of(context).colorScheme.primary.withValues(alpha: 0.22)
+          : null,
       child: Padding(
         padding: const EdgeInsets.all(12),
         child: Column(
