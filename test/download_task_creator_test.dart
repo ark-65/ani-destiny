@@ -116,6 +116,23 @@ void main() {
       expect(service.lastEpisodeTitle, 'Episode 6 - Line 3A - Line 3');
     },
   );
+
+  test('create avoids repeating the line title with extra spaces', () async {
+    final service = _CapturingDownloadService();
+    final creator = DownloadTaskCreator(service);
+
+    await creator.create(
+      animeId: 'anime-1',
+      episodeId: 'episode-6b',
+      sourceId: 'sakura',
+      url: 'https://cdn.example.test/video.mp4',
+      title: 'Anime 1',
+      episodeTitle: 'Episode 6 - Line 3',
+      lineTitle: ' line   3',
+    );
+
+    expect(service.lastEpisodeTitle, 'Episode 6 - Line 3');
+  });
 }
 
 class _CapturingDownloadService implements DownloadService {

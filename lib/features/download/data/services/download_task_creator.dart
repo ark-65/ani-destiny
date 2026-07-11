@@ -75,11 +75,8 @@ class DownloadTaskCreator {
     required String episodeTitle,
     required String lineTitle,
   }) {
-    final normalizedEpisodeTitle = episodeTitle
-        .toLowerCase()
-        .replaceAll(RegExp(r'\s+'), ' ')
-        .trim();
-    final normalizedLineTitle = lineTitle.toLowerCase();
+    final normalizedEpisodeTitle = _normalizeEpisodePart(episodeTitle);
+    final normalizedLineTitle = _normalizeEpisodePart(lineTitle);
     if (normalizedEpisodeTitle == normalizedLineTitle) {
       return true;
     }
@@ -90,5 +87,12 @@ class DownloadTaskCreator {
       '(?=${'\$'}|$separatorBoundary)',
     );
     return boundaryPattern.hasMatch(normalizedEpisodeTitle);
+  }
+
+  String _normalizeEpisodePart(String title) {
+    return title
+        .toLowerCase()
+        .replaceAll(RegExp(r'\s+'), ' ')
+        .trim();
   }
 }
