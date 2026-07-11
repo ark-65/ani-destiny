@@ -212,6 +212,10 @@ void main() {
       ),
       findsOneWidget,
     );
+    expect(
+      find.byKey(const ValueKey('download-task-focus-indicator-target')),
+      findsOneWidget,
+    );
 
     final targetTopLeft = tester.getTopLeft(
       find.byKey(const ValueKey('download-task-card-target')),
