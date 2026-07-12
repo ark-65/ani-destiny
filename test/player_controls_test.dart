@@ -625,7 +625,7 @@ void main() {
     expect(playButton.onPressed, isNull);
     expect(
       playButton.tooltip,
-      'No playable source found. Try another source or retry later.',
+      'No playable source found. Switch to another source before retrying.',
     );
 
     final speedButton = tester.widget<IconButton>(
@@ -634,7 +634,7 @@ void main() {
     expect(speedButton.onPressed, isNull);
     expect(
       speedButton.tooltip,
-      'No playable source found. Try another source or retry later.',
+      'No playable source found. Switch to another source before retrying.',
     );
 
     final slider = tester.widget<Slider>(find.byType(Slider));
