@@ -10,6 +10,7 @@
 - Added a tighter issue-reporting flow: tapping Report issue copies a sanitized diagnostics summary and opens a prefilled GitHub issue, while users who are not signed in to GitHub can paste the same report into any support channel.
 
 ### 🐛 Fixed
+- Updated player no-playable-source prompts so users are explicitly told to switch source before retrying, reducing ambiguity when playback recovers from transient source failures.
 - Fixed playback error states so when the player reports no playable source, the error panel now includes an explicit source-unavailable suggestion to switch source or retry later, making recovery intent clearer before users leave the failure context.
 - Fixed source fallback/diagnostics rows to map `playback_queue` to `Playback queue` instead of showing the fallback `Other operation`, so diagnostics stay user-facing and easier to understand.
 - Fixed source operation labels in playback-related fallback and diagnostics rows to normalize separator variants (for example `play-sources` or `play sources`) before lookup, so they stay mapped to `Playback lines` instead of dropping to `Other operation`.

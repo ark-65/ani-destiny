@@ -2935,7 +2935,10 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(find.text('No playable source found'), findsOneWidget);
+    expect(
+      find.text('No playable source found. Switch to another source before retrying.'),
+      findsOneWidget,
+    );
     expect(find.text('Anime: Anime 1'), findsOneWidget);
     expect(find.text('Episode: Episode 3'), findsOneWidget);
     expect(find.text('Active playback source: Sakura Anime'), findsOneWidget);
@@ -2952,7 +2955,7 @@ void main() {
     );
     expect(
       downloadButton.tooltip,
-      'No playable source found. Try another source or retry later.',
+      'No playable source found. Switch to another source before retrying.',
     );
     expect(downloadButton.onPressed, isNull);
 
@@ -2962,7 +2965,7 @@ void main() {
     expect(playButton.onPressed, isNull);
     expect(
       playButton.tooltip,
-      'No playable source found. Try another source or retry later.',
+      'No playable source found. Switch to another source before retrying.',
     );
 
     final speedButton = tester.widget<IconButton>(
@@ -2971,7 +2974,7 @@ void main() {
     expect(speedButton.onPressed, isNull);
     expect(
       speedButton.tooltip,
-      'No playable source found. Try another source or retry later.',
+      'No playable source found. Switch to another source before retrying.',
     );
 
     final slider = tester.widget<Slider>(find.byType(Slider));
@@ -3160,7 +3163,10 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(find.text('No playable source found'), findsOneWidget);
+    expect(
+      find.text('No playable source found. Switch to another source before retrying.'),
+      findsOneWidget,
+    );
     expect(
       find.text(
         'Playback temporarily failed. Retry now or try another playback line.',
@@ -3174,7 +3180,7 @@ void main() {
     expect(playButton.onPressed, isNull);
     expect(
       playButton.tooltip,
-      'No playable source found. Try another source or retry later.',
+      'No playable source found. Switch to another source before retrying.',
     );
   });
 }
