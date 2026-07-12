@@ -809,6 +809,8 @@ class AppLocalizations {
       'detail' => _t('sourceOperationDetail'),
       'play' => _t('sourceOperationPlay'),
       'play_sources' => _t('sourceOperationPlaySources'),
+      'play_line' => _t('sourceOperationPlaySources'),
+      'playline' => _t('sourceOperationPlaySources'),
       'playback_queue' => _t('sourceOperationPlaybackQueue'),
       'schedule' => _t('sourceOperationSchedule'),
       'match' => _t('sourceOperationMatch'),

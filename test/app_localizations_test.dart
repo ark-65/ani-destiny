@@ -162,6 +162,9 @@ void main() {
       expect(l10n.sourceOperationLabel('play/sources'), equals(playbackSourcesLabel));
       expect(l10n.sourceOperationLabel('  play  sources  '), equals(playbackSourcesLabel));
       expect(l10n.sourceOperationLabel('playSources'), equals(playbackSourcesLabel));
+      expect(l10n.sourceOperationLabel('play-line'), equals(playbackSourcesLabel));
+      expect(l10n.sourceOperationLabel('play_line'), equals(playbackSourcesLabel));
+      expect(l10n.sourceOperationLabel('playline'), equals(playbackSourcesLabel));
 
       final playbackQueueLabel = l10n.sourceOperationLabel('playback_queue');
       expect(l10n.sourceOperationLabel('playback queue'), equals(playbackQueueLabel));

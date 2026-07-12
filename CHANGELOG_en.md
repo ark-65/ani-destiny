@@ -16,6 +16,7 @@
 - Fixed source fallback/diagnostics rows to map `playback_queue` to `Playback queue` instead of showing the fallback `Other operation`, so diagnostics stay user-facing and easier to understand.
 - Fixed source operation labels in playback-related fallback and diagnostics rows to normalize separator variants (for example `play-sources` or `play sources`) before lookup, so they stay mapped to `Playback lines` instead of dropping to `Other operation`.
 - Fixed source operation labels to also normalize path- and camelCase-style variants (for example `play/sources` and `playSources`) so those diagnostics stay readable as `Playback lines` instead of the `Other operation` fallback.
+- Fixed source operation labels so common `playline` / `play-line` / `play_line` variants also map to `Playback lines`, further reducing “Other operation” noise when diagnostics emit slightly different operation identifiers.
 - Normalized source operation labels so leading/trailing spaces and casing are ignored before lookup, keeping fallback/diagnostic rows readable when operation strings vary while still falling back to “Other operation” for unknown values.
 - Fixed source diagnostics and fallback event display so unknown source operations no longer expose raw internal operation identifiers; they now fall back to a user-friendly “Other operation” label for clear support-facing logs.
 - Fixed player unsupported-download wording to stay consistent with other entry points and avoid claiming a save happened before it does.
