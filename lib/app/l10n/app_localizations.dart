@@ -802,7 +802,7 @@ class AppLocalizations {
       'schedule' => _t('sourceOperationSchedule'),
       'match' => _t('sourceOperationMatch'),
       'comments' => _t('sourceOperationComments'),
-      _ => operation,
+      _ => _t('sourceOperationUnknown'),
     };
   }
 
@@ -1185,6 +1185,7 @@ const _localizedValues = {
     'sourceOperationSchedule': '时间表',
     'sourceOperationMatch': '匹配',
     'sourceOperationComments': '弹幕',
+    'sourceOperationUnknown': '其他操作',
     'danmaku': '弹幕',
     'danmakuStatusLoading': '弹幕：加载中',
     'danmakuStatusDandanplay': '弹幕：弹弹play',
@@ -1587,6 +1588,7 @@ const _localizedValues = {
     'sourceOperationSchedule': 'Schedule',
     'sourceOperationMatch': 'Matching',
     'sourceOperationComments': 'Danmaku',
+    'sourceOperationUnknown': 'Other operation',
     'danmaku': 'Danmaku',
     'danmakuStatusLoading': 'Danmaku: loading',
     'danmakuStatusDandanplay': 'Danmaku: Dandanplay',
@@ -1958,6 +1960,7 @@ const _localizedValues = {
     'sourceOperationSchedule': '放送予定',
     'sourceOperationMatch': 'マッチ',
     'sourceOperationComments': '弾幕',
+    'sourceOperationUnknown': 'その他の操作',
     'danmaku': '弾幕',
     'danmakuStatusLoading': '弾幕: 読み込み中',
     'danmakuStatusDandanplay': '弾幕: 弹弹play',

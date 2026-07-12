@@ -10,6 +10,7 @@
 - Added a tighter issue-reporting flow: tapping Report issue copies a sanitized diagnostics summary and opens a prefilled GitHub issue, while users who are not signed in to GitHub can paste the same report into any support channel.
 
 ### 🐛 Fixed
+- Fixed source diagnostics and fallback event display so unknown source operations no longer expose raw internal operation identifiers; they now fall back to a user-friendly “Other operation” label for clear support-facing logs.
 - Fixed player unsupported-download wording to stay consistent with other entry points and avoid claiming a save happened before it does.
 - Fixed unsupported-download copy so download records now explicitly tell users to review and try another source from Downloads before removing a task.
 - Fixed unsupported-download copy to say the same in all locales: keep the record in Downloads, review it, try a different download source, then decide whether to keep or remove it.

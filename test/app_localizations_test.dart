@@ -345,6 +345,7 @@ void main() {
     expect(zh.yesNo(false), '否');
     expect(zh.platformDisplayName('android'), 'Android');
     expect(zh.sourceOperationLabel('detail'), '详情');
+    expect(zh.sourceOperationLabel('playback_queue'), '其他操作');
 
     const en = AppLocalizations(Locale('en'));
     expect(en.playbackDiagnosticsLatestPlayback, 'Latest playback');
@@ -394,6 +395,7 @@ void main() {
       contains('playback section stays unavailable'),
     );
     expect(en.sourceOperationLabel('play_sources'), 'Playback lines');
+    expect(en.sourceOperationLabel('playback_queue'), 'Other operation');
     expect(en.yesNo(true), 'Yes');
     expect(en.yesNo(false), 'No');
 
@@ -446,5 +448,6 @@ void main() {
     expect(ja.yesNo(false), 'いいえ');
     expect(ja.platformDisplayName('windows'), 'Windows');
     expect(ja.sourceOperationLabel('detail'), '詳細');
+    expect(ja.sourceOperationLabel('playback_queue'), 'その他の操作');
   });
 }
