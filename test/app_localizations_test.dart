@@ -258,11 +258,16 @@ void main() {
     const zh = AppLocalizations(Locale('zh'));
     expect(zh.sourceFallbackNotice, contains('AniDestiny'));
     expect(zh.sourceFallbackNotice, contains('其他数据源'));
+    expect(zh.sourceFallbackNotice, contains('切换到其他数据源再重试'));
     expect(zh.sourceFallbackNotice, isNot(contains('备用数据')));
 
     const en = AppLocalizations(Locale('en'));
     expect(en.sourceFallbackNotice, contains('AniDestiny'));
     expect(en.sourceFallbackNotice, contains('another source'));
+    expect(
+      en.sourceFallbackNotice.toLowerCase(),
+      contains('switch to another source and retry'),
+    );
     expect(
       en.sourceFallbackNotice.toLowerCase(),
       isNot(contains('fallback data')),
@@ -271,6 +276,7 @@ void main() {
     const ja = AppLocalizations(Locale('ja'));
     expect(ja.sourceFallbackNotice, contains('AniDestiny'));
     expect(ja.sourceFallbackNotice, contains('別のソース'));
+    expect(ja.sourceFallbackNotice, contains('別のソースに切り替えて再試行'));
     expect(ja.sourceFallbackNotice, isNot(contains('代替データ')));
   });
 

@@ -1177,7 +1177,8 @@ const _localizedValues = {
     'sourceDiagnosticsSubtitle': '查看最近的数据源请求和解析状态。',
     'sourceDiagnosticsEmpty': '暂无诊断记录',
     'sourceDiagnosticsClear': '清空',
-    'sourceFallbackNotice': '当前数据源暂时不可用，AniDestiny 已改为显示其他数据源的内容。',
+    'sourceFallbackNotice':
+        '当前数据源暂时不可用，AniDestiny 已改为显示其他数据源的内容。若仍异常，请先切换到其他数据源再重试。',
     'sourceHealth': '数据源健康状态',
     'sourceHealthHealthy': '正常',
     'sourceHealthDegraded': '不稳定',
@@ -1579,7 +1580,7 @@ const _localizedValues = {
     'sourceDiagnosticsEmpty': 'No diagnostics yet',
     'sourceDiagnosticsClear': 'Clear',
     'sourceFallbackNotice':
-        'The current source is temporarily unavailable. AniDestiny is showing content from another source instead.',
+        'The current source is temporarily unavailable. AniDestiny is showing content from another source instead. If this still fails, switch to another source and retry.',
     'sourceHealth': 'Source health',
     'sourceHealthHealthy': 'Healthy',
     'sourceHealthDegraded': 'Degraded',
@@ -1953,7 +1954,8 @@ const _localizedValues = {
     'sourceDiagnosticsSubtitle': '最近のソース要求と解析状態を確認します。',
     'sourceDiagnosticsEmpty': '診断記録はありません',
     'sourceDiagnosticsClear': 'クリア',
-    'sourceFallbackNotice': '現在のソースは一時的に利用できません。AniDestiny は別のソースの内容を表示しています。',
+    'sourceFallbackNotice':
+        '現在のソースは一時的に利用できません。AniDestiny は別のソースの内容を表示しています。引き続き問題がある場合は、別のソースに切り替えて再試行してください。',
     'sourceHealth': 'ソース健康状態',
     'sourceHealthHealthy': '正常',
     'sourceHealthDegraded': '不安定',

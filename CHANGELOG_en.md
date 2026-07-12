@@ -11,6 +11,7 @@
 
 ### 🐛 Fixed
 - Updated player no-playable-source prompts so users are explicitly told to switch source before retrying, reducing ambiguity when playback recovers from transient source failures.
+- Fixed fallback source notices to include the next-step guidance to switch to another source and retry if needed, so users know what to do when fallback content appears.
 - Fixed player control tests to align their no-playable-source assertions with the active copy, ensuring playback copy drift cannot silently break user-facing regression coverage.
 - Fixed playback error states so when the player reports no playable source, the error panel now includes an explicit source-unavailable suggestion to switch source or retry later, making recovery intent clearer before users leave the failure context.
 - Fixed no-playable-source recovery guidance to consistently say switch to another source before retrying, and added regression coverage for the source-unavailable suggestion in all three locales.
