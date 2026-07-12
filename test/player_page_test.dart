@@ -2945,7 +2945,7 @@ void main() {
     expect(find.text('Line: Missing Line'), findsOneWidget);
     expect(
       find.text(
-        'The upstream source changed or is temporarily unavailable. Try another source or retry later.',
+        'The source changed or is temporarily unavailable. Switch to another source before retrying.',
       ),
       findsOneWidget,
     );

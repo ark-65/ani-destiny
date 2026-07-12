@@ -13,6 +13,7 @@
 - Updated player no-playable-source prompts so users are explicitly told to switch source before retrying, reducing ambiguity when playback recovers from transient source failures.
 - Fixed player control tests to align their no-playable-source assertions with the active copy, ensuring playback copy drift cannot silently break user-facing regression coverage.
 - Fixed playback error states so when the player reports no playable source, the error panel now includes an explicit source-unavailable suggestion to switch source or retry later, making recovery intent clearer before users leave the failure context.
+- Fixed no-playable-source recovery guidance to consistently say switch to another source before retrying, and added regression coverage for the source-unavailable suggestion in all three locales.
 - Fixed source fallback/diagnostics rows to map `playback_queue` to `Playback queue` instead of showing the fallback `Other operation`, so diagnostics stay user-facing and easier to understand.
 - Fixed source operation labels in playback-related fallback and diagnostics rows to normalize separator variants (for example `play-sources` or `play sources`) before lookup, so they stay mapped to `Playback lines` instead of dropping to `Other operation`.
 - Fixed source operation labels to also normalize path- and camelCase-style variants (for example `play/sources` and `playSources`) so those diagnostics stay readable as `Playback lines` instead of the `Other operation` fallback.

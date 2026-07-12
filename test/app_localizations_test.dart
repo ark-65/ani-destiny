@@ -205,6 +205,26 @@ void main() {
     );
   });
 
+  test('missing source suggestion copy follows next-step guidance', () {
+    const zh = AppLocalizations(Locale('zh'));
+    expect(
+      zh.sourceUnavailableSuggestion,
+      contains('先切换到其他数据源再重试'),
+    );
+
+    const en = AppLocalizations(Locale('en'));
+    expect(
+      en.sourceUnavailableSuggestion,
+      contains('Switch to another source before retrying'),
+    );
+
+    const ja = AppLocalizations(Locale('ja'));
+    expect(
+      ja.sourceUnavailableSuggestion,
+      contains('先に別のソースへ切り替えてから再試行してください'),
+    );
+  });
+
   test('player fallback copy stays calm and avoids fallback jargon', () {
     const zh = AppLocalizations(Locale('zh'));
     final zhNotice = zh.sourceFallbackPlayerNotice(
