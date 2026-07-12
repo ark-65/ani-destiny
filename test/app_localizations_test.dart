@@ -173,6 +173,38 @@ void main() {
     }
   });
 
+  test('missing source copy tells users to switch source first', () {
+    const zh = AppLocalizations(Locale('zh'));
+    expect(
+      zh.noPlaySource,
+      contains('请先切换到其他数据源再重试'),
+    );
+    expect(
+      zh.noDownloadSource,
+      contains('请先切换到其他数据源再重试'),
+    );
+
+    const en = AppLocalizations(Locale('en'));
+    expect(
+      en.noPlaySource,
+      contains('Switch to another source before retrying'),
+    );
+    expect(
+      en.noDownloadSource,
+      contains('Switch to another source before retrying'),
+    );
+
+    const ja = AppLocalizations(Locale('ja'));
+    expect(
+      ja.noPlaySource,
+      contains('先に別のソースへ切り替えてから再試行してください'),
+    );
+    expect(
+      ja.noDownloadSource,
+      contains('先に別のソースへ切り替えてから再試行してください'),
+    );
+  });
+
   test('player fallback copy stays calm and avoids fallback jargon', () {
     const zh = AppLocalizations(Locale('zh'));
     final zhNotice = zh.sourceFallbackPlayerNotice(

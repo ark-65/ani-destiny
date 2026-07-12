@@ -47,6 +47,7 @@
 - Fixed source failure rows in Runtime diagnostics and the Source diagnostics sheet still exposing internal exception type names like `AppException`; those diagnostics now keep the sanitized failure note, HTTP status, and source switch result without making the support view read like an engineering log.
 - Fixed About and runtime diagnostics still reading a stale hard-coded version after release; version labels now prefer runtime package metadata and use the constant only as a fallback.
 - Fixed the danmaku settings bottom sheet on macOS / desktop being able to sit behind the main bottom navigation, hiding lower controls such as speed; the sheet now covers the bottom navigation and remains scrollable.
+- Fixed source-empty prompts (`noPlaySource`, `noDownloadSource`) in Chinese, English, and Japanese to consistently say switch to another source before retrying, including download-source guidance, so fallback flow keeps one clear next action.
 
 ## [1.0.5] - 2026-07-08
 
