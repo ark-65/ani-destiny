@@ -793,7 +793,8 @@ class AppLocalizations {
   String sourceTransitionLabel(String fromSourceId, String toSourceId) =>
       '${sourceDisplayLabel(fromSourceId)} -> ${sourceDisplayLabel(toSourceId)}';
   String sourceOperationLabel(String operation) {
-    return switch (operation) {
+    final normalizedOperation = operation.trim().toLowerCase();
+    return switch (normalizedOperation) {
       'home' => _t('sourceOperationHome'),
       'search' => _t('sourceOperationSearch'),
       'detail' => _t('sourceOperationDetail'),
