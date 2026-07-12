@@ -795,8 +795,14 @@ class AppLocalizations {
   String sourceOperationLabel(String operation) {
     final normalizedOperation = operation
         .trim()
+        .replaceAllMapped(
+          RegExp(r'([a-z])([A-Z])'),
+          (match) => '${match.group(1)}_${match.group(2)}',
+        )
         .toLowerCase()
-        .replaceAll(RegExp(r'[\s_-]+'), '_');
+        .replaceAll(RegExp(r'[^a-z0-9]+'), '_')
+        .replaceAll(RegExp(r'_+'), '_')
+        .replaceAll(RegExp(r'^_|_$'), '');
     return switch (normalizedOperation) {
       'home' => _t('sourceOperationHome'),
       'search' => _t('sourceOperationSearch'),

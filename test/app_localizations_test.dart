@@ -159,7 +159,9 @@ void main() {
       final defaultLabel = l10n.sourceOperationLabel('play_sources');
       expect(l10n.sourceOperationLabel('play sources'), equals(defaultLabel));
       expect(l10n.sourceOperationLabel('play-sources'), equals(defaultLabel));
+      expect(l10n.sourceOperationLabel('play/sources'), equals(defaultLabel));
       expect(l10n.sourceOperationLabel('  play  sources  '), equals(defaultLabel));
+      expect(l10n.sourceOperationLabel('playSources'), equals(defaultLabel));
     }
   });
 
