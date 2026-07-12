@@ -10,6 +10,7 @@
 - Added a tighter issue-reporting flow: tapping Report issue copies a sanitized diagnostics summary and opens a prefilled GitHub issue, while users who are not signed in to GitHub can paste the same report into any support channel.
 
 ### 🐛 Fixed
+- Fixed source fallback/diagnostics rows to map `playback_queue` to `Playback queue` instead of showing the fallback `Other operation`, so diagnostics stay user-facing and easier to understand.
 - Fixed source operation labels in playback-related fallback and diagnostics rows to normalize separator variants (for example `play-sources` or `play sources`) before lookup, so they stay mapped to `Playback lines` instead of dropping to `Other operation`.
 - Fixed source operation labels to also normalize path- and camelCase-style variants (for example `play/sources` and `playSources`) so those diagnostics stay readable as `Playback lines` instead of the `Other operation` fallback.
 - Normalized source operation labels so leading/trailing spaces and casing are ignored before lookup, keeping fallback/diagnostic rows readable when operation strings vary while still falling back to “Other operation” for unknown values.

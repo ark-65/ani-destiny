@@ -156,12 +156,17 @@ void main() {
     for (final locale in const [Locale('zh'), Locale('en'), Locale('ja')]) {
       final l10n = AppLocalizations(locale);
 
-      final defaultLabel = l10n.sourceOperationLabel('play_sources');
-      expect(l10n.sourceOperationLabel('play sources'), equals(defaultLabel));
-      expect(l10n.sourceOperationLabel('play-sources'), equals(defaultLabel));
-      expect(l10n.sourceOperationLabel('play/sources'), equals(defaultLabel));
-      expect(l10n.sourceOperationLabel('  play  sources  '), equals(defaultLabel));
-      expect(l10n.sourceOperationLabel('playSources'), equals(defaultLabel));
+      final playbackSourcesLabel = l10n.sourceOperationLabel('play_sources');
+      expect(l10n.sourceOperationLabel('play sources'), equals(playbackSourcesLabel));
+      expect(l10n.sourceOperationLabel('play-sources'), equals(playbackSourcesLabel));
+      expect(l10n.sourceOperationLabel('play/sources'), equals(playbackSourcesLabel));
+      expect(l10n.sourceOperationLabel('  play  sources  '), equals(playbackSourcesLabel));
+      expect(l10n.sourceOperationLabel('playSources'), equals(playbackSourcesLabel));
+
+      final playbackQueueLabel = l10n.sourceOperationLabel('playback_queue');
+      expect(l10n.sourceOperationLabel('playback queue'), equals(playbackQueueLabel));
+      expect(l10n.sourceOperationLabel('playback-queue'), equals(playbackQueueLabel));
+      expect(l10n.sourceOperationLabel('playbackQueue'), equals(playbackQueueLabel));
     }
   });
 
@@ -359,7 +364,8 @@ void main() {
     expect(zh.platformDisplayName('android'), 'Android');
     expect(zh.sourceOperationLabel('detail'), '详情');
     expect(zh.sourceOperationLabel(' DETAIL '), zh.sourceOperationLabel('detail'));
-    expect(zh.sourceOperationLabel('playback_queue'), '其他操作');
+    expect(zh.sourceOperationLabel('playback_queue'), '播放队列');
+    expect(zh.sourceOperationLabel(' playback_queue_unknown '), '其他操作');
 
     const en = AppLocalizations(Locale('en'));
     expect(en.playbackDiagnosticsLatestPlayback, 'Latest playback');
@@ -410,7 +416,8 @@ void main() {
     );
     expect(en.sourceOperationLabel('play_sources'), 'Playback lines');
     expect(en.sourceOperationLabel(' PLAY_SOURCES '), en.sourceOperationLabel('play_sources'));
-    expect(en.sourceOperationLabel('playback_queue'), 'Other operation');
+    expect(en.sourceOperationLabel('playback_queue'), 'Playback queue');
+    expect(en.sourceOperationLabel('playback_queue_unknown'), 'Other operation');
     expect(en.yesNo(true), 'Yes');
     expect(en.yesNo(false), 'No');
 
@@ -464,6 +471,7 @@ void main() {
     expect(ja.platformDisplayName('windows'), 'Windows');
     expect(ja.sourceOperationLabel('detail'), '詳細');
     expect(ja.sourceOperationLabel(' detail '), ja.sourceOperationLabel('detail'));
-    expect(ja.sourceOperationLabel('playback_queue'), 'その他の操作');
+    expect(ja.sourceOperationLabel('playback_queue'), '再生キュー');
+    expect(ja.sourceOperationLabel('playback_queue_unknown'), 'その他の操作');
   });
 }
