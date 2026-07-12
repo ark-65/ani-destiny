@@ -2940,6 +2940,12 @@ void main() {
     expect(find.text('Episode: Episode 3'), findsOneWidget);
     expect(find.text('Active playback source: Sakura Anime'), findsOneWidget);
     expect(find.text('Line: Missing Line'), findsOneWidget);
+    expect(
+      find.text(
+        'The upstream source changed or is temporarily unavailable. Try another source or retry later.',
+      ),
+      findsOneWidget,
+    );
     expect(find.text('Playback diagnostics'), findsOneWidget);
     final downloadButton = tester.widget<IconButton>(
       find.widgetWithIcon(IconButton, Icons.download_outlined),
