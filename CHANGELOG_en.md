@@ -10,6 +10,7 @@
 - Added a tighter issue-reporting flow: tapping Report issue copies a sanitized diagnostics summary and opens a prefilled GitHub issue, while users who are not signed in to GitHub can paste the same report into any support channel.
 
 ### 🐛 Fixed
+- Fixed source fallback notice tests to match the full current copy and explicitly guard against legacy “fallback data” wording, keeping regression coverage aligned with user-facing fallback messaging.
 - Updated player no-playable-source prompts so users are explicitly told to switch source before retrying, reducing ambiguity when playback recovers from transient source failures.
 - Fixed fallback source notices to include the next-step guidance to switch to another source and retry if needed, so users know what to do when fallback content appears.
 - Fixed player control tests to align their no-playable-source assertions with the active copy, ensuring playback copy drift cannot silently break user-facing regression coverage.

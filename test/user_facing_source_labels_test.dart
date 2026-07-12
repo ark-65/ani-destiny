@@ -114,6 +114,8 @@ void main() {
   testWidgets('schedule fallback notice avoids fallback-data jargon', (
     tester,
   ) async {
+    const en = AppLocalizations(Locale('en'));
+
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
@@ -141,15 +143,11 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(
-      find.text(
-        'The current source is temporarily unavailable. AniDestiny is showing content from another source instead.',
-      ),
+      find.textContaining(en.sourceFallbackNotice),
       findsOneWidget,
     );
     expect(
-      find.text(
-        'The current source is temporarily unavailable. Showing fallback data.',
-      ),
+      find.textContaining('Showing fallback data'),
       findsNothing,
     );
   });
