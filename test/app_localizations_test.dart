@@ -152,6 +152,17 @@ void main() {
     expect(ja.latestEpisode, '最新話');
   });
 
+  test('source operation labels normalize space and dash variants', () {
+    for (final locale in const [Locale('zh'), Locale('en'), Locale('ja')]) {
+      final l10n = AppLocalizations(locale);
+
+      final defaultLabel = l10n.sourceOperationLabel('play_sources');
+      expect(l10n.sourceOperationLabel('play sources'), equals(defaultLabel));
+      expect(l10n.sourceOperationLabel('play-sources'), equals(defaultLabel));
+      expect(l10n.sourceOperationLabel('  play  sources  '), equals(defaultLabel));
+    }
+  });
+
   test('player fallback copy stays calm and avoids fallback jargon', () {
     const zh = AppLocalizations(Locale('zh'));
     final zhNotice = zh.sourceFallbackPlayerNotice(

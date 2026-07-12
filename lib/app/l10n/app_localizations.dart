@@ -793,7 +793,10 @@ class AppLocalizations {
   String sourceTransitionLabel(String fromSourceId, String toSourceId) =>
       '${sourceDisplayLabel(fromSourceId)} -> ${sourceDisplayLabel(toSourceId)}';
   String sourceOperationLabel(String operation) {
-    final normalizedOperation = operation.trim().toLowerCase();
+    final normalizedOperation = operation
+        .trim()
+        .toLowerCase()
+        .replaceAll(RegExp(r'[\s_-]+'), '_');
     return switch (normalizedOperation) {
       'home' => _t('sourceOperationHome'),
       'search' => _t('sourceOperationSearch'),
