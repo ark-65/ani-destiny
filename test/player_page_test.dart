@@ -1975,8 +1975,7 @@ void main() {
     expect(find.text('Episode 2'), findsNothing);
   });
 
-  testWidgets(
-      'fullscreen exit stays available while next episode is unresolved', (
+  testWidgets('fullscreen exit is blocked while next episode is unresolved', (
     tester,
   ) async {
     final animeRepository = _PendingPlayableNextEpisodeAnimeRepository();
@@ -2005,13 +2004,14 @@ void main() {
       find.widgetWithIcon(IconButton, Icons.fullscreen_exit),
     );
     expect(fullscreenButton.onPressed, isNotNull);
-    expect(fullscreenButton.tooltip, 'Exit fullscreen');
+    expect(fullscreenButton.tooltip, 'Loading next episode...');
+    expect(find.byType(AppBar), findsNothing);
 
     await tester.tap(find.widgetWithIcon(IconButton, Icons.fullscreen_exit));
     await tester.pump();
 
-    expect(find.byType(AppBar), findsOneWidget);
-    expect(find.text('Loading next episode...'), findsNothing);
+    expect(find.byType(SnackBar), findsOneWidget);
+    expect(find.byType(AppBar), findsNothing);
   });
 
   testWidgets(
@@ -2936,7 +2936,9 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(
-      find.text('No playable source found. Switch to another source before retrying.'),
+      find.text(
+        'No playable source found. Switch to another source before retrying.',
+      ),
       findsOneWidget,
     );
     expect(find.text('Anime: Anime 1'), findsOneWidget);
@@ -3164,7 +3166,9 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(
-      find.text('No playable source found. Switch to another source before retrying.'),
+      find.text(
+        'No playable source found. Switch to another source before retrying.',
+      ),
       findsOneWidget,
     );
     expect(

@@ -327,37 +327,38 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
                           alignment: Alignment.topCenter,
                           child: ConstrainedBox(
                             constraints: const BoxConstraints(maxWidth: 420),
-                                child: Card(
-                                  child: Padding(
-                                    padding: const EdgeInsets.all(16),
-                                    child: Column(
-                                      mainAxisSize: MainAxisSize.min,
-                                      children: [
-                                        Text(
-                                          _playbackErrorMessage(),
-                                          textAlign: TextAlign.center,
-                                        ),
-                                        if (_state.errorMessage ==
-                                            context.l10n.playerNoPlayUrl) ...[
-                                          const SizedBox(height: 12),
-                                          Text(
-                                            context.l10n.sourceUnavailableSuggestion,
-                                            textAlign: TextAlign.center,
-                                            style: Theme.of(context)
-                                                .textTheme
-                                                .bodySmall
-                                                ?.copyWith(
-                                                  color: Theme.of(context)
-                                                      .colorScheme
-                                                      .onSurfaceVariant,
-                                                ),
-                                          ),
-                                        ],
-                                        if (_hasSourceFallbackContext()) ...[
-                                          const SizedBox(height: 12),
-                                          Text(
-                                            _sourceFallbackNotice(context),
-                                            textAlign: TextAlign.center,
+                            child: Card(
+                              child: Padding(
+                                padding: const EdgeInsets.all(16),
+                                child: Column(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Text(
+                                      _playbackErrorMessage(),
+                                      textAlign: TextAlign.center,
+                                    ),
+                                    if (_state.errorMessage ==
+                                        context.l10n.playerNoPlayUrl) ...[
+                                      const SizedBox(height: 12),
+                                      Text(
+                                        context
+                                            .l10n.sourceUnavailableSuggestion,
+                                        textAlign: TextAlign.center,
+                                        style: Theme.of(context)
+                                            .textTheme
+                                            .bodySmall
+                                            ?.copyWith(
+                                              color: Theme.of(context)
+                                                  .colorScheme
+                                                  .onSurfaceVariant,
+                                            ),
+                                      ),
+                                    ],
+                                    if (_hasSourceFallbackContext()) ...[
+                                      const SizedBox(height: 12),
+                                      Text(
+                                        _sourceFallbackNotice(context),
+                                        textAlign: TextAlign.center,
                                         style: Theme.of(
                                           context,
                                         ).textTheme.bodySmall?.copyWith(
@@ -563,9 +564,10 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
                     : null,
                 onToggleFullscreen:
                     isRouteBusy ? null : () => unawaited(_toggleFullscreen()),
-                onBlockedFullscreenExit: isRouteBusy && _isFullscreen
-                    ? () => _showSnackBar(playerExitBusyMessage)
-                    : null,
+                onBlockedFullscreenExit:
+                    (_isResolvingNextEpisode || isRouteBusy) && _isFullscreen
+                        ? () => _showSnackBar(playerExitBusyMessage)
+                        : null,
                 onToggleDanmaku: () {
                   ref.read(danmakuSettingsProvider.notifier).state =
                       danmakuSettings.copyWith(

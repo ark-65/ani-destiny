@@ -225,9 +225,9 @@ void main() {
     expect(find.text('--:-- / --:--'), findsNothing);
   });
 
-  testWidgets(
-      'fullscreen next episode verification still allows leaving fullscreen',
+  testWidgets('fullscreen next episode verification blocks leaving fullscreen',
       (tester) async {
+    var blockedTaps = 0;
     var fullscreenTaps = 0;
 
     await tester.pumpWidget(
@@ -243,6 +243,7 @@ void main() {
           externalPlayerTooltip: 'Loading next episode...',
           downloadTooltip: 'Loading next episode...',
           onDownload: null,
+          onBlockedFullscreenExit: () => blockedTaps += 1,
           onToggleDanmaku: _noop,
           onToggleFullscreen: () => fullscreenTaps += 1,
           danmakuEnabled: true,
@@ -260,12 +261,15 @@ void main() {
       find.widgetWithIcon(IconButton, Icons.fullscreen_exit),
     );
     expect(fullscreenButton.onPressed, isNotNull);
-    expect(fullscreenButton.tooltip, 'Exit fullscreen');
+    expect(blockedTaps, 0);
+    expect(fullscreenButton.tooltip, 'Loading next episode...');
+    expect(fullscreenTaps, 0);
 
     await tester.tap(find.widgetWithIcon(IconButton, Icons.fullscreen_exit));
     await tester.pump();
 
-    expect(fullscreenTaps, 1);
+    expect(blockedTaps, 1);
+    expect(fullscreenTaps, 0);
   });
 
   testWidgets('retrying playback also disables danmaku changes',
