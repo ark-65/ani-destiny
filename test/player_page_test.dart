@@ -2717,16 +2717,23 @@ void main() {
 
     final busyBackButton = tester.widget<IconButton>(
       find
-          .descendant(
-            of: find.byType(AppBar),
-            matching: find.byType(IconButton),
-          )
-          .first,
+        .descendant(
+          of: find.byType(AppBar),
+          matching: find.byType(IconButton),
+        )
+        .first,
     );
     expect(busyBackButton.onPressed, isNotNull);
     expect(
       busyBackButton.tooltip,
       'Please wait until the next episode finishes loading before leaving.',
+    );
+    expect(
+      busyBackButton.style?.foregroundColor?.resolve(const {}),
+      Theme.of(tester.element(find.byType(AppBar)))
+          .colorScheme
+          .onSurface
+          .withValues(alpha: 0.38),
     );
 
     await tester.tap(

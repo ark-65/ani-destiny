@@ -235,18 +235,23 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
         appBar: _isFullscreen
             ? null
             : AppBar(
-                automaticallyImplyLeading: false,
-                leading: canLeavePlayer
-                    ? IconButton(
-                        tooltip: isRouteBusyForExit
-                            ? playerExitBusyMessage
-                            : context.l10n.back,
-                        onPressed: isRouteBusyForExit
-                            ? () => _showSnackBar(playerExitBusyMessage)
-                            : () => Navigator.of(context).maybePop(),
-                        icon: const BackButtonIcon(),
-                      )
-                    : null,
+                  automaticallyImplyLeading: false,
+                    leading: canLeavePlayer
+                        ? IconButton(
+                            tooltip: isRouteBusyForExit
+                                ? playerExitBusyMessage
+                                : context.l10n.back,
+                            style: isRouteBusyForExit
+                                ? IconButton.styleFrom(
+                                    foregroundColor: unavailableActionColor,
+                                  )
+                                : null,
+                            onPressed: isRouteBusyForExit
+                                ? () => _showSnackBar(playerExitBusyMessage)
+                                : () => Navigator.of(context).maybePop(),
+                            icon: const BackButtonIcon(),
+                          )
+                        : null,
                 title: _PlayerAppBarTitle(
                   title: appBarEpisodeTitle,
                   status: appBarStatus,
