@@ -1063,8 +1063,15 @@ void main() {
     final fullscreenButton = tester.widget<IconButton>(
       find.widgetWithIcon(IconButton, Icons.fullscreen),
     );
-    expect(fullscreenButton.onPressed, isNull);
+    expect(fullscreenButton.onPressed, isNotNull);
     expect(fullscreenButton.tooltip, 'Retrying playback...');
+
+    await tester.tap(find.widgetWithIcon(IconButton, Icons.fullscreen));
+    await tester.pump();
+    expect(
+      find.text('Please wait until playback finishes retrying before leaving.'),
+      findsOneWidget,
+    );
 
     final slider = tester.widget<Slider>(find.byType(Slider));
     expect(slider.onChanged, isNull);
@@ -1675,8 +1682,14 @@ void main() {
     final fullscreenButton = tester.widget<IconButton>(
       find.widgetWithIcon(IconButton, Icons.fullscreen),
     );
-    expect(fullscreenButton.onPressed, isNull);
+    expect(fullscreenButton.onPressed, isNotNull);
     expect(fullscreenButton.tooltip, 'Opening external player...');
+    await tester.tap(find.widgetWithIcon(IconButton, Icons.fullscreen));
+    await tester.pump();
+    expect(
+      find.text('Please wait until the external player finishes opening before leaving.'),
+      findsOneWidget,
+    );
 
     final slider = tester.widget<Slider>(find.byType(Slider));
     expect(slider.onChanged, isNull);
@@ -1869,7 +1882,7 @@ void main() {
     final fullscreenButton = tester.widget<IconButton>(
       find.widgetWithIcon(IconButton, Icons.fullscreen),
     );
-    expect(fullscreenButton.onPressed, isNull);
+    expect(fullscreenButton.onPressed, isNotNull);
     expect(fullscreenButton.tooltip, 'Loading next episode...');
 
     expect(find.byTooltip('Loading next episode...'), findsWidgets);

@@ -566,7 +566,7 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
                 onToggleFullscreen:
                     isRouteBusy ? null : () => unawaited(_toggleFullscreen()),
                 onBlockedFullscreenExit:
-                    (_isResolvingNextEpisode || isRouteBusy) && _isFullscreen
+                    (_isResolvingNextEpisode || isRouteBusy)
                         ? () => _showSnackBar(playerExitBusyMessage)
                         : null,
                 onToggleDanmaku: () {

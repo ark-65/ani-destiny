@@ -115,7 +115,7 @@ class PlayerControls extends StatelessWidget {
         : !isInteractionLocked && canEnterFullscreen;
     final fullscreenAction = canToggleFullscreen
         ? onToggleFullscreen
-        : isFullscreen && isCommittedRouteTransition
+        : isCommittedRouteTransition
             ? onBlockedFullscreenExit
             : null;
     final fullscreenTooltip = isSwitchingEpisode || isResolvingNextEpisode
