@@ -2749,6 +2749,65 @@ void main() {
     );
   });
 
+  testWidgets('app bar back stays on player while playback is retrying', (
+    tester,
+  ) async {
+    final repository = _RetryablePlayerRepository();
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          playerRepositoryProvider.overrideWithValue(repository),
+          historyRepositoryProvider.overrideWithValue(_FakeHistoryRepository()),
+          danmakuRepositoryProvider.overrideWithValue(_FakeDanmakuRepository()),
+        ],
+        child: _buildApp(_args),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byType(ElevatedButton));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Retry'));
+    await tester.pump();
+
+    final busyBackButton = tester.widget<IconButton>(
+      find
+          .descendant(
+            of: find.byType(AppBar),
+            matching: find.byType(IconButton),
+          )
+          .first,
+    );
+    expect(busyBackButton.onPressed, isNotNull);
+    expect(
+      busyBackButton.tooltip,
+      'Please wait until playback finishes retrying before leaving.',
+    );
+
+    await tester.tap(
+      find
+          .descendant(
+            of: find.byType(AppBar),
+            matching: find.byType(IconButton),
+          )
+          .first,
+    );
+    await tester.pump();
+
+    expect(find.byType(PlayerPage), findsOneWidget);
+    expect(
+      find.text(
+        'Please wait until playback finishes retrying before leaving.',
+      ),
+      findsOneWidget,
+    );
+
+    repository.completeRetry();
+    await tester.pumpAndSettle();
+  });
+
   testWidgets(
       'app bar back stays on player while external handoff is opening', (
     tester,
