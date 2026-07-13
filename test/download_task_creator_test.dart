@@ -79,6 +79,157 @@ void main() {
 
     expect(service.lastEpisodeTitle, 'Episode 4 - Line 3');
   });
+
+  test('create avoids repeating the line title with casing differences', () async {
+    final service = _CapturingDownloadService();
+    final creator = DownloadTaskCreator(service);
+
+    await creator.create(
+      animeId: 'anime-1',
+      episodeId: 'episode-5',
+      sourceId: 'sakura',
+      url: 'https://cdn.example.test/video.mp4',
+      title: 'Anime 1',
+      episodeTitle: 'Episode 5 - line 3',
+      lineTitle: 'LINE 3',
+    );
+
+    expect(service.lastEpisodeTitle, 'Episode 5 - line 3');
+  });
+
+  test(
+    'create avoids repeating line title only for boundary matches',
+    () async {
+      final service = _CapturingDownloadService();
+      final creator = DownloadTaskCreator(service);
+
+      await creator.create(
+        animeId: 'anime-1',
+        episodeId: 'episode-6',
+        sourceId: 'sakura',
+        url: 'https://cdn.example.test/video.mp4',
+        title: 'Anime 1',
+        episodeTitle: 'Episode 6 - Line 3A',
+        lineTitle: 'Line 3',
+      );
+
+      expect(service.lastEpisodeTitle, 'Episode 6 - Line 3A - Line 3');
+    },
+  );
+
+  test('create avoids repeating the line title with extra spaces', () async {
+    final service = _CapturingDownloadService();
+    final creator = DownloadTaskCreator(service);
+
+    await creator.create(
+      animeId: 'anime-1',
+      episodeId: 'episode-6b',
+      sourceId: 'sakura',
+      url: 'https://cdn.example.test/video.mp4',
+      title: 'Anime 1',
+      episodeTitle: 'Episode 6 - Line 3',
+      lineTitle: ' line   3',
+    );
+
+    expect(service.lastEpisodeTitle, 'Episode 6 - Line 3');
+  });
+
+  test('create avoids repeating line title with full-width punctuation', () async {
+    final service = _CapturingDownloadService();
+    final creator = DownloadTaskCreator(service);
+
+    await creator.create(
+      animeId: 'anime-1',
+      episodeId: 'episode-7',
+      sourceId: 'sakura',
+      url: 'https://cdn.example.test/video.mp4',
+      title: 'Anime 1',
+      episodeTitle: 'Episode 7（Line 3）',
+      lineTitle: 'Line 3',
+    );
+
+    expect(service.lastEpisodeTitle, 'Episode 7（Line 3）');
+  });
+
+  test(
+    'create avoids repeating the line title with full-width minus separator',
+    () async {
+      final service = _CapturingDownloadService();
+      final creator = DownloadTaskCreator(service);
+
+      await creator.create(
+        animeId: 'anime-1',
+        episodeId: 'episode-8',
+        sourceId: 'sakura',
+        url: 'https://cdn.example.test/video.mp4',
+        title: 'Anime 1',
+        episodeTitle: 'Episode 8－Line 3',
+        lineTitle: 'Line 3',
+      );
+
+      expect(service.lastEpisodeTitle, 'Episode 8－Line 3');
+    },
+  );
+
+  test(
+    'create avoids repeating the line title with slash separator',
+    () async {
+      final service = _CapturingDownloadService();
+      final creator = DownloadTaskCreator(service);
+
+      await creator.create(
+        animeId: 'anime-1',
+        episodeId: 'episode-9',
+        sourceId: 'sakura',
+        url: 'https://cdn.example.test/video.mp4',
+        title: 'Anime 1',
+        episodeTitle: 'Episode 9/Line 3',
+        lineTitle: 'Line 3',
+      );
+
+      expect(service.lastEpisodeTitle, 'Episode 9/Line 3');
+    },
+  );
+
+  test(
+    'create avoids repeating the line title with angle bracket separator',
+    () async {
+      final service = _CapturingDownloadService();
+      final creator = DownloadTaskCreator(service);
+
+      await creator.create(
+        animeId: 'anime-1',
+        episodeId: 'episode-10',
+        sourceId: 'sakura',
+        url: 'https://cdn.example.test/video.mp4',
+        title: 'Anime 1',
+        episodeTitle: 'Episode 10《Line 3》',
+        lineTitle: 'Line 3',
+      );
+
+      expect(service.lastEpisodeTitle, 'Episode 10《Line 3》');
+    },
+  );
+
+  test(
+    'create avoids repeating the line title with Japanese corner quote separator',
+    () async {
+      final service = _CapturingDownloadService();
+      final creator = DownloadTaskCreator(service);
+
+      await creator.create(
+        animeId: 'anime-1',
+        episodeId: 'episode-11',
+        sourceId: 'sakura',
+        url: 'https://cdn.example.test/video.mp4',
+        title: 'Anime 1',
+        episodeTitle: 'Episode 11「Line 3」',
+        lineTitle: 'Line 3',
+      );
+
+      expect(service.lastEpisodeTitle, 'Episode 11「Line 3」');
+    },
+  );
 }
 
 class _CapturingDownloadService implements DownloadService {

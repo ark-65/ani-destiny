@@ -793,16 +793,29 @@ class AppLocalizations {
   String sourceTransitionLabel(String fromSourceId, String toSourceId) =>
       '${sourceDisplayLabel(fromSourceId)} -> ${sourceDisplayLabel(toSourceId)}';
   String sourceOperationLabel(String operation) {
-    return switch (operation) {
+    final normalizedOperation = operation
+        .trim()
+        .replaceAllMapped(
+          RegExp(r'([a-z])([A-Z])'),
+          (match) => '${match.group(1)}_${match.group(2)}',
+        )
+        .toLowerCase()
+        .replaceAll(RegExp(r'[^a-z0-9]+'), '_')
+        .replaceAll(RegExp(r'_+'), '_')
+        .replaceAll(RegExp(r'^_|_$'), '');
+    return switch (normalizedOperation) {
       'home' => _t('sourceOperationHome'),
       'search' => _t('sourceOperationSearch'),
       'detail' => _t('sourceOperationDetail'),
       'play' => _t('sourceOperationPlay'),
       'play_sources' => _t('sourceOperationPlaySources'),
+      'play_line' => _t('sourceOperationPlaySources'),
+      'playline' => _t('sourceOperationPlaySources'),
+      'playback_queue' => _t('sourceOperationPlaybackQueue'),
       'schedule' => _t('sourceOperationSchedule'),
       'match' => _t('sourceOperationMatch'),
       'comments' => _t('sourceOperationComments'),
-      _ => operation,
+      _ => _t('sourceOperationUnknown'),
     };
   }
 
@@ -902,8 +915,8 @@ const _localizedValues = {
     'play': '播放',
     'downloads': '下载',
     'loadingDetail': '正在加载详情',
-    'noPlaySource': '未找到可播放线路，请稍后重试或切换数据源。',
-    'noDownloadSource': '未找到可下载线路，请稍后重试或切换数据源。',
+    'noPlaySource': '未找到可播放线路。请先切换到其他数据源再重试。',
+    'noDownloadSource': '未找到可下载线路。请先切换到其他数据源再重试。',
     'selectPlaySource': '选择播放线路',
     'selectDownloadSource': '选择下载线路',
     'checkDownloadLines': '查看下载线路',
@@ -1015,7 +1028,8 @@ const _localizedValues = {
         'AniDestiny 正在移除这条失败的下载记录，并清掉这次失败留下的未完成文件。',
     'downloadRemovingListOnlyNote': 'AniDestiny 正在把这条任务从列表移除，请稍候片刻。',
     'downloadUnsupportedRemoveNote': 'AniDestiny 还不能接管这类下载；确认后可以先把这条任务从列表移除。',
-    'downloadUnsupportedListReviewNote': '这条记录仍会留在下载列表里，方便你稍后查看或移除。',
+    'downloadUnsupportedListReviewNote':
+        '这条记录会留在下载列表，方便你先查看问题，再尝试其他下载源后决定是否移除。',
     'downloadDiscardedNeedsManualCleanupNote':
         '这个下载已放弃，但 AniDestiny 没能自动清掉残留的未完成文件；如果你不再需要它，请按下面的本地路径手动删除，删完后回到这里点一下“重新检查”。',
     'downloadActionFailedMessage': 'AniDestiny 暂时没能完成这一步下载操作；请稍后再试。',
@@ -1150,8 +1164,8 @@ const _localizedValues = {
         '当前所选数据源 {requestedSource} 暂时不可用，下面这些下载线路来自 {activeSource}。',
     'playbackDiagnosticCapturedAt': '采集时间',
     'sourceTemporarilyUnavailable': '数据源暂时不可用',
-    'sourceUnavailableSuggestion': '上游数据源可能已变化或暂时不可用，请稍后重试或切换数据源。',
-    'noPlayableSourceFound': '未找到可播放线路，请稍后重试或切换数据源。',
+    'sourceUnavailableSuggestion': '上游数据源可能已变化或暂时不可用，请先切换到其他数据源再重试。',
+    'noPlayableSourceFound': '未找到可播放线路。请先切换到其他数据源再重试。',
     'playbackFailedSuggestion': '播放暂时失败，请重试或尝试其他播放线路。',
     'sources': '数据源',
     'loadingCurrentSource': '正在加载当前数据源',
@@ -1163,7 +1177,8 @@ const _localizedValues = {
     'sourceDiagnosticsSubtitle': '查看最近的数据源请求和解析状态。',
     'sourceDiagnosticsEmpty': '暂无诊断记录',
     'sourceDiagnosticsClear': '清空',
-    'sourceFallbackNotice': '当前数据源暂时不可用，AniDestiny 已改为显示其他数据源的内容。',
+    'sourceFallbackNotice':
+        '当前数据源暂时不可用，AniDestiny 已改为显示其他数据源的内容。若仍异常，请先切换到其他数据源再重试。',
     'sourceHealth': '数据源健康状态',
     'sourceHealthHealthy': '正常',
     'sourceHealthDegraded': '不稳定',
@@ -1181,9 +1196,11 @@ const _localizedValues = {
     'sourceOperationDetail': '详情',
     'sourceOperationPlay': '播放',
     'sourceOperationPlaySources': '播放线路',
+    'sourceOperationPlaybackQueue': '播放队列',
     'sourceOperationSchedule': '时间表',
     'sourceOperationMatch': '匹配',
     'sourceOperationComments': '弹幕',
+    'sourceOperationUnknown': '其他操作',
     'danmaku': '弹幕',
     'danmakuStatusLoading': '弹幕：加载中',
     'danmakuStatusDandanplay': '弹幕：弹弹play',
@@ -1255,9 +1272,9 @@ const _localizedValues = {
     'downloads': 'Downloads',
     'loadingDetail': 'Loading detail',
     'noPlaySource':
-        'No playable source found. Try another source or retry later.',
+        'No playable source found. Switch to another source before retrying.',
     'noDownloadSource':
-        'No downloadable source found. Try another source or retry later.',
+        'No downloadable source found. Switch to another source before retrying.',
     'selectPlaySource': 'Select playback line',
     'selectDownloadSource': 'Select download line',
     'checkDownloadLines': 'Check download lines',
@@ -1389,7 +1406,7 @@ const _localizedValues = {
     'downloadUnsupportedRemoveNote':
         'AniDestiny cannot take over this type of download yet. You can remove this task from the list for now.',
     'downloadUnsupportedListReviewNote':
-        'This entry still stays in Downloads so you can review it or remove it later.',
+        'This entry stays in Downloads so you can review it, try another download source, and decide whether to keep or remove it.',
     'downloadDiscardedNeedsManualCleanupNote':
         'This download was discarded, but AniDestiny could not clear the partial file automatically. Remove the leftover file from your device if you no longer need it, then return here and tap Check again.',
     'downloadActionFailedMessage':
@@ -1545,9 +1562,9 @@ const _localizedValues = {
     'playbackDiagnosticCapturedAt': 'Captured at',
     'sourceTemporarilyUnavailable': 'Source temporarily unavailable',
     'sourceUnavailableSuggestion':
-        'The upstream source changed or is temporarily unavailable. Try another source or retry later.',
+        'The source changed or is temporarily unavailable. Switch to another source before retrying.',
     'noPlayableSourceFound':
-        'No playable source found. Try another source or retry later.',
+        'No playable source found. Switch to another source before retrying.',
     'playbackFailedSuggestion':
         'Playback temporarily failed. Retry now or try another playback line.',
     'sources': 'Sources',
@@ -1563,7 +1580,7 @@ const _localizedValues = {
     'sourceDiagnosticsEmpty': 'No diagnostics yet',
     'sourceDiagnosticsClear': 'Clear',
     'sourceFallbackNotice':
-        'The current source is temporarily unavailable. AniDestiny is showing content from another source instead.',
+        'The current source is temporarily unavailable. AniDestiny is showing content from another source instead. If this still fails, switch to another source and retry.',
     'sourceHealth': 'Source health',
     'sourceHealthHealthy': 'Healthy',
     'sourceHealthDegraded': 'Degraded',
@@ -1583,9 +1600,11 @@ const _localizedValues = {
     'sourceOperationDetail': 'Details',
     'sourceOperationPlay': 'Playback',
     'sourceOperationPlaySources': 'Playback lines',
+    'sourceOperationPlaybackQueue': 'Playback queue',
     'sourceOperationSchedule': 'Schedule',
     'sourceOperationMatch': 'Matching',
     'sourceOperationComments': 'Danmaku',
+    'sourceOperationUnknown': 'Other operation',
     'danmaku': 'Danmaku',
     'danmakuStatusLoading': 'Danmaku: loading',
     'danmakuStatusDandanplay': 'Danmaku: Dandanplay',
@@ -1653,8 +1672,8 @@ const _localizedValues = {
     'play': '再生',
     'downloads': 'ダウンロード',
     'loadingDetail': '詳細を読み込み中',
-    'noPlaySource': '再生可能なソースが見つかりません。別のソースを試すか、後で再試行してください。',
-    'noDownloadSource': 'ダウンロード可能なソースが見つかりません。別のソースを試すか、後で再試行してください。',
+    'noPlaySource': '再生可能なソースが見つかりません。先に別のソースへ切り替えてから再試行してください。',
+    'noDownloadSource': 'ダウンロード可能なソースが見つかりません。先に別のソースへ切り替えてから再試行してください。',
     'selectPlaySource': '再生ラインを選択',
     'selectDownloadSource': 'ダウンロードラインを選択',
     'checkDownloadLines': 'ダウンロードラインを確認',
@@ -1775,7 +1794,7 @@ const _localizedValues = {
     'downloadUnsupportedRemoveNote':
         'AniDestiny はまだこの種類のダウンロードを引き継げません。今はこのタスクを一覧から消せます。',
     'downloadUnsupportedListReviewNote':
-        'この記録は、あとで確認したり一覧から消したりできるように、ダウンロード一覧に残してあります。',
+        'この記録はダウンロード一覧に残るため、内容を確認し、別のダウンロードソースを試したうえで、保持するか削除するかを決められます。',
     'downloadDiscardedNeedsManualCleanupNote':
         'このダウンロードは破棄されましたが、AniDestiny は未完了ファイルを自動で削除できませんでした。不要なら下のローカルパスをもとに手動で削除し、戻ってきたら「再確認」を押してください。',
     'downloadActionFailedMessage':
@@ -1920,8 +1939,9 @@ const _localizedValues = {
     'playbackDiagnosticCapturedAt': '取得時刻',
     'sourceTemporarilyUnavailable': 'ソースが一時的に利用できません',
     'sourceUnavailableSuggestion':
-        '上流ソースが変更されたか、一時的に利用できません。別のソースを試すか、後で再試行してください。',
-    'noPlayableSourceFound': '再生可能なソースが見つかりません。別のソースを試すか、後で再試行してください。',
+        '上流ソースが変更されたか、一時的に利用できません。先に別のソースへ切り替えてから再試行してください。',
+  'noPlayableSourceFound':
+      '再生可能なソースが見つかりません。別のソースに切り替えてから再試行してください。',
     'playbackFailedSuggestion': '再生に一時的に失敗しました。再試行するか、別の再生ラインを試してください。',
     'sources': 'ソース',
     'loadingCurrentSource': '現在のソースを読み込み中',
@@ -1934,7 +1954,8 @@ const _localizedValues = {
     'sourceDiagnosticsSubtitle': '最近のソース要求と解析状態を確認します。',
     'sourceDiagnosticsEmpty': '診断記録はありません',
     'sourceDiagnosticsClear': 'クリア',
-    'sourceFallbackNotice': '現在のソースは一時的に利用できません。AniDestiny は別のソースの内容を表示しています。',
+    'sourceFallbackNotice':
+        '現在のソースは一時的に利用できません。AniDestiny は別のソースの内容を表示しています。引き続き問題がある場合は、別のソースに切り替えて再試行してください。',
     'sourceHealth': 'ソース健康状態',
     'sourceHealthHealthy': '正常',
     'sourceHealthDegraded': '不安定',
@@ -1954,9 +1975,11 @@ const _localizedValues = {
     'sourceOperationDetail': '詳細',
     'sourceOperationPlay': '再生',
     'sourceOperationPlaySources': '再生ライン',
+    'sourceOperationPlaybackQueue': '再生キュー',
     'sourceOperationSchedule': '放送予定',
     'sourceOperationMatch': 'マッチ',
     'sourceOperationComments': '弾幕',
+    'sourceOperationUnknown': 'その他の操作',
     'danmaku': '弾幕',
     'danmakuStatusLoading': '弾幕: 読み込み中',
     'danmakuStatusDandanplay': '弾幕: 弹弹play',

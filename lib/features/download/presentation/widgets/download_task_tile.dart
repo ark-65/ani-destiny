@@ -51,8 +51,21 @@ class DownloadTaskTile extends StatelessWidget {
 
     return Card(
       key: ValueKey('download-task-card-${task.id}'),
+      shape: isHighlighted
+          ? RoundedRectangleBorder(
+              side: BorderSide(
+                color: Theme.of(context).colorScheme.primary,
+                width: 1.2,
+              ),
+              borderRadius: const BorderRadius.all(Radius.circular(12)),
+            )
+          : null,
       color: isHighlighted
           ? Theme.of(context).colorScheme.secondaryContainer
+          : null,
+      elevation: isHighlighted ? 3 : 0,
+      shadowColor: isHighlighted
+          ? Theme.of(context).colorScheme.primary.withValues(alpha: 0.22)
           : null,
       child: Padding(
         padding: const EdgeInsets.all(12),
@@ -61,6 +74,19 @@ class DownloadTaskTile extends StatelessWidget {
           children: [
             Row(
               children: [
+                if (isHighlighted)
+                  Padding(
+                    padding: const EdgeInsets.only(right: 6),
+                    child: Tooltip(
+                      message: context.l10n.downloadFocusedTaskNotice,
+                      child: Icon(
+                        Icons.push_pin,
+                        size: 16,
+                        color: Theme.of(context).colorScheme.primary,
+                        key: ValueKey('download-task-focus-indicator-${task.id}'),
+                      ),
+                    ),
+                  ),
                 Expanded(
                   child: Text(
                     task.title,

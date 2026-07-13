@@ -62,9 +62,58 @@ class DownloadTaskCreator {
     if (trimmedLineTitle == null || trimmedLineTitle.isEmpty) {
       return trimmedEpisodeTitle;
     }
-    if (trimmedEpisodeTitle.contains(trimmedLineTitle)) {
+    if (_isLineTitleAlreadyIncludedInEpisodeTitle(
+      episodeTitle: trimmedEpisodeTitle,
+      lineTitle: trimmedLineTitle,
+    )) {
       return trimmedEpisodeTitle;
     }
     return '$trimmedEpisodeTitle - $trimmedLineTitle';
+  }
+
+  bool _isLineTitleAlreadyIncludedInEpisodeTitle({
+    required String episodeTitle,
+    required String lineTitle,
+  }) {
+    final normalizedEpisodeTitle = _normalizeEpisodePart(episodeTitle);
+    final normalizedLineTitle = _normalizeEpisodePart(lineTitle);
+    if (normalizedEpisodeTitle == normalizedLineTitle) {
+      return true;
+    }
+
+    const separatorBoundary = r'[\s\-–—·|()<>/:;.!?\[\]]';
+    final boundaryPattern = RegExp(
+      '(?:^|$separatorBoundary)${RegExp.escape(normalizedLineTitle)}'
+      '(?=${'\$'}|$separatorBoundary)',
+    );
+    return boundaryPattern.hasMatch(normalizedEpisodeTitle);
+  }
+
+  String _normalizeEpisodePart(String title) {
+    return title
+        .toLowerCase()
+        .replaceAll('「', '(')
+        .replaceAll('」', ')')
+        .replaceAll('（', '(')
+        .replaceAll('）', ')')
+        .replaceAll('【', '[')
+        .replaceAll('】', ']')
+        .replaceAll('《', '<')
+        .replaceAll('》', '>')
+        .replaceAll('〈', '<')
+        .replaceAll('〉', '>')
+        .replaceAll('－', '-')
+        .replaceAll('：', ':')
+        .replaceAll('；', ';')
+        .replaceAll('，', ',')
+        .replaceAll('、', ',')
+        .replaceAll('。', '.')
+        .replaceAll('！', '!')
+        .replaceAll('？', '?')
+        .replaceAll('／', '/')
+        .replaceAll('｜', '|')
+        .replaceAll('\u3000', ' ')
+        .replaceAll(RegExp(r'\s+'), ' ')
+        .trim();
   }
 }

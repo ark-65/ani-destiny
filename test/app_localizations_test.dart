@@ -152,6 +152,79 @@ void main() {
     expect(ja.latestEpisode, '最新話');
   });
 
+  test('source operation labels normalize space and dash variants', () {
+    for (final locale in const [Locale('zh'), Locale('en'), Locale('ja')]) {
+      final l10n = AppLocalizations(locale);
+
+      final playbackSourcesLabel = l10n.sourceOperationLabel('play_sources');
+      expect(l10n.sourceOperationLabel('play sources'), equals(playbackSourcesLabel));
+      expect(l10n.sourceOperationLabel('play-sources'), equals(playbackSourcesLabel));
+      expect(l10n.sourceOperationLabel('play/sources'), equals(playbackSourcesLabel));
+      expect(l10n.sourceOperationLabel('  play  sources  '), equals(playbackSourcesLabel));
+      expect(l10n.sourceOperationLabel('playSources'), equals(playbackSourcesLabel));
+      expect(l10n.sourceOperationLabel('play-line'), equals(playbackSourcesLabel));
+      expect(l10n.sourceOperationLabel('play_line'), equals(playbackSourcesLabel));
+      expect(l10n.sourceOperationLabel('playline'), equals(playbackSourcesLabel));
+
+      final playbackQueueLabel = l10n.sourceOperationLabel('playback_queue');
+      expect(l10n.sourceOperationLabel('playback queue'), equals(playbackQueueLabel));
+      expect(l10n.sourceOperationLabel('playback-queue'), equals(playbackQueueLabel));
+      expect(l10n.sourceOperationLabel('playbackQueue'), equals(playbackQueueLabel));
+    }
+  });
+
+  test('missing source copy tells users to switch source first', () {
+    const zh = AppLocalizations(Locale('zh'));
+    expect(
+      zh.noPlaySource,
+      contains('请先切换到其他数据源再重试'),
+    );
+    expect(
+      zh.noDownloadSource,
+      contains('请先切换到其他数据源再重试'),
+    );
+
+    const en = AppLocalizations(Locale('en'));
+    expect(
+      en.noPlaySource,
+      contains('Switch to another source before retrying'),
+    );
+    expect(
+      en.noDownloadSource,
+      contains('Switch to another source before retrying'),
+    );
+
+    const ja = AppLocalizations(Locale('ja'));
+    expect(
+      ja.noPlaySource,
+      contains('先に別のソースへ切り替えてから再試行してください'),
+    );
+    expect(
+      ja.noDownloadSource,
+      contains('先に別のソースへ切り替えてから再試行してください'),
+    );
+  });
+
+  test('missing source suggestion copy follows next-step guidance', () {
+    const zh = AppLocalizations(Locale('zh'));
+    expect(
+      zh.sourceUnavailableSuggestion,
+      contains('先切换到其他数据源再重试'),
+    );
+
+    const en = AppLocalizations(Locale('en'));
+    expect(
+      en.sourceUnavailableSuggestion,
+      contains('Switch to another source before retrying'),
+    );
+
+    const ja = AppLocalizations(Locale('ja'));
+    expect(
+      ja.sourceUnavailableSuggestion,
+      contains('先に別のソースへ切り替えてから再試行してください'),
+    );
+  });
+
   test('player fallback copy stays calm and avoids fallback jargon', () {
     const zh = AppLocalizations(Locale('zh'));
     final zhNotice = zh.sourceFallbackPlayerNotice(
@@ -185,11 +258,16 @@ void main() {
     const zh = AppLocalizations(Locale('zh'));
     expect(zh.sourceFallbackNotice, contains('AniDestiny'));
     expect(zh.sourceFallbackNotice, contains('其他数据源'));
+    expect(zh.sourceFallbackNotice, contains('切换到其他数据源再重试'));
     expect(zh.sourceFallbackNotice, isNot(contains('备用数据')));
 
     const en = AppLocalizations(Locale('en'));
     expect(en.sourceFallbackNotice, contains('AniDestiny'));
     expect(en.sourceFallbackNotice, contains('another source'));
+    expect(
+      en.sourceFallbackNotice.toLowerCase(),
+      contains('switch to another source and retry'),
+    );
     expect(
       en.sourceFallbackNotice.toLowerCase(),
       isNot(contains('fallback data')),
@@ -198,6 +276,7 @@ void main() {
     const ja = AppLocalizations(Locale('ja'));
     expect(ja.sourceFallbackNotice, contains('AniDestiny'));
     expect(ja.sourceFallbackNotice, contains('別のソース'));
+    expect(ja.sourceFallbackNotice, contains('別のソースに切り替えて再試行'));
     expect(ja.sourceFallbackNotice, isNot(contains('代替データ')));
   });
 
@@ -345,6 +424,9 @@ void main() {
     expect(zh.yesNo(false), '否');
     expect(zh.platformDisplayName('android'), 'Android');
     expect(zh.sourceOperationLabel('detail'), '详情');
+    expect(zh.sourceOperationLabel(' DETAIL '), zh.sourceOperationLabel('detail'));
+    expect(zh.sourceOperationLabel('playback_queue'), '播放队列');
+    expect(zh.sourceOperationLabel(' playback_queue_unknown '), '其他操作');
 
     const en = AppLocalizations(Locale('en'));
     expect(en.playbackDiagnosticsLatestPlayback, 'Latest playback');
@@ -394,6 +476,9 @@ void main() {
       contains('playback section stays unavailable'),
     );
     expect(en.sourceOperationLabel('play_sources'), 'Playback lines');
+    expect(en.sourceOperationLabel(' PLAY_SOURCES '), en.sourceOperationLabel('play_sources'));
+    expect(en.sourceOperationLabel('playback_queue'), 'Playback queue');
+    expect(en.sourceOperationLabel('playback_queue_unknown'), 'Other operation');
     expect(en.yesNo(true), 'Yes');
     expect(en.yesNo(false), 'No');
 
@@ -446,5 +531,8 @@ void main() {
     expect(ja.yesNo(false), 'いいえ');
     expect(ja.platformDisplayName('windows'), 'Windows');
     expect(ja.sourceOperationLabel('detail'), '詳細');
+    expect(ja.sourceOperationLabel(' detail '), ja.sourceOperationLabel('detail'));
+    expect(ja.sourceOperationLabel('playback_queue'), '再生キュー');
+    expect(ja.sourceOperationLabel('playback_queue_unknown'), 'その他の操作');
   });
 }

@@ -2935,18 +2935,27 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(find.text('No playable source found'), findsOneWidget);
+    expect(
+      find.text('No playable source found. Switch to another source before retrying.'),
+      findsOneWidget,
+    );
     expect(find.text('Anime: Anime 1'), findsOneWidget);
     expect(find.text('Episode: Episode 3'), findsOneWidget);
     expect(find.text('Active playback source: Sakura Anime'), findsOneWidget);
     expect(find.text('Line: Missing Line'), findsOneWidget);
+    expect(
+      find.text(
+        'The source changed or is temporarily unavailable. Switch to another source before retrying.',
+      ),
+      findsOneWidget,
+    );
     expect(find.text('Playback diagnostics'), findsOneWidget);
     final downloadButton = tester.widget<IconButton>(
       find.widgetWithIcon(IconButton, Icons.download_outlined),
     );
     expect(
       downloadButton.tooltip,
-      'No playable source found. Try another source or retry later.',
+      'No playable source found. Switch to another source before retrying.',
     );
     expect(downloadButton.onPressed, isNull);
 
@@ -2956,7 +2965,7 @@ void main() {
     expect(playButton.onPressed, isNull);
     expect(
       playButton.tooltip,
-      'No playable source found. Try another source or retry later.',
+      'No playable source found. Switch to another source before retrying.',
     );
 
     final speedButton = tester.widget<IconButton>(
@@ -2965,7 +2974,7 @@ void main() {
     expect(speedButton.onPressed, isNull);
     expect(
       speedButton.tooltip,
-      'No playable source found. Try another source or retry later.',
+      'No playable source found. Switch to another source before retrying.',
     );
 
     final slider = tester.widget<Slider>(find.byType(Slider));
@@ -3005,7 +3014,7 @@ void main() {
     );
     expect(
       downloadButton.tooltip,
-      'This download currently uses an HLS / m3u8 stream, and AniDestiny cannot save that type offline yet. This entry still stays in Downloads so you can review it or remove it later.',
+      'This download currently uses an HLS / m3u8 stream, and AniDestiny cannot save that type offline yet. This entry stays in Downloads so you can review it, try another download source, and decide whether to keep or remove it.',
     );
 
     await tester.tap(find.widgetWithIcon(IconButton, Icons.download_outlined));
@@ -3014,7 +3023,7 @@ void main() {
     expect(createdDownloads, 1);
     expect(
       find.text(
-        'This download currently uses an HLS / m3u8 stream, and AniDestiny cannot save that type offline yet. This entry still stays in Downloads so you can review it or remove it later.',
+        'This download currently uses an HLS / m3u8 stream, and AniDestiny cannot save that type offline yet. This entry stays in Downloads so you can review it, try another download source, and decide whether to keep or remove it.',
       ),
       findsOneWidget,
     );
@@ -3154,7 +3163,10 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(find.text('No playable source found'), findsOneWidget);
+    expect(
+      find.text('No playable source found. Switch to another source before retrying.'),
+      findsOneWidget,
+    );
     expect(
       find.text(
         'Playback temporarily failed. Retry now or try another playback line.',
@@ -3168,7 +3180,7 @@ void main() {
     expect(playButton.onPressed, isNull);
     expect(
       playButton.tooltip,
-      'No playable source found. Try another source or retry later.',
+      'No playable source found. Switch to another source before retrying.',
     );
   });
 }
