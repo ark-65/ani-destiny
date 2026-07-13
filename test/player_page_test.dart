@@ -2736,6 +2736,82 @@ void main() {
     );
   });
 
+  testWidgets(
+      'app bar back stays on player while external handoff is opening', (
+    tester,
+  ) async {
+    final launchCompleter = Completer<bool>();
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          playerRepositoryProvider
+              .overrideWithValue(const _FakePlayerRepository()),
+          historyRepositoryProvider.overrideWithValue(_FakeHistoryRepository()),
+          danmakuRepositoryProvider.overrideWithValue(_FakeDanmakuRepository()),
+          externalPlayerLauncherProvider.overrideWithValue(
+            (_) => launchCompleter.future,
+          ),
+        ],
+        child: _buildApp(_args),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byType(ElevatedButton));
+    await tester.pumpAndSettle();
+
+    final initialBackButton = tester.widget<IconButton>(
+      find
+          .descendant(
+            of: find.byType(AppBar),
+            matching: find.byType(IconButton),
+          )
+          .first,
+    );
+    expect(initialBackButton.onPressed, isNotNull);
+    expect(initialBackButton.tooltip, 'Back');
+
+    await tester.tap(find.byTooltip('External player'));
+    await tester.pump();
+
+    final busyBackButton = tester.widget<IconButton>(
+      find
+          .descendant(
+            of: find.byType(AppBar),
+            matching: find.byType(IconButton),
+          )
+          .first,
+    );
+    expect(busyBackButton.onPressed, isNotNull);
+    expect(
+      busyBackButton.tooltip,
+      'Please wait until the external player finishes opening before leaving.',
+    );
+
+    await tester.tap(
+      find
+          .descendant(
+            of: find.byType(AppBar),
+            matching: find.byType(IconButton),
+          )
+          .first,
+    );
+    await tester.pump();
+
+    expect(find.byType(PlayerPage), findsOneWidget);
+    expect(find.text('Open player'), findsNothing);
+    expect(
+      find.text(
+        'Please wait until the external player finishes opening before leaving.',
+      ),
+      findsOneWidget,
+    );
+
+    launchCompleter.complete(true);
+    await tester.pumpAndSettle();
+  });
+
   testWidgets('system back stays on player while next episode is unresolved', (
     tester,
   ) async {
