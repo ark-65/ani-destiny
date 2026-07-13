@@ -2666,7 +2666,7 @@ void main() {
     expect(playButton.tooltip, 'Pause');
   });
 
-  testWidgets('app bar back can leave while next episode is still unresolved', (
+  testWidgets('app bar back stays on player while next episode is unresolved', (
     tester,
   ) async {
     final pendingRepository = _PendingNextEpisodeAnimeRepository();
@@ -2711,16 +2711,32 @@ void main() {
           .first,
     );
     expect(busyBackButton.onPressed, isNotNull);
-    expect(busyBackButton.tooltip, 'Back');
+    expect(
+      busyBackButton.tooltip,
+      'Please wait until the next episode finishes loading before leaving.',
+    );
 
-    await tester.tap(find.byTooltip('Back'));
-    await tester.pumpAndSettle();
+    await tester.tap(
+      find
+          .descendant(
+            of: find.byType(AppBar),
+            matching: find.byType(IconButton),
+          )
+          .first,
+    );
+    await tester.pump();
 
-    expect(find.byType(PlayerPage), findsNothing);
-    expect(find.text('Open player'), findsOneWidget);
+    expect(find.byType(PlayerPage), findsOneWidget);
+    expect(find.text('Open player'), findsNothing);
+    expect(
+      find.text(
+        'Please wait until the next episode finishes loading before leaving.',
+      ),
+      findsOneWidget,
+    );
   });
 
-  testWidgets('system back can leave while next episode is still unresolved', (
+  testWidgets('system back stays on player while next episode is unresolved', (
     tester,
   ) async {
     final pendingRepository = _PendingNextEpisodeAnimeRepository();
@@ -2746,14 +2762,20 @@ void main() {
     await tester.pump();
 
     await tester.binding.handlePopRoute();
-    await tester.pumpAndSettle();
+    await tester.pump();
 
-    expect(find.byType(PlayerPage), findsNothing);
-    expect(find.text('Open player'), findsOneWidget);
+    expect(find.byType(PlayerPage), findsOneWidget);
+    expect(find.text('Open player'), findsNothing);
+    expect(
+      find.text(
+        'Please wait until the next episode finishes loading before leaving.',
+      ),
+      findsOneWidget,
+    );
   });
 
   testWidgets(
-      'system back exits fullscreen while next episode is still unresolved', (
+      'system back stays in fullscreen while next episode is still unresolved', (
     tester,
   ) async {
     final pendingRepository = _PendingNextEpisodeAnimeRepository();
@@ -2785,9 +2807,15 @@ void main() {
     await tester.pump();
 
     expect(find.byType(PlayerPage), findsOneWidget);
-    expect(find.byType(AppBar), findsOneWidget);
+    expect(find.byType(AppBar), findsNothing);
     expect(find.text('Open player'), findsNothing);
     expect(find.text('Loading next episode...'), findsNothing);
+    expect(
+      find.text(
+        'Please wait until the next episode finishes loading before leaving.',
+      ),
+      findsOneWidget,
+    );
   });
 
   testWidgets('system back stays on the player while external handoff opens', (

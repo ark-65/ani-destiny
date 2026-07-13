@@ -134,6 +134,7 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
     final hasCommittedRouteTransition =
         _isSwitchingEpisode || _isOpeningExternalPlayer || isRetryingPlayback;
     final isRouteBusy = hasCommittedRouteTransition;
+    final isRouteBusyForExit = isRouteBusy || _isResolvingNextEpisode;
     final isPreparingNextEpisode =
         _isResolvingNextEpisode || _isSwitchingEpisode;
     final showRouteTransitionOverlay =
@@ -217,10 +218,10 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
     );
 
     return PopScope<void>(
-      canPop: !_isFullscreen && !isRouteBusy,
+      canPop: !_isFullscreen && !isRouteBusyForExit,
       onPopInvokedWithResult: (didPop, result) {
         if (didPop) return;
-        if (isRouteBusy) {
+        if (isRouteBusyForExit) {
           _showSnackBar(playerExitBusyMessage);
           return;
         }
@@ -237,10 +238,10 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
                 automaticallyImplyLeading: false,
                 leading: canLeavePlayer
                     ? IconButton(
-                        tooltip: isRouteBusy
+                        tooltip: isRouteBusyForExit
                             ? playerExitBusyMessage
                             : context.l10n.back,
-                        onPressed: isRouteBusy
+                        onPressed: isRouteBusyForExit
                             ? () => _showSnackBar(playerExitBusyMessage)
                             : () => Navigator.of(context).maybePop(),
                         icon: const BackButtonIcon(),
