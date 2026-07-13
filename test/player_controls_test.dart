@@ -187,6 +187,54 @@ void main() {
   });
 
   testWidgets(
+      'embedded next episode verification blocks entering fullscreen',
+      (tester) async {
+    var blockedTaps = 0;
+    var fullscreenTaps = 0;
+
+    await tester.pumpWidget(
+      _buildApp(
+        PlayerControls(
+          state: _state,
+          hasPlayableSource: true,
+          onPlayPause: _noop,
+          onSeek: (_) {},
+          onSpeed: _noop,
+          onNextEpisode: null,
+          onOpenExternalPlayer: _noop,
+          externalPlayerTooltip: 'External player',
+          downloadTooltip: 'Loading next episode...',
+          onDownload: null,
+          onBlockedFullscreenExit: () => blockedTaps += 1,
+          onToggleFullscreen: () => fullscreenTaps += 1,
+          onToggleDanmaku: _noop,
+          danmakuEnabled: true,
+          isFullscreen: false,
+          isResolvingNextEpisode: true,
+          isSwitchingEpisode: false,
+          isOpeningExternalPlayer: false,
+        ),
+      ),
+    );
+
+    await tester.pump();
+
+    final fullscreenButton = tester.widget<IconButton>(
+      find.widgetWithIcon(IconButton, Icons.fullscreen),
+    );
+    expect(fullscreenButton.onPressed, isNotNull);
+    expect(fullscreenButton.tooltip, 'Loading next episode...');
+    expect(blockedTaps, 0);
+    expect(fullscreenTaps, 0);
+
+    await tester.tap(find.widgetWithIcon(IconButton, Icons.fullscreen));
+    await tester.pump();
+
+    expect(blockedTaps, 1);
+    expect(fullscreenTaps, 0);
+  });
+
+  testWidgets(
       'next episode verification keeps the current progress visible while controls stay locked',
       (tester) async {
     await tester.pumpWidget(
