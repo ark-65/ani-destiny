@@ -3055,6 +3055,59 @@ void main() {
     await tester.pumpAndSettle();
   });
 
+  testWidgets(
+      'fullscreen exit is blocked while external handoff is opening', (
+    tester,
+  ) async {
+    final repository = _TrackingPlayerRepository();
+    final launchCompleter = Completer<bool>();
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          playerRepositoryProvider
+              .overrideWithValue(repository),
+          historyRepositoryProvider.overrideWithValue(_FakeHistoryRepository()),
+          danmakuRepositoryProvider.overrideWithValue(_FakeDanmakuRepository()),
+          externalPlayerLauncherProvider.overrideWithValue(
+            (_) => launchCompleter.future,
+          ),
+        ],
+        child: _buildApp(_args),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byType(ElevatedButton));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byTooltip('Enter fullscreen'));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byTooltip('External player'));
+    await tester.pump();
+
+    final fullscreenButton = tester.widget<IconButton>(
+      find.widgetWithIcon(IconButton, Icons.fullscreen_exit),
+    );
+    expect(fullscreenButton.onPressed, isNotNull);
+
+    await tester.tap(find.widgetWithIcon(IconButton, Icons.fullscreen_exit));
+    await tester.pump();
+
+    expect(find.byType(PlayerPage), findsOneWidget);
+    expect(find.byType(AppBar), findsNothing);
+    expect(
+      find.text(
+        'Please wait until the external player finishes opening before leaving.',
+      ),
+      findsOneWidget,
+    );
+
+    launchCompleter.complete(true);
+    await tester.pumpAndSettle();
+  });
+
   testWidgets('system back stays on the player while playback retries', (
     tester,
   ) async {
