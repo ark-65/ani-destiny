@@ -113,6 +113,9 @@ class PlayerControls extends StatelessWidget {
     final canToggleFullscreen = isFullscreen
         ? !isCommittedRouteTransition
         : !isInteractionLocked && canEnterFullscreen;
+    final isFullscreenActionLocked = isFullscreen
+        ? isCommittedRouteTransition
+        : !canToggleFullscreen;
     final fullscreenAction = canToggleFullscreen
         ? onToggleFullscreen
         : isCommittedRouteTransition
@@ -239,6 +242,9 @@ class PlayerControls extends StatelessWidget {
                     onPressed: fullscreenAction,
                     icon: Icon(
                       isFullscreen ? Icons.fullscreen_exit : Icons.fullscreen,
+                      color: isFullscreenActionLocked
+                          ? unavailableActionColor
+                          : null,
                     ),
                   ),
                 ],

@@ -235,6 +235,48 @@ void main() {
     expect(fullscreenTaps, 0);
   });
 
+  testWidgets('fullscreen blocked state shows muted icon', (tester) async {
+    await tester.pumpWidget(
+      _buildApp(
+        PlayerControls(
+          state: _state.copyWith(errorMessage: 'Playback temporarily failed.'),
+          hasPlayableSource: true,
+          onPlayPause: _noop,
+          onSeek: (_) {},
+          onSpeed: _noop,
+          onNextEpisode: null,
+          onOpenExternalPlayer: _noop,
+          externalPlayerTooltip: 'Retrying playback...',
+          downloadTooltip: 'Retrying playback...',
+          onDownload: null,
+          onBlockedFullscreenExit: () {},
+          onToggleFullscreen: _noop,
+          onToggleDanmaku: _noop,
+          danmakuEnabled: true,
+          isFullscreen: true,
+          isResolvingNextEpisode: false,
+          isSwitchingEpisode: false,
+          isOpeningExternalPlayer: false,
+          isRetryingPlayback: true,
+        ),
+      ),
+    );
+
+    await tester.pump();
+
+    final fullscreenButtonFinder = find.widgetWithIcon(
+      IconButton,
+      Icons.fullscreen_exit,
+    );
+    final fullscreenButton = tester.widget<IconButton>(fullscreenButtonFinder);
+    final expectedColor = Theme.of(tester.element(fullscreenButtonFinder))
+        .colorScheme
+        .onSurface
+        .withValues(alpha: 0.38);
+    final fullscreenIcon = fullscreenButton.icon as Icon;
+    expect(fullscreenIcon.color, expectedColor);
+  });
+
   testWidgets(
       'embedded next episode verification blocks entering fullscreen',
       (tester) async {
