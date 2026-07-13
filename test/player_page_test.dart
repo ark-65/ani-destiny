@@ -3035,6 +3035,54 @@ void main() {
     await tester.pumpAndSettle();
   });
 
+  testWidgets('fullscreen exit stays blocked while retrying playback', (
+    tester,
+  ) async {
+    final repository = _InterruptedRetryRecoveryRepository();
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          playerRepositoryProvider.overrideWithValue(repository),
+          historyRepositoryProvider.overrideWithValue(_FakeHistoryRepository()),
+          danmakuRepositoryProvider.overrideWithValue(_FakeDanmakuRepository()),
+        ],
+        child: _buildPlayerApp(_args),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byTooltip('Enter fullscreen'));
+    await tester.pumpAndSettle();
+
+    repository.emitPlaybackFailure(
+      position: const Duration(minutes: 4, seconds: 20),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Retry'));
+    await tester.pump();
+
+    final fullscreenButton = tester.widget<IconButton>(
+      find.widgetWithIcon(IconButton, Icons.fullscreen_exit),
+    );
+    expect(fullscreenButton.onPressed, isNotNull);
+    expect(fullscreenButton.tooltip, 'Retrying playback...');
+
+    await tester.tap(find.widgetWithIcon(IconButton, Icons.fullscreen_exit));
+    await tester.pump();
+
+    expect(find.byType(SnackBar), findsOneWidget);
+    expect(find.byType(PlayerPage), findsOneWidget);
+    expect(find.byType(AppBar), findsNothing);
+    expect(
+      find.text('Please wait until playback finishes retrying before leaving.'),
+      findsOneWidget,
+    );
+
+    await tester.pumpAndSettle();
+  });
+
   testWidgets(
       'download action is disabled and explained while next episode loads',
       (tester) async {
