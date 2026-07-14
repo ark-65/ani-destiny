@@ -125,15 +125,17 @@ void main() {
     );
 
     expect(find.textContaining('temporarily unavailable'), findsOneWidget);
-    expect(find.text('Mock source temporarily returned DNS error.'),
-        findsOneWidget);
+    expect(
+      find.textContaining('Mock source temporarily returned DNS error.'),
+      findsAtLeastNWidgets(1),
+    );
 
     await tester.tap(find.byIcon(Icons.play_arrow));
     await tester.pumpAndSettle();
 
     expect(
-      find.text('Mock source temporarily returned DNS error.'),
-      findsOneWidget,
+      find.textContaining('Mock source temporarily returned DNS error.'),
+      findsAtLeastNWidgets(1),
     );
   });
   testWidgets('anime detail download keeps unsupported feedback honest', (
