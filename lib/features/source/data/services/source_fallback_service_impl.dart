@@ -63,9 +63,7 @@ class SourceFallbackServiceImpl implements SourceFallbackService {
           operation: operation,
         );
         if (adapter.id != selectedSourceId) {
-          final reason = failures.isEmpty
-              ? 'Selected source is unavailable.'
-              : failures.join(' · ');
+          final reason = _buildFallbackReason(failures);
           _recordFallback(
             fromSourceId: selectedSourceId,
             toSourceId: adapter.id,
@@ -81,7 +79,7 @@ class SourceFallbackServiceImpl implements SourceFallbackService {
               adapter.id == selectedSourceId ? null : selectedSourceId,
           message: adapter.id == selectedSourceId
               ? null
-              : 'Selected source is temporarily unavailable. AniDestiny is showing another source instead.',
+              : _buildFallbackResultMessage(failures),
         );
       } on Object catch (error) {
         lastError = error;
@@ -164,5 +162,16 @@ class SourceFallbackServiceImpl implements SourceFallbackService {
         reason: reason,
       ),
     );
+  }
+
+  String _buildFallbackReason(List<String> failures) {
+    if (failures.isEmpty) return 'No additional fallback context.';
+    return failures.join(' · ');
+  }
+
+  String _buildFallbackResultMessage(List<String> failures) {
+    final reason = _buildFallbackReason(failures);
+    return 'Selected source is temporarily unavailable. AniDestiny is showing another source instead. '
+        'Fallback reason: $reason';
   }
 }

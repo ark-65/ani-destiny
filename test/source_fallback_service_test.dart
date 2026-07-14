@@ -53,7 +53,13 @@ void main() {
     expect(harness.calls, ['remote-proxy', 'sakura']);
     expect(
       result.message,
-      'Selected source is temporarily unavailable. AniDestiny is showing another source instead.',
+      allOf([
+        contains(
+          'Selected source is temporarily unavailable. AniDestiny is showing another source instead.',
+        ),
+        contains('Fallback reason: Source attempt 1:'),
+        contains('Exception: selected unavailable'),
+      ]),
     );
   });
 
@@ -76,7 +82,13 @@ void main() {
     expect(harness.events.single.toSourceId, 'mock');
     expect(
       result.message,
-      'Selected source is temporarily unavailable. AniDestiny is showing another source instead.',
+      allOf([
+        contains(
+          'Selected source is temporarily unavailable. AniDestiny is showing another source instead.',
+        ),
+        contains('Fallback reason: Source attempt 1:'),
+        contains('Exception: real source failed'),
+      ]),
     );
   });
 
