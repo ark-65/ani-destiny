@@ -16,6 +16,7 @@
 - Fixed anime-detail playback path so when playback lines are served from fallback, the play-source chooser now shows the requested source and active source in a top notice before continuing, so users can confirm the source switch before playback starts.
 - Updated anime-detail fallback header notices so when fallback happens, users now see both the requested source and active source instead of only a generic unavailable-source message.
 - Improved fallback clarity on anime detail by appending available fallback reasons to the detail notice, playback source picker, and download entry, so users can see why AniDestiny switched sources before proceeding.
+- Fixed source fallback exhaustion errors to include recorded fallback attempt reasons, so users can see why AniDestiny still has no usable source instead of only seeing a generic no-source message.
 - Updated player no-playable-source prompts so users are explicitly told to switch source before retrying, reducing ambiguity when playback recovers from transient source failures.
 - Fixed fallback source notices to include the next-step guidance to switch to another source and retry if needed, so users know what to do when fallback content appears.
 - Fixed player control tests to align their no-playable-source assertions with the active copy, ensuring playback copy drift cannot silently break user-facing regression coverage.

@@ -125,7 +125,7 @@ void main() {
     expect(recorder.items.last.reason, isNot(contains('token=secret')));
   });
 
-  test('all sources failed throws AppException', () async {
+  test('all sources failed throws AppException with fallback attempts', () async {
     final harness = await _Harness.create(selectedSourceId: 'sakura');
 
     await expectLater(
@@ -135,7 +135,24 @@ void main() {
           throw Exception('${adapter.id} failed');
         },
       ),
-      throwsA(isA<AppException>()),
+      throwsA(
+        isA<AppException>()
+            .having(
+              (error) => error.code,
+              'code',
+              'source_fallback_exhausted',
+            )
+            .having(
+              (error) => error.message,
+              'message includes fallback attempts',
+              allOf([
+                contains('No source is currently available'),
+                contains('Fallback attempts:'),
+                contains('Source attempt 1:'),
+                contains('sakura failed'),
+              ]),
+            ),
+      ),
     );
   });
 

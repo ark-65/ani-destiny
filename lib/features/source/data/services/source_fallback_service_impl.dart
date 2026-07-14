@@ -106,8 +106,12 @@ class SourceFallbackServiceImpl implements SourceFallbackService {
       }
     }
 
+    final reason = _buildFallbackReason(failures);
     throw AppException(
-      'No source is currently available. Try another source or retry later.',
+      failures.isEmpty
+          ? 'No source is currently available. Try another source or retry later.'
+          : 'No source is currently available. Try another source or retry later. '
+              'Fallback attempts: $reason',
       code: 'source_fallback_exhausted',
       cause: lastError,
     );
