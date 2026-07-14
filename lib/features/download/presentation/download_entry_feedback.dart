@@ -39,10 +39,29 @@ String downloadActionErrorMessage(
   AppLocalizations l10n,
   Object error,
 ) {
+  if (error is AppException && error.code != null) {
+    final byCode = _downloadActionErrorMessageByCode(l10n, error.code!);
+    if (byCode != null) {
+      return byCode;
+    }
+  }
   if (error is AppException &&
       error.message.trim().isNotEmpty &&
       !looksLikeRawDownloadFailureMessage(error.message)) {
     return error.message;
   }
   return l10n.downloadActionFailedMessage;
+}
+
+String? _downloadActionErrorMessageByCode(
+  AppLocalizations l10n,
+  String code,
+) {
+  return switch (code) {
+    'download_network_error' =>
+      '${l10n.downloadFailureNetworkError}. ${l10n.downloadActionFailedMessage}',
+    'download_storage_unavailable' =>
+      '${l10n.downloadFailureStorageUnavailable}. ${l10n.downloadActionFailedMessage}',
+    _ => null,
+  };
 }

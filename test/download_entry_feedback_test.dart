@@ -53,4 +53,29 @@ void main() {
       'The selected download source is unavailable.',
     );
   });
+
+  test('download action errors fallback to readable reason for known codes', () {
+    const l10n = AppLocalizations(Locale('en'));
+
+    expect(
+      downloadActionErrorMessage(
+        l10n,
+        const AppException(
+          'AppException: [download_failed] DioException: socket closed',
+          code: 'download_network_error',
+        ),
+      ),
+      '${l10n.downloadFailureNetworkError}. ${l10n.downloadActionFailedMessage}',
+    );
+    expect(
+      downloadActionErrorMessage(
+        l10n,
+        const AppException(
+          'AppException: [download_failed] file write error',
+          code: 'download_storage_unavailable',
+        ),
+      ),
+      '${l10n.downloadFailureStorageUnavailable}. ${l10n.downloadActionFailedMessage}',
+    );
+  });
 }
