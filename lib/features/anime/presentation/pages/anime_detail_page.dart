@@ -91,12 +91,17 @@ class AnimeDetailPage extends ConsumerWidget {
                 if (result.usedFallback) ...[
                   const SizedBox(height: 12),
                   _FallbackNotice(
-                    message: result.fromSourceId == null
-                        ? context.l10n.sourceFallbackNotice
-                        : context.l10n.sourceFallbackPlayerNotice(
-                            context.l10n.sourceDisplayLabel(result.fromSourceId!),
-                            context.l10n.sourceDisplayLabel(result.sourceId),
-                          ),
+                    message: _fallbackNotice(
+                      base: result.fromSourceId == null
+                          ? context.l10n.sourceFallbackNotice
+                          : context.l10n.sourceFallbackPlayerNotice(
+                              context.l10n.sourceDisplayLabel(
+                                result.fromSourceId!,
+                              ),
+                              context.l10n.sourceDisplayLabel(result.sourceId),
+                            ),
+                      reason: result.message,
+                    ),
                   ),
                 ],
                 const SizedBox(height: 18),
@@ -149,14 +154,21 @@ class AnimeDetailPage extends ConsumerWidget {
       return;
     }
     final fallbackNotice = sourceResult.usedFallback
-        ? context.l10n.sourceFallbackPlayerNotice(
-            context.l10n.sourceDisplayLabel(
-              sourceResult.fromSourceId ?? detail.sourceId,
+        ? _fallbackNotice(
+            base: context.l10n.sourceFallbackPlayerNotice(
+              context.l10n.sourceDisplayLabel(
+                sourceResult.fromSourceId ?? detail.sourceId,
+              ),
+              context.l10n.sourceDisplayLabel(sourceResult.sourceId),
             ),
-            context.l10n.sourceDisplayLabel(sourceResult.sourceId),
+            reason: sourceResult.message,
           )
         : null;
-    final source = await _selectPlaySource(context, sources, fallbackNotice);
+    final source = await _selectPlaySource(
+      context,
+      sources,
+      fallbackNotice,
+    );
     if (!context.mounted || source == null) return;
     context.push(
       '/player',
@@ -199,17 +211,26 @@ class AnimeDetailPage extends ConsumerWidget {
         );
         return;
       }
-    if (sourceResult.usedFallback) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(context.l10n.sourceFallbackNotice)),
-      );
-    }
+      final downloadFallbackNotice = sourceResult.usedFallback
+          ? _fallbackNotice(
+              base: context.l10n.sourceFallbackNotice,
+              reason: sourceResult.message,
+            )
+          : null;
+      if (downloadFallbackNotice != null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(downloadFallbackNotice)),
+        );
+      }
       final fallbackNotice = sourceResult.usedFallback
-          ? context.l10n.sourceFallbackDownloadNotice(
-              context.l10n.sourceDisplayLabel(
-                sourceResult.fromSourceId ?? detail.sourceId,
+          ? _fallbackNotice(
+              base: context.l10n.sourceFallbackDownloadNotice(
+                context.l10n.sourceDisplayLabel(
+                  sourceResult.fromSourceId ?? detail.sourceId,
+                ),
+                context.l10n.sourceDisplayLabel(sourceResult.sourceId),
               ),
-              context.l10n.sourceDisplayLabel(sourceResult.sourceId),
+              reason: sourceResult.message,
             )
           : null;
       final source = await _selectDownloadSource(
@@ -376,6 +397,15 @@ class AnimeDetailPage extends ConsumerWidget {
       if (source.quality != null) source.quality,
       if (host != null && host.isNotEmpty) host,
     ].join(' · ');
+  }
+
+  String _fallbackNotice({
+    required String base,
+    String? reason,
+  }) {
+    final normalizedReason = reason?.trim();
+    if (normalizedReason == null || normalizedReason.isEmpty) return base;
+    return '$base\n$normalizedReason';
   }
 }
 

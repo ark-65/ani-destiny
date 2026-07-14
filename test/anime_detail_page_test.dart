@@ -26,7 +26,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
-  testWidgets('anime detail shows active fallback source notice in play chooser', (
+  testWidgets(
+      'anime detail shows active fallback source notice in play chooser', (
     tester,
   ) async {
     const repository = _FakeAnimeRepository(
@@ -71,7 +72,8 @@ void main() {
     );
   });
 
-  testWidgets('anime detail shows explicit fallback source notice on detail page', (
+  testWidgets(
+      'anime detail shows explicit fallback source notice on detail page', (
     tester,
   ) async {
     const repository = _FakeAnimeRepository(
@@ -98,6 +100,42 @@ void main() {
     expect(find.textContaining('Mock'), findsOneWidget);
   });
 
+  testWidgets('anime detail shows fallback reason in notices', (tester) async {
+    const repository = _FakeAnimeRepository(
+      detail: _detail,
+      playSources: [
+        PlaySource(
+          id: 'source-0',
+          episodeId: 'episode-1',
+          title: 'Direct line',
+          url: 'https://cdn.example.com/episode-1.mp4',
+        ),
+      ],
+      detailUsedFallback: true,
+      detailFromSourceId: 'mock',
+      playSourcesUsedFallback: true,
+      playSourcesFromSourceId: 'mock',
+      fallbackMessage: 'Mock source temporarily returned DNS error.',
+    );
+
+    await _pumpPage(
+      tester,
+      animeRepository: repository,
+      downloadService: const _FakeDownloadService(),
+    );
+
+    expect(find.textContaining('temporarily unavailable'), findsOneWidget);
+    expect(find.text('Mock source temporarily returned DNS error.'),
+        findsOneWidget);
+
+    await tester.tap(find.byIcon(Icons.play_arrow));
+    await tester.pumpAndSettle();
+
+    expect(
+      find.text('Mock source temporarily returned DNS error.'),
+      findsOneWidget,
+    );
+  });
   testWidgets('anime detail download keeps unsupported feedback honest', (
     tester,
   ) async {
@@ -407,6 +445,7 @@ class _FakeAnimeRepository implements AnimeRepository {
     this.playSourcesFromSourceId,
     this.detailUsedFallback = false,
     this.detailFromSourceId,
+    this.fallbackMessage,
   });
 
   final AnimeDetail detail;
@@ -415,6 +454,7 @@ class _FakeAnimeRepository implements AnimeRepository {
   final String? playSourcesFromSourceId;
   final bool detailUsedFallback;
   final String? detailFromSourceId;
+  final String? fallbackMessage;
 
   @override
   Future<SourceFallbackResult<AnimeDetail>> getAnimeDetail(String animeId) {
@@ -424,6 +464,7 @@ class _FakeAnimeRepository implements AnimeRepository {
         sourceId: detail.sourceId,
         usedFallback: detailUsedFallback,
         fromSourceId: detailFromSourceId,
+        message: fallbackMessage,
       ),
     );
   }
@@ -438,6 +479,7 @@ class _FakeAnimeRepository implements AnimeRepository {
       sourceId: sourceId,
       usedFallback: detailUsedFallback,
       fromSourceId: detailFromSourceId,
+      message: fallbackMessage,
     );
   }
 
@@ -463,6 +505,7 @@ class _FakeAnimeRepository implements AnimeRepository {
       sourceId: sourceId,
       usedFallback: playSourcesUsedFallback,
       fromSourceId: playSourcesFromSourceId,
+      message: fallbackMessage,
     );
   }
 
