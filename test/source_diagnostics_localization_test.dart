@@ -108,6 +108,43 @@ void main() {
     expect(find.textContaining('AppException'), findsNothing);
   });
 
+  testWidgets('source diagnostics sheet shows fallback reasons clearly', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      _buildApp(
+        home: const SourceSettingsPage(),
+        overrides: [
+          ..._providerOverrides,
+          sourceFallbackEventsProvider.overrideWith(
+            () => _ReadableFallbackReasonSourceFallbackEventsController(),
+          ),
+        ],
+      ),
+    );
+
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Source diagnostics'));
+    await tester.pumpAndSettle();
+    await tester.scrollUntilVisible(
+      find.text('Sakura Anime · Details'),
+      200,
+      scrollable: find.byType(Scrollable).last,
+    );
+    await tester.pumpAndSettle();
+
+    expect(
+      find.textContaining('DNS timeout while reading metadata'),
+      findsOneWidget,
+    );
+    expect(
+      find.textContaining('Source attempt 1:'),
+      findsNothing,
+      reason:
+          'Fallback reasons should be shown without low-level attempt prefix in user-facing diagnostics.',
+    );
+  });
+
   testWidgets('settings page keeps runtime diagnostics visible for support',
       (tester) async {
     SharedPreferences.setMockInitialValues({});
@@ -801,6 +838,23 @@ class _FakeSourceFallbackEventsController
         toSourceId: 'mock',
         operation: 'detail',
         reason: 'Fallback triggered',
+        timestamp: DateTime(2026, 6, 7, 1, 2, 3),
+      ),
+    ];
+  }
+}
+
+class _ReadableFallbackReasonSourceFallbackEventsController
+    extends SourceFallbackEventsController {
+  @override
+  List<SourceFallbackEvent> build() {
+    return [
+      SourceFallbackEvent(
+        fromSourceId: 'sakura',
+        toSourceId: 'mock',
+        operation: 'detail',
+        reason:
+            'Source attempt 1: DNS timeout while reading metadata · Source attempt 2: Remote source returned 503.',
         timestamp: DateTime(2026, 6, 7, 1, 2, 3),
       ),
     ];

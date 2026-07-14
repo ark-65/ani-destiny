@@ -12,6 +12,7 @@
 ### 🐛 Fixed
 - Improved source fallback output messaging so fallback notices now include readable failure reasons when available, giving users context for why AniDestiny switched sources instead of presenting a generic “source unavailable” message.
 - Fixed history continue playback fallback notices to append available fallback reasons after the unavailable-source message, so users can see why AniDestiny switched source before starting playback.
+- Simplified fallback-event rows in diagnostics to remove internal “Source attempt N” prefixes and show readable failure reasons directly, so users understand fallback history without engineering noise.
 - Fixed source fallback notice tests to match the full current copy and explicitly guard against legacy “fallback data” wording, keeping regression coverage aligned with user-facing fallback messaging.
 - Fixed anime-detail playback path so when playback lines are served from fallback, the play-source chooser now shows the requested source and active source in a top notice before continuing, so users can confirm the source switch before playback starts.
 - Updated anime-detail fallback header notices so when fallback happens, users now see both the requested source and active source instead of only a generic unavailable-source message.
