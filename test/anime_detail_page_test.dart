@@ -26,6 +26,51 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
+  testWidgets('anime detail shows active fallback source notice in play chooser', (
+    tester,
+  ) async {
+    const repository = _FakeAnimeRepository(
+      detail: _detail,
+      playSources: [
+        PlaySource(
+          id: 'source-0',
+          episodeId: 'episode-1',
+          title: 'Direct line',
+          url: 'https://cdn.example.com/episode-1.mp4',
+        ),
+        PlaySource(
+          id: 'source-1',
+          episodeId: 'episode-1',
+          title: 'HLS line',
+          url: 'https://cdn.example.com/episode-1.m3u8',
+        ),
+      ],
+      playSourcesUsedFallback: true,
+      playSourcesFromSourceId: 'mock',
+    );
+
+    await _pumpPage(
+      tester,
+      animeRepository: repository,
+      downloadService: const _FakeDownloadService(),
+    );
+
+    await tester.tap(find.byIcon(Icons.play_arrow));
+    await tester.pumpAndSettle();
+
+    expect(find.textContaining('Select playback'), findsOneWidget);
+    expect(
+      find.byWidgetPredicate(
+        (widget) =>
+            widget is Text &&
+            (widget.data?.contains('temporarily unavailable') ?? false) &&
+            (widget.data?.contains('Mock') ?? false) &&
+            (widget.data?.contains('Sakura Anime') ?? false),
+      ),
+      findsOneWidget,
+    );
+  });
+
   testWidgets('anime detail download keeps unsupported feedback honest', (
     tester,
   ) async {
@@ -314,6 +359,7 @@ Future<void> _pumpPage(
           GlobalCupertinoLocalizations.delegate,
         ],
         supportedLocales: AppLocalizations.supportedLocales,
+        locale: Locale('en'),
         home: Scaffold(
           body: AnimeDetailPage(
             animeId: 'anime-1',

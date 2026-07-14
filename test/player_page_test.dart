@@ -1063,8 +1063,15 @@ void main() {
     final fullscreenButton = tester.widget<IconButton>(
       find.widgetWithIcon(IconButton, Icons.fullscreen),
     );
-    expect(fullscreenButton.onPressed, isNull);
+    expect(fullscreenButton.onPressed, isNotNull);
     expect(fullscreenButton.tooltip, 'Retrying playback...');
+
+    await tester.tap(find.widgetWithIcon(IconButton, Icons.fullscreen));
+    await tester.pump();
+    expect(
+      find.text('Please wait until playback finishes retrying before leaving.'),
+      findsOneWidget,
+    );
 
     final slider = tester.widget<Slider>(find.byType(Slider));
     expect(slider.onChanged, isNull);
@@ -1546,8 +1553,8 @@ void main() {
   testWidgets('external handoff pauses playback before launch completes', (
     tester,
   ) async {
-    final launchCompleter = Completer<bool>();
     final repository = _TrackingPlayerRepository();
+    final launchCompleter = Completer<bool>();
 
     await tester.pumpWidget(
       ProviderScope(
@@ -1675,8 +1682,14 @@ void main() {
     final fullscreenButton = tester.widget<IconButton>(
       find.widgetWithIcon(IconButton, Icons.fullscreen),
     );
-    expect(fullscreenButton.onPressed, isNull);
+    expect(fullscreenButton.onPressed, isNotNull);
     expect(fullscreenButton.tooltip, 'Opening external player...');
+    await tester.tap(find.widgetWithIcon(IconButton, Icons.fullscreen));
+    await tester.pump();
+    expect(
+      find.text('Please wait until the external player finishes opening before leaving.'),
+      findsOneWidget,
+    );
 
     final slider = tester.widget<Slider>(find.byType(Slider));
     expect(slider.onChanged, isNull);
@@ -1869,7 +1882,7 @@ void main() {
     final fullscreenButton = tester.widget<IconButton>(
       find.widgetWithIcon(IconButton, Icons.fullscreen),
     );
-    expect(fullscreenButton.onPressed, isNull);
+    expect(fullscreenButton.onPressed, isNotNull);
     expect(fullscreenButton.tooltip, 'Loading next episode...');
 
     expect(find.byTooltip('Loading next episode...'), findsWidgets);
@@ -1975,8 +1988,7 @@ void main() {
     expect(find.text('Episode 2'), findsNothing);
   });
 
-  testWidgets(
-      'fullscreen exit stays available while next episode is unresolved', (
+  testWidgets('fullscreen exit is blocked while next episode is unresolved', (
     tester,
   ) async {
     final animeRepository = _PendingPlayableNextEpisodeAnimeRepository();
@@ -2005,13 +2017,14 @@ void main() {
       find.widgetWithIcon(IconButton, Icons.fullscreen_exit),
     );
     expect(fullscreenButton.onPressed, isNotNull);
-    expect(fullscreenButton.tooltip, 'Exit fullscreen');
+    expect(fullscreenButton.tooltip, 'Loading next episode...');
+    expect(find.byType(AppBar), findsNothing);
 
     await tester.tap(find.widgetWithIcon(IconButton, Icons.fullscreen_exit));
     await tester.pump();
 
-    expect(find.byType(AppBar), findsOneWidget);
-    expect(find.text('Loading next episode...'), findsNothing);
+    expect(find.byType(SnackBar), findsOneWidget);
+    expect(find.byType(AppBar), findsNothing);
   });
 
   testWidgets(
@@ -2666,7 +2679,7 @@ void main() {
     expect(playButton.tooltip, 'Pause');
   });
 
-  testWidgets('app bar back can leave while next episode is still unresolved', (
+  testWidgets('app bar back stays on player while next episode is unresolved', (
     tester,
   ) async {
     final pendingRepository = _PendingNextEpisodeAnimeRepository();
@@ -2704,6 +2717,70 @@ void main() {
 
     final busyBackButton = tester.widget<IconButton>(
       find
+        .descendant(
+          of: find.byType(AppBar),
+          matching: find.byType(IconButton),
+        )
+        .first,
+    );
+    expect(busyBackButton.onPressed, isNotNull);
+    expect(
+      busyBackButton.tooltip,
+      'Please wait until the next episode finishes loading before leaving.',
+    );
+    expect(
+      busyBackButton.style?.foregroundColor?.resolve(const {}),
+      Theme.of(tester.element(find.byType(AppBar)))
+          .colorScheme
+          .onSurface
+          .withValues(alpha: 0.38),
+    );
+
+    await tester.tap(
+      find
+          .descendant(
+            of: find.byType(AppBar),
+            matching: find.byType(IconButton),
+          )
+          .first,
+    );
+    await tester.pump();
+
+    expect(find.byType(PlayerPage), findsOneWidget);
+    expect(find.text('Open player'), findsNothing);
+    expect(
+      find.text(
+        'Please wait until the next episode finishes loading before leaving.',
+      ),
+      findsOneWidget,
+    );
+  });
+
+  testWidgets('app bar back stays on player while playback is retrying', (
+    tester,
+  ) async {
+    final repository = _RetryablePlayerRepository();
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          playerRepositoryProvider.overrideWithValue(repository),
+          historyRepositoryProvider.overrideWithValue(_FakeHistoryRepository()),
+          danmakuRepositoryProvider.overrideWithValue(_FakeDanmakuRepository()),
+        ],
+        child: _buildApp(_args),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byType(ElevatedButton));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Retry'));
+    await tester.pump();
+
+    final busyBackButton = tester.widget<IconButton>(
+      find
           .descendant(
             of: find.byType(AppBar),
             matching: find.byType(IconButton),
@@ -2711,16 +2788,110 @@ void main() {
           .first,
     );
     expect(busyBackButton.onPressed, isNotNull);
-    expect(busyBackButton.tooltip, 'Back');
+    expect(
+      busyBackButton.tooltip,
+      'Please wait until playback finishes retrying before leaving.',
+    );
 
-    await tester.tap(find.byTooltip('Back'));
+    await tester.tap(
+      find
+          .descendant(
+            of: find.byType(AppBar),
+            matching: find.byType(IconButton),
+          )
+          .first,
+    );
+    await tester.pump();
+
+    expect(find.byType(PlayerPage), findsOneWidget);
+    expect(
+      find.text(
+        'Please wait until playback finishes retrying before leaving.',
+      ),
+      findsOneWidget,
+    );
+
+    repository.completeRetry();
     await tester.pumpAndSettle();
-
-    expect(find.byType(PlayerPage), findsNothing);
-    expect(find.text('Open player'), findsOneWidget);
   });
 
-  testWidgets('system back can leave while next episode is still unresolved', (
+  testWidgets(
+      'app bar back stays on player while external handoff is opening', (
+    tester,
+  ) async {
+    final launchCompleter = Completer<bool>();
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          playerRepositoryProvider
+              .overrideWithValue(const _FakePlayerRepository()),
+          historyRepositoryProvider.overrideWithValue(_FakeHistoryRepository()),
+          danmakuRepositoryProvider.overrideWithValue(_FakeDanmakuRepository()),
+          externalPlayerLauncherProvider.overrideWithValue(
+            (_) => launchCompleter.future,
+          ),
+        ],
+        child: _buildApp(_args),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byType(ElevatedButton));
+    await tester.pumpAndSettle();
+
+    final initialBackButton = tester.widget<IconButton>(
+      find
+          .descendant(
+            of: find.byType(AppBar),
+            matching: find.byType(IconButton),
+          )
+          .first,
+    );
+    expect(initialBackButton.onPressed, isNotNull);
+    expect(initialBackButton.tooltip, 'Back');
+
+    await tester.tap(find.byTooltip('External player'));
+    await tester.pump();
+
+    final busyBackButton = tester.widget<IconButton>(
+      find
+          .descendant(
+            of: find.byType(AppBar),
+            matching: find.byType(IconButton),
+          )
+          .first,
+    );
+    expect(busyBackButton.onPressed, isNotNull);
+    expect(
+      busyBackButton.tooltip,
+      'Please wait until the external player finishes opening before leaving.',
+    );
+
+    await tester.tap(
+      find
+          .descendant(
+            of: find.byType(AppBar),
+            matching: find.byType(IconButton),
+          )
+          .first,
+    );
+    await tester.pump();
+
+    expect(find.byType(PlayerPage), findsOneWidget);
+    expect(find.text('Open player'), findsNothing);
+    expect(
+      find.text(
+        'Please wait until the external player finishes opening before leaving.',
+      ),
+      findsOneWidget,
+    );
+
+    launchCompleter.complete(true);
+    await tester.pumpAndSettle();
+  });
+
+  testWidgets('system back stays on player while next episode is unresolved', (
     tester,
   ) async {
     final pendingRepository = _PendingNextEpisodeAnimeRepository();
@@ -2746,14 +2917,20 @@ void main() {
     await tester.pump();
 
     await tester.binding.handlePopRoute();
-    await tester.pumpAndSettle();
+    await tester.pump();
 
-    expect(find.byType(PlayerPage), findsNothing);
-    expect(find.text('Open player'), findsOneWidget);
+    expect(find.byType(PlayerPage), findsOneWidget);
+    expect(find.text('Open player'), findsNothing);
+    expect(
+      find.text(
+        'Please wait until the next episode finishes loading before leaving.',
+      ),
+      findsOneWidget,
+    );
   });
 
   testWidgets(
-      'system back exits fullscreen while next episode is still unresolved', (
+      'system back stays in fullscreen while next episode is still unresolved', (
     tester,
   ) async {
     final pendingRepository = _PendingNextEpisodeAnimeRepository();
@@ -2785,9 +2962,15 @@ void main() {
     await tester.pump();
 
     expect(find.byType(PlayerPage), findsOneWidget);
-    expect(find.byType(AppBar), findsOneWidget);
+    expect(find.byType(AppBar), findsNothing);
     expect(find.text('Open player'), findsNothing);
     expect(find.text('Loading next episode...'), findsNothing);
+    expect(
+      find.text(
+        'Please wait until the next episode finishes loading before leaving.',
+      ),
+      findsOneWidget,
+    );
   });
 
   testWidgets('system back stays on the player while external handoff opens', (
@@ -2822,6 +3005,105 @@ void main() {
 
     expect(find.byType(PlayerPage), findsOneWidget);
     expect(find.text('Open player'), findsNothing);
+    expect(
+      find.text(
+        'Please wait until the external player finishes opening before leaving.',
+      ),
+      findsOneWidget,
+    );
+
+    launchCompleter.complete(true);
+    await tester.pumpAndSettle();
+  });
+
+  testWidgets(
+      'system back stays in fullscreen while external handoff opens', (
+    tester,
+  ) async {
+    final repository = _TrackingPlayerRepository();
+    final launchCompleter = Completer<bool>();
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          playerRepositoryProvider
+              .overrideWithValue(repository),
+          historyRepositoryProvider.overrideWithValue(_FakeHistoryRepository()),
+          danmakuRepositoryProvider.overrideWithValue(_FakeDanmakuRepository()),
+          externalPlayerLauncherProvider.overrideWithValue(
+            (_) => launchCompleter.future,
+          ),
+        ],
+        child: _buildApp(_args),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byType(ElevatedButton));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byTooltip('Enter fullscreen'));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byTooltip('External player'));
+    await tester.pump();
+
+    await tester.binding.handlePopRoute();
+    await tester.pump();
+
+    expect(find.byType(PlayerPage), findsOneWidget);
+    expect(find.byType(AppBar), findsNothing);
+    expect(
+      find.text('Please wait until the external player finishes opening before leaving.'),
+      findsOneWidget,
+    );
+
+    launchCompleter.complete(true);
+    await tester.pumpAndSettle();
+  });
+
+  testWidgets(
+      'fullscreen exit is blocked while external handoff is opening', (
+    tester,
+  ) async {
+    final repository = _TrackingPlayerRepository();
+    final launchCompleter = Completer<bool>();
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          playerRepositoryProvider
+              .overrideWithValue(repository),
+          historyRepositoryProvider.overrideWithValue(_FakeHistoryRepository()),
+          danmakuRepositoryProvider.overrideWithValue(_FakeDanmakuRepository()),
+          externalPlayerLauncherProvider.overrideWithValue(
+            (_) => launchCompleter.future,
+          ),
+        ],
+        child: _buildApp(_args),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byType(ElevatedButton));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byTooltip('Enter fullscreen'));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byTooltip('External player'));
+    await tester.pump();
+
+    final fullscreenButton = tester.widget<IconButton>(
+      find.widgetWithIcon(IconButton, Icons.fullscreen_exit),
+    );
+    expect(fullscreenButton.onPressed, isNotNull);
+
+    await tester.tap(find.widgetWithIcon(IconButton, Icons.fullscreen_exit));
+    await tester.pump();
+
+    expect(find.byType(PlayerPage), findsOneWidget);
+    expect(find.byType(AppBar), findsNothing);
     expect(
       find.text(
         'Please wait until the external player finishes opening before leaving.',
@@ -2869,6 +3151,54 @@ void main() {
     );
 
     repository.completeRetry();
+    await tester.pumpAndSettle();
+  });
+
+  testWidgets('fullscreen exit stays blocked while retrying playback', (
+    tester,
+  ) async {
+    final repository = _InterruptedRetryRecoveryRepository();
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          playerRepositoryProvider.overrideWithValue(repository),
+          historyRepositoryProvider.overrideWithValue(_FakeHistoryRepository()),
+          danmakuRepositoryProvider.overrideWithValue(_FakeDanmakuRepository()),
+        ],
+        child: _buildPlayerApp(_args),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byTooltip('Enter fullscreen'));
+    await tester.pumpAndSettle();
+
+    repository.emitPlaybackFailure(
+      position: const Duration(minutes: 4, seconds: 20),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Retry'));
+    await tester.pump();
+
+    final fullscreenButton = tester.widget<IconButton>(
+      find.widgetWithIcon(IconButton, Icons.fullscreen_exit),
+    );
+    expect(fullscreenButton.onPressed, isNotNull);
+    expect(fullscreenButton.tooltip, 'Retrying playback...');
+
+    await tester.tap(find.widgetWithIcon(IconButton, Icons.fullscreen_exit));
+    await tester.pump();
+
+    expect(find.byType(SnackBar), findsOneWidget);
+    expect(find.byType(PlayerPage), findsOneWidget);
+    expect(find.byType(AppBar), findsNothing);
+    expect(
+      find.text('Please wait until playback finishes retrying before leaving.'),
+      findsOneWidget,
+    );
+
     await tester.pumpAndSettle();
   });
 
@@ -2936,7 +3266,9 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(
-      find.text('No playable source found. Switch to another source before retrying.'),
+      find.text(
+        'No playable source found. Switch to another source before retrying.',
+      ),
       findsOneWidget,
     );
     expect(find.text('Anime: Anime 1'), findsOneWidget);
@@ -3164,7 +3496,9 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(
-      find.text('No playable source found. Switch to another source before retrying.'),
+      find.text(
+        'No playable source found. Switch to another source before retrying.',
+      ),
       findsOneWidget,
     );
     expect(

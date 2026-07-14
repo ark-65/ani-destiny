@@ -141,12 +141,15 @@ class AnimeDetailPage extends ConsumerWidget {
       );
       return;
     }
-    if (sourceResult.usedFallback) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(context.l10n.sourceFallbackNotice)),
-      );
-    }
-    final source = await _selectPlaySource(context, sources);
+    final fallbackNotice = sourceResult.usedFallback
+        ? context.l10n.sourceFallbackPlayerNotice(
+            context.l10n.sourceDisplayLabel(
+              sourceResult.fromSourceId ?? detail.sourceId,
+            ),
+            context.l10n.sourceDisplayLabel(sourceResult.sourceId),
+          )
+        : null;
+    final source = await _selectPlaySource(context, sources, fallbackNotice);
     if (!context.mounted || source == null) return;
     context.push(
       '/player',
@@ -244,12 +247,15 @@ class AnimeDetailPage extends ConsumerWidget {
   Future<PlaySource?> _selectPlaySource(
     BuildContext context,
     List<PlaySource> sources,
+    String? fallbackNotice,
   ) {
     return _selectSource(
       context,
       sources,
       title: context.l10n.selectPlaySource,
       actionIcon: Icons.play_arrow,
+      topNotice: fallbackNotice,
+      forceSheet: fallbackNotice != null,
     );
   }
 

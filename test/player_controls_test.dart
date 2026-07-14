@@ -187,6 +187,145 @@ void main() {
   });
 
   testWidgets(
+      'fullscreen retrying playback is blocked from exiting fullscreen',
+      (tester) async {
+    var blockedExitTaps = 0;
+    var fullscreenTaps = 0;
+
+    await tester.pumpWidget(
+      _buildApp(
+        PlayerControls(
+          state: _state.copyWith(errorMessage: 'Playback temporarily failed.'),
+          hasPlayableSource: true,
+          onPlayPause: _noop,
+          onSeek: (_) {},
+          onSpeed: _noop,
+          onNextEpisode: null,
+          onOpenExternalPlayer: _noop,
+          externalPlayerTooltip: 'Retrying playback...',
+          downloadTooltip: 'Retrying playback...',
+          onDownload: null,
+          onBlockedFullscreenExit: () => blockedExitTaps += 1,
+          onToggleFullscreen: () => fullscreenTaps += 1,
+          onToggleDanmaku: _noop,
+          danmakuEnabled: true,
+          isFullscreen: true,
+          isResolvingNextEpisode: false,
+          isSwitchingEpisode: false,
+          isOpeningExternalPlayer: false,
+          isRetryingPlayback: true,
+        ),
+      ),
+    );
+
+    await tester.pump();
+
+    final fullscreenButton = tester.widget<IconButton>(
+      find.widgetWithIcon(IconButton, Icons.fullscreen_exit),
+    );
+    expect(fullscreenButton.onPressed, isNotNull);
+    expect(fullscreenButton.tooltip, 'Retrying playback...');
+    expect(blockedExitTaps, 0);
+    expect(fullscreenTaps, 0);
+
+    await tester.tap(find.widgetWithIcon(IconButton, Icons.fullscreen_exit));
+    await tester.pump();
+
+    expect(blockedExitTaps, 1);
+    expect(fullscreenTaps, 0);
+  });
+
+  testWidgets('fullscreen blocked state shows muted icon', (tester) async {
+    await tester.pumpWidget(
+      _buildApp(
+        PlayerControls(
+          state: _state.copyWith(errorMessage: 'Playback temporarily failed.'),
+          hasPlayableSource: true,
+          onPlayPause: _noop,
+          onSeek: (_) {},
+          onSpeed: _noop,
+          onNextEpisode: null,
+          onOpenExternalPlayer: _noop,
+          externalPlayerTooltip: 'Retrying playback...',
+          downloadTooltip: 'Retrying playback...',
+          onDownload: null,
+          onBlockedFullscreenExit: () {},
+          onToggleFullscreen: _noop,
+          onToggleDanmaku: _noop,
+          danmakuEnabled: true,
+          isFullscreen: true,
+          isResolvingNextEpisode: false,
+          isSwitchingEpisode: false,
+          isOpeningExternalPlayer: false,
+          isRetryingPlayback: true,
+        ),
+      ),
+    );
+
+    await tester.pump();
+
+    final fullscreenButtonFinder = find.widgetWithIcon(
+      IconButton,
+      Icons.fullscreen_exit,
+    );
+    final fullscreenButton = tester.widget<IconButton>(fullscreenButtonFinder);
+    final expectedColor = Theme.of(tester.element(fullscreenButtonFinder))
+        .colorScheme
+        .onSurface
+        .withValues(alpha: 0.38);
+    final fullscreenIcon = fullscreenButton.icon as Icon;
+    expect(fullscreenIcon.color, expectedColor);
+  });
+
+  testWidgets(
+      'embedded next episode verification blocks entering fullscreen',
+      (tester) async {
+    var blockedTaps = 0;
+    var fullscreenTaps = 0;
+
+    await tester.pumpWidget(
+      _buildApp(
+        PlayerControls(
+          state: _state,
+          hasPlayableSource: true,
+          onPlayPause: _noop,
+          onSeek: (_) {},
+          onSpeed: _noop,
+          onNextEpisode: null,
+          onOpenExternalPlayer: _noop,
+          externalPlayerTooltip: 'External player',
+          downloadTooltip: 'Loading next episode...',
+          onDownload: null,
+          onBlockedFullscreenExit: () => blockedTaps += 1,
+          onToggleFullscreen: () => fullscreenTaps += 1,
+          onToggleDanmaku: _noop,
+          danmakuEnabled: true,
+          isFullscreen: false,
+          isResolvingNextEpisode: true,
+          isSwitchingEpisode: false,
+          isOpeningExternalPlayer: false,
+        ),
+      ),
+    );
+
+    await tester.pump();
+
+    final fullscreenButton = tester.widget<IconButton>(
+      find.widgetWithIcon(IconButton, Icons.fullscreen),
+    );
+    expect(fullscreenButton.onPressed, isNotNull);
+    expect(fullscreenButton.tooltip, 'Loading next episode...');
+    expect(blockedTaps, 0);
+    expect(fullscreenTaps, 0);
+
+    await tester.tap(find.widgetWithIcon(IconButton, Icons.fullscreen));
+    await tester.pump();
+
+    expect(blockedTaps, 1);
+    expect(fullscreenTaps, 0);
+  });
+
+  testWidgets(
       'next episode verification keeps the current progress visible while controls stay locked',
       (tester) async {
     await tester.pumpWidget(
@@ -225,9 +364,9 @@ void main() {
     expect(find.text('--:-- / --:--'), findsNothing);
   });
 
-  testWidgets(
-      'fullscreen next episode verification still allows leaving fullscreen',
+  testWidgets('fullscreen next episode verification blocks leaving fullscreen',
       (tester) async {
+    var blockedTaps = 0;
     var fullscreenTaps = 0;
 
     await tester.pumpWidget(
@@ -243,6 +382,7 @@ void main() {
           externalPlayerTooltip: 'Loading next episode...',
           downloadTooltip: 'Loading next episode...',
           onDownload: null,
+          onBlockedFullscreenExit: () => blockedTaps += 1,
           onToggleDanmaku: _noop,
           onToggleFullscreen: () => fullscreenTaps += 1,
           danmakuEnabled: true,
@@ -260,12 +400,15 @@ void main() {
       find.widgetWithIcon(IconButton, Icons.fullscreen_exit),
     );
     expect(fullscreenButton.onPressed, isNotNull);
-    expect(fullscreenButton.tooltip, 'Exit fullscreen');
+    expect(blockedTaps, 0);
+    expect(fullscreenButton.tooltip, 'Loading next episode...');
+    expect(fullscreenTaps, 0);
 
     await tester.tap(find.widgetWithIcon(IconButton, Icons.fullscreen_exit));
     await tester.pump();
 
-    expect(fullscreenTaps, 1);
+    expect(blockedTaps, 1);
+    expect(fullscreenTaps, 0);
   });
 
   testWidgets('retrying playback also disables danmaku changes',

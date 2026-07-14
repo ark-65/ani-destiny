@@ -134,6 +134,7 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
     final hasCommittedRouteTransition =
         _isSwitchingEpisode || _isOpeningExternalPlayer || isRetryingPlayback;
     final isRouteBusy = hasCommittedRouteTransition;
+    final isRouteBusyForExit = isRouteBusy || _isResolvingNextEpisode;
     final isPreparingNextEpisode =
         _isResolvingNextEpisode || _isSwitchingEpisode;
     final showRouteTransitionOverlay =
@@ -217,10 +218,10 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
     );
 
     return PopScope<void>(
-      canPop: !_isFullscreen && !isRouteBusy,
+      canPop: !_isFullscreen && !isRouteBusyForExit,
       onPopInvokedWithResult: (didPop, result) {
         if (didPop) return;
-        if (isRouteBusy) {
+        if (isRouteBusyForExit) {
           _showSnackBar(playerExitBusyMessage);
           return;
         }
@@ -234,18 +235,23 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
         appBar: _isFullscreen
             ? null
             : AppBar(
-                automaticallyImplyLeading: false,
-                leading: canLeavePlayer
-                    ? IconButton(
-                        tooltip: isRouteBusy
-                            ? playerExitBusyMessage
-                            : context.l10n.back,
-                        onPressed: isRouteBusy
-                            ? () => _showSnackBar(playerExitBusyMessage)
-                            : () => Navigator.of(context).maybePop(),
-                        icon: const BackButtonIcon(),
-                      )
-                    : null,
+                  automaticallyImplyLeading: false,
+                    leading: canLeavePlayer
+                        ? IconButton(
+                            tooltip: isRouteBusyForExit
+                                ? playerExitBusyMessage
+                                : context.l10n.back,
+                            style: isRouteBusyForExit
+                                ? IconButton.styleFrom(
+                                    foregroundColor: unavailableActionColor,
+                                  )
+                                : null,
+                            onPressed: isRouteBusyForExit
+                                ? () => _showSnackBar(playerExitBusyMessage)
+                                : () => Navigator.of(context).maybePop(),
+                            icon: const BackButtonIcon(),
+                          )
+                        : null,
                 title: _PlayerAppBarTitle(
                   title: appBarEpisodeTitle,
                   status: appBarStatus,
@@ -327,37 +333,38 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
                           alignment: Alignment.topCenter,
                           child: ConstrainedBox(
                             constraints: const BoxConstraints(maxWidth: 420),
-                                child: Card(
-                                  child: Padding(
-                                    padding: const EdgeInsets.all(16),
-                                    child: Column(
-                                      mainAxisSize: MainAxisSize.min,
-                                      children: [
-                                        Text(
-                                          _playbackErrorMessage(),
-                                          textAlign: TextAlign.center,
-                                        ),
-                                        if (_state.errorMessage ==
-                                            context.l10n.playerNoPlayUrl) ...[
-                                          const SizedBox(height: 12),
-                                          Text(
-                                            context.l10n.sourceUnavailableSuggestion,
-                                            textAlign: TextAlign.center,
-                                            style: Theme.of(context)
-                                                .textTheme
-                                                .bodySmall
-                                                ?.copyWith(
-                                                  color: Theme.of(context)
-                                                      .colorScheme
-                                                      .onSurfaceVariant,
-                                                ),
-                                          ),
-                                        ],
-                                        if (_hasSourceFallbackContext()) ...[
-                                          const SizedBox(height: 12),
-                                          Text(
-                                            _sourceFallbackNotice(context),
-                                            textAlign: TextAlign.center,
+                            child: Card(
+                              child: Padding(
+                                padding: const EdgeInsets.all(16),
+                                child: Column(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Text(
+                                      _playbackErrorMessage(),
+                                      textAlign: TextAlign.center,
+                                    ),
+                                    if (_state.errorMessage ==
+                                        context.l10n.playerNoPlayUrl) ...[
+                                      const SizedBox(height: 12),
+                                      Text(
+                                        context
+                                            .l10n.sourceUnavailableSuggestion,
+                                        textAlign: TextAlign.center,
+                                        style: Theme.of(context)
+                                            .textTheme
+                                            .bodySmall
+                                            ?.copyWith(
+                                              color: Theme.of(context)
+                                                  .colorScheme
+                                                  .onSurfaceVariant,
+                                            ),
+                                      ),
+                                    ],
+                                    if (_hasSourceFallbackContext()) ...[
+                                      const SizedBox(height: 12),
+                                      Text(
+                                        _sourceFallbackNotice(context),
+                                        textAlign: TextAlign.center,
                                         style: Theme.of(
                                           context,
                                         ).textTheme.bodySmall?.copyWith(
@@ -563,9 +570,10 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
                     : null,
                 onToggleFullscreen:
                     isRouteBusy ? null : () => unawaited(_toggleFullscreen()),
-                onBlockedFullscreenExit: isRouteBusy && _isFullscreen
-                    ? () => _showSnackBar(playerExitBusyMessage)
-                    : null,
+                onBlockedFullscreenExit:
+                    (_isResolvingNextEpisode || isRouteBusy)
+                        ? () => _showSnackBar(playerExitBusyMessage)
+                        : null,
                 onToggleDanmaku: () {
                   ref.read(danmakuSettingsProvider.notifier).state =
                       danmakuSettings.copyWith(
