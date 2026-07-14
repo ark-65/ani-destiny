@@ -77,5 +77,12 @@ void main() {
       ),
       '${l10n.downloadFailureStorageUnavailable}. ${l10n.downloadActionFailedMessage}',
     );
+    expect(
+      downloadActionErrorMessage(
+        l10n,
+        const AppException('unsupported download type', code: 'download_unsupported_type'),
+      ),
+      '${l10n.downloadFailureUnsupportedType}. ${l10n.downloadActionFailedMessage}',
+    );
   });
 }

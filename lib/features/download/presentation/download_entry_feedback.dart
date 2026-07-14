@@ -62,6 +62,8 @@ String? _downloadActionErrorMessageByCode(
       '${l10n.downloadFailureNetworkError}. ${l10n.downloadActionFailedMessage}',
     'download_storage_unavailable' =>
       '${l10n.downloadFailureStorageUnavailable}. ${l10n.downloadActionFailedMessage}',
+    'download_unsupported_type' =>
+      '${l10n.downloadFailureUnsupportedType}. ${l10n.downloadActionFailedMessage}',
     _ => null,
   };
 }
