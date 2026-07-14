@@ -101,7 +101,14 @@ class HistoryPage extends ConsumerWidget {
     }
     if (sourceResult.usedFallback) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(context.l10n.sourceFallbackNotice)),
+        SnackBar(
+          content: Text(
+            _fallbackNotice(
+              base: context.l10n.sourceFallbackNotice,
+              reason: sourceResult.message,
+            ),
+          ),
+        ),
       );
     }
     final source = history.playSourceId == null
@@ -152,5 +159,14 @@ class HistoryPage extends ConsumerWidget {
             history.position > Duration.zero ? history.position : null,
       ),
     );
+  }
+
+  String _fallbackNotice({
+    required String base,
+    String? reason,
+  }) {
+    final normalizedReason = reason?.trim();
+    if (normalizedReason == null || normalizedReason.isEmpty) return base;
+    return '$base\n$normalizedReason';
   }
 }

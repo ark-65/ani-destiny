@@ -10,6 +10,7 @@
 - Added a tighter issue-reporting flow: tapping Report issue copies a sanitized diagnostics summary and opens a prefilled GitHub issue, while users who are not signed in to GitHub can paste the same report into any support channel.
 
 ### 🐛 Fixed
+- Fixed history continue playback fallback notices to append available fallback reasons after the unavailable-source message, so users can see why AniDestiny switched source before starting playback.
 - Fixed source fallback notice tests to match the full current copy and explicitly guard against legacy “fallback data” wording, keeping regression coverage aligned with user-facing fallback messaging.
 - Fixed anime-detail playback path so when playback lines are served from fallback, the play-source chooser now shows the requested source and active source in a top notice before continuing, so users can confirm the source switch before playback starts.
 - Updated anime-detail fallback header notices so when fallback happens, users now see both the requested source and active source instead of only a generic unavailable-source message.
