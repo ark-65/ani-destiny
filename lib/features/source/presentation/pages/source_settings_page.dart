@@ -343,6 +343,7 @@ class _SourceDiagnosticTile extends StatelessWidget {
       SourceDiagnosticLevel.warning => Theme.of(context).colorScheme.tertiary,
       SourceDiagnosticLevel.error => Theme.of(context).colorScheme.error,
     };
+    final messageLine = _diagnosticMessageLine(diagnostic);
     final timestamp = diagnostic.timestamp;
     final details = [
       if (diagnostic.url != null) sanitizeUrlForDiagnostics(diagnostic.url!),
@@ -368,10 +369,26 @@ class _SourceDiagnosticTile extends StatelessWidget {
       ),
       subtitle: Text(
         [
-          sanitizeError(diagnostic.message),
+          if (messageLine != null) messageLine,
           if (details.isNotEmpty) details.join(' · '),
         ].join('\n'),
       ),
     );
   }
+}
+
+String? _diagnosticMessageLine(SourceDiagnostic diagnostic) {
+  final message = sanitizeError(diagnostic.message).trim();
+  if (message.isEmpty) {
+    return null;
+  }
+  final reason = diagnostic.reason?.trim() ?? '';
+  if (_isSourceFallbackMessageBoilerplate(message) && reason.isNotEmpty) {
+    return null;
+  }
+  return message;
+}
+
+bool _isSourceFallbackMessageBoilerplate(String message) {
+  return message == 'Source fallback used.' || message == 'Source fallback used';
 }

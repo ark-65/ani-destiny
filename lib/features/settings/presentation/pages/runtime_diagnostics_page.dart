@@ -398,9 +398,10 @@ class _SourceDiagnosticTile extends StatelessWidget {
       ),
       subtitle: SelectableText(
         [
-          sanitizeError(diagnostic.message),
+          if (_diagnosticMessageLine(diagnostic) != null)
+            _diagnosticMessageLine(diagnostic),
           if (details.isNotEmpty) details.join(' · '),
-        ].join('\n'),
+        ].whereType<String>().where((line) => line.trim().isNotEmpty).join('\n'),
       ),
     );
   }
@@ -412,6 +413,22 @@ class _SourceDiagnosticTile extends StatelessWidget {
       SourceDiagnosticLevel.error => Icons.error_outline,
     };
   }
+}
+
+String? _diagnosticMessageLine(SourceDiagnostic diagnostic) {
+  final message = sanitizeError(diagnostic.message).trim();
+  if (message.isEmpty) {
+    return null;
+  }
+  final reason = diagnostic.reason?.trim() ?? '';
+  if (_isSourceFallbackMessageBoilerplate(message) && reason.isNotEmpty) {
+    return null;
+  }
+  return message;
+}
+
+bool _isSourceFallbackMessageBoilerplate(String message) {
+  return message == 'Source fallback used.' || message == 'Source fallback used';
 }
 
 Future<void> _copyDiagnostics(BuildContext context, WidgetRef ref) async {
