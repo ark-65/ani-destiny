@@ -102,6 +102,16 @@ void main() {
       downloadActionErrorMessage(
         l10n,
         const AppException(
+          'Unexpected error while download failed.',
+          code: 'download_unexpected_error',
+        ),
+      ),
+      '${l10n.downloadFailureUnexpectedError}. ${l10n.downloadActionFailedMessage}',
+    );
+    expect(
+      downloadActionErrorMessage(
+        l10n,
+        const AppException(
           'This download is still active.',
           code: 'download_remove_not_allowed',
         ),

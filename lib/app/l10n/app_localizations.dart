@@ -267,6 +267,8 @@ class AppLocalizations {
       _t('downloadActionTaskNotFoundMessage');
   String get downloadActionNotAllowedMessage =>
       _t('downloadActionNotAllowedMessage');
+  String get downloadFailureUnexpectedError =>
+      _t('downloadFailureUnexpectedError');
   String get downloadPageLoadFailedMessage =>
       _t('downloadPageLoadFailedMessage');
   String downloadDiscardedNeedsManualCleanupGuidance({
@@ -1065,6 +1067,7 @@ const _localizedValues = {
     'downloadFailureUnsupportedType': '暂不支持该类型',
     'downloadFailurePermissionDenied': '权限不足',
     'downloadFailureNetworkError': '网络错误',
+    'downloadFailureUnexpectedError': '下载时发生意外异常',
     'downloadFailureSourceUnavailable': '数据源不可用',
     'downloadFailureInvalidUrl': 'URL 无效',
     'downloadFailureInvalidManifest': 'm3u8 无效',
@@ -1452,6 +1455,7 @@ const _localizedValues = {
     'downloadFailureUnsupportedType': 'Unsupported type',
     'downloadFailurePermissionDenied': 'Permission denied',
     'downloadFailureNetworkError': 'Network error',
+    'downloadFailureUnexpectedError': 'Unexpected download error',
     'downloadFailureSourceUnavailable': 'Source unavailable',
     'downloadFailureInvalidUrl': 'Invalid URL',
     'downloadFailureInvalidManifest': 'Invalid m3u8',
@@ -1838,6 +1842,7 @@ const _localizedValues = {
     'downloadFailureUnsupportedType': '未対応の種類',
     'downloadFailurePermissionDenied': '権限がありません',
     'downloadFailureNetworkError': 'ネットワークエラー',
+    'downloadFailureUnexpectedError': 'ダウンロード中に予期しないエラーが発生しました',
     'downloadFailureSourceUnavailable': 'ソースを利用できません',
     'downloadFailureInvalidUrl': 'URL が無効です',
     'downloadFailureInvalidManifest': 'm3u8 が無効です',

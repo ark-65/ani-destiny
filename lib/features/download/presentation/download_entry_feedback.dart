@@ -60,6 +60,8 @@ String? _downloadActionErrorMessageByCode(
   return switch (code) {
     'download_network_error' =>
       '${l10n.downloadFailureNetworkError}. ${l10n.downloadActionFailedMessage}',
+    'download_unexpected_error' =>
+      '${l10n.downloadFailureUnexpectedError}. ${l10n.downloadActionFailedMessage}',
     'download_storage_unavailable' =>
       '${l10n.downloadFailureStorageUnavailable}. ${l10n.downloadActionFailedMessage}',
     'download_unsupported_type' =>
