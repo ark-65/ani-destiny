@@ -10,6 +10,7 @@
 - Added a tighter issue-reporting flow: tapping Report issue copies a sanitized diagnostics summary and opens a prefilled GitHub issue, while users who are not signed in to GitHub can paste the same report into any support channel.
 
 ### 🐛 Fixed
+- Fixed download action failure handling so additional error codes (`download_not_found`, `download_remove_not_allowed`, `download_manual_cleanup_required`) no longer leak English implementation copy; they now use localized user-facing messages.
 - Fixed download action failure copy so AppException codes for known network and storage failures now map to localized readable reasons plus retry guidance, instead of surfacing ambiguous raw exception detail and leaving users guessing what failed.
 - Fixed download action failures with `download_unsupported_type` so users now get a clear `Unsupported type` reason before retry guidance, replacing the previous opaque generic failure behavior.
 - Fixed source and runtime diagnostic fallback tiles to hide boilerplate `Source fallback used.` messages when a fallback reason exists, keeping user-facing rows focused on readable reasons instead of implementation copy.

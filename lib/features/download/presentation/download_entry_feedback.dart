@@ -64,6 +64,10 @@ String? _downloadActionErrorMessageByCode(
       '${l10n.downloadFailureStorageUnavailable}. ${l10n.downloadActionFailedMessage}',
     'download_unsupported_type' =>
       '${l10n.downloadFailureUnsupportedType}. ${l10n.downloadActionFailedMessage}',
+    'download_not_found' => l10n.downloadActionTaskNotFoundMessage,
+    'download_remove_not_allowed' => l10n.downloadActionNotAllowedMessage,
+    'download_manual_cleanup_required' =>
+      l10n.downloadManualCleanupRequiredError,
     _ => null,
   };
 }

@@ -54,7 +54,8 @@ void main() {
     );
   });
 
-  test('download action errors fallback to readable reason for known codes', () {
+  test('download action errors fallback to readable reason for known codes',
+      () {
     const l10n = AppLocalizations(Locale('en'));
 
     expect(
@@ -80,9 +81,42 @@ void main() {
     expect(
       downloadActionErrorMessage(
         l10n,
-        const AppException('unsupported download type', code: 'download_unsupported_type'),
+        const AppException(
+          'unsupported download type',
+          code: 'download_unsupported_type',
+        ),
       ),
       '${l10n.downloadFailureUnsupportedType}. ${l10n.downloadActionFailedMessage}',
+    );
+    expect(
+      downloadActionErrorMessage(
+        l10n,
+        const AppException(
+          'Download task not found.',
+          code: 'download_not_found',
+        ),
+      ),
+      l10n.downloadActionTaskNotFoundMessage,
+    );
+    expect(
+      downloadActionErrorMessage(
+        l10n,
+        const AppException(
+          'This download is still active.',
+          code: 'download_remove_not_allowed',
+        ),
+      ),
+      l10n.downloadActionNotAllowedMessage,
+    );
+    expect(
+      downloadActionErrorMessage(
+        l10n,
+        const AppException(
+          'Leftover partial file still exists.',
+          code: 'download_manual_cleanup_required',
+        ),
+      ),
+      l10n.downloadManualCleanupRequiredError,
     );
   });
 }
