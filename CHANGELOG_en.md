@@ -12,6 +12,7 @@
 ### 🐛 Fixed
 - Fixed source fallback notice tests to match the full current copy and explicitly guard against legacy “fallback data” wording, keeping regression coverage aligned with user-facing fallback messaging.
 - Fixed anime-detail playback path so when playback lines are served from fallback, the play-source chooser now shows the requested source and active source in a top notice before continuing, so users can confirm the source switch before playback starts.
+- Updated anime-detail fallback header notices so when fallback happens, users now see both the requested source and active source instead of only a generic unavailable-source message.
 - Updated player no-playable-source prompts so users are explicitly told to switch source before retrying, reducing ambiguity when playback recovers from transient source failures.
 - Fixed fallback source notices to include the next-step guidance to switch to another source and retry if needed, so users know what to do when fallback content appears.
 - Fixed player control tests to align their no-playable-source assertions with the active copy, ensuring playback copy drift cannot silently break user-facing regression coverage.

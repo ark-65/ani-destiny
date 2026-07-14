@@ -71,6 +71,33 @@ void main() {
     );
   });
 
+  testWidgets('anime detail shows explicit fallback source notice on detail page', (
+    tester,
+  ) async {
+    const repository = _FakeAnimeRepository(
+      detail: _detail,
+      playSources: [
+        PlaySource(
+          id: 'source-0',
+          episodeId: 'episode-1',
+          title: 'Direct line',
+          url: 'https://cdn.example.com/episode-1.mp4',
+        ),
+      ],
+      detailUsedFallback: true,
+      detailFromSourceId: 'mock',
+    );
+
+    await _pumpPage(
+      tester,
+      animeRepository: repository,
+      downloadService: const _FakeDownloadService(),
+    );
+
+    expect(find.textContaining('temporarily unavailable'), findsOneWidget);
+    expect(find.textContaining('Mock'), findsOneWidget);
+  });
+
   testWidgets('anime detail download keeps unsupported feedback honest', (
     tester,
   ) async {
@@ -378,16 +405,27 @@ class _FakeAnimeRepository implements AnimeRepository {
     required this.playSources,
     this.playSourcesUsedFallback = false,
     this.playSourcesFromSourceId,
+    this.detailUsedFallback = false,
+    this.detailFromSourceId,
   });
 
   final AnimeDetail detail;
   final List<PlaySource> playSources;
   final bool playSourcesUsedFallback;
   final String? playSourcesFromSourceId;
+  final bool detailUsedFallback;
+  final String? detailFromSourceId;
 
   @override
   Future<SourceFallbackResult<AnimeDetail>> getAnimeDetail(String animeId) {
-    throw UnimplementedError();
+    return Future.value(
+      SourceFallbackResult<AnimeDetail>(
+        value: detail,
+        sourceId: detail.sourceId,
+        usedFallback: detailUsedFallback,
+        fromSourceId: detailFromSourceId,
+      ),
+    );
   }
 
   @override
@@ -398,7 +436,8 @@ class _FakeAnimeRepository implements AnimeRepository {
     return SourceFallbackResult<AnimeDetail>(
       value: detail,
       sourceId: sourceId,
-      usedFallback: false,
+      usedFallback: detailUsedFallback,
+      fromSourceId: detailFromSourceId,
     );
   }
 

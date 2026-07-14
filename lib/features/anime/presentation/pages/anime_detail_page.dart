@@ -90,7 +90,14 @@ class AnimeDetailPage extends ConsumerWidget {
                 ),
                 if (result.usedFallback) ...[
                   const SizedBox(height: 12),
-                  _FallbackNotice(message: context.l10n.sourceFallbackNotice),
+                  _FallbackNotice(
+                    message: result.fromSourceId == null
+                        ? context.l10n.sourceFallbackNotice
+                        : context.l10n.sourceFallbackPlayerNotice(
+                            context.l10n.sourceDisplayLabel(result.fromSourceId!),
+                            context.l10n.sourceDisplayLabel(result.sourceId),
+                          ),
+                  ),
                 ],
                 const SizedBox(height: 18),
                 Text(detail.description ?? context.l10n.noDescription),
@@ -192,11 +199,11 @@ class AnimeDetailPage extends ConsumerWidget {
         );
         return;
       }
-      if (sourceResult.usedFallback) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(context.l10n.sourceFallbackNotice)),
-        );
-      }
+    if (sourceResult.usedFallback) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(context.l10n.sourceFallbackNotice)),
+      );
+    }
       final fallbackNotice = sourceResult.usedFallback
           ? context.l10n.sourceFallbackDownloadNotice(
               context.l10n.sourceDisplayLabel(
