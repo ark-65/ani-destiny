@@ -47,6 +47,41 @@ void main() {
       findsOneWidget,
     );
   });
+
+  testWidgets(
+      'history continue strips fallback boilerplate from service message', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          historyRepositoryProvider.overrideWithValue(
+            const _FakeHistoryRepository(),
+          ),
+          animeRepositoryProvider.overrideWithValue(
+            const _FakeAnimeRepository(
+              usedFallback: true,
+              fromSourceId: 'mock',
+              fallbackMessage:
+                  'Selected source is temporarily unavailable. AniDestiny is showing another source instead. Fallback reason: Mock source temporarily returned DNS error.',
+            ),
+          ),
+        ],
+        child: _buildApp(),
+      ),
+    );
+
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Episode 1'));
+    await tester.pumpAndSettle();
+
+    expect(
+      find.textContaining('Mock source temporarily returned DNS error.'),
+      findsOneWidget,
+    );
+    expect(find.textContaining('Fallback reason:'), findsNothing);
+  });
 }
 
 Widget _buildApp() {

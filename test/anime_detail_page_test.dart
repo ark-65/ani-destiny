@@ -138,6 +138,40 @@ void main() {
       findsAtLeastNWidgets(1),
     );
   });
+
+  testWidgets('anime detail strips fallback boilerplate from service message', (
+    tester,
+  ) async {
+    const repository = _FakeAnimeRepository(
+      detail: _detail,
+      playSources: [
+        PlaySource(
+          id: 'source-0',
+          episodeId: 'episode-1',
+          title: 'Direct line',
+          url: 'https://cdn.example.com/episode-1.mp4',
+        ),
+      ],
+      detailUsedFallback: true,
+      detailFromSourceId: 'mock',
+      playSourcesUsedFallback: true,
+      playSourcesFromSourceId: 'mock',
+      fallbackMessage:
+          'Selected source is temporarily unavailable. AniDestiny is showing another source instead. Fallback reason: Mock source temporarily returned DNS error.',
+    );
+
+    await _pumpPage(
+      tester,
+      animeRepository: repository,
+      downloadService: const _FakeDownloadService(),
+    );
+
+    expect(
+      find.textContaining('Mock source temporarily returned DNS error.'),
+      findsAtLeastNWidgets(1),
+    );
+    expect(find.textContaining('Fallback reason:'), findsNothing);
+  });
   testWidgets('anime detail download keeps unsupported feedback honest', (
     tester,
   ) async {
