@@ -57,7 +57,7 @@ void main() {
         contains(
           'Selected source is temporarily unavailable. AniDestiny is showing another source instead.',
         ),
-        contains('Fallback reason: Source attempt 1:'),
+        contains('Fallback reason: Exception: selected unavailable'),
         contains('Exception: selected unavailable'),
       ]),
     );
@@ -86,7 +86,7 @@ void main() {
         contains(
           'Selected source is temporarily unavailable. AniDestiny is showing another source instead.',
         ),
-        contains('Fallback reason: Source attempt 1:'),
+        contains('Fallback reason: Exception: real source failed'),
         contains('Exception: real source failed'),
       ]),
     );
@@ -116,7 +116,7 @@ void main() {
 
     expect(result.sourceId, 'mock');
     expect(harness.events.single.reason, contains('https://example.test'));
-    expect(harness.events.single.reason, contains('Source attempt 1:'));
+    expect(harness.events.single.reason, contains('Exception: Failed'));
     expect(harness.events.single.reason, isNot(contains('sakura:')));
     expect(harness.events.single.reason, isNot(contains('token=secret')));
     expect(harness.events.single.reason, contains('/Users/<user>/'));
@@ -148,7 +148,6 @@ void main() {
               allOf([
                 contains('No source is currently available'),
                 contains('Fallback attempts:'),
-                contains('Source attempt 1:'),
                 contains('sakura failed'),
               ]),
             ),
