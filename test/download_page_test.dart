@@ -66,17 +66,20 @@ void main() {
   testWidgets('download page load surfaces repository errors calmly', (
     tester,
   ) async {
-    const failureMessage = 'Downloads are temporarily unavailable.';
+    const l10n = AppLocalizations(Locale('en'));
 
     await _pumpDownloadPage(
       tester,
       _FakeDownloadRepository(const []),
       downloadTasksStream: Stream<List<DownloadTask>>.error(
-        const AppException(failureMessage, code: 'download_busy'),
+        const AppException(
+          'Downloads are temporarily unavailable.',
+          code: 'download_busy',
+        ),
       ),
     );
 
-    expect(find.text(failureMessage), findsOneWidget);
+    expect(find.text(l10n.downloadActionBusyMessage), findsOneWidget);
     expect(find.textContaining('AppException'), findsNothing);
     expect(find.text('Retry'), findsOneWidget);
   });
@@ -84,6 +87,8 @@ void main() {
   testWidgets(
     'download page load hides raw app-exception wrappers behind calm fallback copy',
     (tester) async {
+      const l10n = AppLocalizations(Locale('en'));
+
       await _pumpDownloadPage(
         tester,
         _FakeDownloadRepository(const []),
@@ -95,9 +100,7 @@ void main() {
       );
 
       expect(
-        find.text(
-          'Downloads are temporarily unavailable. Try again in a moment.',
-        ),
+        find.text(l10n.downloadActionFailedMessage),
         findsOneWidget,
       );
       expect(find.textContaining('AppException'), findsNothing);

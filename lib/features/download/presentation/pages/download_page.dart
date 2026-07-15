@@ -777,10 +777,8 @@ class _DownloadPageState extends ConsumerState<DownloadPage>
   }
 
   String _pageErrorMessage(Object error) {
-    if (error is AppException &&
-        error.message.trim().isNotEmpty &&
-        !looksLikeRawDownloadFailureMessage(error.message)) {
-      return error.message;
+    if (error is AppException) {
+      return downloadActionErrorMessage(context.l10n, error);
     }
     return context.l10n.downloadPageLoadFailedMessage;
   }
