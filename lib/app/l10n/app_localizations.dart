@@ -267,6 +267,7 @@ class AppLocalizations {
       _t('downloadActionTaskNotFoundMessage');
   String get downloadActionNotAllowedMessage =>
       _t('downloadActionNotAllowedMessage');
+  String get downloadActionBusyMessage => _t('downloadActionBusyMessage');
   String get downloadFailureUnexpectedError =>
       _t('downloadFailureUnexpectedError');
   String get downloadPageLoadFailedMessage =>
@@ -1041,6 +1042,7 @@ const _localizedValues = {
     'downloadActionFailedMessage': 'AniDestiny 暂时没能完成这一步下载操作；请稍后再试。',
     'downloadActionTaskNotFoundMessage': '该下载任务不存在或已从列表移除，请稍后再试。',
     'downloadActionNotAllowedMessage': '该下载仍在进行中，请先停下后再移除，或稍后再试。',
+    'downloadActionBusyMessage': '该下载操作仍在进行中，请稍等后再试。',
     'downloadPageLoadFailedMessage': '下载列表暂时不可用；请稍后再试。',
     'downloadStartingStatus': '正在开始',
     'downloadRetryingStatus': '正在重试',
@@ -1424,6 +1426,8 @@ const _localizedValues = {
         'This download task was not found or was already removed. Please try again later.',
     'downloadActionNotAllowedMessage':
         'This download is still active. Please stop it first or try again a moment later.',
+    'downloadActionBusyMessage':
+        'This download action is still in progress. Please try again in a moment.',
     'downloadPageLoadFailedMessage':
         'Downloads are temporarily unavailable. Try again in a moment.',
     'downloadStartingStatus': 'Starting...',
@@ -1813,6 +1817,8 @@ const _localizedValues = {
         'このダウンロードは破棄されましたが、AniDestiny は未完了ファイルを自動で削除できませんでした。不要なら下のローカルパスをもとに手動で削除し、戻ってきたら「再確認」を押してください。',
     'downloadActionFailedMessage':
         'AniDestiny はこのダウンロード操作を今は完了できませんでした。少し待ってからもう一度お試しください。',
+    'downloadActionBusyMessage':
+        'このダウンロード操作はまだ進行中です。少し待ってからもう一度お試しください。',
     'downloadPageLoadFailedMessage': 'ダウンロード一覧は一時的に利用できません。少し待ってからもう一度お試しください。',
     'downloadStartingStatus': '開始中...',
     'downloadRetryingStatus': '再試行中...',

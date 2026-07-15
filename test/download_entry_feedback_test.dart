@@ -72,6 +72,16 @@ void main() {
       downloadActionErrorMessage(
         l10n,
         const AppException(
+          'Downloads are temporarily unavailable.',
+          code: 'download_busy',
+        ),
+      ),
+      l10n.downloadActionBusyMessage,
+    );
+    expect(
+      downloadActionErrorMessage(
+        l10n,
+        const AppException(
           'AppException: [download_failed] file write error',
           code: 'download_storage_unavailable',
         ),

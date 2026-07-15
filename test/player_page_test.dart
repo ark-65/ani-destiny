@@ -3432,7 +3432,12 @@ void main() {
     await tester.tap(find.widgetWithIcon(IconButton, Icons.download_outlined));
     await tester.pump();
 
-    expect(find.text(failureMessage), findsOneWidget);
+    expect(
+      find.text(
+        'This download action is still in progress. Please try again in a moment.',
+      ),
+      findsOneWidget,
+    );
     expect(find.textContaining('AppException'), findsNothing);
     expect(find.text('Open Downloads'), findsNothing);
   });
