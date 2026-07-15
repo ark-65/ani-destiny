@@ -1104,6 +1104,53 @@ void main() {
   );
 
   testWidgets(
+    'batch clear failures show readable action reasons for mixed outcomes',
+    (tester) async {
+      const l10n = AppLocalizations(Locale('en'));
+      final repository = _FakeDownloadRepository([
+        _task('completed', DownloadStatus.completed),
+        _task('failed', DownloadStatus.failed),
+      ]);
+      final service = _RemoveEndedTaskSequentialFailureDownloadService(
+        repository,
+        [
+          const AppException(
+            'AppException: [download_not_found] task is not in the list anymore',
+            code: 'download_not_found',
+          ),
+          const AppException(
+            'AppException: [download_manual_cleanup_required] manual cleanup still needed',
+            code: 'download_manual_cleanup_required',
+          ),
+        ],
+      );
+
+      await _pumpDownloadPage(
+        tester,
+        repository,
+        downloadService: service,
+      );
+
+      await tester
+          .tap(find.byKey(const ValueKey('downloads-clear-ended-tasks')));
+      await tester.pump();
+
+      expect(
+        find.textContaining('Cleared 0 ended tasks from the list, 2 failed.'),
+        findsOneWidget,
+      );
+      expect(
+        find.textContaining(l10n.downloadActionTaskNotFoundMessage),
+        findsOneWidget,
+      );
+      expect(
+        find.textContaining(l10n.downloadManualCleanupRequiredError),
+        findsOneWidget,
+      );
+    },
+  );
+
+  testWidgets(
     'clear ended tasks stays disabled while cleanup is still running',
     (tester) async {
       final deleteBlocker = Completer<void>();
@@ -2087,6 +2134,28 @@ class _RemoveEndedTaskFailureDownloadService extends _FakeDownloadService {
 
   @override
   Future<void> removeEndedTask(String taskId) async {
+    throw error;
+  }
+}
+
+class _RemoveEndedTaskSequentialFailureDownloadService
+    extends _FakeDownloadService {
+  _RemoveEndedTaskSequentialFailureDownloadService(
+    super.repository,
+    this.errors,
+  );
+
+  final List<Object> errors;
+  var _attemptIndex = 0;
+
+  @override
+  Future<void> removeEndedTask(String taskId) async {
+    final index = _attemptIndex;
+    _attemptIndex += 1;
+    if (index >= errors.length) {
+      return super.removeEndedTask(taskId);
+    }
+    final error = errors[index];
     throw error;
   }
 }

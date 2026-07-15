@@ -577,18 +577,19 @@ class _DownloadPageState extends ConsumerState<DownloadPage>
     final l10n = context.l10n;
     var clearedCount = 0;
     var failedCount = 0;
-    String? firstFailureMessage;
+    final List<String> failureMessages = [];
     for (final taskId in taskIds) {
       try {
         await service.removeEndedTask(taskId);
         clearedCount += 1;
       } catch (error) {
         failedCount += 1;
-        if (firstFailureMessage == null && mounted) {
-          firstFailureMessage = error is AppException &&
-                  error.code == 'download_manual_cleanup_required'
-              ? l10n.downloadManualCleanupRequiredError
-              : downloadActionErrorMessage(l10n, error);
+        final failureMessage = error is AppException &&
+                error.code == 'download_manual_cleanup_required'
+            ? l10n.downloadManualCleanupRequiredError
+            : downloadActionErrorMessage(l10n, error);
+        if (!failureMessages.contains(failureMessage)) {
+          failureMessages.add(failureMessage);
         }
       }
     }
@@ -604,10 +605,8 @@ class _DownloadPageState extends ConsumerState<DownloadPage>
         remainingTasks?.where(downloadTaskNeedsManualCleanup).length ?? 0;
     final remainingClearableTaskCount =
         remainingTasks == null ? 0 : _clearableTaskIds(remainingTasks).length;
-    final actionFailureMessage = failedCount > 0
-        ? firstFailureMessage == null
-            ? baseMessage
-            : '$baseMessage\n$firstFailureMessage'
+    final actionFailureMessage = failedCount > 0 && failureMessages.isNotEmpty
+        ? '$baseMessage\n${failureMessages.map((message) => '• $message').join('\n')}'
         : baseMessage;
     final message = remainingManualCleanupCount > 0
         ? '$actionFailureMessage\n${_manualCleanupRetentionGuidance(context, remainingManualCleanupCount, clearableTaskCount: remainingClearableTaskCount)}'
