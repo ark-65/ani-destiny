@@ -139,4 +139,27 @@ void main() {
       l10n.downloadManualCleanupRequiredError,
     );
   });
+
+  test('download action errors decode known code from AppException message', () {
+    const l10n = AppLocalizations(Locale('en'));
+
+    expect(
+      downloadActionErrorMessage(
+        l10n,
+        const AppException(
+          'AppException: [download_not_found] Downloads were removed from this source.',
+        ),
+      ),
+      l10n.downloadActionTaskNotFoundMessage,
+    );
+    expect(
+      downloadActionErrorMessage(
+        l10n,
+        const AppException(
+          'AppException: [download_not_found]',
+        ),
+      ),
+      l10n.downloadActionTaskNotFoundMessage,
+    );
+  });
 }

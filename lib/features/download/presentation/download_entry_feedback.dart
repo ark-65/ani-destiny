@@ -39,16 +39,27 @@ String downloadActionErrorMessage(
   AppLocalizations l10n,
   Object error,
 ) {
+  final appError = error is AppException;
   if (error is AppException && error.code != null) {
     final byCode = _downloadActionErrorMessageByCode(l10n, error.code!);
     if (byCode != null) {
       return byCode;
     }
   }
-  if (error is AppException &&
-      error.message.trim().isNotEmpty &&
-      !looksLikeRawDownloadFailureMessage(error.message)) {
-    return error.message;
+  if (!appError) {
+    return l10n.downloadActionFailedMessage;
+  }
+  final parsedError = _extractDownloadActionErrorCodeAndMessage(error.message);
+  final messageByCode = parsedError?.code == null
+      ? null
+      : _downloadActionErrorMessageByCode(l10n, parsedError!.code!);
+  if (messageByCode != null) {
+    return messageByCode;
+  }
+  final fallbackMessage = parsedError?.message ?? error.message;
+  if (fallbackMessage.trim().isNotEmpty &&
+      !looksLikeRawDownloadFailureMessage(fallbackMessage)) {
+    return fallbackMessage;
   }
   return l10n.downloadActionFailedMessage;
 }
@@ -73,4 +84,34 @@ String? _downloadActionErrorMessageByCode(
       l10n.downloadManualCleanupRequiredError,
     _ => null,
   };
+}
+
+_DownloadErrorCodeAndMessage? _extractDownloadActionErrorCodeAndMessage(
+  String message,
+) {
+  var trimmed = message.trim();
+  if (!trimmed.startsWith('AppException:')) {
+    return null;
+  }
+  trimmed = trimmed.substring('AppException:'.length).trimLeft();
+  if (!trimmed.startsWith('[')) {
+    return _DownloadErrorCodeAndMessage(null, trimmed);
+  }
+  final closingBracket = trimmed.indexOf(']');
+  if (closingBracket < 1) {
+    return _DownloadErrorCodeAndMessage(null, trimmed);
+  }
+  final code = trimmed.substring(1, closingBracket).trim();
+  final remainder = trimmed.substring(closingBracket + 1).trimLeft();
+  return _DownloadErrorCodeAndMessage(
+    code.isEmpty ? null : code,
+    remainder.isEmpty ? null : remainder,
+  );
+}
+
+class _DownloadErrorCodeAndMessage {
+  const _DownloadErrorCodeAndMessage(this.code, this.message);
+
+  final String? code;
+  final String? message;
 }
