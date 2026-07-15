@@ -263,6 +263,12 @@ class AppLocalizations {
   String get downloadDiscardedNeedsManualCleanupNote =>
       _t('downloadDiscardedNeedsManualCleanupNote');
   String get downloadActionFailedMessage => _t('downloadActionFailedMessage');
+  String get downloadActionTaskNotFoundMessage =>
+      _t('downloadActionTaskNotFoundMessage');
+  String get downloadActionNotAllowedMessage =>
+      _t('downloadActionNotAllowedMessage');
+  String get downloadFailureUnexpectedError =>
+      _t('downloadFailureUnexpectedError');
   String get downloadPageLoadFailedMessage =>
       _t('downloadPageLoadFailedMessage');
   String downloadDiscardedNeedsManualCleanupGuidance({
@@ -1033,6 +1039,8 @@ const _localizedValues = {
     'downloadDiscardedNeedsManualCleanupNote':
         '这个下载已放弃，但 AniDestiny 没能自动清掉残留的未完成文件；如果你不再需要它，请按下面的本地路径手动删除，删完后回到这里点一下“重新检查”。',
     'downloadActionFailedMessage': 'AniDestiny 暂时没能完成这一步下载操作；请稍后再试。',
+    'downloadActionTaskNotFoundMessage': '该下载任务不存在或已从列表移除，请稍后再试。',
+    'downloadActionNotAllowedMessage': '该下载仍在进行中，请先停下后再移除，或稍后再试。',
     'downloadPageLoadFailedMessage': '下载列表暂时不可用；请稍后再试。',
     'downloadStartingStatus': '正在开始',
     'downloadRetryingStatus': '正在重试',
@@ -1059,6 +1067,7 @@ const _localizedValues = {
     'downloadFailureUnsupportedType': '暂不支持该类型',
     'downloadFailurePermissionDenied': '权限不足',
     'downloadFailureNetworkError': '网络错误',
+    'downloadFailureUnexpectedError': '下载时发生意外异常',
     'downloadFailureSourceUnavailable': '数据源不可用',
     'downloadFailureInvalidUrl': 'URL 无效',
     'downloadFailureInvalidManifest': 'm3u8 无效',
@@ -1411,6 +1420,10 @@ const _localizedValues = {
         'This download was discarded, but AniDestiny could not clear the partial file automatically. Remove the leftover file from your device if you no longer need it, then return here and tap Check again.',
     'downloadActionFailedMessage':
         'AniDestiny could not finish that download action right now. Try again in a moment.',
+    'downloadActionTaskNotFoundMessage':
+        'This download task was not found or was already removed. Please try again later.',
+    'downloadActionNotAllowedMessage':
+        'This download is still active. Please stop it first or try again a moment later.',
     'downloadPageLoadFailedMessage':
         'Downloads are temporarily unavailable. Try again in a moment.',
     'downloadStartingStatus': 'Starting...',
@@ -1442,6 +1455,7 @@ const _localizedValues = {
     'downloadFailureUnsupportedType': 'Unsupported type',
     'downloadFailurePermissionDenied': 'Permission denied',
     'downloadFailureNetworkError': 'Network error',
+    'downloadFailureUnexpectedError': 'Unexpected download error',
     'downloadFailureSourceUnavailable': 'Source unavailable',
     'downloadFailureInvalidUrl': 'Invalid URL',
     'downloadFailureInvalidManifest': 'Invalid m3u8',
@@ -1828,6 +1842,7 @@ const _localizedValues = {
     'downloadFailureUnsupportedType': '未対応の種類',
     'downloadFailurePermissionDenied': '権限がありません',
     'downloadFailureNetworkError': 'ネットワークエラー',
+    'downloadFailureUnexpectedError': 'ダウンロード中に予期しないエラーが発生しました',
     'downloadFailureSourceUnavailable': 'ソースを利用できません',
     'downloadFailureInvalidUrl': 'URL が無効です',
     'downloadFailureInvalidManifest': 'm3u8 が無効です',
@@ -1940,8 +1955,7 @@ const _localizedValues = {
     'sourceTemporarilyUnavailable': 'ソースが一時的に利用できません',
     'sourceUnavailableSuggestion':
         '上流ソースが変更されたか、一時的に利用できません。先に別のソースへ切り替えてから再試行してください。',
-  'noPlayableSourceFound':
-      '再生可能なソースが見つかりません。別のソースに切り替えてから再試行してください。',
+    'noPlayableSourceFound': '再生可能なソースが見つかりません。別のソースに切り替えてから再試行してください。',
     'playbackFailedSuggestion': '再生に一時的に失敗しました。再試行するか、別の再生ラインを試してください。',
     'sources': 'ソース',
     'loadingCurrentSource': '現在のソースを読み込み中',

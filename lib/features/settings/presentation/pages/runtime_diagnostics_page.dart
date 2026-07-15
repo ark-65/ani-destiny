@@ -312,10 +312,41 @@ class _FallbackEventTile extends StatelessWidget {
     return _DiagnosticTile(
       label:
           '${context.l10n.sourceOperationLabel(event.operation)}: ${context.l10n.sourceTransitionLabel(event.fromSourceId, event.toSourceId)}',
-      value: sanitizeError(event.reason),
+      value: _formatFallbackEventReason(event.reason),
       icon: Icons.swap_horiz_outlined,
     );
   }
+}
+
+final _fallbackAttemptPrefix = RegExp(r'^Source attempt \d+:\s*');
+
+String _formatFallbackEventReason(String reason) {
+  final normalized = sanitizeError(reason).trim();
+  if (normalized.isEmpty) {
+    return normalized;
+  }
+
+  if (!_fallbackAttemptPrefix.hasMatch(normalized)) {
+    return normalized;
+  }
+
+  final reasons = normalized
+      .split(' · ')
+      .map((entry) => entry.trim())
+      .where((entry) => entry.isNotEmpty)
+      .map((entry) => entry.replaceFirst(_fallbackAttemptPrefix, ''))
+      .where((entry) => entry.isNotEmpty)
+      .toList(growable: false);
+
+  if (reasons.isEmpty) {
+    return normalized;
+  }
+
+  if (reasons.length == 1) {
+    return reasons.single;
+  }
+
+  return reasons.join('\n');
 }
 
 class _DiagnosticTile extends StatelessWidget {
@@ -356,7 +387,8 @@ class _SourceDiagnosticTile extends StatelessWidget {
           diagnostic.fromSourceId!,
           diagnostic.toSourceId!,
         ),
-      if (diagnostic.reason != null) sanitizeError(diagnostic.reason!),
+      if (diagnostic.reason != null)
+        _formatFallbackEventReason(diagnostic.reason!),
     ];
 
     return ListTile(
@@ -366,9 +398,10 @@ class _SourceDiagnosticTile extends StatelessWidget {
       ),
       subtitle: SelectableText(
         [
-          sanitizeError(diagnostic.message),
+          if (_diagnosticMessageLine(diagnostic) != null)
+            _diagnosticMessageLine(diagnostic),
           if (details.isNotEmpty) details.join(' · '),
-        ].join('\n'),
+        ].whereType<String>().where((line) => line.trim().isNotEmpty).join('\n'),
       ),
     );
   }
@@ -380,6 +413,22 @@ class _SourceDiagnosticTile extends StatelessWidget {
       SourceDiagnosticLevel.error => Icons.error_outline,
     };
   }
+}
+
+String? _diagnosticMessageLine(SourceDiagnostic diagnostic) {
+  final message = sanitizeError(diagnostic.message).trim();
+  if (message.isEmpty) {
+    return null;
+  }
+  final reason = diagnostic.reason?.trim() ?? '';
+  if (_isSourceFallbackMessageBoilerplate(message) && reason.isNotEmpty) {
+    return null;
+  }
+  return message;
+}
+
+bool _isSourceFallbackMessageBoilerplate(String message) {
+  return message == 'Source fallback used.' || message == 'Source fallback used';
 }
 
 Future<void> _copyDiagnostics(BuildContext context, WidgetRef ref) async {

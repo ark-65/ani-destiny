@@ -53,7 +53,13 @@ void main() {
     expect(harness.calls, ['remote-proxy', 'sakura']);
     expect(
       result.message,
-      'Selected source is temporarily unavailable. AniDestiny is showing another source instead.',
+      allOf([
+        contains(
+          'Selected source is temporarily unavailable. AniDestiny is showing another source instead.',
+        ),
+        contains('Fallback reason: Exception: selected unavailable'),
+        contains('Exception: selected unavailable'),
+      ]),
     );
   });
 
@@ -76,7 +82,13 @@ void main() {
     expect(harness.events.single.toSourceId, 'mock');
     expect(
       result.message,
-      'Selected source is temporarily unavailable. AniDestiny is showing another source instead.',
+      allOf([
+        contains(
+          'Selected source is temporarily unavailable. AniDestiny is showing another source instead.',
+        ),
+        contains('Fallback reason: Exception: real source failed'),
+        contains('Exception: real source failed'),
+      ]),
     );
   });
 
@@ -104,7 +116,7 @@ void main() {
 
     expect(result.sourceId, 'mock');
     expect(harness.events.single.reason, contains('https://example.test'));
-    expect(harness.events.single.reason, contains('Source attempt 1:'));
+    expect(harness.events.single.reason, contains('Exception: Failed'));
     expect(harness.events.single.reason, isNot(contains('sakura:')));
     expect(harness.events.single.reason, isNot(contains('token=secret')));
     expect(harness.events.single.reason, contains('/Users/<user>/'));
@@ -113,7 +125,7 @@ void main() {
     expect(recorder.items.last.reason, isNot(contains('token=secret')));
   });
 
-  test('all sources failed throws AppException', () async {
+  test('all sources failed throws AppException with fallback attempts', () async {
     final harness = await _Harness.create(selectedSourceId: 'sakura');
 
     await expectLater(
@@ -123,7 +135,23 @@ void main() {
           throw Exception('${adapter.id} failed');
         },
       ),
-      throwsA(isA<AppException>()),
+      throwsA(
+        isA<AppException>()
+            .having(
+              (error) => error.code,
+              'code',
+              'source_fallback_exhausted',
+            )
+            .having(
+              (error) => error.message,
+              'message includes fallback attempts',
+              allOf([
+                contains('No source is currently available'),
+                contains('Fallback attempts:'),
+                contains('sakura failed'),
+              ]),
+            ),
+      ),
     );
   });
 

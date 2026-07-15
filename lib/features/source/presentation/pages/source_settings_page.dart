@@ -295,9 +295,40 @@ class _FallbackEventTile extends StatelessWidget {
       title: Text(
         '${context.l10n.sourceOperationLabel(event.operation)}: ${context.l10n.sourceTransitionLabel(event.fromSourceId, event.toSourceId)}',
       ),
-      subtitle: Text(sanitizeError(event.reason)),
+      subtitle: Text(_formatFallbackEventReason(event.reason)),
     );
   }
+}
+
+final _fallbackAttemptPrefix = RegExp(r'^Source attempt \d+:\s*');
+
+String _formatFallbackEventReason(String reason) {
+  final normalized = sanitizeError(reason).trim();
+  if (normalized.isEmpty) {
+    return normalized;
+  }
+
+  if (!_fallbackAttemptPrefix.hasMatch(normalized)) {
+    return normalized;
+  }
+
+  final reasons = normalized
+      .split(' · ')
+      .map((entry) => entry.trim())
+      .where((entry) => entry.isNotEmpty)
+      .map((entry) => entry.replaceFirst(_fallbackAttemptPrefix, ''))
+      .where((entry) => entry.isNotEmpty)
+      .toList(growable: false);
+
+  if (reasons.isEmpty) {
+    return normalized;
+  }
+
+  if (reasons.length == 1) {
+    return reasons.single;
+  }
+
+  return reasons.join('\n');
 }
 
 class _SourceDiagnosticTile extends StatelessWidget {
@@ -312,6 +343,7 @@ class _SourceDiagnosticTile extends StatelessWidget {
       SourceDiagnosticLevel.warning => Theme.of(context).colorScheme.tertiary,
       SourceDiagnosticLevel.error => Theme.of(context).colorScheme.error,
     };
+    final messageLine = _diagnosticMessageLine(diagnostic);
     final timestamp = diagnostic.timestamp;
     final details = [
       if (diagnostic.url != null) sanitizeUrlForDiagnostics(diagnostic.url!),
@@ -323,7 +355,8 @@ class _SourceDiagnosticTile extends StatelessWidget {
           diagnostic.fromSourceId!,
           diagnostic.toSourceId!,
         ),
-      if (diagnostic.reason != null) sanitizeError(diagnostic.reason!),
+      if (diagnostic.reason != null)
+        _formatFallbackEventReason(diagnostic.reason!),
       if (timestamp != null)
         '${timestamp.hour.toString().padLeft(2, '0')}:${timestamp.minute.toString().padLeft(2, '0')}:${timestamp.second.toString().padLeft(2, '0')}',
     ];
@@ -336,10 +369,26 @@ class _SourceDiagnosticTile extends StatelessWidget {
       ),
       subtitle: Text(
         [
-          sanitizeError(diagnostic.message),
+          if (messageLine != null) messageLine,
           if (details.isNotEmpty) details.join(' · '),
         ].join('\n'),
       ),
     );
   }
+}
+
+String? _diagnosticMessageLine(SourceDiagnostic diagnostic) {
+  final message = sanitizeError(diagnostic.message).trim();
+  if (message.isEmpty) {
+    return null;
+  }
+  final reason = diagnostic.reason?.trim() ?? '';
+  if (_isSourceFallbackMessageBoilerplate(message) && reason.isNotEmpty) {
+    return null;
+  }
+  return message;
+}
+
+bool _isSourceFallbackMessageBoilerplate(String message) {
+  return message == 'Source fallback used.' || message == 'Source fallback used';
 }

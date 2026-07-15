@@ -12,6 +12,9 @@ import '../../domain/services/source_health_service.dart';
 import '../registry/source_registry.dart';
 
 class SourceFallbackServiceImpl implements SourceFallbackService {
+  static final RegExp _fallbackAttemptPrefix =
+      RegExp(r'^Source attempt \d+:\s*');
+
   const SourceFallbackServiceImpl({
     required SourceRepository sourceRepository,
     required SourceRegistry registry,
@@ -45,11 +48,9 @@ class SourceFallbackServiceImpl implements SourceFallbackService {
       allowMockFallback: allowMockFallback,
     );
     final failures = <String>[];
-    var attemptCount = 0;
     Object? lastError;
 
     for (final adapter in adapters) {
-      attemptCount += 1;
       try {
         final value = await action(adapter);
         if (isFailureValue?.call(value) ?? false) {
@@ -63,9 +64,7 @@ class SourceFallbackServiceImpl implements SourceFallbackService {
           operation: operation,
         );
         if (adapter.id != selectedSourceId) {
-          final reason = failures.isEmpty
-              ? 'Selected source is unavailable.'
-              : failures.join(' · ');
+          final reason = _buildFallbackReason(failures);
           _recordFallback(
             fromSourceId: selectedSourceId,
             toSourceId: adapter.id,
@@ -81,14 +80,11 @@ class SourceFallbackServiceImpl implements SourceFallbackService {
               adapter.id == selectedSourceId ? null : selectedSourceId,
           message: adapter.id == selectedSourceId
               ? null
-              : 'Selected source is temporarily unavailable. AniDestiny is showing another source instead.',
+              : _buildFallbackResultMessage(failures),
         );
       } on Object catch (error) {
         lastError = error;
-        failures.add(
-          'Source attempt $attemptCount: '
-          '${summarizeSourceFailure(error, maxLength: 120)}',
-        );
+        failures.add(summarizeSourceFailure(error, maxLength: 120));
         _healthService.recordFailure(
           sourceId: adapter.id,
           operation: operation,
@@ -108,8 +104,12 @@ class SourceFallbackServiceImpl implements SourceFallbackService {
       }
     }
 
+    final reason = _buildFallbackReason(failures);
     throw AppException(
-      'No source is currently available. Try another source or retry later.',
+      failures.isEmpty
+          ? 'No source is currently available. Try another source or retry later.'
+          : 'No source is currently available. Try another source or retry later. '
+              'Fallback attempts: $reason',
       code: 'source_fallback_exhausted',
       cause: lastError,
     );
@@ -164,5 +164,18 @@ class SourceFallbackServiceImpl implements SourceFallbackService {
         reason: reason,
       ),
     );
+  }
+
+  String _buildFallbackReason(List<String> failures) {
+    if (failures.isEmpty) return 'No additional fallback context.';
+    return failures
+        .map((reason) => reason.replaceFirst(_fallbackAttemptPrefix, ''))
+        .join(' · ');
+  }
+
+  String _buildFallbackResultMessage(List<String> failures) {
+    final reason = _buildFallbackReason(failures);
+    return 'Selected source is temporarily unavailable. AniDestiny is showing another source instead. '
+        'Fallback reason: $reason';
   }
 }
