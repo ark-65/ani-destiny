@@ -184,5 +184,27 @@ void main() {
       ),
       l10n.downloadActionTaskNotFoundMessage,
     );
+
+    expect(
+      downloadActionErrorMessage(
+        l10n,
+        '[download_not_found] removed from list',
+      ),
+      l10n.downloadActionTaskNotFoundMessage,
+    );
+    expect(
+      downloadActionErrorMessage(
+        l10n,
+        'download_network_error: no route to host',
+      ),
+      '${l10n.downloadFailureNetworkError}. ${l10n.downloadActionFailedMessage}',
+    );
+    expect(
+      downloadActionErrorMessage(
+        l10n,
+        'download_busy: action in progress',
+      ),
+      l10n.downloadActionBusyMessage,
+    );
   });
 }

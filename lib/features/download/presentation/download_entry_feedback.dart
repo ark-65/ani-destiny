@@ -39,6 +39,16 @@ String downloadActionErrorMessage(
   AppLocalizations l10n,
   Object error,
 ) {
+  final rawMessage = error is AppException
+      ? error.message
+      : error is String
+          ? error
+          : null;
+
+  if (rawMessage == null) {
+    return l10n.downloadActionFailedMessage;
+  }
+
   final appError = error is AppException;
   if (error is AppException && error.code != null) {
     final byCode = _downloadActionErrorMessageByCode(l10n, error.code!);
@@ -47,16 +57,22 @@ String downloadActionErrorMessage(
     }
   }
   if (!appError) {
-    return l10n.downloadActionFailedMessage;
+    final parsedPlainMessage = _extractDownloadActionErrorCodeAndMessage(rawMessage);
+    final plainMessageByCode = parsedPlainMessage?.code == null
+        ? null
+        : _downloadActionErrorMessageByCode(l10n, parsedPlainMessage!.code!);
+    if (plainMessageByCode != null) {
+      return plainMessageByCode;
+    }
   }
-  final parsedError = _extractDownloadActionErrorCodeAndMessage(error.message);
+  final parsedError = _extractDownloadActionErrorCodeAndMessage(rawMessage);
   final messageByCode = parsedError?.code == null
       ? null
       : _downloadActionErrorMessageByCode(l10n, parsedError!.code!);
   if (messageByCode != null) {
     return messageByCode;
   }
-  final fallbackMessage = parsedError?.message ?? error.message;
+  final fallbackMessage = parsedError?.message ?? rawMessage;
   if (fallbackMessage.trim().isNotEmpty &&
       !looksLikeRawDownloadFailureMessage(fallbackMessage)) {
     return fallbackMessage;
@@ -97,6 +113,16 @@ _DownloadErrorCodeAndMessage? _extractDownloadActionErrorCodeAndMessage(
     }
   }
   if (!trimmed.startsWith('[')) {
+    final plainCodeMatch = RegExp(r'^(download_[a-zA-Z0-9_]+)\s*:?\s*(.*)$')
+        .firstMatch(trimmed);
+    if (plainCodeMatch != null) {
+      final code = plainCodeMatch.group(1)!;
+      final remainder = plainCodeMatch.group(2)!.trim();
+      return _DownloadErrorCodeAndMessage(
+        code,
+        remainder.isEmpty ? null : remainder,
+      );
+    }
     return null;
   }
   final closingBracket = trimmed.indexOf(']');

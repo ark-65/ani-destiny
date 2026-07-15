@@ -10,6 +10,7 @@
 - Added a tighter issue-reporting flow: tapping Report issue copies a sanitized diagnostics summary and opens a prefilled GitHub issue, while users who are not signed in to GitHub can paste the same report into any support channel.
 
 ### 🐛 Fixed
+- Fixed download action feedback to parse plain-string `download_*` error payloads (for example `[download_busy]` and `download_network_error: ...`) so non-AppException string errors keep returning localized reasons instead of raw technical copy.
 - Fixed batch clear of ended download tasks to report multiple readable failure reasons when clear failures come from mixed causes, so users can tell missing-task, manual-cleanup, or other specific failures apart at a glance.
 - Fixed batch clear failure summary feedback so mixed-clear outcomes now consistently keep a readable failure reason visible alongside the failed count, while keeping non-AppException copies calm and free of raw `StateError` wording.
 - Fixed download action failure handling so additional error codes (`download_not_found`, `download_remove_not_allowed`, `download_manual_cleanup_required`) no longer leak English implementation copy; they now use localized user-facing messages.
