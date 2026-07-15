@@ -1065,6 +1065,39 @@ void main() {
   );
 
   testWidgets(
+    'batch clear failures show readable action reason for non-app exceptions',
+    (tester) async {
+      const l10n = AppLocalizations(Locale('en'));
+      final repository = _FakeDownloadRepository([
+        _task('completed', DownloadStatus.completed),
+        _task('failed', DownloadStatus.failed),
+      ]);
+      final service = _RemoveEndedTaskFailureDownloadService(
+        repository,
+        StateError('remove failed because of a filesystem lock'),
+      );
+
+      await _pumpDownloadPage(
+        tester,
+        repository,
+        downloadService: service,
+      );
+
+      await tester
+          .tap(find.byKey(const ValueKey('downloads-clear-ended-tasks')));
+      await tester.pump();
+
+      expect(
+        find.textContaining('Cleared 0 ended tasks from the list, 2 failed.'),
+        findsOneWidget,
+      );
+      expect(find.textContaining(l10n.downloadActionFailedMessage), findsOneWidget);
+      expect(find.textContaining('filesystem lock'), findsNothing);
+      expect(find.textContaining('StateError'), findsNothing);
+    },
+  );
+
+  testWidgets(
     'clear ended tasks stays disabled while cleanup is still running',
     (tester) async {
       final deleteBlocker = Completer<void>();

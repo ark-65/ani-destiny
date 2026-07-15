@@ -584,8 +584,9 @@ class _DownloadPageState extends ConsumerState<DownloadPage>
         clearedCount += 1;
       } catch (error) {
         failedCount += 1;
-        if (firstFailureMessage == null && mounted && error is AppException) {
-          firstFailureMessage = error.code == 'download_manual_cleanup_required'
+        if (firstFailureMessage == null && mounted) {
+          firstFailureMessage = error is AppException &&
+                  error.code == 'download_manual_cleanup_required'
               ? l10n.downloadManualCleanupRequiredError
               : downloadActionErrorMessage(l10n, error);
         }

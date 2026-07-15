@@ -11,6 +11,7 @@
 
 ### 🐛 Fixed
 - Fixed download action failure handling so additional error codes (`download_not_found`, `download_remove_not_allowed`, `download_manual_cleanup_required`) no longer leak English implementation copy; they now use localized user-facing messages.
+- Fixed batch-clear failure feedback so non-AppException failures now show a readable action-level reason instead of only the failed count, with non-coded failures now falling back to the same calm retry guidance in `downloadActionErrorMessage`.
 - Fixed batch download-clear failures so when a bulk remove action hits a known app exception, the snackbar now shows a readable failure reason alongside the summary counts, instead of only surfacing “X failed.”.
 - Fixed download action failure copy so AppException codes for known network and storage failures now map to localized readable reasons plus retry guidance, instead of surfacing ambiguous raw exception detail and leaving users guessing what failed.
 - Fixed download action failures with `download_unsupported_type` so users now get a clear `Unsupported type` reason before retry guidance, replacing the previous opaque generic failure behavior.
