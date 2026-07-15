@@ -90,8 +90,11 @@ _DownloadErrorCodeAndMessage? _extractDownloadActionErrorCodeAndMessage(
   String message,
 ) {
   var trimmed = message.trimLeft();
-  if (trimmed.startsWith('AppException:')) {
-    trimmed = trimmed.substring('AppException:'.length).trimLeft();
+  if (trimmed.startsWith('AppException')) {
+    trimmed = trimmed.substring('AppException'.length).trimLeft();
+    if (trimmed.startsWith(':')) {
+      trimmed = trimmed.substring(1).trimLeft();
+    }
   }
   if (!trimmed.startsWith('[')) {
     return null;

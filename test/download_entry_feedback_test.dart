@@ -156,6 +156,15 @@ void main() {
       downloadActionErrorMessage(
         l10n,
         const AppException(
+          'AppException [download_not_found] Downloads were removed from this source.',
+        ),
+      ),
+      l10n.downloadActionTaskNotFoundMessage,
+    );
+    expect(
+      downloadActionErrorMessage(
+        l10n,
+        const AppException(
           'AppException: [download_not_found]',
         ),
       ),
