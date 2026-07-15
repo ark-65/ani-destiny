@@ -1025,6 +1025,46 @@ void main() {
   );
 
   testWidgets(
+    'batch clear failures show readable action reason for app exceptions',
+    (tester) async {
+      final repository = _FakeDownloadRepository([
+        _task('completed', DownloadStatus.completed),
+        _task('failed', DownloadStatus.failed),
+      ]);
+      final service = _RemoveEndedTaskFailureDownloadService(
+        repository,
+        const AppException(
+          'AppException: [download_not_found] task is not in the list anymore',
+          code: 'download_not_found',
+        ),
+      );
+
+      await _pumpDownloadPage(
+        tester,
+        repository,
+        downloadService: service,
+      );
+
+      await tester
+          .tap(find.byKey(const ValueKey('downloads-clear-ended-tasks')));
+      await tester.pump();
+
+      expect(
+        find.textContaining('Cleared 0 ended tasks from the list, 2 failed.'),
+        findsOneWidget,
+      );
+      expect(
+        find.textContaining(
+          'This download task was not found or was already removed. Please try again later.',
+        ),
+        findsOneWidget,
+      );
+      expect(find.textContaining('AppException'), findsNothing);
+      expect(find.textContaining('[download_not_found]'), findsNothing);
+    },
+  );
+
+  testWidgets(
     'clear ended tasks stays disabled while cleanup is still running',
     (tester) async {
       final deleteBlocker = Completer<void>();
