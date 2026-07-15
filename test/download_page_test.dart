@@ -992,6 +992,7 @@ void main() {
   testWidgets(
     'clear ended tasks continues after one deletion fails and shows summary',
     (tester) async {
+      const l10n = AppLocalizations(Locale('en'));
       final repository = _FakeDownloadRepository(
         [
           _task('pending', DownloadStatus.pending),
@@ -1018,9 +1019,14 @@ void main() {
         ['completed', 'canceled', 'unsupported'],
       );
       expect(
-        find.text('Cleared 3 ended tasks from the list, 1 failed.'),
+        find.textContaining('Cleared 3 ended tasks from the list, 1 failed.'),
         findsOneWidget,
       );
+      expect(
+        find.textContaining(l10n.downloadActionFailedMessage),
+        findsOneWidget,
+      );
+      expect(find.textContaining('delete failed for failed'), findsNothing);
     },
   );
 

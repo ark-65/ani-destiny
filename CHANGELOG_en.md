@@ -10,6 +10,7 @@
 - Added a tighter issue-reporting flow: tapping Report issue copies a sanitized diagnostics summary and opens a prefilled GitHub issue, while users who are not signed in to GitHub can paste the same report into any support channel.
 
 ### 🐛 Fixed
+- Fixed batch clear failure summary feedback so mixed-clear outcomes now consistently keep a readable failure reason visible alongside the failed count, while keeping non-AppException copies calm and free of raw `StateError` wording.
 - Fixed download action failure handling so additional error codes (`download_not_found`, `download_remove_not_allowed`, `download_manual_cleanup_required`) no longer leak English implementation copy; they now use localized user-facing messages.
 - Fixed batch-clear failure feedback so non-AppException failures now show a readable action-level reason instead of only the failed count, with non-coded failures now falling back to the same calm retry guidance in `downloadActionErrorMessage`.
 - Fixed batch download-clear failures so when a bulk remove action hits a known app exception, the snackbar now shows a readable failure reason alongside the summary counts, instead of only surfacing “X failed.”.
