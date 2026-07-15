@@ -193,9 +193,9 @@ void main() {
 
     expect(find.textContaining('StateError'), findsNothing);
     expect(
-      find.text(unexpectedDownloadFailureMessage),
-      findsOneWidget,
-    );
+        find.text('Unexpected download error'),
+        findsOneWidget,
+      );
   });
 
   testWidgets(
