@@ -161,5 +161,19 @@ void main() {
       ),
       l10n.downloadActionTaskNotFoundMessage,
     );
+    expect(
+      downloadActionErrorMessage(
+        l10n,
+        const AppException('[download_not_found]'),
+      ),
+      l10n.downloadActionTaskNotFoundMessage,
+    );
+    expect(
+      downloadActionErrorMessage(
+        l10n,
+        const AppException('[download_not_found] removed from list'),
+      ),
+      l10n.downloadActionTaskNotFoundMessage,
+    );
   });
 }

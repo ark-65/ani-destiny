@@ -89,13 +89,12 @@ String? _downloadActionErrorMessageByCode(
 _DownloadErrorCodeAndMessage? _extractDownloadActionErrorCodeAndMessage(
   String message,
 ) {
-  var trimmed = message.trim();
-  if (!trimmed.startsWith('AppException:')) {
-    return null;
+  var trimmed = message.trimLeft();
+  if (trimmed.startsWith('AppException:')) {
+    trimmed = trimmed.substring('AppException:'.length).trimLeft();
   }
-  trimmed = trimmed.substring('AppException:'.length).trimLeft();
   if (!trimmed.startsWith('[')) {
-    return _DownloadErrorCodeAndMessage(null, trimmed);
+    return null;
   }
   final closingBracket = trimmed.indexOf(']');
   if (closingBracket < 1) {
