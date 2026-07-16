@@ -268,7 +268,7 @@ class _DownloadPageState extends ConsumerState<DownloadPage>
                       clearableTaskIds.length == 1 &&
                       manualCleanupTaskCount > 0;
                   final showRecheckManualCleanupAction =
-                      manualCleanupTaskCount > 0;
+                      manualCleanupTaskCount > 1 || clearableTaskIds.isEmpty;
                   final manualCleanupBatchRecheckLabel =
                       showRecheckManualCleanupAction
                           ? context.l10n.recheckLeftoverFilesCount(
