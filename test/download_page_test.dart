@@ -1151,6 +1151,68 @@ void main() {
   );
 
   testWidgets(
+    'batch clear failures with manual cleanup still offer a check again action',
+    (tester) async {
+      const l10n = AppLocalizations(Locale('en'));
+      final repository = _FakeDownloadRepository([
+        _task('completed', DownloadStatus.completed),
+        _task('failed', DownloadStatus.failed),
+      ]);
+      final service = _RemoveEndedTaskSequentialFailureDownloadService(
+        repository,
+        [
+          const AppException(
+            'AppException: [download_not_found] task is not in the list anymore',
+            code: 'download_not_found',
+          ),
+          const AppException(
+            'AppException: [download_manual_cleanup_required] manual cleanup still needed',
+            code: 'download_manual_cleanup_required',
+          ),
+        ],
+      );
+
+      await _pumpDownloadPage(
+        tester,
+        repository,
+        downloadService: service,
+      );
+
+      await tester
+          .tap(find.byKey(const ValueKey('downloads-clear-ended-tasks')));
+      await tester.pump();
+
+      expect(
+        find.textContaining('Cleared 0 ended tasks from the list, 2 failed.'),
+        findsOneWidget,
+      );
+      expect(
+        find.textContaining(l10n.downloadActionTaskNotFoundMessage),
+        findsOneWidget,
+      );
+      expect(
+        find.textContaining(l10n.downloadManualCleanupRequiredError),
+        findsOneWidget,
+      );
+      final recheckAction =
+          find.widgetWithText(SnackBarAction, l10n.checkAgain);
+      expect(recheckAction, findsOneWidget);
+
+      tester.widget<SnackBarAction>(recheckAction).onPressed();
+      await tester.pump();
+
+      expect(
+        find.textContaining(
+          l10n.downloadManualCleanupRecheckClearedAction(
+            l10n.clearEndedDownloadsCount(2),
+          ),
+        ),
+        findsOneWidget,
+      );
+    },
+  );
+
+  testWidgets(
     'clear ended tasks stays disabled while cleanup is still running',
     (tester) async {
       final deleteBlocker = Completer<void>();

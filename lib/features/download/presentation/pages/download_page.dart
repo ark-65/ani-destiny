@@ -74,6 +74,31 @@ class _DownloadPageState extends ConsumerState<DownloadPage>
     return null;
   }
 
+  _DownloadSnackBarAction? _manualCleanupFailureFollowUpSnackBarAction(
+    List<DownloadTask>? tasks, {
+    required List<String> manualCleanupTaskIds,
+  }) {
+    if (manualCleanupTaskIds.isEmpty || tasks == null || tasks.isEmpty) {
+      return null;
+    }
+    final manualCleanupTasks = tasks
+        .where((task) => manualCleanupTaskIds.contains(task.id))
+        .toList(growable: false);
+    if (manualCleanupTasks.isEmpty) {
+      return null;
+    }
+    if (manualCleanupTasks.length == 1) {
+      return _DownloadSnackBarAction(
+        label: context.l10n.checkAgain,
+        onPressed: () => _refreshCleanupStatus(manualCleanupTasks.single),
+      );
+    }
+    return _DownloadSnackBarAction(
+      label: context.l10n.checkAgain,
+      onPressed: () => _recheckManualCleanupTasks(manualCleanupTasks),
+    );
+  }
+
   @override
   void initState() {
     super.initState();
@@ -618,6 +643,7 @@ class _DownloadPageState extends ConsumerState<DownloadPage>
     final l10n = context.l10n;
     var clearedCount = 0;
     var failedCount = 0;
+    final manualCleanupTaskIds = <String>[];
     final List<String> failureMessages = [];
     for (final taskId in taskIds) {
       try {
@@ -625,6 +651,9 @@ class _DownloadPageState extends ConsumerState<DownloadPage>
         clearedCount += 1;
       } catch (error) {
         failedCount += 1;
+        if (downloadActionErrorCode(error) == 'download_manual_cleanup_required') {
+          manualCleanupTaskIds.add(taskId);
+        }
         final failureMessage = error is AppException &&
                 error.code == 'download_manual_cleanup_required'
             ? l10n.downloadManualCleanupRequiredError
@@ -652,7 +681,17 @@ class _DownloadPageState extends ConsumerState<DownloadPage>
     final message = remainingManualCleanupCount > 0
         ? '$actionFailureMessage\n${_manualCleanupRetentionGuidance(context, remainingManualCleanupCount, clearableTaskCount: remainingClearableTaskCount)}'
         : actionFailureMessage;
-    _showDownloadSnackBar(message);
+    final manualCleanupTasks = remainingTasks
+        ?.where((task) => manualCleanupTaskIds.contains(task.id))
+        .toList(growable: false);
+    final followUpAction = _manualCleanupFailureFollowUpSnackBarAction(
+      manualCleanupTasks,
+      manualCleanupTaskIds: manualCleanupTaskIds,
+    );
+    _showDownloadSnackBar(
+      message,
+      action: followUpAction,
+    );
   }
 
   Future<void> _handleClearRemovableTasks(List<String> taskIds) async {
