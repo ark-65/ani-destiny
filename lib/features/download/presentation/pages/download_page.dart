@@ -554,8 +554,13 @@ class _DownloadPageState extends ConsumerState<DownloadPage>
       await action();
     } catch (error) {
       if (!context.mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(_actionErrorMessage(context, error))),
+      _showDownloadSnackBar(
+        _actionErrorMessage(context, error),
+        action: _taskActionFailureSnackBarAction(
+          taskId: taskId,
+          error: error,
+          busyAction: busyAction,
+        ),
       );
     } finally {
       if (mounted) {
@@ -566,6 +571,40 @@ class _DownloadPageState extends ConsumerState<DownloadPage>
         _busyTaskActions.remove(taskId);
       }
     }
+  }
+
+  _DownloadSnackBarAction? _taskActionFailureSnackBarAction({
+    required String taskId,
+    required Object error,
+    required DownloadTaskBusyAction busyAction,
+  }) {
+    if (busyAction != DownloadTaskBusyAction.remove) {
+      return null;
+    }
+    if (error is AppException && error.code == 'download_manual_cleanup_required') {
+      final task = _findTask(taskId);
+      if (task == null) {
+        return null;
+      }
+      return _DownloadSnackBarAction(
+        label: context.l10n.checkAgain,
+        onPressed: () => _refreshCleanupStatus(task),
+      );
+    }
+    return null;
+  }
+
+  DownloadTask? _findTask(String taskId) {
+    final tasks = ref.read(downloadTasksProvider).valueOrNull;
+    if (tasks == null) {
+      return null;
+    }
+    for (final task in tasks) {
+      if (task.id == taskId) {
+        return task;
+      }
+    }
+    return null;
   }
 
   Future<void> _clearRemovableTasks(

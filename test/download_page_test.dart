@@ -1300,6 +1300,49 @@ void main() {
   );
 
   testWidgets(
+    'remove action failures keep manual cleanup actionable',
+    (tester) async {
+      const l10n = AppLocalizations(Locale('en'));
+      final repository = _FakeDownloadRepository([
+        _task('completed', DownloadStatus.completed),
+      ]);
+      final service = _RemoveEndedTaskFailureDownloadService(
+        repository,
+        const AppException(
+          'AppException: [download_manual_cleanup_required] manual cleanup still needed',
+          code: 'download_manual_cleanup_required',
+        ),
+      );
+
+      await _pumpDownloadPage(
+        tester,
+        repository,
+        downloadService: service,
+      );
+
+      await tester.tap(
+        find.byKey(const ValueKey('download-task-remove-completed')),
+      );
+      await tester.pump();
+
+      expect(
+        find.text(l10n.downloadManualCleanupRequiredError),
+        findsOneWidget,
+      );
+      final recheckAction =
+          find.widgetWithText(SnackBarAction, l10n.checkAgain);
+      expect(recheckAction, findsOneWidget);
+      tester.widget<SnackBarAction>(recheckAction).onPressed();
+      await tester.pump();
+
+      expect(
+        find.text(l10n.downloadManualCleanupRecheckCleared),
+        findsOneWidget,
+      );
+    },
+  );
+
+  testWidgets(
     'remove action failures keep product-facing app exceptions visible',
     (tester) async {
       final repository = _FakeDownloadRepository([
