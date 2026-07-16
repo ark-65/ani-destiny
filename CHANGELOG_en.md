@@ -10,6 +10,7 @@
 - Added a tighter issue-reporting flow: tapping Report issue copies a sanitized diagnostics summary and opens a prefilled GitHub issue, while users who are not signed in to GitHub can paste the same report into any support channel.
 
 ### 🐛 Fixed
+- Fixed download cleanup copy clarity by normalizing Chinese wording for manual-cleanup status so it consistently says a task is "marked for cleanup", reducing terminology ambiguity in the manual cleanup path.
 - Fixed batch-clear failure recovery so when any `download_manual_cleanup_required` failure happens, the clear action now shows a `Check again` follow-up immediately (single-task failures call task-level recheck, multi-task failures call batch recheck), reducing one extra navigation step in cleanup.
 - Fixed single-task download remove failures with `download_manual_cleanup_required` so the snackbar now keeps a direct `Check again` action for the same task and rechecks residual-file cleanup state, instead of forcing users to hunt for the next step.
 - Fixed download remove failures where the server only returns a plain-string `download_manual_cleanup_required` payload (without `AppException.code`) so the snackbar still offers a direct `Check again` action and users can immediately recheck residual cleanup state.
