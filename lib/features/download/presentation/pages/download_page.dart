@@ -63,15 +63,10 @@ class _DownloadPageState extends ConsumerState<DownloadPage>
     List<DownloadTask>? tasks, {
     required int remainingCount,
   }) {
-    final action = _followUpSnackBarAction(tasks);
-    if (action == null || tasks == null) {
+    if (remainingCount < 0) {
       return null;
     }
-    final clearableTaskCount = _clearableTaskIds(tasks).length;
-    if (remainingCount <= 1 || clearableTaskCount == 1) {
-      return action;
-    }
-    return null;
+    return _followUpSnackBarAction(tasks);
   }
 
   _DownloadSnackBarAction? _manualCleanupFailureFollowUpSnackBarAction(

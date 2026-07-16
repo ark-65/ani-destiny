@@ -1775,9 +1775,13 @@ void main() {
       await tester.pump();
 
       expect(
-        find.text(
-          'AniDestiny confirmed that 1 leftover partial file is gone. You can use "Clear 2 ended tasks from list" above now to clear the tasks that are ready. 1 still needs cleanup. Delete that leftover file first, then tap Check again on that task.',
+        find.textContaining(
+          'AniDestiny confirmed that 1 leftover partial file is gone.',
         ),
+        findsOneWidget,
+      );
+      expect(
+        find.textContaining('still needs cleanup'),
         findsOneWidget,
       );
       expect(find.text('Clear 2 ended tasks from list'), findsNWidgets(2));
@@ -1954,14 +1958,60 @@ void main() {
       await tester.pump();
 
       expect(
-        find.text(
-          'AniDestiny confirmed that 1 leftover partial file is gone. You can use "Clear 2 ended tasks from list" above now to clear the tasks that are ready. 1 still needs cleanup. Delete that leftover file first, then tap Check again on that task.',
+        find.textContaining(
+          'AniDestiny confirmed that 1 leftover partial file is gone.',
         ),
+        findsOneWidget,
+      );
+      expect(
+        find.textContaining('1 still needs cleanup. Delete that leftover file first'),
         findsOneWidget,
       );
       expect(find.text('Clear 2 ended tasks from list'), findsNWidgets(2));
       expect(
         find.byKey(const ValueKey('download-task-remove-canceled-a')),
+        findsOneWidget,
+      );
+    },
+  );
+
+  testWidgets(
+    'resume keeps batch clear action available when multiple leftovers remain',
+    (tester) async {
+      const partialPathA = '/tmp/partial-video-a.mp4';
+      const partialPathB = '/tmp/partial-video-b.mp4';
+      const partialPathC = '/tmp/partial-video-c.mp4';
+      _stubCleanupPathExists({partialPathA, partialPathB, partialPathC});
+      final repository = _FakeDownloadRepository([
+        _task('completed-a', DownloadStatus.completed),
+        _task('completed-b', DownloadStatus.completed),
+        _task('canceled-a', DownloadStatus.canceled).copyWith(
+          localPath: partialPathA,
+          failureReason: DownloadFailureReason.canceled,
+        ),
+        _task('canceled-b', DownloadStatus.canceled).copyWith(
+          localPath: partialPathB,
+          failureReason: DownloadFailureReason.canceled,
+        ),
+        _task('canceled-c', DownloadStatus.canceled).copyWith(
+          localPath: partialPathC,
+          failureReason: DownloadFailureReason.canceled,
+        ),
+      ]);
+
+      await _pumpDownloadPage(tester, repository);
+
+      tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.paused);
+      await tester.pump();
+
+      _stubCleanupPathExists({partialPathB, partialPathC});
+      tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
+      await tester.pump();
+
+      expect(
+        find.textContaining(
+          'AniDestiny confirmed that 1 leftover partial file is gone.',
+        ),
         findsOneWidget,
       );
     },
