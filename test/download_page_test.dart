@@ -394,6 +394,42 @@ void main() {
   );
 
   testWidgets(
+    'single manual cleanup task shows page-level recheck action when no clearable tasks remain',
+    (tester) async {
+      const partialPath = '/tmp/partial-video.mp4';
+      _stubCleanupPathExists({partialPath});
+      final repository = _FakeDownloadRepository([
+        _task('canceled', DownloadStatus.canceled).copyWith(
+          localPath: partialPath,
+          failureReason: DownloadFailureReason.canceled,
+        ),
+      ]);
+
+      await _pumpDownloadPage(tester, repository);
+
+      expect(
+        find.byKey(const ValueKey('downloads-recheck-manual-cleanup')),
+        findsOneWidget,
+      );
+      expect(find.text('Check 1 leftover file again'), findsOneWidget);
+
+      _stubCleanupPathExists(const {});
+      await tester.tap(
+        find.byKey(const ValueKey('downloads-recheck-manual-cleanup')),
+      );
+      await tester.pump();
+
+      expect(
+        find.text(
+          'That leftover partial file is gone. You can remove this task from the list now.',
+        ),
+        findsOneWidget,
+      );
+      expect(find.byKey(const ValueKey('download-task-remove-canceled')), findsOneWidget);
+    },
+  );
+
+  testWidgets(
     'single leftover guidance points at batch clear when other ended tasks are already ready',
     (tester) async {
       const partialPath = '/tmp/partial-video.mp4';

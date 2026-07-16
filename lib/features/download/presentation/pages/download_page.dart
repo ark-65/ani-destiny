@@ -268,7 +268,9 @@ class _DownloadPageState extends ConsumerState<DownloadPage>
                       clearableTaskIds.length == 1 &&
                           manualCleanupTaskCount > 0;
                   final showRecheckManualCleanupAction =
-                      manualCleanupTaskCount > 1;
+                      manualCleanupTaskCount > 1 ||
+                      (manualCleanupTaskCount == 1 &&
+                          clearableTaskIds.isEmpty);
                   final manualCleanupBatchRecheckLabel =
                       showRecheckManualCleanupAction
                           ? context.l10n.recheckLeftoverFilesCount(
@@ -506,7 +508,13 @@ class _DownloadPageState extends ConsumerState<DownloadPage>
   }
 
   void _recheckManualCleanupTasks(List<DownloadTask> tasks) {
-    if (tasks.length < 2 || !mounted) {
+    if (tasks.isEmpty || !mounted) {
+      return;
+    }
+    if (tasks.length == 1) {
+      final firstTask = tasks.single;
+      final currentTask = _findTask(firstTask.id);
+      _refreshCleanupStatus(currentTask ?? firstTask);
       return;
     }
 
