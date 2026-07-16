@@ -577,6 +577,16 @@ void main() {
 
       await _pumpDownloadPage(tester, repository);
 
+      expect(
+        find.byKey(const ValueKey('downloads-recheck-manual-cleanup')),
+        findsOneWidget,
+      );
+      expect(find.text('Check 1 leftover file again'), findsOneWidget);
+      expect(
+        find.byKey(const ValueKey('downloads-remove-ready-task')),
+        findsOneWidget,
+      );
+
       _stubCleanupPathExists(const {});
       await tester.tap(
         find.byKey(const ValueKey('download-task-refresh-cleanup-canceled')),
