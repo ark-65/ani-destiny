@@ -1016,7 +1016,7 @@ void main() {
 
       expect(
         find.text(
-          'This download was discarded, but AniDestiny could not clear the partial file automatically. Remove the leftover file from your device if you no longer need it, then return here and tap Check again.',
+          'This download was discarded, but AniDestiny could not clear the partial file automatically. Remove the leftover file from your device if you no longer need it, then use "Check 1 leftover file again" above or tap Check again here.',
         ),
         findsOneWidget,
       );
@@ -1528,7 +1528,7 @@ void main() {
       expect(repository.deleteAttempts, isEmpty);
       expect(
         find.text(
-          'This download was discarded, but AniDestiny could not clear the partial file automatically. Remove the leftover file from your device if you no longer need it, then return here and tap Check again.',
+          'This download was discarded, but AniDestiny could not clear the partial file automatically. Remove the leftover file from your device if you no longer need it, then use "Check 1 leftover file again" above or tap Check again here.',
         ),
         findsOneWidget,
       );
