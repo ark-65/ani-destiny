@@ -346,6 +346,7 @@ void main() {
     'single removable task keeps discarded leftovers visible for manual cleanup',
     (tester) async {
       const partialPath = '/tmp/partial-video.mp4';
+      const l10n = AppLocalizations(Locale('en'));
       _stubCleanupPathExists({partialPath});
       final repository = _FakeDownloadRepository([
         _task('completed', DownloadStatus.completed),
@@ -373,7 +374,11 @@ void main() {
       );
       expect(
         find.text(
-          'This download was discarded, but AniDestiny could not clear the partial file automatically. You can use "Remove from list" on the task that is already ready now. For this leftover partial file, remove it from your device if you no longer need it, then return here and tap Check again.',
+          l10n.downloadDiscardedNeedsManualCleanupGuidance(
+            readyActionLabel: l10n.removeFromList,
+            readyActionIsBatch: false,
+            recheckActionLabel: l10n.recheckLeftoverFilesCount(1),
+          ),
         ),
         findsOneWidget,
       );
@@ -707,7 +712,7 @@ void main() {
       );
       expect(
         find.byKey(const ValueKey('downloads-recheck-manual-cleanup')),
-        findsNothing,
+        findsOneWidget,
       );
       expect(
         find.byKey(const ValueKey('download-task-remove-canceled-a')),
