@@ -72,6 +72,16 @@ void main() {
       downloadActionErrorMessage(
         l10n,
         const AppException(
+          'Downloads are temporarily unavailable.',
+          code: 'download_busy',
+        ),
+      ),
+      l10n.downloadActionBusyMessage,
+    );
+    expect(
+      downloadActionErrorMessage(
+        l10n,
+        const AppException(
           'AppException: [download_failed] file write error',
           code: 'download_storage_unavailable',
         ),
@@ -127,6 +137,74 @@ void main() {
         ),
       ),
       l10n.downloadManualCleanupRequiredError,
+    );
+  });
+
+  test('download action errors decode known code from AppException message', () {
+    const l10n = AppLocalizations(Locale('en'));
+
+    expect(
+      downloadActionErrorMessage(
+        l10n,
+        const AppException(
+          'AppException: [download_not_found] Downloads were removed from this source.',
+        ),
+      ),
+      l10n.downloadActionTaskNotFoundMessage,
+    );
+    expect(
+      downloadActionErrorMessage(
+        l10n,
+        const AppException(
+          'AppException [download_not_found] Downloads were removed from this source.',
+        ),
+      ),
+      l10n.downloadActionTaskNotFoundMessage,
+    );
+    expect(
+      downloadActionErrorMessage(
+        l10n,
+        const AppException(
+          'AppException: [download_not_found]',
+        ),
+      ),
+      l10n.downloadActionTaskNotFoundMessage,
+    );
+    expect(
+      downloadActionErrorMessage(
+        l10n,
+        const AppException('[download_not_found]'),
+      ),
+      l10n.downloadActionTaskNotFoundMessage,
+    );
+    expect(
+      downloadActionErrorMessage(
+        l10n,
+        const AppException('[download_not_found] removed from list'),
+      ),
+      l10n.downloadActionTaskNotFoundMessage,
+    );
+
+    expect(
+      downloadActionErrorMessage(
+        l10n,
+        '[download_not_found] removed from list',
+      ),
+      l10n.downloadActionTaskNotFoundMessage,
+    );
+    expect(
+      downloadActionErrorMessage(
+        l10n,
+        'download_network_error: no route to host',
+      ),
+      '${l10n.downloadFailureNetworkError}. ${l10n.downloadActionFailedMessage}',
+    );
+    expect(
+      downloadActionErrorMessage(
+        l10n,
+        'download_busy: action in progress',
+      ),
+      l10n.downloadActionBusyMessage,
     );
   });
 }

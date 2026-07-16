@@ -66,17 +66,20 @@ void main() {
   testWidgets('download page load surfaces repository errors calmly', (
     tester,
   ) async {
-    const failureMessage = 'Downloads are temporarily unavailable.';
+    const l10n = AppLocalizations(Locale('en'));
 
     await _pumpDownloadPage(
       tester,
       _FakeDownloadRepository(const []),
       downloadTasksStream: Stream<List<DownloadTask>>.error(
-        const AppException(failureMessage, code: 'download_busy'),
+        const AppException(
+          'Downloads are temporarily unavailable.',
+          code: 'download_busy',
+        ),
       ),
     );
 
-    expect(find.text(failureMessage), findsOneWidget);
+    expect(find.text(l10n.downloadActionBusyMessage), findsOneWidget);
     expect(find.textContaining('AppException'), findsNothing);
     expect(find.text('Retry'), findsOneWidget);
   });
@@ -84,6 +87,8 @@ void main() {
   testWidgets(
     'download page load hides raw app-exception wrappers behind calm fallback copy',
     (tester) async {
+      const l10n = AppLocalizations(Locale('en'));
+
       await _pumpDownloadPage(
         tester,
         _FakeDownloadRepository(const []),
@@ -95,9 +100,7 @@ void main() {
       );
 
       expect(
-        find.text(
-          'Downloads are temporarily unavailable. Try again in a moment.',
-        ),
+        find.text(l10n.downloadActionFailedMessage),
         findsOneWidget,
       );
       expect(find.textContaining('AppException'), findsNothing);
@@ -989,6 +992,7 @@ void main() {
   testWidgets(
     'clear ended tasks continues after one deletion fails and shows summary',
     (tester) async {
+      const l10n = AppLocalizations(Locale('en'));
       final repository = _FakeDownloadRepository(
         [
           _task('pending', DownloadStatus.pending),
@@ -1015,7 +1019,132 @@ void main() {
         ['completed', 'canceled', 'unsupported'],
       );
       expect(
-        find.text('Cleared 3 ended tasks from the list, 1 failed.'),
+        find.textContaining('Cleared 3 ended tasks from the list, 1 failed.'),
+        findsOneWidget,
+      );
+      expect(
+        find.textContaining(l10n.downloadActionFailedMessage),
+        findsOneWidget,
+      );
+      expect(find.textContaining('delete failed for failed'), findsNothing);
+    },
+  );
+
+  testWidgets(
+    'batch clear failures show readable action reason for app exceptions',
+    (tester) async {
+      final repository = _FakeDownloadRepository([
+        _task('completed', DownloadStatus.completed),
+        _task('failed', DownloadStatus.failed),
+      ]);
+      final service = _RemoveEndedTaskFailureDownloadService(
+        repository,
+        const AppException(
+          'AppException: [download_not_found] task is not in the list anymore',
+          code: 'download_not_found',
+        ),
+      );
+
+      await _pumpDownloadPage(
+        tester,
+        repository,
+        downloadService: service,
+      );
+
+      await tester
+          .tap(find.byKey(const ValueKey('downloads-clear-ended-tasks')));
+      await tester.pump();
+
+      expect(
+        find.textContaining('Cleared 0 ended tasks from the list, 2 failed.'),
+        findsOneWidget,
+      );
+      expect(
+        find.textContaining(
+          'This download task was not found or was already removed. Please try again later.',
+        ),
+        findsOneWidget,
+      );
+      expect(find.textContaining('AppException'), findsNothing);
+      expect(find.textContaining('[download_not_found]'), findsNothing);
+    },
+  );
+
+  testWidgets(
+    'batch clear failures show readable action reason for non-app exceptions',
+    (tester) async {
+      const l10n = AppLocalizations(Locale('en'));
+      final repository = _FakeDownloadRepository([
+        _task('completed', DownloadStatus.completed),
+        _task('failed', DownloadStatus.failed),
+      ]);
+      final service = _RemoveEndedTaskFailureDownloadService(
+        repository,
+        StateError('remove failed because of a filesystem lock'),
+      );
+
+      await _pumpDownloadPage(
+        tester,
+        repository,
+        downloadService: service,
+      );
+
+      await tester
+          .tap(find.byKey(const ValueKey('downloads-clear-ended-tasks')));
+      await tester.pump();
+
+      expect(
+        find.textContaining('Cleared 0 ended tasks from the list, 2 failed.'),
+        findsOneWidget,
+      );
+      expect(find.textContaining(l10n.downloadActionFailedMessage), findsOneWidget);
+      expect(find.textContaining('filesystem lock'), findsNothing);
+      expect(find.textContaining('StateError'), findsNothing);
+    },
+  );
+
+  testWidgets(
+    'batch clear failures show readable action reasons for mixed outcomes',
+    (tester) async {
+      const l10n = AppLocalizations(Locale('en'));
+      final repository = _FakeDownloadRepository([
+        _task('completed', DownloadStatus.completed),
+        _task('failed', DownloadStatus.failed),
+      ]);
+      final service = _RemoveEndedTaskSequentialFailureDownloadService(
+        repository,
+        [
+          const AppException(
+            'AppException: [download_not_found] task is not in the list anymore',
+            code: 'download_not_found',
+          ),
+          const AppException(
+            'AppException: [download_manual_cleanup_required] manual cleanup still needed',
+            code: 'download_manual_cleanup_required',
+          ),
+        ],
+      );
+
+      await _pumpDownloadPage(
+        tester,
+        repository,
+        downloadService: service,
+      );
+
+      await tester
+          .tap(find.byKey(const ValueKey('downloads-clear-ended-tasks')));
+      await tester.pump();
+
+      expect(
+        find.textContaining('Cleared 0 ended tasks from the list, 2 failed.'),
+        findsOneWidget,
+      );
+      expect(
+        find.textContaining(l10n.downloadActionTaskNotFoundMessage),
+        findsOneWidget,
+      );
+      expect(
+        find.textContaining(l10n.downloadManualCleanupRequiredError),
         findsOneWidget,
       );
     },
@@ -2005,6 +2134,28 @@ class _RemoveEndedTaskFailureDownloadService extends _FakeDownloadService {
 
   @override
   Future<void> removeEndedTask(String taskId) async {
+    throw error;
+  }
+}
+
+class _RemoveEndedTaskSequentialFailureDownloadService
+    extends _FakeDownloadService {
+  _RemoveEndedTaskSequentialFailureDownloadService(
+    super.repository,
+    this.errors,
+  );
+
+  final List<Object> errors;
+  var _attemptIndex = 0;
+
+  @override
+  Future<void> removeEndedTask(String taskId) async {
+    final index = _attemptIndex;
+    _attemptIndex += 1;
+    if (index >= errors.length) {
+      return super.removeEndedTask(taskId);
+    }
+    final error = errors[index];
     throw error;
   }
 }

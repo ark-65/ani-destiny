@@ -574,14 +574,23 @@ class _DownloadPageState extends ConsumerState<DownloadPage>
     List<String> taskIds,
   ) async {
     final service = ref.read(httpDownloadServiceProvider);
+    final l10n = context.l10n;
     var clearedCount = 0;
     var failedCount = 0;
+    final List<String> failureMessages = [];
     for (final taskId in taskIds) {
       try {
         await service.removeEndedTask(taskId);
         clearedCount += 1;
-      } catch (_) {
+      } catch (error) {
         failedCount += 1;
+        final failureMessage = error is AppException &&
+                error.code == 'download_manual_cleanup_required'
+            ? l10n.downloadManualCleanupRequiredError
+            : downloadActionErrorMessage(l10n, error);
+        if (!failureMessages.contains(failureMessage)) {
+          failureMessages.add(failureMessage);
+        }
       }
     }
     if (!context.mounted) return;
@@ -596,9 +605,12 @@ class _DownloadPageState extends ConsumerState<DownloadPage>
         remainingTasks?.where(downloadTaskNeedsManualCleanup).length ?? 0;
     final remainingClearableTaskCount =
         remainingTasks == null ? 0 : _clearableTaskIds(remainingTasks).length;
-    final message = remainingManualCleanupCount > 0
-        ? '$baseMessage\n${_manualCleanupRetentionGuidance(context, remainingManualCleanupCount, clearableTaskCount: remainingClearableTaskCount)}'
+    final actionFailureMessage = failedCount > 0 && failureMessages.isNotEmpty
+        ? '$baseMessage\n${failureMessages.map((message) => '• $message').join('\n')}'
         : baseMessage;
+    final message = remainingManualCleanupCount > 0
+        ? '$actionFailureMessage\n${_manualCleanupRetentionGuidance(context, remainingManualCleanupCount, clearableTaskCount: remainingClearableTaskCount)}'
+        : actionFailureMessage;
     _showDownloadSnackBar(message);
   }
 
@@ -777,10 +789,8 @@ class _DownloadPageState extends ConsumerState<DownloadPage>
   }
 
   String _pageErrorMessage(Object error) {
-    if (error is AppException &&
-        error.message.trim().isNotEmpty &&
-        !looksLikeRawDownloadFailureMessage(error.message)) {
-      return error.message;
+    if (error is AppException) {
+      return downloadActionErrorMessage(context.l10n, error);
     }
     return context.l10n.downloadPageLoadFailedMessage;
   }

@@ -376,7 +376,12 @@ void main() {
     await tester.tap(find.byTooltip('Check download lines'));
     await tester.pump();
 
-    expect(find.text(failureMessage), findsOneWidget);
+    expect(
+      find.text(
+        'This download action is still in progress. Please try again in a moment.',
+      ),
+      findsOneWidget,
+    );
     expect(find.textContaining('AppException'), findsNothing);
     expect(find.text('Open Downloads'), findsNothing);
   });
