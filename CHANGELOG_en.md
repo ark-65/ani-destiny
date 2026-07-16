@@ -11,6 +11,7 @@
 
 ### 🐛 Fixed
 - Fixed single-task download remove failures with `download_manual_cleanup_required` so the snackbar now keeps a direct `Check again` action for the same task and rechecks residual-file cleanup state, instead of forcing users to hunt for the next step.
+- Fixed download remove failures where the server only returns a plain-string `download_manual_cleanup_required` payload (without `AppException.code`) so the snackbar still offers a direct `Check again` action and users can immediately recheck residual cleanup state.
 - Fixed download action feedback to parse plain-string `download_*` error payloads (for example `[download_busy]` and `download_network_error: ...`) so non-AppException string errors keep returning localized reasons instead of raw technical copy.
 - Fixed batch clear of ended download tasks to report multiple readable failure reasons when clear failures come from mixed causes, so users can tell missing-task, manual-cleanup, or other specific failures apart at a glance.
 - Fixed batch clear failure summary feedback so mixed-clear outcomes now consistently keep a readable failure reason visible alongside the failed count, while keeping non-AppException copies calm and free of raw `StateError` wording.

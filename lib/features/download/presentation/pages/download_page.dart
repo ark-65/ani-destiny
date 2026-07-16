@@ -581,17 +581,19 @@ class _DownloadPageState extends ConsumerState<DownloadPage>
     if (busyAction != DownloadTaskBusyAction.remove) {
       return null;
     }
-    if (error is AppException && error.code == 'download_manual_cleanup_required') {
-      final task = _findTask(taskId);
-      if (task == null) {
-        return null;
-      }
-      return _DownloadSnackBarAction(
-        label: context.l10n.checkAgain,
-        onPressed: () => _refreshCleanupStatus(task),
-      );
+    if (downloadActionErrorCode(error) != 'download_manual_cleanup_required') {
+      return null;
     }
-    return null;
+
+    final task = _findTask(taskId);
+    if (task == null) {
+      return null;
+    }
+
+    return _DownloadSnackBarAction(
+      label: context.l10n.checkAgain,
+      onPressed: () => _refreshCleanupStatus(task),
+    );
   }
 
   DownloadTask? _findTask(String taskId) {
