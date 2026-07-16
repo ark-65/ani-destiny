@@ -63,10 +63,26 @@ class _DownloadPageState extends ConsumerState<DownloadPage>
     List<DownloadTask>? tasks, {
     required int remainingCount,
   }) {
-    if (remainingCount < 0) {
+    if (remainingCount < 0 || tasks == null) {
       return null;
     }
-    return _followUpSnackBarAction(tasks);
+    final followUpAction = _followUpSnackBarAction(tasks);
+    if (followUpAction != null) {
+      return followUpAction;
+    }
+    if (remainingCount == 0) {
+      return null;
+    }
+    final manualCleanupTasks = tasks
+        .where(downloadTaskNeedsManualCleanup)
+        .toList(growable: false);
+    if (manualCleanupTasks.isEmpty) {
+      return null;
+    }
+    return _DownloadSnackBarAction(
+      label: context.l10n.checkAgain,
+      onPressed: () => _recheckManualCleanupTasks(manualCleanupTasks),
+    );
   }
 
   _DownloadSnackBarAction? _manualCleanupFailureFollowUpSnackBarAction(

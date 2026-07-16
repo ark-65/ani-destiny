@@ -1605,6 +1605,39 @@ void main() {
   );
 
   testWidgets(
+    'resume keeps recheck action when only manual-cleanup tasks remain',
+    (tester) async {
+      const partialPathA = '/tmp/partial-video-a.mp4';
+      const partialPathB = '/tmp/partial-video-b.mp4';
+      _stubCleanupPathExists({partialPathA, partialPathB});
+      final repository = _FakeDownloadRepository([
+        _task('canceled-a', DownloadStatus.canceled).copyWith(
+          localPath: partialPathA,
+          failureReason: DownloadFailureReason.canceled,
+        ),
+        _task('canceled-b', DownloadStatus.canceled).copyWith(
+          localPath: partialPathB,
+          failureReason: DownloadFailureReason.canceled,
+        ),
+      ]);
+
+      await _pumpDownloadPage(tester, repository);
+
+      tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.paused);
+      await tester.pump();
+
+      await repository.deleteTask('canceled-a');
+      await tester.pump();
+      _stubCleanupPathExists({partialPathB});
+      tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
+      await tester.pump();
+
+      expect(find.textContaining('1 still needs cleanup.'), findsOneWidget);
+      expect(find.widgetWithText(SnackBarAction, 'Check again'), findsOneWidget);
+    },
+  );
+
+  testWidgets(
     'resume explains how many leftover files were cleared and how many still need cleanup',
     (tester) async {
       const partialPathA = '/tmp/partial-video-a.mp4';
