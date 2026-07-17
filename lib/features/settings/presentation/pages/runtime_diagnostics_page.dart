@@ -323,7 +323,7 @@ final _fallbackAttemptPrefix = RegExp(
   caseSensitive: false,
 );
 final _sourceFallbackMessageBoilerplate = RegExp(
-  r'^source fallback used[\s:：。！!;；,，\-–—.]*$',
+  r'^source fallback used[\s:：。！!;；,，\-–—.]*(?<reason>.*)$',
   caseSensitive: false,
 );
 
@@ -428,15 +428,26 @@ String? _diagnosticMessageLine(SourceDiagnostic diagnostic) {
     return null;
   }
 
-  if (_isSourceFallbackMessageBoilerplate(message)) {
+  final sanitizedMessage = _sanitizeSourceFallbackMessage(message);
+  if (sanitizedMessage == null) {
     return null;
   }
 
-  return message;
+  return sanitizedMessage;
 }
 
-bool _isSourceFallbackMessageBoilerplate(String message) {
-  return _sourceFallbackMessageBoilerplate.hasMatch(message);
+String? _sanitizeSourceFallbackMessage(String message) {
+  final match = _sourceFallbackMessageBoilerplate.firstMatch(message);
+  if (match == null) {
+    return message;
+  }
+
+  final reason = match.namedGroup('reason')?.trim() ?? '';
+  if (reason.isEmpty) {
+    return null;
+  }
+
+  return reason;
 }
 
 Future<void> _copyDiagnostics(BuildContext context, WidgetRef ref) async {
