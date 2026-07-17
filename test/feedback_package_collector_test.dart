@@ -32,7 +32,7 @@ void main() {
         ),
       ],
       sourceDiagnostics: [
-        SourceDiagnostic(
+        const SourceDiagnostic(
           sourceId: 'sakura',
           operation: 'detail',
           level: SourceDiagnosticLevel.error,
@@ -151,7 +151,7 @@ void main() {
         ),
       ],
       sourceDiagnostics: [
-        SourceDiagnostic(
+        const SourceDiagnostic(
           sourceId: 'sakura',
           operation: 'detail',
           level: SourceDiagnosticLevel.info,
@@ -223,7 +223,7 @@ void main() {
       currentSourceId: 'sakura',
       sourceHealth: const [],
       sourceDiagnostics: [
-        SourceDiagnostic(
+        const SourceDiagnostic(
           sourceId: 'sakura',
           operation: 'detail',
           level: SourceDiagnosticLevel.warning,
