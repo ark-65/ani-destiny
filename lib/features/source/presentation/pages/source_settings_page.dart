@@ -300,7 +300,14 @@ class _FallbackEventTile extends StatelessWidget {
   }
 }
 
-final _fallbackAttemptPrefix = RegExp(r'^Source attempt \d+:\s*');
+final _fallbackAttemptPrefix = RegExp(
+  r'^Source attempt \d+:\s*',
+  caseSensitive: false,
+);
+final _sourceFallbackMessageBoilerplate = RegExp(
+  r'^source fallback used\.?$',
+  caseSensitive: false,
+);
 
 String _formatFallbackEventReason(String reason) {
   final normalized = sanitizeError(reason).trim();
@@ -391,5 +398,5 @@ String? _diagnosticMessageLine(SourceDiagnostic diagnostic) {
 }
 
 bool _isSourceFallbackMessageBoilerplate(String message) {
-  return message == 'Source fallback used.' || message == 'Source fallback used';
+  return _sourceFallbackMessageBoilerplate.hasMatch(message);
 }

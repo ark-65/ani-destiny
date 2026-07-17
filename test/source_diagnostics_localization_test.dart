@@ -165,6 +165,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.textContaining('Source fallback used.'), findsNothing);
+    expect(find.textContaining('SOURCE FALLBACK USED'), findsNothing);
     expect(find.textContaining('Sakura Anime'), findsWidgets);
     expect(find.textContaining('Mock Anime Source'), findsWidgets);
   });
@@ -225,6 +226,7 @@ void main() {
 
     await tester.pumpAndSettle();
     expect(find.textContaining('Source fallback used.'), findsNothing);
+    expect(find.textContaining('SOURCE FALLBACK USED'), findsNothing);
     expect(find.textContaining('Sakura Anime'), findsOneWidget);
   });
 
@@ -936,7 +938,7 @@ class _SourceFallbackBoilerplateSourceDiagnosticsController
         sourceId: 'sakura',
         operation: 'detail',
         level: SourceDiagnosticLevel.warning,
-        message: 'Source fallback used.',
+        message: 'SOURCE FALLBACK USED',
         exceptionType: null,
         fromSourceId: 'sakura',
         toSourceId: 'mock',
