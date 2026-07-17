@@ -211,6 +211,61 @@ void main() {
     expect(markdown, isNot(contains('healthy')));
   });
 
+  test('collector keeps fallback reasons readable in copied feedback summary',
+      () {
+    final now = DateTime.utc(2026, 7, 17, 10, 11, 12);
+    const l10n = AppLocalizations(Locale('en'));
+    final package = FeedbackPackageCollector(
+      l10n: l10n,
+      appName: 'AniDestiny',
+      appVersion: '1.0.4',
+      platform: 'Windows',
+      currentSourceId: 'sakura',
+      sourceHealth: const [],
+      sourceDiagnostics: const [
+        SourceDiagnostic(
+          sourceId: 'sakura',
+          operation: 'detail',
+          level: SourceDiagnosticLevel.warning,
+          message: 'Source fallback used: DNS timeout while reading metadata',
+          usedFallback: true,
+          fromSourceId: 'remote-proxy',
+          toSourceId: 'sakura',
+          reason: 'Source fallback used: DNS timeout while reading metadata',
+        ),
+      ],
+      fallbackEvents: [
+        SourceFallbackEvent(
+          fromSourceId: 'remote-proxy',
+          toSourceId: 'sakura',
+          operation: 'detail',
+          reason: 'Source fallback used: DNS timeout while reading metadata',
+          timestamp: now,
+        ),
+      ],
+      playbackDiagnostics: null,
+      danmakuEnabled: false,
+      dandanplayAppIdConfigured: false,
+      dandanplayAppSecretConfigured: false,
+      downloadTasks: const [],
+      sourceLabelForId: (sourceId) {
+        return switch (sourceId) {
+          'remote-proxy' => 'Remote Source Proxy',
+          _ => _sourceLabelForId(sourceId),
+        };
+      },
+    ).collect(generatedAt: now);
+
+    final markdown = const FeedbackPackageFormatter(l10n: l10n).format(package);
+
+    expect(markdown, contains('Remote Source Proxy -> Sakura Anime'));
+    expect(markdown, contains('DNS timeout while reading metadata'));
+    expect(markdown, contains('Reason: DNS timeout while reading metadata'));
+    expect(markdown, contains('Sakura Anime · Details'));
+    expect(markdown, isNot(contains('Source fallback used:')));
+    expect(markdown, isNot(contains('Source fallback used')));
+  });
+
   test('collector does not treat canceled downloads as the latest issue', () {
     final now = DateTime.utc(2026, 6, 5, 1, 2, 3);
     const l10n = AppLocalizations(Locale('en'));

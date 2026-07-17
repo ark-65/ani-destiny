@@ -11,6 +11,15 @@ import 'diagnostic_sanitizer.dart';
 import 'feedback_package.dart';
 import 'playback_diagnostic_summary.dart';
 
+final _sourceFallbackAttemptPrefix = RegExp(
+  r'^Source attempt \d+:\s*',
+  caseSensitive: false,
+);
+final _sourceFallbackMessageBoilerplate = RegExp(
+  r'^source fallback used[\s:：。！!;；,，\-–—.]*(?<reason>.*)$',
+  caseSensitive: false,
+);
+
 class FeedbackPackageCollector {
   const FeedbackPackageCollector({
     required this.l10n,
@@ -89,12 +98,14 @@ class FeedbackPackageCollector {
     } else {
       lines.add('- ${l10n.sourceFallbackEvents}:');
       for (final event in fallbackEvents.take(6)) {
+        final reason = _sanitizeSourceFallbackReason(event.reason) ??
+            l10n.feedbackPackageUnavailable;
         lines.add(
           '  - ${l10n.sourceOperationLabel(event.operation)}: '
           '${l10n.sourceTransitionLabel(event.fromSourceId, event.toSourceId)}',
         );
         lines.add(
-          '    ${l10n.feedbackPackageReason}: ${sanitizeError(event.reason)}',
+          '    ${l10n.feedbackPackageReason}: $reason',
         );
       }
     }
@@ -118,11 +129,20 @@ class FeedbackPackageCollector {
               diagnostic.toSourceId!,
             ),
         ].join(' · ');
+        final diagnosticsLine = _sanitizeSourceFallbackReason(
+          diagnostic.message,
+        );
+        final fallbackReason = _sanitizeSourceFallbackReason(diagnostic.reason);
         lines.add(
           '  - ${_sourceLabel(diagnostic.sourceId)} · '
           '${l10n.sourceOperationLabel(diagnostic.operation)}',
         );
-        lines.add('    ${sanitizeError(diagnostic.message)}');
+        if (diagnosticsLine != null) {
+          lines.add('    $diagnosticsLine');
+        }
+        if (fallbackReason != null) {
+          lines.add('    ${l10n.feedbackPackageReason}: $fallbackReason');
+        }
         if (details.isNotEmpty) {
           lines.add('    $details');
         }
@@ -175,6 +195,57 @@ class FeedbackPackageCollector {
   String _sourceLabelOrUnavailable(String? sourceId) {
     if (sourceId == null) return l10n.feedbackPackageUnavailable;
     return _sourceLabel(sourceId);
+  }
+
+  String? _sanitizeSourceFallbackReason(String? reason) {
+    if (reason == null) {
+      return null;
+    }
+
+    final normalized = sanitizeError(reason).trim();
+    if (normalized.isEmpty) {
+      return null;
+    }
+
+    final candidate =
+        _sourceFallbackMessageBoilerplate.firstMatch(normalized)?.namedGroup(
+                  'reason',
+                ) ??
+            normalized;
+    final strippedCandidate = _stripSourceFallbackParentheses(candidate.trim());
+    if (strippedCandidate == null || strippedCandidate.isEmpty) {
+      return null;
+    }
+
+    if (!_sourceFallbackAttemptPrefix.hasMatch(strippedCandidate)) {
+      return strippedCandidate;
+    }
+
+    final reasons = strippedCandidate
+        .split(' · ')
+        .map((entry) => entry.trim())
+        .where((entry) => entry.isNotEmpty)
+        .map((entry) => entry.replaceFirst(_sourceFallbackAttemptPrefix, ''))
+        .where((entry) => entry.isNotEmpty)
+        .toList(growable: false);
+
+    if (reasons.isEmpty) {
+      return null;
+    }
+    if (reasons.length == 1) {
+      return reasons.single;
+    }
+    return reasons.join(', ');
+  }
+
+  String? _stripSourceFallbackParentheses(String reason) {
+    final normalized = reason.trim();
+    if ((normalized.startsWith('(') && normalized.endsWith(')')) ||
+        (normalized.startsWith('（') && normalized.endsWith('）'))) {
+      if (normalized.length <= 2) return null;
+      return normalized.substring(1, normalized.length - 1).trim();
+    }
+    return normalized;
   }
 
   String _downloadSummary() {
