@@ -12,6 +12,7 @@
 ### 🐛 Fixed
 - Fixed source diagnostics, runtime diagnostics, and copied feedback snapshots to strip `Source fallback used => reason` ASCII variants (including `Source fallback used = reason`) so users only see readable causes, not internal boilerplate.
 - Fixed `Source fallback used / reason`-style separator variants (including full-width slash/vertical separator forms) in feedback snapshots, source diagnostics, and runtime diagnostics so internal boilerplate is removed and readable reasons remain.
+- Fixed source diagnostics, runtime diagnostics, and copied feedback snapshots to strip `Source fallback used<reason>` angle-bracket wrapped reasons so technical fallback boilerplate stays hidden and users can still read the true failure reason.
 - Fixed `test/feedback_package_collector_test.dart` to pass CI `flutter analyze` strict mode by marking three `SourceDiagnostic` fixtures as `const`, removing `prefer_const_constructors` info failures without changing runtime behavior.
 - Fixed download cleanup copy clarity by normalizing Chinese wording for manual-cleanup status so it consistently says a task is "marked for cleanup", reducing terminology ambiguity in the manual cleanup path.
 - Fixed download cleanup regression coverage to match the current user-facing copy and behavior: aligned single-task leftover-cleanup assertions with the new wording and the top-level recheck button visibility after partial multi-leftover refreshes, so CI checks no longer fail on stale expectations.

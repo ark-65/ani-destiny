@@ -466,6 +466,7 @@ String? _sanitizeSourceFallbackMessage(String message) {
 String _stripEnclosingParentheses(String reason) {
   if ((reason.startsWith('(') && reason.endsWith(')')) ||
       (reason.startsWith('[') && reason.endsWith(']')) ||
+      (reason.startsWith('<') && reason.endsWith('>')) ||
       (reason.startsWith('（') && reason.endsWith('）')) ||
       (reason.startsWith('【') && reason.endsWith('】'))) {
     return reason.substring(1, reason.length - 1).trim();

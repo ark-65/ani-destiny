@@ -242,6 +242,7 @@ class FeedbackPackageCollector {
     final normalized = reason.trim();
     if ((normalized.startsWith('(') && normalized.endsWith(')')) ||
         (normalized.startsWith('[') && normalized.endsWith(']')) ||
+        (normalized.startsWith('<') && normalized.endsWith('>')) ||
         (normalized.startsWith('（') && normalized.endsWith('）')) ||
         (normalized.startsWith('【') && normalized.endsWith('】'))) {
       if (normalized.length <= 2) return null;
