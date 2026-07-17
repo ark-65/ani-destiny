@@ -315,11 +315,22 @@ String _formatFallbackEventReason(String reason) {
     return normalized;
   }
 
-  if (!_fallbackAttemptPrefix.hasMatch(normalized)) {
-    return normalized;
+  final fallbackBoilerplateReason = _sourceFallbackMessageBoilerplate
+      .firstMatch(normalized)
+      ?.namedGroup('reason')
+      ?.trim();
+  final candidate = fallbackBoilerplateReason != null
+      ? _stripEnclosingParentheses(fallbackBoilerplateReason)
+      : normalized;
+  if (candidate.isEmpty) {
+    return '';
   }
 
-  final reasons = normalized
+  if (!_fallbackAttemptPrefix.hasMatch(candidate)) {
+    return candidate;
+  }
+
+  final reasons = candidate
       .split(' · ')
       .map((entry) => entry.trim())
       .where((entry) => entry.isNotEmpty)
