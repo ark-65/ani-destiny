@@ -363,6 +363,67 @@ void main() {
   );
 
   testWidgets(
+    'diagnostics keep readable reason when fallback boilerplate is arrow',
+    (tester) async {
+      SharedPreferences.setMockInitialValues({});
+
+      await tester.pumpWidget(
+        _buildApp(
+          home: const RuntimeDiagnosticsPage(),
+          overrides: [
+            ..._providerOverrides,
+            sourceDiagnosticsControllerProvider.overrideWith(
+              () =>
+                  _SourceFallbackBoilerplateWithReasonInArrowSourceDiagnosticsController(),
+            ),
+          ],
+        ),
+      );
+
+      await tester.pumpAndSettle();
+      await tester.scrollUntilVisible(
+        find.textContaining('Sakura Anime ·'),
+        200,
+        scrollable: find.byType(Scrollable).last,
+      );
+      await tester.pumpAndSettle();
+      expect(find.text('Source fallback used'), findsNothing);
+      expect(
+        find.textContaining('DNS timeout while reading metadata'),
+        findsOneWidget,
+      );
+
+      await tester.pumpWidget(
+        _buildApp(
+          home: const SourceSettingsPage(),
+          overrides: [
+            ..._providerOverrides,
+            sourceFallbackEventsProvider.overrideWith(
+              () =>
+                  _SourceFallbackBoilerplateWithReasonInArrowSourceFallbackEventsController(),
+            ),
+          ],
+        ),
+      );
+
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Source diagnostics'));
+      await tester.pumpAndSettle();
+      await tester.scrollUntilVisible(
+        find.textContaining('Sakura Anime · Details'),
+        200,
+        scrollable: find.byType(Scrollable).last,
+      );
+      await tester.pumpAndSettle();
+      expect(find.textContaining('Source fallback used'), findsNothing);
+      expect(
+        find.textContaining('DNS timeout while reading metadata'),
+        findsOneWidget,
+      );
+    },
+  );
+
+  testWidgets(
     'diagnostics keep readable reason when fallback boilerplate is parenthesized',
     (tester) async {
       SharedPreferences.setMockInitialValues({});
@@ -1162,6 +1223,22 @@ class _SourceFallbackBoilerplateInReasonSourceFallbackEventsController
   }
 }
 
+class _SourceFallbackBoilerplateWithReasonInArrowSourceFallbackEventsController
+    extends SourceFallbackEventsController {
+  @override
+  List<SourceFallbackEvent> build() {
+    return [
+      SourceFallbackEvent(
+        fromSourceId: 'sakura',
+        toSourceId: 'mock',
+        operation: 'detail',
+        reason: 'Source fallback used -> DNS timeout while reading metadata',
+        timestamp: DateTime(2026, 6, 7, 1, 2, 3),
+      ),
+    ];
+  }
+}
+
 class _FakeSourceDiagnosticsController extends SourceDiagnosticsController {
   @override
   List<SourceDiagnostic> build() {
@@ -1234,6 +1311,27 @@ class _SourceFallbackBoilerplateWithReasonSourceDiagnosticsController
         operation: 'detail',
         level: SourceDiagnosticLevel.warning,
         message: 'Source fallback used: DNS timeout while reading metadata',
+        exceptionType: null,
+        fromSourceId: 'sakura',
+        toSourceId: 'mock',
+        usedFallback: true,
+        reason: null,
+        timestamp: DateTime(2026, 6, 7, 1, 2, 3),
+      ),
+    ];
+  }
+}
+
+class _SourceFallbackBoilerplateWithReasonInArrowSourceDiagnosticsController
+    extends SourceDiagnosticsController {
+  @override
+  List<SourceDiagnostic> build() {
+    return [
+      SourceDiagnostic(
+        sourceId: 'sakura',
+        operation: 'detail',
+        level: SourceDiagnosticLevel.warning,
+        message: 'Source fallback used -> DNS timeout while reading metadata',
         exceptionType: null,
         fromSourceId: 'sakura',
         toSourceId: 'mock',
