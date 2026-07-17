@@ -323,7 +323,7 @@ final _fallbackAttemptPrefix = RegExp(
   caseSensitive: false,
 );
 final _sourceFallbackMessageBoilerplate = RegExp(
-  r'^source fallback used\.?$',
+  r'^source fallback used[\s:：。！!;；,，\-–—.]*$',
   caseSensitive: false,
 );
 

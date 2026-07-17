@@ -230,6 +230,49 @@ void main() {
     expect(find.textContaining('Sakura Anime'), findsOneWidget);
   });
 
+  testWidgets(
+    'diagnostics hide source fallback boilerplate with separator punctuation variant',
+    (tester) async {
+      SharedPreferences.setMockInitialValues({});
+
+      await tester.pumpWidget(
+        _buildApp(
+          home: const RuntimeDiagnosticsPage(),
+          overrides: [
+            ..._providerOverrides,
+            sourceDiagnosticsControllerProvider.overrideWith(
+              () => _SourceFallbackBoilerplateWithPunctuationSourceDiagnosticsController(),
+            ),
+          ],
+        ),
+      );
+
+      await tester.pumpAndSettle();
+      expect(find.textContaining('Source fallback used:'), findsNothing);
+      expect(find.textContaining('SOURCE FALLBACK USED;'), findsNothing);
+      expect(find.textContaining('Sakura Anime'), findsOneWidget);
+
+      await tester.pumpWidget(
+        _buildApp(
+          home: const SourceSettingsPage(),
+          overrides: [
+            ..._providerOverrides,
+            sourceDiagnosticsControllerProvider.overrideWith(
+              () => _SourceFallbackBoilerplateWithPunctuationSourceDiagnosticsController(),
+            ),
+          ],
+        ),
+      );
+
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Source diagnostics'));
+      await tester.pumpAndSettle();
+      expect(find.textContaining('Source fallback used !'), findsNothing);
+      expect(find.textContaining('source fallback used.'), findsNothing);
+      expect(find.textContaining('Mock Anime Source'), findsWidgets);
+    },
+  );
+
   testWidgets('settings page exposes force-ahead playback buffering',
       (tester) async {
     SharedPreferences.setMockInitialValues({});
@@ -944,6 +987,27 @@ class _SourceFallbackBoilerplateSourceDiagnosticsController
         toSourceId: 'mock',
         usedFallback: true,
         reason: null,
+        timestamp: DateTime(2026, 6, 7, 1, 2, 3),
+      ),
+    ];
+  }
+}
+
+class _SourceFallbackBoilerplateWithPunctuationSourceDiagnosticsController
+    extends SourceDiagnosticsController {
+  @override
+  List<SourceDiagnostic> build() {
+    return [
+      SourceDiagnostic(
+        sourceId: 'sakura',
+        operation: 'detail',
+        level: SourceDiagnosticLevel.warning,
+        message: 'SOURCE FALLBACK USED;',
+        exceptionType: null,
+        fromSourceId: 'sakura',
+        toSourceId: 'mock',
+        usedFallback: true,
+        reason: 'DNS timeout while reading metadata',
         timestamp: DateTime(2026, 6, 7, 1, 2, 3),
       ),
     ];
