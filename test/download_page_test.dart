@@ -346,6 +346,7 @@ void main() {
     'single removable task keeps discarded leftovers visible for manual cleanup',
     (tester) async {
       const partialPath = '/tmp/partial-video.mp4';
+      const l10n = AppLocalizations(Locale('en'));
       _stubCleanupPathExists({partialPath});
       final repository = _FakeDownloadRepository([
         _task('completed', DownloadStatus.completed),
@@ -373,7 +374,11 @@ void main() {
       );
       expect(
         find.text(
-          'This download was discarded, but AniDestiny could not clear the partial file automatically. You can use "Remove from list" on the task that is already ready now. For this leftover partial file, remove it from your device if you no longer need it, then return here and tap Check again.',
+          l10n.downloadDiscardedNeedsManualCleanupGuidance(
+            readyActionLabel: l10n.removeFromList,
+            readyActionIsBatch: false,
+            recheckActionLabel: l10n.recheckLeftoverFilesCount(1),
+          ),
         ),
         findsOneWidget,
       );
@@ -390,6 +395,42 @@ void main() {
         ),
         findsOneWidget,
       );
+    },
+  );
+
+  testWidgets(
+    'single manual cleanup task shows page-level recheck action when no clearable tasks remain',
+    (tester) async {
+      const partialPath = '/tmp/partial-video.mp4';
+      _stubCleanupPathExists({partialPath});
+      final repository = _FakeDownloadRepository([
+        _task('canceled', DownloadStatus.canceled).copyWith(
+          localPath: partialPath,
+          failureReason: DownloadFailureReason.canceled,
+        ),
+      ]);
+
+      await _pumpDownloadPage(tester, repository);
+
+      expect(
+        find.byKey(const ValueKey('downloads-recheck-manual-cleanup')),
+        findsOneWidget,
+      );
+      expect(find.text('Check 1 leftover file again'), findsOneWidget);
+
+      _stubCleanupPathExists(const {});
+      await tester.tap(
+        find.byKey(const ValueKey('downloads-recheck-manual-cleanup')),
+      );
+      await tester.pump();
+
+      expect(
+        find.text(
+          'That leftover partial file is gone. You can remove this task from the list now.',
+        ),
+        findsOneWidget,
+      );
+      expect(find.byKey(const ValueKey('download-task-remove-canceled')), findsOneWidget);
     },
   );
 
@@ -541,6 +582,16 @@ void main() {
 
       await _pumpDownloadPage(tester, repository);
 
+      expect(
+        find.byKey(const ValueKey('downloads-recheck-manual-cleanup')),
+        findsOneWidget,
+      );
+      expect(find.text('Check 1 leftover file again'), findsOneWidget);
+      expect(
+        find.byKey(const ValueKey('downloads-remove-ready-task')),
+        findsOneWidget,
+      );
+
       _stubCleanupPathExists(const {});
       await tester.tap(
         find.byKey(const ValueKey('download-task-refresh-cleanup-canceled')),
@@ -661,7 +712,7 @@ void main() {
       );
       expect(
         find.byKey(const ValueKey('downloads-recheck-manual-cleanup')),
-        findsNothing,
+        findsOneWidget,
       );
       expect(
         find.byKey(const ValueKey('download-task-remove-canceled-a')),
@@ -980,7 +1031,7 @@ void main() {
 
       expect(
         find.text(
-          'This download was discarded, but AniDestiny could not clear the partial file automatically. Remove the leftover file from your device if you no longer need it, then return here and tap Check again.',
+          'This download was discarded, but AniDestiny could not clear the partial file automatically. Remove the leftover file from your device if you no longer need it, then use "Check 1 leftover file again" above or tap Check again here.',
         ),
         findsOneWidget,
       );
@@ -1151,6 +1202,68 @@ void main() {
   );
 
   testWidgets(
+    'batch clear failures with manual cleanup still offer a check again action',
+    (tester) async {
+      const l10n = AppLocalizations(Locale('en'));
+      final repository = _FakeDownloadRepository([
+        _task('completed', DownloadStatus.completed),
+        _task('failed', DownloadStatus.failed),
+      ]);
+      final service = _RemoveEndedTaskSequentialFailureDownloadService(
+        repository,
+        [
+          const AppException(
+            'AppException: [download_not_found] task is not in the list anymore',
+            code: 'download_not_found',
+          ),
+          const AppException(
+            'AppException: [download_manual_cleanup_required] manual cleanup still needed',
+            code: 'download_manual_cleanup_required',
+          ),
+        ],
+      );
+
+      await _pumpDownloadPage(
+        tester,
+        repository,
+        downloadService: service,
+      );
+
+      await tester
+          .tap(find.byKey(const ValueKey('downloads-clear-ended-tasks')));
+      await tester.pump();
+
+      expect(
+        find.textContaining('Cleared 0 ended tasks from the list, 2 failed.'),
+        findsOneWidget,
+      );
+      expect(
+        find.textContaining(l10n.downloadActionTaskNotFoundMessage),
+        findsOneWidget,
+      );
+      expect(
+        find.textContaining(l10n.downloadManualCleanupRequiredError),
+        findsOneWidget,
+      );
+      final recheckAction =
+          find.widgetWithText(SnackBarAction, l10n.checkAgain);
+      expect(recheckAction, findsOneWidget);
+
+      tester.widget<SnackBarAction>(recheckAction).onPressed();
+      await tester.pump();
+
+      expect(
+        find.textContaining(
+          l10n.downloadManualCleanupRecheckClearedAction(
+            l10n.clearEndedDownloadsCount(2),
+          ),
+        ),
+        findsOneWidget,
+      );
+    },
+  );
+
+  testWidgets(
     'clear ended tasks stays disabled while cleanup is still running',
     (tester) async {
       final deleteBlocker = Completer<void>();
@@ -1300,6 +1413,89 @@ void main() {
   );
 
   testWidgets(
+    'remove action failures keep manual cleanup actionable',
+    (tester) async {
+      const l10n = AppLocalizations(Locale('en'));
+      final repository = _FakeDownloadRepository([
+        _task('completed', DownloadStatus.completed),
+      ]);
+      final service = _RemoveEndedTaskFailureDownloadService(
+        repository,
+        const AppException(
+          'AppException: [download_manual_cleanup_required] manual cleanup still needed',
+          code: 'download_manual_cleanup_required',
+        ),
+      );
+
+      await _pumpDownloadPage(
+        tester,
+        repository,
+        downloadService: service,
+      );
+
+      await tester.tap(
+        find.byKey(const ValueKey('download-task-remove-completed')),
+      );
+      await tester.pump();
+
+      expect(
+        find.text(l10n.downloadManualCleanupRequiredError),
+        findsOneWidget,
+      );
+      final recheckAction =
+          find.widgetWithText(SnackBarAction, l10n.checkAgain);
+      expect(recheckAction, findsOneWidget);
+      tester.widget<SnackBarAction>(recheckAction).onPressed();
+      await tester.pump();
+
+      expect(
+        find.text(l10n.downloadManualCleanupRecheckCleared),
+        findsOneWidget,
+      );
+    },
+  );
+
+  testWidgets(
+    'remove action failures keep manual cleanup actionable from plain wrapper',
+    (tester) async {
+      const l10n = AppLocalizations(Locale('en'));
+      final repository = _FakeDownloadRepository([
+        _task('completed', DownloadStatus.completed),
+      ]);
+      final service = _RemoveEndedTaskFailureDownloadService(
+        repository,
+        'AppException [download_manual_cleanup_required] manual cleanup still needed',
+      );
+
+      await _pumpDownloadPage(
+        tester,
+        repository,
+        downloadService: service,
+      );
+
+      await tester.tap(
+        find.byKey(const ValueKey('download-task-remove-completed')),
+      );
+      await tester.pump();
+
+      expect(
+        find.text(l10n.downloadManualCleanupRequiredError),
+        findsOneWidget,
+      );
+      final recheckAction =
+          find.widgetWithText(SnackBarAction, l10n.checkAgain);
+      expect(recheckAction, findsOneWidget);
+      tester.widget<SnackBarAction>(recheckAction).onPressed();
+      await tester.pump();
+
+      expect(
+        find.text(l10n.downloadManualCleanupRecheckCleared),
+        findsOneWidget,
+      );
+    },
+  );
+
+  testWidgets(
     'remove action failures keep product-facing app exceptions visible',
     (tester) async {
       final repository = _FakeDownloadRepository([
@@ -1347,7 +1543,7 @@ void main() {
       expect(repository.deleteAttempts, isEmpty);
       expect(
         find.text(
-          'This download was discarded, but AniDestiny could not clear the partial file automatically. Remove the leftover file from your device if you no longer need it, then return here and tap Check again.',
+          'This download was discarded, but AniDestiny could not clear the partial file automatically. Remove the leftover file from your device if you no longer need it, then use "Check 1 leftover file again" above or tap Check again here.',
         ),
         findsOneWidget,
       );
@@ -1375,7 +1571,7 @@ void main() {
 
       expect(
         find.text(
-          '标成“待清理残留文件”的任务会继续留在列表里，直到这份半截文件已经被手动删掉，或 AniDestiny 成功把它清掉。删完后回到这里点一下“重新检查”。',
+          '标记为“待清理残留文件”的任务会继续留在列表里，直到这份半截文件已经被手动删掉，或 AniDestiny 成功把它清掉。删完后回到这里点一下“重新检查”。',
         ),
         findsOneWidget,
       );
@@ -1456,6 +1652,39 @@ void main() {
         ),
         findsNothing,
       );
+    },
+  );
+
+  testWidgets(
+    'resume keeps recheck action when only manual-cleanup tasks remain',
+    (tester) async {
+      const partialPathA = '/tmp/partial-video-a.mp4';
+      const partialPathB = '/tmp/partial-video-b.mp4';
+      _stubCleanupPathExists({partialPathA, partialPathB});
+      final repository = _FakeDownloadRepository([
+        _task('canceled-a', DownloadStatus.canceled).copyWith(
+          localPath: partialPathA,
+          failureReason: DownloadFailureReason.canceled,
+        ),
+        _task('canceled-b', DownloadStatus.canceled).copyWith(
+          localPath: partialPathB,
+          failureReason: DownloadFailureReason.canceled,
+        ),
+      ]);
+
+      await _pumpDownloadPage(tester, repository);
+
+      tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.paused);
+      await tester.pump();
+
+      await repository.deleteTask('canceled-a');
+      await tester.pump();
+      _stubCleanupPathExists({partialPathB});
+      tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
+      await tester.pump();
+
+      expect(find.textContaining('1 still needs cleanup.'), findsOneWidget);
+      expect(find.widgetWithText(SnackBarAction, 'Check again'), findsOneWidget);
     },
   );
 
@@ -1630,9 +1859,13 @@ void main() {
       await tester.pump();
 
       expect(
-        find.text(
-          'AniDestiny confirmed that 1 leftover partial file is gone. You can use "Clear 2 ended tasks from list" above now to clear the tasks that are ready. 1 still needs cleanup. Delete that leftover file first, then tap Check again on that task.',
+        find.textContaining(
+          'AniDestiny confirmed that 1 leftover partial file is gone.',
         ),
+        findsOneWidget,
+      );
+      expect(
+        find.textContaining('still needs cleanup'),
         findsOneWidget,
       );
       expect(find.text('Clear 2 ended tasks from list'), findsNWidgets(2));
@@ -1809,14 +2042,60 @@ void main() {
       await tester.pump();
 
       expect(
-        find.text(
-          'AniDestiny confirmed that 1 leftover partial file is gone. You can use "Clear 2 ended tasks from list" above now to clear the tasks that are ready. 1 still needs cleanup. Delete that leftover file first, then tap Check again on that task.',
+        find.textContaining(
+          'AniDestiny confirmed that 1 leftover partial file is gone.',
         ),
+        findsOneWidget,
+      );
+      expect(
+        find.textContaining('1 still needs cleanup. Delete that leftover file first'),
         findsOneWidget,
       );
       expect(find.text('Clear 2 ended tasks from list'), findsNWidgets(2));
       expect(
         find.byKey(const ValueKey('download-task-remove-canceled-a')),
+        findsOneWidget,
+      );
+    },
+  );
+
+  testWidgets(
+    'resume keeps batch clear action available when multiple leftovers remain',
+    (tester) async {
+      const partialPathA = '/tmp/partial-video-a.mp4';
+      const partialPathB = '/tmp/partial-video-b.mp4';
+      const partialPathC = '/tmp/partial-video-c.mp4';
+      _stubCleanupPathExists({partialPathA, partialPathB, partialPathC});
+      final repository = _FakeDownloadRepository([
+        _task('completed-a', DownloadStatus.completed),
+        _task('completed-b', DownloadStatus.completed),
+        _task('canceled-a', DownloadStatus.canceled).copyWith(
+          localPath: partialPathA,
+          failureReason: DownloadFailureReason.canceled,
+        ),
+        _task('canceled-b', DownloadStatus.canceled).copyWith(
+          localPath: partialPathB,
+          failureReason: DownloadFailureReason.canceled,
+        ),
+        _task('canceled-c', DownloadStatus.canceled).copyWith(
+          localPath: partialPathC,
+          failureReason: DownloadFailureReason.canceled,
+        ),
+      ]);
+
+      await _pumpDownloadPage(tester, repository);
+
+      tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.paused);
+      await tester.pump();
+
+      _stubCleanupPathExists({partialPathB, partialPathC});
+      tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
+      await tester.pump();
+
+      expect(
+        find.textContaining(
+          'AniDestiny confirmed that 1 leftover partial file is gone.',
+        ),
         findsOneWidget,
       );
     },

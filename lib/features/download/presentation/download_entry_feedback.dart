@@ -80,6 +80,25 @@ String downloadActionErrorMessage(
   return l10n.downloadActionFailedMessage;
 }
 
+String? downloadActionErrorCode(Object error) {
+  if (error is AppException &&
+      error.code != null &&
+      error.code!.trim().isNotEmpty) {
+    return error.code;
+  }
+
+  final rawMessage = error is AppException
+      ? error.message
+      : error is String
+          ? error
+          : null;
+  if (rawMessage == null) {
+    return null;
+  }
+
+  return _extractDownloadActionErrorCodeAndMessage(rawMessage)?.code;
+}
+
 String? _downloadActionErrorMessageByCode(
   AppLocalizations l10n,
   String code,

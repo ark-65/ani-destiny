@@ -63,15 +63,51 @@ class _DownloadPageState extends ConsumerState<DownloadPage>
     List<DownloadTask>? tasks, {
     required int remainingCount,
   }) {
-    final action = _followUpSnackBarAction(tasks);
-    if (action == null || tasks == null) {
+    if (remainingCount < 0 || tasks == null) {
       return null;
     }
-    final clearableTaskCount = _clearableTaskIds(tasks).length;
-    if (remainingCount <= 1 || clearableTaskCount == 1) {
-      return action;
+    final followUpAction = _followUpSnackBarAction(tasks);
+    if (followUpAction != null) {
+      return followUpAction;
     }
-    return null;
+    if (remainingCount == 0) {
+      return null;
+    }
+    final manualCleanupTasks = tasks
+        .where(downloadTaskNeedsManualCleanup)
+        .toList(growable: false);
+    if (manualCleanupTasks.isEmpty) {
+      return null;
+    }
+    return _DownloadSnackBarAction(
+      label: context.l10n.checkAgain,
+      onPressed: () => _recheckManualCleanupTasks(manualCleanupTasks),
+    );
+  }
+
+  _DownloadSnackBarAction? _manualCleanupFailureFollowUpSnackBarAction(
+    List<DownloadTask>? tasks, {
+    required List<String> manualCleanupTaskIds,
+  }) {
+    if (manualCleanupTaskIds.isEmpty || tasks == null || tasks.isEmpty) {
+      return null;
+    }
+    final manualCleanupTasks = tasks
+        .where((task) => manualCleanupTaskIds.contains(task.id))
+        .toList(growable: false);
+    if (manualCleanupTasks.isEmpty) {
+      return null;
+    }
+    if (manualCleanupTasks.length == 1) {
+      return _DownloadSnackBarAction(
+        label: context.l10n.checkAgain,
+        onPressed: () => _refreshCleanupStatus(manualCleanupTasks.single),
+      );
+    }
+    return _DownloadSnackBarAction(
+      label: context.l10n.checkAgain,
+      onPressed: () => _recheckManualCleanupTasks(manualCleanupTasks),
+    );
   }
 
   @override
@@ -230,9 +266,10 @@ class _DownloadPageState extends ConsumerState<DownloadPage>
                   final showClearEndedTasksAction = clearableTaskIds.length > 1;
                   final showSingleReadyTaskAction =
                       clearableTaskIds.length == 1 &&
-                          manualCleanupTaskCount > 0;
+                      manualCleanupTaskCount > 0;
                   final showRecheckManualCleanupAction =
-                      manualCleanupTaskCount > 1;
+                      manualCleanupTaskCount > 1 ||
+                      (manualCleanupTaskCount > 0 && clearableTaskIds.length <= 1);
                   final manualCleanupBatchRecheckLabel =
                       showRecheckManualCleanupAction
                           ? context.l10n.recheckLeftoverFilesCount(
@@ -470,7 +507,13 @@ class _DownloadPageState extends ConsumerState<DownloadPage>
   }
 
   void _recheckManualCleanupTasks(List<DownloadTask> tasks) {
-    if (tasks.length < 2 || !mounted) {
+    if (tasks.isEmpty || !mounted) {
+      return;
+    }
+    if (tasks.length == 1) {
+      final firstTask = tasks.single;
+      final currentTask = _findTask(firstTask.id);
+      _refreshCleanupStatus(currentTask ?? firstTask);
       return;
     }
 
@@ -554,8 +597,13 @@ class _DownloadPageState extends ConsumerState<DownloadPage>
       await action();
     } catch (error) {
       if (!context.mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(_actionErrorMessage(context, error))),
+      _showDownloadSnackBar(
+        _actionErrorMessage(context, error),
+        action: _taskActionFailureSnackBarAction(
+          taskId: taskId,
+          error: error,
+          busyAction: busyAction,
+        ),
       );
     } finally {
       if (mounted) {
@@ -568,6 +616,42 @@ class _DownloadPageState extends ConsumerState<DownloadPage>
     }
   }
 
+  _DownloadSnackBarAction? _taskActionFailureSnackBarAction({
+    required String taskId,
+    required Object error,
+    required DownloadTaskBusyAction busyAction,
+  }) {
+    if (busyAction != DownloadTaskBusyAction.remove) {
+      return null;
+    }
+    if (downloadActionErrorCode(error) != 'download_manual_cleanup_required') {
+      return null;
+    }
+
+    final task = _findTask(taskId);
+    if (task == null) {
+      return null;
+    }
+
+    return _DownloadSnackBarAction(
+      label: context.l10n.checkAgain,
+      onPressed: () => _refreshCleanupStatus(task),
+    );
+  }
+
+  DownloadTask? _findTask(String taskId) {
+    final tasks = ref.read(downloadTasksProvider).valueOrNull;
+    if (tasks == null) {
+      return null;
+    }
+    for (final task in tasks) {
+      if (task.id == taskId) {
+        return task;
+      }
+    }
+    return null;
+  }
+
   Future<void> _clearRemovableTasks(
     BuildContext context,
     WidgetRef ref,
@@ -577,6 +661,7 @@ class _DownloadPageState extends ConsumerState<DownloadPage>
     final l10n = context.l10n;
     var clearedCount = 0;
     var failedCount = 0;
+    final manualCleanupTaskIds = <String>[];
     final List<String> failureMessages = [];
     for (final taskId in taskIds) {
       try {
@@ -584,6 +669,9 @@ class _DownloadPageState extends ConsumerState<DownloadPage>
         clearedCount += 1;
       } catch (error) {
         failedCount += 1;
+        if (downloadActionErrorCode(error) == 'download_manual_cleanup_required') {
+          manualCleanupTaskIds.add(taskId);
+        }
         final failureMessage = error is AppException &&
                 error.code == 'download_manual_cleanup_required'
             ? l10n.downloadManualCleanupRequiredError
@@ -611,7 +699,17 @@ class _DownloadPageState extends ConsumerState<DownloadPage>
     final message = remainingManualCleanupCount > 0
         ? '$actionFailureMessage\n${_manualCleanupRetentionGuidance(context, remainingManualCleanupCount, clearableTaskCount: remainingClearableTaskCount)}'
         : actionFailureMessage;
-    _showDownloadSnackBar(message);
+    final manualCleanupTasks = remainingTasks
+        ?.where((task) => manualCleanupTaskIds.contains(task.id))
+        .toList(growable: false);
+    final followUpAction = _manualCleanupFailureFollowUpSnackBarAction(
+      manualCleanupTasks,
+      manualCleanupTaskIds: manualCleanupTaskIds,
+    );
+    _showDownloadSnackBar(
+      message,
+      action: followUpAction,
+    );
   }
 
   Future<void> _handleClearRemovableTasks(List<String> taskIds) async {
