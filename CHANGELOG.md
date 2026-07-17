@@ -10,6 +10,7 @@
 - 新增“反馈问题”闭环：点击后会复制已脱敏的诊断摘要，并打开预填的 GitHub issue；如果用户没有登录 GitHub，也可以把同一份报告直接粘贴到其他反馈渠道。
 
 ### 🐛 修复
+- 修复源诊断、运行诊断与反馈摘要里对 `Source fallback used =>` ASCII 箭头变体的兼容：当上游回退文案写成 `Source fallback used => reason` 或 `Source fallback used = reason` 时，不再把技术前缀暴露给用户，依然稳定展示可读原因。
 - 修复 `test/feedback_package_collector_test.dart` 在 CI 的 `flutter analyze` 严格模式下因 `prefer_const_constructors` 3 条 info 被视为失败的问题：将测试中的 `SourceDiagnostic` 实例改为 `const` 构造，保持现网行为不变并恢复下载诊断快照回归链路。
 - 修复下载清理文案里“待清理残留文件”表述不一致的问题：中文提示统一改为“标记为”表达，避免在手动清理路径里给用户制造术语歧义。
 - 修复下载页残留清理回归断言与当前文案/交互脱节的问题：把单条手动清理残留场景的提示文案和“多条残留重检后仍有剩余条目”时顶部重检入口可见性的行为收束到现网实现，避免 CI 因旧期待文本误报。

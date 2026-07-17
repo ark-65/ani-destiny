@@ -16,7 +16,7 @@ final _sourceFallbackAttemptPrefix = RegExp(
   caseSensitive: false,
 );
 final _sourceFallbackMessageBoilerplate = RegExp(
-  r'^source fallback used[\s:：。！!;；,，\-–—.\(（【\[\]<>→]*(?<reason>.*)$',
+  r'^source fallback used[\s:：。！!;；,，\-–—.\(（【\[\]<>→=＝]*(?<reason>.*)$',
   caseSensitive: false,
 );
 
