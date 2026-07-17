@@ -16,7 +16,7 @@ final _sourceFallbackAttemptPrefix = RegExp(
   caseSensitive: false,
 );
 final _sourceFallbackMessageBoilerplate = RegExp(
-  r'^source fallback used[\s:：。！!;；,，\-–—.]*(?<reason>.*)$',
+  r'^source fallback used[\s:：。！!;；,，\-–—.\(（【\[]*(?<reason>.*)$',
   caseSensitive: false,
 );
 
@@ -241,7 +241,9 @@ class FeedbackPackageCollector {
   String? _stripSourceFallbackParentheses(String reason) {
     final normalized = reason.trim();
     if ((normalized.startsWith('(') && normalized.endsWith(')')) ||
-        (normalized.startsWith('（') && normalized.endsWith('）'))) {
+        (normalized.startsWith('[') && normalized.endsWith(']')) ||
+        (normalized.startsWith('（') && normalized.endsWith('）')) ||
+        (normalized.startsWith('【') && normalized.endsWith('】'))) {
       if (normalized.length <= 2) return null;
       return normalized.substring(1, normalized.length - 1).trim();
     }

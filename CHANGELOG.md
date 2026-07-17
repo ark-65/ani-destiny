@@ -43,6 +43,7 @@
 - 修复源诊断与运行诊断页在 `Source fallback used` 后续分隔符变体下仍可能露出的工程化兜底文案，扩大兜底过滤规则到常见冒号、分号、中文句点和空白尾巴，使 `Source fallback used:`、`SOURCE FALLBACK USED;` 这类形态都能稳定隐藏，并补充对应回归覆盖。
 - 修复源诊断与运行诊断页在 `Source fallback used:` 后仍透传可读原因时出现“实现口吻+重复原因”问题；现在会把固定前缀压缩成原因内容，保留原因细节并避免同一条日志里重复出现 `Source fallback used`。
 - 修复源诊断与运行诊断页对 `Source fallback used（...）` 这类括号包裹原因兼容：会优先提取括号内原因并展示，避免工程化前缀继续在可见诊断行中干扰用户判断。
+- 修复源诊断、运行诊断与反馈摘要在 `Source fallback used[...]` 这类方括号包裹变体下仍可能暴露前缀的场景；补充方括号清洗后统一展示可读原因，减少 fallback 报文的工程噪音。
 - 修复源诊断与运行诊断页里 fallback 事件原因字段仍出现 `Source fallback used` 前缀的场景，统一优先显示可读原因，避免同一条事件在 message 与 reason 两个入口里展示不一致口径。
 - 修复反馈问题快照里仍可能出现 `Source fallback used` 工程化文案：在导出的源回退事件与源诊断行里同步清洗 fallback 前缀/前缀噪音，让用户把导出内容当作可理解的问题描述，而不是实现日志残留。
 - 修复番剧详情与历史页在 fallback 场景下仍可能展示服务层“Selected source is temporarily unavailable...”风格的技术句式；现在会先提取并仅展示可读的失败原因，让用户关注“为什么换源”，而不是“内部切源描述”。
