@@ -382,10 +382,11 @@ String? _diagnosticMessageLine(SourceDiagnostic diagnostic) {
   if (message.isEmpty) {
     return null;
   }
-  final reason = diagnostic.reason?.trim() ?? '';
-  if (_isSourceFallbackMessageBoilerplate(message) && reason.isNotEmpty) {
+
+  if (_isSourceFallbackMessageBoilerplate(message)) {
     return null;
   }
+
   return message;
 }
 

@@ -145,6 +145,30 @@ void main() {
     );
   });
 
+  testWidgets('source diagnostics sheet hides fallback boilerplate message', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      _buildApp(
+        home: const SourceSettingsPage(),
+        overrides: [
+          ..._providerOverrides,
+          sourceDiagnosticsControllerProvider.overrideWith(
+            () => _SourceFallbackBoilerplateSourceDiagnosticsController(),
+          ),
+        ],
+      ),
+    );
+
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Source diagnostics'));
+    await tester.pumpAndSettle();
+
+    expect(find.textContaining('Source fallback used.'), findsNothing);
+    expect(find.textContaining('Sakura Anime'), findsWidgets);
+    expect(find.textContaining('Mock Anime Source'), findsWidgets);
+  });
+
   testWidgets('settings page keeps runtime diagnostics visible for support',
       (tester) async {
     SharedPreferences.setMockInitialValues({});
@@ -180,6 +204,28 @@ void main() {
       find.textContaining('Copy sanitized diagnostics and open'),
       findsOneWidget,
     );
+  });
+
+  testWidgets('runtime diagnostics page hides fallback boilerplate message', (
+    tester,
+  ) async {
+    SharedPreferences.setMockInitialValues({});
+
+    await tester.pumpWidget(
+      _buildApp(
+        home: const RuntimeDiagnosticsPage(),
+        overrides: [
+          ..._providerOverrides,
+          sourceDiagnosticsControllerProvider.overrideWith(
+            () => _SourceFallbackBoilerplateSourceDiagnosticsController(),
+          ),
+        ],
+      ),
+    );
+
+    await tester.pumpAndSettle();
+    expect(find.textContaining('Source fallback used.'), findsNothing);
+    expect(find.textContaining('Sakura Anime'), findsOneWidget);
   });
 
   testWidgets('settings page exposes force-ahead playback buffering',
@@ -875,6 +921,27 @@ class _FakeSourceDiagnosticsController extends SourceDiagnosticsController {
         toSourceId: 'mock',
         usedFallback: true,
         reason: 'Fallback triggered',
+        timestamp: DateTime(2026, 6, 7, 1, 2, 3),
+      ),
+    ];
+  }
+}
+
+class _SourceFallbackBoilerplateSourceDiagnosticsController
+    extends SourceDiagnosticsController {
+  @override
+  List<SourceDiagnostic> build() {
+    return [
+      SourceDiagnostic(
+        sourceId: 'sakura',
+        operation: 'detail',
+        level: SourceDiagnosticLevel.warning,
+        message: 'Source fallback used.',
+        exceptionType: null,
+        fromSourceId: 'sakura',
+        toSourceId: 'mock',
+        usedFallback: true,
+        reason: null,
         timestamp: DateTime(2026, 6, 7, 1, 2, 3),
       ),
     ];
