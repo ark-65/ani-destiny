@@ -1177,7 +1177,7 @@ const _localizedValues = {
     'sourceTemporarilyUnavailable': '数据源暂时不可用',
     'sourceUnavailableSuggestion': '上游数据源可能已变化或暂时不可用，请先切换到其他数据源再重试。',
     'noPlayableSourceFound': '未找到可播放线路。请先切换到其他数据源再重试。',
-    'playbackFailedSuggestion': '播放暂时失败，请重试或尝试其他播放线路。',
+    'playbackFailedSuggestion': '播放暂时中断了。先点“重试”恢复；如果仍不通，再先切换到其他播放线路再试。',
     'sources': '数据源',
     'loadingCurrentSource': '正在加载当前数据源',
     'sourceSetTo': '数据源已切换为',

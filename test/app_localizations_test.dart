@@ -225,6 +225,13 @@ void main() {
     );
   });
 
+  test('playback failure guidance in Chinese stays calm and actionable', () {
+    const zh = AppLocalizations(Locale('zh'));
+    expect(zh.playbackFailedSuggestion, contains('播放暂时中断了'));
+    expect(zh.playbackFailedSuggestion, contains('先点“重试”恢复'));
+    expect(zh.playbackFailedSuggestion, contains('切换到其他播放线路'));
+  });
+
   test('player fallback copy stays calm and avoids fallback jargon', () {
     const zh = AppLocalizations(Locale('zh'));
     final zhNotice = zh.sourceFallbackPlayerNotice(
