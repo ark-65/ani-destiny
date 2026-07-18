@@ -266,7 +266,8 @@ void main() {
     expect(markdown, isNot(contains('Source fallback used')));
   });
 
-  test('collector keeps bracketed fallback reasons readable in copied feedback summary',
+  test(
+      'collector keeps bracketed fallback reasons readable in copied feedback summary',
       () {
     final now = DateTime.utc(2026, 7, 17, 11, 12, 13);
     const l10n = AppLocalizations(Locale('en'));
@@ -343,7 +344,8 @@ void main() {
             usedFallback: true,
             fromSourceId: 'remote-proxy',
             toSourceId: 'sakura',
-            reason: 'Source fallback used -> DNS timeout while reading metadata',
+            reason:
+                'Source fallback used -> DNS timeout while reading metadata',
             timestamp: DateTime.utc(2026, 7, 17, 12, 13, 14),
           ),
         ],
@@ -352,7 +354,8 @@ void main() {
             fromSourceId: 'remote-proxy',
             toSourceId: 'sakura',
             operation: 'detail',
-            reason: 'Source fallback used -> DNS timeout while reading metadata',
+            reason:
+                'Source fallback used -> DNS timeout while reading metadata',
             timestamp: now,
           ),
         ],
@@ -369,7 +372,8 @@ void main() {
         },
       ).collect(generatedAt: now);
 
-      final markdown = const FeedbackPackageFormatter(l10n: l10n).format(package);
+      final markdown =
+          const FeedbackPackageFormatter(l10n: l10n).format(package);
 
       expect(markdown, contains('Remote Source Proxy -> Sakura Anime'));
       expect(markdown, contains('DNS timeout while reading metadata'));
@@ -401,7 +405,8 @@ void main() {
             usedFallback: true,
             fromSourceId: 'remote-proxy',
             toSourceId: 'sakura',
-            reason: 'Source fallback used => DNS timeout while reading metadata',
+            reason:
+                'Source fallback used => DNS timeout while reading metadata',
             timestamp: DateTime.utc(2026, 7, 17, 12, 13, 14),
           ),
         ],
@@ -410,7 +415,8 @@ void main() {
             fromSourceId: 'remote-proxy',
             toSourceId: 'sakura',
             operation: 'detail',
-            reason: 'Source fallback used => DNS timeout while reading metadata',
+            reason:
+                'Source fallback used => DNS timeout while reading metadata',
             timestamp: now,
           ),
         ],
@@ -427,7 +433,8 @@ void main() {
         },
       ).collect(generatedAt: now);
 
-      final markdown = const FeedbackPackageFormatter(l10n: l10n).format(package);
+      final markdown =
+          const FeedbackPackageFormatter(l10n: l10n).format(package);
 
       expect(markdown, contains('Remote Source Proxy -> Sakura Anime'));
       expect(markdown, contains('DNS timeout while reading metadata'));
@@ -454,7 +461,8 @@ void main() {
             sourceId: 'sakura',
             operation: 'detail',
             level: SourceDiagnosticLevel.warning,
-            message: 'Source fallback used / DNS timeout while reading metadata',
+            message:
+                'Source fallback used / DNS timeout while reading metadata',
             usedFallback: true,
             fromSourceId: 'remote-proxy',
             toSourceId: 'sakura',
@@ -484,12 +492,72 @@ void main() {
         },
       ).collect(generatedAt: now);
 
-      final markdown = const FeedbackPackageFormatter(l10n: l10n).format(package);
+      final markdown =
+          const FeedbackPackageFormatter(l10n: l10n).format(package);
 
       expect(markdown, contains('Remote Source Proxy -> Sakura Anime'));
       expect(markdown, contains('DNS timeout while reading metadata'));
       expect(markdown, contains('Reason: DNS timeout while reading metadata'));
       expect(markdown, isNot(contains('Source fallback used /')));
+      expect(markdown, isNot(contains('Source fallback used')));
+    },
+  );
+
+  test(
+    'collector keeps middle-dot fallback reasons readable in copied feedback summary',
+    () {
+      final now = DateTime.utc(2026, 6, 30, 9, 10, 14);
+      const l10n = AppLocalizations(Locale('en'));
+      final package = FeedbackPackageCollector(
+        l10n: l10n,
+        appName: 'AniDestiny',
+        appVersion: '1.0.4',
+        platform: 'Windows',
+        currentSourceId: 'sakura',
+        sourceHealth: const [],
+        sourceDiagnostics: [
+          SourceDiagnostic(
+            sourceId: 'sakura',
+            operation: 'detail',
+            level: SourceDiagnosticLevel.warning,
+            message:
+                'Source fallback used · DNS timeout while reading metadata',
+            usedFallback: true,
+            fromSourceId: 'remote-proxy',
+            toSourceId: 'sakura',
+            reason: 'Source fallback used · DNS timeout while reading metadata',
+            timestamp: DateTime.utc(2026, 6, 30, 9, 10, 14),
+          ),
+        ],
+        fallbackEvents: [
+          SourceFallbackEvent(
+            fromSourceId: 'remote-proxy',
+            toSourceId: 'sakura',
+            operation: 'detail',
+            reason: 'Source fallback used · DNS timeout while reading metadata',
+            timestamp: now,
+          ),
+        ],
+        playbackDiagnostics: null,
+        danmakuEnabled: false,
+        dandanplayAppIdConfigured: false,
+        dandanplayAppSecretConfigured: false,
+        downloadTasks: const [],
+        sourceLabelForId: (sourceId) {
+          return switch (sourceId) {
+            'remote-proxy' => 'Remote Source Proxy',
+            _ => _sourceLabelForId(sourceId),
+          };
+        },
+      ).collect(generatedAt: now);
+
+      final markdown =
+          const FeedbackPackageFormatter(l10n: l10n).format(package);
+
+      expect(markdown, contains('Remote Source Proxy -> Sakura Anime'));
+      expect(markdown, contains('DNS timeout while reading metadata'));
+      expect(markdown, contains('Reason: DNS timeout while reading metadata'));
+      expect(markdown, isNot(contains('Source fallback used ·')));
       expect(markdown, isNot(contains('Source fallback used')));
     },
   );
@@ -511,7 +579,8 @@ void main() {
             sourceId: 'sakura',
             operation: 'detail',
             level: SourceDiagnosticLevel.warning,
-            message: 'Source fallback used <DNS timeout while reading metadata>',
+            message:
+                'Source fallback used <DNS timeout while reading metadata>',
             usedFallback: true,
             fromSourceId: 'remote-proxy',
             toSourceId: 'sakura',
@@ -541,7 +610,8 @@ void main() {
         },
       ).collect(generatedAt: now);
 
-      final markdown = const FeedbackPackageFormatter(l10n: l10n).format(package);
+      final markdown =
+          const FeedbackPackageFormatter(l10n: l10n).format(package);
 
       expect(markdown, contains('Remote Source Proxy -> Sakura Anime'));
       expect(markdown, contains('DNS timeout while reading metadata'));

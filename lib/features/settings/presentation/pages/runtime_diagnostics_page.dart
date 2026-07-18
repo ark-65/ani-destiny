@@ -323,7 +323,7 @@ final _fallbackAttemptPrefix = RegExp(
   caseSensitive: false,
 );
 final _sourceFallbackMessageBoilerplate = RegExp(
-  r'^source fallback used[\s:：。！!;；,，/\|｜\-–—.\(（【\[\]<>→=＝]*(?<reason>.*)$',
+  r'^source fallback used[\s:：。！!;；,，/\|｜\-–—.·\(（【\[\]<>→=＝]*(?<reason>.*)$',
   caseSensitive: false,
 );
 
@@ -419,7 +419,10 @@ class _SourceDiagnosticTile extends StatelessWidget {
           if (_diagnosticMessageLine(diagnostic) != null)
             _diagnosticMessageLine(diagnostic),
           if (details.isNotEmpty) details.join(' · '),
-        ].whereType<String>().where((line) => line.trim().isNotEmpty).join('\n'),
+        ]
+            .whereType<String>()
+            .where((line) => line.trim().isNotEmpty)
+            .join('\n'),
       ),
     );
   }
