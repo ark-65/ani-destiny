@@ -1175,7 +1175,7 @@ const _localizedValues = {
         '当前所选数据源 {requestedSource} 暂时不可用，下面这些下载线路来自 {activeSource}。',
     'playbackDiagnosticCapturedAt': '采集时间',
     'sourceTemporarilyUnavailable': '数据源暂时不可用',
-    'sourceUnavailableSuggestion': '上游数据源可能已变化或暂时不可用，请先切换到其他数据源再重试。切换失败时，先回到该集顶部的数据源选择处再重试。',
+    'sourceUnavailableSuggestion': '上游数据源可能已变化或暂时不可用。请先切换到其他数据源后重试。若重试后仍无效，可在当前页面的源选择处重新确认并再次切换后重试。',
     'noPlayableSourceFound': '未找到可播放线路。请先切换到其他数据源再重试。',
     'playbackFailedSuggestion': '播放暂时中断了。先点“重试”恢复；如果仍不通，再先切换到其他播放线路再试。',
     'sources': '数据源',
@@ -1580,7 +1580,7 @@ const _localizedValues = {
     'playbackDiagnosticCapturedAt': 'Captured at',
     'sourceTemporarilyUnavailable': 'Source temporarily unavailable',
     'sourceUnavailableSuggestion':
-        'The source changed or is temporarily unavailable. Switch to another source before retrying. If needed, switch the episode source first, then retry.',
+        'The source may have changed or is temporarily unavailable. Switch to another source before retrying. If it still fails, return to the current item and choose a different source again before retrying.',
     'noPlayableSourceFound':
         'No playable source found. Switch to another source before retrying.',
     'playbackFailedSuggestion':
@@ -1960,7 +1960,7 @@ const _localizedValues = {
     'playbackDiagnosticCapturedAt': '取得時刻',
     'sourceTemporarilyUnavailable': 'ソースが一時的に利用できません',
     'sourceUnavailableSuggestion':
-        '上流ソースが変更されたか、一時的に利用できません。先に別のソースへ切り替えてから再試行してください。必要なら作品ページ上部のソース切り替えから切り替えた後に再試行してください。',
+        '上流ソースが変更されたか、一時的に利用できない状態になっています。まず別のソースへ切り替えてから再試行してください。必要なら現在の画面でソースを再選択してから再度再試行してください。',
     'noPlayableSourceFound': '再生可能なソースが見つかりません。別のソースに切り替えてから再試行してください。',
     'playbackFailedSuggestion': '再生に一時的に失敗しました。再試行するか、別の再生ラインを試してください。',
     'sources': 'ソース',

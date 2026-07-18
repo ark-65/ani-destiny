@@ -209,7 +209,7 @@ void main() {
     const zh = AppLocalizations(Locale('zh'));
     expect(
       zh.sourceUnavailableSuggestion,
-      contains('先切换到其他数据源再重试'),
+      contains('先切换到其他数据源后重试'),
     );
 
     const en = AppLocalizations(Locale('en'));
@@ -221,7 +221,7 @@ void main() {
     const ja = AppLocalizations(Locale('ja'));
     expect(
       ja.sourceUnavailableSuggestion,
-      contains('先に別のソースへ切り替えてから再試行してください'),
+      contains('まず別のソースへ切り替えてから再試行してください'),
     );
   });
 
