@@ -10,6 +10,7 @@
 - Added a tighter issue-reporting flow: tapping Report issue copies a sanitized diagnostics summary and opens a prefilled GitHub issue, while users who are not signed in to GitHub can paste the same report into any support channel.
 
 ### 🐛 Fixed
+- Synced player and anime-detail unsupported-download test expectations for HLS/m3u8 “review-only” cases to current copy (`Review in Downloads` + retry/remove flow), preventing wording drift from reintroducing CI failures.
 - Fixed source diagnostics, runtime diagnostics, and copied feedback snapshots to strip `Source fallback used · reason` boilerplate so middle-dot-separated fallback reasons show readable text without internal prefix noise.
 - Fixed source diagnostics, runtime diagnostics, and copied feedback snapshots to strip `Source fallback used => reason` ASCII variants (including `Source fallback used = reason`) so users only see readable causes, not internal boilerplate.
 - Fixed `Source fallback used / reason`-style separator variants (including full-width slash/vertical separator forms) in feedback snapshots, source diagnostics, and runtime diagnostics so internal boilerplate is removed and readable reasons remain.
