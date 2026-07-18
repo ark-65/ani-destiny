@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../app/l10n/app_localizations.dart';
+import '../../../../core/diagnostics/diagnostic_sanitizer.dart';
 import '../../../../core/widgets/app_empty_view.dart';
 import '../../../../core/widgets/app_error_view.dart';
 import '../../../../core/widgets/app_loading_view.dart';
@@ -167,18 +168,8 @@ class HistoryPage extends ConsumerWidget {
   }) {
     final normalizedReason = reason?.trim();
     if (normalizedReason == null || normalizedReason.isEmpty) return base;
-    final displayReason = _extractReadableFallbackReason(normalizedReason);
+    final displayReason = sanitizeSourceFallbackNoticeReason(normalizedReason);
     if (displayReason == null || displayReason.isEmpty) return base;
     return '$base\n$displayReason';
   }
-}
-
-String? _extractReadableFallbackReason(String reason) {
-  final normalized = reason.trim();
-  if (normalized.isEmpty) return null;
-  const marker = 'Fallback reason:';
-  final markerIndex = normalized.indexOf(marker);
-  if (markerIndex < 0) return normalized;
-  final extracted = normalized.substring(markerIndex + marker.length).trim();
-  return extracted.isEmpty ? null : extracted;
 }
