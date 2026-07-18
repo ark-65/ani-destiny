@@ -10,6 +10,7 @@
 - Added a tighter issue-reporting flow: tapping Report issue copies a sanitized diagnostics summary and opens a prefilled GitHub issue, while users who are not signed in to GitHub can paste the same report into any support channel.
 
 ### 🐛 Fixed
+- Fixed unsupported download list entries so they now explicitly say to return to the episode and confirm a supported source before retry or remove, matching detail-page guidance and removing mixed messaging on dead-end download tasks.
 - Synced player and anime-detail unsupported-download test expectations for HLS/m3u8 “review-only” cases to current copy (`Review in Downloads` + retry/remove flow), preventing wording drift from reintroducing CI failures.
 - Fixed unsupported-offline-download review copy so users now explicitly see the next safe step: return to the episode and confirm a supported source before retrying, otherwise remove the task.
 - Fixed source diagnostics, runtime diagnostics, and copied feedback snapshots to strip `Source fallback used · reason` boilerplate so middle-dot-separated fallback reasons show readable text without internal prefix noise.
