@@ -287,6 +287,38 @@ void main() {
     expect(ja.sourceFallbackNotice, isNot(contains('代替データ')));
   });
 
+  test('download fallback notice stays calm and actionable', () {
+    const zh = AppLocalizations(Locale('zh'));
+    final zhNotice = zh.sourceFallbackDownloadNotice(
+      'Mock Anime Source',
+      'Sakura Anime',
+    );
+    expect(zhNotice, contains('Mock Anime Source'));
+    expect(zhNotice, contains('Sakura Anime'));
+    expect(zhNotice, contains('返回该集'));
+    expect(zhNotice, contains('切换源'));
+
+    const en = AppLocalizations(Locale('en'));
+    final enNotice = en.sourceFallbackDownloadNotice(
+      'Mock Anime Source',
+      'Sakura Anime',
+    );
+    expect(enNotice, contains('Mock Anime Source'));
+    expect(enNotice, contains('Sakura Anime'));
+    expect(enNotice, contains('return to this episode'));
+    expect(enNotice, isNot(contains('fallback')));
+
+    const ja = AppLocalizations(Locale('ja'));
+    final jaNotice = ja.sourceFallbackDownloadNotice(
+      'Mock Anime Source',
+      'Sakura Anime',
+    );
+    expect(jaNotice, contains('Mock Anime Source'));
+    expect(jaNotice, contains('Sakura Anime'));
+    expect(jaNotice, contains('このエピソード'));
+    expect(jaNotice, contains('再試行'));
+  });
+
   test('busy player exit copy matches the active handoff', () {
     const zh = AppLocalizations(Locale('zh'));
     expect(zh.playerExitBusyNextEpisode, contains('下一集'));

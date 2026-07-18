@@ -1172,7 +1172,7 @@ const _localizedValues = {
     'sourceFallbackPlayerNotice':
         '当前所选数据源 {requestedSource} 暂时不可用，已改用 {activeSource} 继续播放。',
     'sourceFallbackDownloadNotice':
-        '当前所选数据源 {requestedSource} 暂时不可用，下面这些下载线路来自 {activeSource}。',
+        '当前所选数据源 {requestedSource} 暂时不可用，下载线路当前由 {activeSource} 提供。若仍需调整，请返回该集先切换源后再重试。',
     'playbackDiagnosticCapturedAt': '采集时间',
     'sourceTemporarilyUnavailable': '数据源暂时不可用',
     'sourceUnavailableSuggestion': '上游数据源可能已变化或暂时不可用。请先切换到其他数据源后重试。若重试后仍无效，可在当前页面的源选择处重新确认并再次切换后重试。',
@@ -1576,7 +1576,7 @@ const _localizedValues = {
     'sourceFallbackPlayerNotice':
         '{requestedSource} is temporarily unavailable. AniDestiny is playing from {activeSource} instead.',
     'sourceFallbackDownloadNotice':
-        '{requestedSource} is temporarily unavailable. These download lines are coming from {activeSource} instead.',
+        'The selected source {requestedSource} is temporarily unavailable. The download lines shown come from {activeSource}. If you want to try another source, return to this episode, switch source, and retry.',
     'playbackDiagnosticCapturedAt': 'Captured at',
     'sourceTemporarilyUnavailable': 'Source temporarily unavailable',
     'sourceUnavailableSuggestion':
@@ -1956,7 +1956,7 @@ const _localizedValues = {
     'sourceFallbackPlayerNotice':
         '選択していたソース {requestedSource} は一時的に利用できないため、現在は {activeSource} に切り替えて再生しています。',
     'sourceFallbackDownloadNotice':
-        '選択していたソース {requestedSource} は一時的に利用できないため、以下のダウンロードラインは {activeSource} から取得しています。',
+        '選択していたソース {requestedSource} は一時的に利用できないため、ダウンロードラインは現在 {activeSource} から取得しています。別のソースを試す場合は、このエピソードに戻ってソースを切り替えてから再試行してください。',
     'playbackDiagnosticCapturedAt': '取得時刻',
     'sourceTemporarilyUnavailable': 'ソースが一時的に利用できません',
     'sourceUnavailableSuggestion':
