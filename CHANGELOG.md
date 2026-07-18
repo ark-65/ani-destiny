@@ -11,6 +11,7 @@
 
 ### 🐛 修复
 - 修复播放器与番剧详情“该下载仅支持留存查看”场景在 HLS / m3u8 文案上的回归：将测试断言同步到最新提示（先确认可下载源后再决定重试或移除），避免文案漂移再度拉低 CI 与产品一致性。
+- 修复不支持离线保存下载的记录提示文案：明确下一步为“先回到该集确认可直接下载源，再决定重试或移除”，减少用户在遇到 HLS / m3u8 或 BT 记录时的误判。
 - 修复源诊断、运行诊断与反馈摘要对 `Source fallback used · reason`（中点分隔）形态的兼容：当上游文案是 `Source fallback used · DNS timeout...` 时，不再保留前缀噪音，仍直接展示可读原因。
 - 修复源诊断、运行诊断与反馈摘要里对 `Source fallback used =>` ASCII 箭头变体的兼容：当上游回退文案写成 `Source fallback used => reason` 或 `Source fallback used = reason` 时，不再把技术前缀暴露给用户，依然稳定展示可读原因。
 - 修复 `Source fallback used / reason`（含全角变体 `｜`）这类分隔符形态下仍露出工程化前缀的问题：反馈摘要、运行诊断与源诊断都继续隐藏 `Source fallback used` 噪音并保留可读原因。

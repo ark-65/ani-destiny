@@ -3346,7 +3346,7 @@ void main() {
     );
     expect(
       downloadButton.tooltip,
-      'This download currently uses an HLS / m3u8 stream, and AniDestiny cannot save that type offline yet. This entry stays in Downloads; confirm whether a supported source is available, then decide to retry or remove.',
+      'This download currently uses an HLS / m3u8 stream, and AniDestiny cannot save that type offline yet. This entry stays in Downloads. If you want to retry, return to the episode first and confirm a supported source is available, then decide to retry or remove.',
     );
 
     await tester.tap(find.widgetWithIcon(IconButton, Icons.download_outlined));
@@ -3355,7 +3355,7 @@ void main() {
     expect(createdDownloads, 1);
     expect(
       find.text(
-        'This download currently uses an HLS / m3u8 stream, and AniDestiny cannot save that type offline yet. This entry stays in Downloads; confirm whether a supported source is available, then decide to retry or remove.',
+        'This download currently uses an HLS / m3u8 stream, and AniDestiny cannot save that type offline yet. This entry stays in Downloads. If you want to retry, return to the episode first and confirm a supported source is available, then decide to retry or remove.',
       ),
       findsOneWidget,
     );

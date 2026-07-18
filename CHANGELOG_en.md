@@ -11,6 +11,7 @@
 
 ### 🐛 Fixed
 - Synced player and anime-detail unsupported-download test expectations for HLS/m3u8 “review-only” cases to current copy (`Review in Downloads` + retry/remove flow), preventing wording drift from reintroducing CI failures.
+- Fixed unsupported-offline-download review copy so users now explicitly see the next safe step: return to the episode and confirm a supported source before retrying, otherwise remove the task.
 - Fixed source diagnostics, runtime diagnostics, and copied feedback snapshots to strip `Source fallback used · reason` boilerplate so middle-dot-separated fallback reasons show readable text without internal prefix noise.
 - Fixed source diagnostics, runtime diagnostics, and copied feedback snapshots to strip `Source fallback used => reason` ASCII variants (including `Source fallback used = reason`) so users only see readable causes, not internal boilerplate.
 - Fixed `Source fallback used / reason`-style separator variants (including full-width slash/vertical separator forms) in feedback snapshots, source diagnostics, and runtime diagnostics so internal boilerplate is removed and readable reasons remain.
