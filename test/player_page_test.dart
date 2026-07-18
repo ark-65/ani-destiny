@@ -3277,7 +3277,7 @@ void main() {
     expect(find.text('Line: Missing Line'), findsOneWidget);
     expect(
       find.text(
-        'The source changed or is temporarily unavailable. Switch to another source before retrying.',
+        'The source changed or is temporarily unavailable. Switch to another source before retrying. If needed, switch the episode source first, then retry.',
       ),
       findsOneWidget,
     );

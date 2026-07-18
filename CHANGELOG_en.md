@@ -10,6 +10,7 @@
 - Added a tighter issue-reporting flow: tapping Report issue copies a sanitized diagnostics summary and opens a prefilled GitHub issue, while users who are not signed in to GitHub can paste the same report into any support channel.
 
 ### 🐛 Fixed
+- Clarified source-unavailable recovery copy by stating users should switch episode source first when needed, then retry, reducing guesswork in no-playable-source recovery.
 - Refined playback failure copy so the first action is a direct retry, then only suggesting switching lines if retry doesn't recover, reducing hesitation during transient playback interruptions.
 - Fixed unsupported download list entries so they now explicitly say to return to the episode and confirm a supported source before retry or remove, matching detail-page guidance and removing mixed messaging on dead-end download tasks.
 - Synced player and anime-detail unsupported-download test expectations for HLS/m3u8 “review-only” cases to current copy (`Review in Downloads` + retry/remove flow), preventing wording drift from reintroducing CI failures.
