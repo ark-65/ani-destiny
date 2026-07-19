@@ -56,4 +56,20 @@ void main() {
       'HTML document omitted',
     );
   });
+
+  test('sanitizeSourceFallbackNoticeReason extracts reason with equal separator', () {
+    expect(
+      sanitizeSourceFallbackNoticeReason(
+        'Fallback reason = DNS timeout while reading metadata.',
+      ),
+      'DNS timeout while reading metadata.',
+    );
+
+    expect(
+      sanitizeSourceFallbackNoticeReason(
+        'Fallback reason＝DNS timeout while reading metadata.',
+      ),
+      'DNS timeout while reading metadata.',
+    );
+  });
 }

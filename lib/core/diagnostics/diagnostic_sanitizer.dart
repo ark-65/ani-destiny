@@ -22,7 +22,7 @@ final _sourceFallbackAttemptPrefix = RegExp(
   caseSensitive: false,
 );
 final _fallbackReasonMarkerPattern = RegExp(
-  r'Fallback reason\s*[:：]\s*(?<reason>.*)$',
+  r'Fallback reason\s*[:＝=]\s*(?<reason>.*)$',
   caseSensitive: false,
 );
 final _sourceFallbackMessageBoilerplate = RegExp(
