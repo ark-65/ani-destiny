@@ -208,7 +208,7 @@ class AnimeDetailPage extends ConsumerWidget {
       final sources = sourceResult.value;
       if (sources.isEmpty) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(context.l10n.noPlayableSourceFound)),
+          SnackBar(content: Text(context.l10n.noDownloadSource)),
         );
         return;
       }

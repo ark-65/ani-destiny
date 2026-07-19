@@ -280,6 +280,35 @@ void main() {
     expect(find.text('Review in Downloads'), findsOneWidget);
   });
 
+  testWidgets('anime detail download shows no-download source message when empty', (
+    tester,
+  ) async {
+    const repository = _FakeAnimeRepository(
+      detail: _detail,
+      playSources: [],
+    );
+
+    await _pumpPage(
+      tester,
+      animeRepository: repository,
+      downloadService: const _FakeDownloadService(),
+    );
+
+    await tester.tap(find.byTooltip('Check download lines'));
+    await tester.pump();
+
+    expect(
+      find.text(
+        'No downloadable source found. Return to this episode, switch to another source, then retry.',
+      ),
+      findsOneWidget,
+    );
+    expect(
+      find.text('This download currently uses an HLS / m3u8 stream, and AniDestiny cannot save that type offline yet. This entry stays in Downloads. If you want to retry, return to the episode first and confirm a supported source is available, then decide to retry or remove.'),
+      findsNothing,
+    );
+  });
+
   testWidgets(
     'anime detail still confirms a single unsupported download line before adding it',
     (tester) async {
