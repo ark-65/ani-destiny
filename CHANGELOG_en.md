@@ -10,6 +10,7 @@
 - Added a tighter issue-reporting flow: tapping Report issue copies a sanitized diagnostics summary and opens a prefilled GitHub issue, while users who are not signed in to GitHub can paste the same report into any support channel.
 
 ### 🐛 Fixed
+- Fixed no-download-source copy in the Downloads path so when no downloadable source is available, it now explicitly tells users to return to the episode, switch source, and retry, so recovery remains one clear path instead of a dead end.
 - Fixed shared `sourceUnavailableSuggestion` copy to use page-agnostic, current-page follow-up wording instead of episode-specific phrasing, so Home/Search/Schedule/Detail/player no-source prompts stay consistent and immediately actionable.
 - Clarified source-unavailable recovery copy by stating users should switch episode source first when needed, then retry, reducing guesswork in no-playable-source recovery.
 - Improved fallback download copy for the detail flow so when AniDestiny must use an alternate source for downloads, users are told to return to the episode and switch source before retrying, avoiding a passive “source switched” state.

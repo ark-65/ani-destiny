@@ -923,7 +923,8 @@ const _localizedValues = {
     'downloads': '下载',
     'loadingDetail': '正在加载详情',
     'noPlaySource': '未找到可播放线路。请先切换到其他数据源再重试。',
-    'noDownloadSource': '未找到可下载线路。请先切换到其他数据源再重试。',
+    'noDownloadSource':
+        '未找到可下载线路。请先返回该集并切换到其他数据源再重试。',
     'selectPlaySource': '选择播放线路',
     'selectDownloadSource': '选择下载线路',
     'checkDownloadLines': '查看下载线路',
@@ -1285,7 +1286,7 @@ const _localizedValues = {
     'noPlaySource':
         'No playable source found. Switch to another source before retrying.',
     'noDownloadSource':
-        'No downloadable source found. Switch to another source before retrying.',
+        'No downloadable source found. Return to this episode, switch to another source, then retry.',
     'selectPlaySource': 'Select playback line',
     'selectDownloadSource': 'Select download line',
     'checkDownloadLines': 'Check download lines',
@@ -1691,7 +1692,7 @@ const _localizedValues = {
     'downloads': 'ダウンロード',
     'loadingDetail': '詳細を読み込み中',
     'noPlaySource': '再生可能なソースが見つかりません。先に別のソースへ切り替えてから再試行してください。',
-    'noDownloadSource': 'ダウンロード可能なソースが見つかりません。先に別のソースへ切り替えてから再試行してください。',
+    'noDownloadSource': 'ダウンロード可能なソースが見つかりません。先にこの話に戻って別のソースを切り替え、再試行してください。',
     'selectPlaySource': '再生ラインを選択',
     'selectDownloadSource': 'ダウンロードラインを選択',
     'checkDownloadLines': 'ダウンロードラインを確認',

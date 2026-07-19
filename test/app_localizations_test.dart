@@ -181,7 +181,7 @@ void main() {
     );
     expect(
       zh.noDownloadSource,
-      contains('请先切换到其他数据源再重试'),
+      contains('返回该集并切换到其他数据源再重试'),
     );
 
     const en = AppLocalizations(Locale('en'));
@@ -191,7 +191,11 @@ void main() {
     );
     expect(
       en.noDownloadSource,
-      contains('Switch to another source before retrying'),
+      contains('Return to this episode'),
+    );
+    expect(
+      en.noDownloadSource,
+      contains('switch to another source'),
     );
 
     const ja = AppLocalizations(Locale('ja'));
@@ -201,7 +205,7 @@ void main() {
     );
     expect(
       ja.noDownloadSource,
-      contains('先に別のソースへ切り替えてから再試行してください'),
+      contains('先にこの話に戻って別のソースを切り替え'),
     );
   });
 
