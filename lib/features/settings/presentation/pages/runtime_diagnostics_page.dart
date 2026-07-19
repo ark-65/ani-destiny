@@ -318,53 +318,13 @@ class _FallbackEventTile extends StatelessWidget {
   }
 }
 
-final _fallbackAttemptPrefix = RegExp(
-  r'^Source attempt \d+:\s*',
-  caseSensitive: false,
-);
-final _sourceFallbackMessageBoilerplate = RegExp(
-  r'^source fallback used[\s:：。！!;；,，/\|｜\-–—.·\(（【\[\]<>→=＝]*(?<reason>.*)$',
-  caseSensitive: false,
-);
-
 String _formatFallbackEventReason(String reason) {
   final normalized = sanitizeError(reason).trim();
   if (normalized.isEmpty) {
-    return normalized;
-  }
-
-  final fallbackBoilerplateReason = _sourceFallbackMessageBoilerplate
-      .firstMatch(normalized)
-      ?.namedGroup('reason')
-      ?.trim();
-  final candidate = fallbackBoilerplateReason != null
-      ? _stripEnclosingParentheses(fallbackBoilerplateReason)
-      : normalized;
-  if (candidate.isEmpty) {
     return '';
   }
 
-  if (!_fallbackAttemptPrefix.hasMatch(candidate)) {
-    return candidate;
-  }
-
-  final reasons = candidate
-      .split(' · ')
-      .map((entry) => entry.trim())
-      .where((entry) => entry.isNotEmpty)
-      .map((entry) => entry.replaceFirst(_fallbackAttemptPrefix, ''))
-      .where((entry) => entry.isNotEmpty)
-      .toList(growable: false);
-
-  if (reasons.isEmpty) {
-    return normalized;
-  }
-
-  if (reasons.length == 1) {
-    return reasons.single;
-  }
-
-  return reasons.join('\n');
+  return sanitizeSourceFallbackNoticeReason(normalized) ?? normalized;
 }
 
 class _DiagnosticTile extends StatelessWidget {
@@ -442,39 +402,7 @@ String? _diagnosticMessageLine(SourceDiagnostic diagnostic) {
     return null;
   }
 
-  final sanitizedMessage = _sanitizeSourceFallbackMessage(message);
-  if (sanitizedMessage == null) {
-    return null;
-  }
-
-  return sanitizedMessage;
-}
-
-String? _sanitizeSourceFallbackMessage(String message) {
-  final match = _sourceFallbackMessageBoilerplate.firstMatch(message);
-  if (match == null) {
-    return message;
-  }
-
-  final reason = _stripEnclosingParentheses(
-    match.namedGroup('reason')?.trim() ?? '',
-  );
-  if (reason.isEmpty) {
-    return null;
-  }
-
-  return reason;
-}
-
-String _stripEnclosingParentheses(String reason) {
-  if ((reason.startsWith('(') && reason.endsWith(')')) ||
-      (reason.startsWith('[') && reason.endsWith(']')) ||
-      (reason.startsWith('<') && reason.endsWith('>')) ||
-      (reason.startsWith('（') && reason.endsWith('）')) ||
-      (reason.startsWith('【') && reason.endsWith('】'))) {
-    return reason.substring(1, reason.length - 1).trim();
-  }
-  return reason;
+  return sanitizeSourceFallbackNoticeReason(message) ?? message;
 }
 
 Future<void> _copyDiagnostics(BuildContext context, WidgetRef ref) async {
