@@ -33,6 +33,31 @@ void main() {
     expect(harness.calls, ['sakura']);
   });
 
+  test('fallback diagnostics do not store fallback boilerplate messages', () async {
+    final recorder = _FakeDiagnosticRecorder();
+    final harness = await _Harness.create(
+      selectedSourceId: 'remote-proxy',
+      diagnosticRecorder: recorder,
+    );
+
+    await harness.service.run<List<String>>(
+      operation: 'home',
+      action: (adapter) async {
+        harness.calls.add(adapter.id);
+        if (adapter.id == 'remote-proxy') {
+          throw Exception('selected unavailable');
+        }
+        return [adapter.id];
+      },
+    );
+
+    expect(harness.calls, ['remote-proxy', 'sakura']);
+    expect(recorder.items, isNotEmpty);
+    for (final item in recorder.items) {
+      expect(item.message.trim(), isEmpty);
+    }
+  });
+
   test('fallback tries Sakura before Mock when selected source is unavailable',
       () async {
     final harness = await _Harness.create(selectedSourceId: 'remote-proxy');
