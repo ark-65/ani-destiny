@@ -3271,6 +3271,7 @@ void main() {
       ),
       findsOneWidget,
     );
+    expect(find.text('Select playback line'), findsOneWidget);
     expect(find.text('Anime: Anime 1'), findsOneWidget);
     expect(find.text('Episode: Episode 3'), findsOneWidget);
     expect(find.text('Active playback source: Sakura Anime'), findsOneWidget);

@@ -385,11 +385,24 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
                                       playSourceTitle: _args.playSourceTitle,
                                     ),
                                     const SizedBox(height: 12),
-                                    Wrap(
+                                  Wrap(
                                       alignment: WrapAlignment.center,
                                       spacing: 8,
                                       runSpacing: 8,
                                       children: [
+                                        if (_state.errorMessage ==
+                                            context.l10n.playerNoPlayUrl)
+                                          TextButton.icon(
+                                            onPressed: () => context.push(
+                                              '/anime/${Uri.encodeComponent(
+                                                _args.animeId,
+                                              )}?sourceId=${Uri.encodeQueryComponent(
+                                                _args.sourceId,
+                                              )}',
+                                            ),
+                                            icon: const Icon(Icons.list),
+                                            label: Text(context.l10n.selectPlaySource),
+                                          ),
                                         if (keepRetryActionVisible)
                                           Tooltip(
                                             message: retryActionTooltip,
