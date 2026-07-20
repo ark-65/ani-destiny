@@ -29,6 +29,10 @@ final _sourceFallbackMessageBoilerplate = RegExp(
   r'^source fallback used[\s:：。！!;；,，/\|｜\-–—.·\(（【\[\]<>→=＝]*(?<reason>.*)$',
   caseSensitive: false,
 );
+final _sourceFailurePrefixPattern = RegExp(
+  r'^[A-Za-z0-9_]*?(?:Exception|Error)\b\s*:\s*(?:\[[^\]]+\]\s*)?',
+  caseSensitive: false,
+);
 
 String sanitizeUrl(String url) {
   final raw = url.trim();
@@ -98,23 +102,31 @@ String? sanitizeSourceFallbackNoticeReason(String? reason) {
   );
   if (extractedReason == null || extractedReason.isEmpty) return null;
 
+  final failurePrefixStripped = _stripSourceFailurePrefix(extractedReason);
   final sourceFallbackMatch = _sourceFallbackMessageBoilerplate.firstMatch(
-    extractedReason,
+    failurePrefixStripped,
   );
   final extracted = _stripSourceFallbackBoilerplate(
-    sourceFallbackMatch?.namedGroup('reason')?.trim() ?? extractedReason,
+    sourceFallbackMatch?.namedGroup('reason')?.trim() ?? failurePrefixStripped,
   );
   if (extracted == null || extracted.isEmpty) return null;
 
-  if (!_sourceFallbackAttemptPrefix.hasMatch(extracted)) {
-    return extracted;
+  final withFailurePrefixStripped = _stripSourceFailurePrefix(extracted);
+  final normalizedExtracted = withFailurePrefixStripped;
+  if (normalizedExtracted.isEmpty) return null;
+
+  if (!_sourceFallbackAttemptPrefix.hasMatch(normalizedExtracted)) {
+    return normalizedExtracted;
   }
 
-  final reasons = extracted
+  final reasons = normalizedExtracted
       .split(' · ')
       .map((entry) => entry.trim())
       .where((entry) => entry.isNotEmpty)
-      .map((entry) => entry.replaceFirst(_sourceFallbackAttemptPrefix, ''))
+      .map(
+        (entry) =>
+            _stripSourceFailurePrefix(entry.replaceFirst(_sourceFallbackAttemptPrefix, '')),
+      )
       .where((entry) => entry.isNotEmpty)
       .toList(growable: false);
 
@@ -122,6 +134,13 @@ String? sanitizeSourceFallbackNoticeReason(String? reason) {
   if (reasons.length == 1) return reasons.single;
 
   return reasons.join('\n');
+}
+
+String _stripSourceFailurePrefix(String reason) {
+  final normalized = reason.trim();
+  return _sourceFailurePrefixPattern.hasMatch(normalized)
+      ? normalized.replaceFirst(_sourceFailurePrefixPattern, '').trim()
+      : normalized;
 }
 
 String? _stripSourceFallbackBoilerplate(String? reason) {
