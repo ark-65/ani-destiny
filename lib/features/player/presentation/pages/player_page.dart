@@ -235,23 +235,23 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
         appBar: _isFullscreen
             ? null
             : AppBar(
-                  automaticallyImplyLeading: false,
-                    leading: canLeavePlayer
-                        ? IconButton(
-                            tooltip: isRouteBusyForExit
-                                ? playerExitBusyMessage
-                                : context.l10n.back,
-                            style: isRouteBusyForExit
-                                ? IconButton.styleFrom(
-                                    foregroundColor: unavailableActionColor,
-                                  )
-                                : null,
-                            onPressed: isRouteBusyForExit
-                                ? () => _showSnackBar(playerExitBusyMessage)
-                                : () => Navigator.of(context).maybePop(),
-                            icon: const BackButtonIcon(),
-                          )
-                        : null,
+                automaticallyImplyLeading: false,
+                leading: canLeavePlayer
+                    ? IconButton(
+                        tooltip: isRouteBusyForExit
+                            ? playerExitBusyMessage
+                            : context.l10n.back,
+                        style: isRouteBusyForExit
+                            ? IconButton.styleFrom(
+                                foregroundColor: unavailableActionColor,
+                              )
+                            : null,
+                        onPressed: isRouteBusyForExit
+                            ? () => _showSnackBar(playerExitBusyMessage)
+                            : () => Navigator.of(context).maybePop(),
+                        icon: const BackButtonIcon(),
+                      )
+                    : null,
                 title: _PlayerAppBarTitle(
                   title: appBarEpisodeTitle,
                   status: appBarStatus,
@@ -385,7 +385,7 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
                                       playSourceTitle: _args.playSourceTitle,
                                     ),
                                     const SizedBox(height: 12),
-                                  Wrap(
+                                    Wrap(
                                       alignment: WrapAlignment.center,
                                       spacing: 8,
                                       runSpacing: 8,
@@ -398,10 +398,14 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
                                                 _args.animeId,
                                               )}?sourceId=${Uri.encodeQueryComponent(
                                                 _args.sourceId,
+                                              )}&focusEpisodeId=${Uri.encodeQueryComponent(
+                                                _args.episodeId,
                                               )}',
-                                            ),
-                                            icon: const Icon(Icons.list),
-                                            label: Text(context.l10n.selectPlaySource),
+                                          ),
+                                          icon: const Icon(Icons.list),
+                                          label: Text(
+                                                context.l10n.selectPlaySource,
+                                              ),
                                           ),
                                         if (keepRetryActionVisible)
                                           Tooltip(

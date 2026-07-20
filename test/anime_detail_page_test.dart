@@ -209,7 +209,8 @@ void main() {
   });
 
   testWidgets(
-      'anime detail strips source fallback attempt boilerplate from service message', (
+      'anime detail strips source fallback attempt boilerplate from service message',
+      (
     tester,
   ) async {
     const repository = _FakeAnimeRepository(
@@ -242,6 +243,44 @@ void main() {
     );
     expect(find.textContaining('Source fallback used'), findsNothing);
     expect(find.textContaining('Fallback reason:'), findsNothing);
+  });
+
+  testWidgets('anime detail highlights focused episode from query',
+      (tester) async {
+    const repository = _FakeAnimeRepository(
+      detail: _detailWithFocus,
+      playSources: [
+        PlaySource(
+          id: 'source-0',
+          episodeId: 'episode-1',
+          title: 'Direct line',
+          url: 'https://cdn.example.com/episode-1.mp4',
+        ),
+      ],
+    );
+
+    await _pumpPage(
+      tester,
+      animeRepository: repository,
+      downloadService: const _FakeDownloadService(),
+      focusEpisodeId: 'episode-2',
+    );
+
+    final focusedTileFinder = find.ancestor(
+      of: find.text('Episode 2'),
+      matching: find.byType(ListTile),
+      matchRoot: true,
+    );
+    final unfocusedTileFinder = find.ancestor(
+      of: find.text('Episode 1'),
+      matching: find.byType(ListTile),
+      matchRoot: true,
+    );
+
+    expect(focusedTileFinder, findsOneWidget);
+    expect(unfocusedTileFinder, findsOneWidget);
+    expect(tester.widget<ListTile>(focusedTileFinder).selected, isTrue);
+    expect(tester.widget<ListTile>(unfocusedTileFinder).selected, isFalse);
   });
 
   testWidgets('anime detail download keeps unsupported feedback honest', (
@@ -315,7 +354,8 @@ void main() {
     expect(find.text('Review in Downloads'), findsOneWidget);
   });
 
-  testWidgets('anime detail download shows no-download source message when empty', (
+  testWidgets(
+      'anime detail download shows no-download source message when empty', (
     tester,
   ) async {
     const repository = _FakeAnimeRepository(
@@ -339,7 +379,9 @@ void main() {
       findsOneWidget,
     );
     expect(
-      find.text('This download currently uses an HLS / m3u8 stream, and AniDestiny cannot save that type offline yet. This entry stays in Downloads. If you want to retry, return to the episode first and confirm a supported source is available, then decide to retry or remove.'),
+      find.text(
+        'This download currently uses an HLS / m3u8 stream, and AniDestiny cannot save that type offline yet. This entry stays in Downloads. If you want to retry, return to the episode first and confirm a supported source is available, then decide to retry or remove.',
+      ),
       findsNothing,
     );
   });
@@ -541,11 +583,41 @@ const _detail = AnimeDetail(
     ),
   ],
 );
+const _detailWithFocus = AnimeDetail(
+  id: 'anime-1',
+  title: 'Starlight Voyage',
+  description: 'An interstellar test detail page.',
+  sourceId: 'sakura',
+  episodes: [
+    Episode(
+      id: 'episode-1',
+      animeId: 'anime-1',
+      title: 'Episode 1',
+      index: 1,
+      sourceId: 'sakura',
+    ),
+    Episode(
+      id: 'episode-2',
+      animeId: 'anime-1',
+      title: 'Episode 2',
+      index: 2,
+      sourceId: 'sakura',
+    ),
+    Episode(
+      id: 'episode-3',
+      animeId: 'anime-1',
+      title: 'Episode 3',
+      index: 3,
+      sourceId: 'sakura',
+    ),
+  ],
+);
 
 Future<void> _pumpPage(
   WidgetTester tester, {
   required AnimeRepository animeRepository,
   required DownloadService downloadService,
+  String? focusEpisodeId,
 }) async {
   await tester.pumpWidget(
     ProviderScope(
@@ -558,19 +630,20 @@ Future<void> _pumpPage(
           (ref) => DownloadTaskCreator(downloadService),
         ),
       ],
-      child: const MaterialApp(
-        localizationsDelegates: [
+      child: MaterialApp(
+        localizationsDelegates: const [
           AppLocalizations.delegate,
           GlobalMaterialLocalizations.delegate,
           GlobalWidgetsLocalizations.delegate,
           GlobalCupertinoLocalizations.delegate,
         ],
         supportedLocales: AppLocalizations.supportedLocales,
-        locale: Locale('en'),
+        locale: const Locale('en'),
         home: Scaffold(
           body: AnimeDetailPage(
             animeId: 'anime-1',
             sourceId: 'sakura',
+            focusEpisodeId: focusEpisodeId,
           ),
         ),
       ),

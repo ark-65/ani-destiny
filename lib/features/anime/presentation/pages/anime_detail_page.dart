@@ -26,10 +26,12 @@ class AnimeDetailPage extends ConsumerWidget {
     required this.animeId,
     super.key,
     this.sourceId,
+    this.focusEpisodeId,
   });
 
   final String animeId;
   final String? sourceId;
+  final String? focusEpisodeId;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -110,6 +112,7 @@ class AnimeDetailPage extends ConsumerWidget {
                 const SizedBox(height: 24),
                 EpisodeList(
                   episodes: detail.episodes,
+                  focusEpisodeId: focusEpisodeId,
                   onPlay: (episode) =>
                       _playEpisode(context, ref, detail, episode),
                   onDownload: (episode) =>
