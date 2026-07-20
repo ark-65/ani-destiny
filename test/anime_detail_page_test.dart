@@ -24,6 +24,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:go_router/go_router.dart';
 
 void main() {
   testWidgets(
@@ -281,6 +282,38 @@ void main() {
     expect(unfocusedTileFinder, findsOneWidget);
     expect(tester.widget<ListTile>(focusedTileFinder).selected, isTrue);
     expect(tester.widget<ListTile>(unfocusedTileFinder).selected, isFalse);
+  });
+
+  testWidgets(
+    'anime detail offers recovery action when no playable source is found',
+    (tester) async {
+    const repository = _FakeAnimeRepository(
+      detail: _detail,
+      playSources: [],
+    );
+
+    await _pumpRecoveryPage(
+      tester,
+      animeRepository: repository,
+      downloadService: const _FakeDownloadService(),
+    );
+
+    await tester.tap(find.byIcon(Icons.play_arrow));
+    await tester.pumpAndSettle();
+
+    final snackBar = tester.widget<SnackBar>(find.byType(SnackBar));
+    final recoveryAction = snackBar.action;
+
+    expect(recoveryAction, isNotNull);
+    expect(recoveryAction!.label, 'Select playback line');
+
+    await tester.tap(find.text('Select playback line'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Recovered anime detail'), findsOneWidget);
+    expect(find.text('Anime: anime-1'), findsOneWidget);
+    expect(find.text('Source: sakura'), findsOneWidget);
+    expect(find.text('Episode: episode-1'), findsOneWidget);
   });
 
   testWidgets('anime detail download keeps unsupported feedback honest', (
@@ -646,6 +679,71 @@ Future<void> _pumpPage(
             focusEpisodeId: focusEpisodeId,
           ),
         ),
+      ),
+    ),
+  );
+  await tester.pumpAndSettle();
+}
+
+Future<void> _pumpRecoveryPage(
+  WidgetTester tester, {
+  required AnimeRepository animeRepository,
+  required DownloadService downloadService,
+}) async {
+  final router = GoRouter(
+    initialLocation: '/',
+    routes: [
+      GoRoute(
+        path: '/',
+        builder: (context, state) => const Scaffold(
+          body: AnimeDetailPage(
+            animeId: 'anime-1',
+            sourceId: 'sakura',
+          ),
+        ),
+      ),
+      GoRoute(
+        path: '/anime/:animeId',
+        builder: (context, state) => Scaffold(
+          body: Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Text('Recovered anime detail'),
+                Text('Anime: ${state.pathParameters['animeId']}'),
+                Text('Source: ${state.uri.queryParameters['sourceId']}'),
+                Text(
+                  'Episode: ${state.uri.queryParameters['focusEpisodeId']}',
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    ],
+  );
+
+  await tester.pumpWidget(
+    ProviderScope(
+      overrides: [
+        animeRepositoryProvider.overrideWithValue(animeRepository),
+        favoriteRepositoryProvider.overrideWithValue(
+          const _FakeFavoriteRepository(),
+        ),
+        downloadTaskCreatorProvider.overrideWith(
+          (ref) => DownloadTaskCreator(downloadService),
+        ),
+      ],
+      child: MaterialApp.router(
+        localizationsDelegates: const [
+          AppLocalizations.delegate,
+          GlobalMaterialLocalizations.delegate,
+          GlobalWidgetsLocalizations.delegate,
+          GlobalCupertinoLocalizations.delegate,
+        ],
+        supportedLocales: AppLocalizations.supportedLocales,
+        locale: const Locale('en'),
+        routerConfig: router,
       ),
     ),
   );

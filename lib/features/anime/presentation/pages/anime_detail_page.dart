@@ -153,7 +153,17 @@ class AnimeDetailPage extends ConsumerWidget {
     final sources = sourceResult.value;
     if (sources.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(context.l10n.noPlayableSourceFound)),
+        SnackBar(
+          content: Text(context.l10n.noPlayableSourceFound),
+          action: SnackBarAction(
+            label: context.l10n.selectPlaySource,
+            onPressed: () => context.push(
+              '/anime/${Uri.encodeComponent(detail.id)}?sourceId=${Uri.encodeQueryComponent(
+                    sourceResult.sourceId,
+                  )}&focusEpisodeId=${Uri.encodeQueryComponent(episode.id)}',
+            ),
+          ),
+        ),
       );
       return;
     }
