@@ -401,11 +401,11 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
                                               )}&focusEpisodeId=${Uri.encodeQueryComponent(
                                                 _args.episodeId,
                                               )}',
-                                          ),
-                                          icon: const Icon(Icons.list),
-                                          label: Text(
-                                                context.l10n.selectPlaySource,
-                                              ),
+                                            ),
+                                            icon: const Icon(Icons.list),
+                                            label: Text(
+                                              context.l10n.selectPlaySource,
+                                            ),
                                           ),
                                         if (keepRetryActionVisible)
                                           Tooltip(
@@ -1014,9 +1014,13 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
               Text(downloadEntryFeedbackMessage(context.l10n, result.kind)),
           action: SnackBarAction(
             label: downloadEntryFeedbackActionLabel(context.l10n, result.kind),
-            onPressed: () => context.push(
-              '/downloads?taskId=${Uri.encodeComponent(result.taskId)}',
-            ),
+            onPressed: result.kind == DownloadKind.directFile
+                ? () => context.push(
+                      '/downloads?taskId=${Uri.encodeComponent(result.taskId)}',
+                    )
+                : () => context.push(
+                      '/anime/${Uri.encodeComponent(_args.animeId)}?focusEpisodeId=${Uri.encodeQueryComponent(_args.episodeId)}&sourceId=${Uri.encodeQueryComponent(_args.sourceId)}',
+                    ),
           ),
         ),
       );

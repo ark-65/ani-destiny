@@ -25,7 +25,7 @@ String downloadEntryFeedbackActionLabel(
 ) {
   return kind == DownloadKind.directFile
       ? l10n.openDownloads
-      : l10n.reviewInDownloads;
+      : l10n.checkDownloadLines;
 }
 
 String downloadEntryFeedbackErrorMessage(
@@ -57,7 +57,8 @@ String downloadActionErrorMessage(
     }
   }
   if (!appError) {
-    final parsedPlainMessage = _extractDownloadActionErrorCodeAndMessage(rawMessage);
+    final parsedPlainMessage =
+        _extractDownloadActionErrorCodeAndMessage(rawMessage);
     final plainMessageByCode = parsedPlainMessage?.code == null
         ? null
         : _downloadActionErrorMessageByCode(l10n, parsedPlainMessage!.code!);
@@ -132,8 +133,8 @@ _DownloadErrorCodeAndMessage? _extractDownloadActionErrorCodeAndMessage(
     }
   }
   if (!trimmed.startsWith('[')) {
-    final plainCodeMatch = RegExp(r'^(download_[a-zA-Z0-9_]+)\s*:?\s*(.*)$')
-        .firstMatch(trimmed);
+    final plainCodeMatch =
+        RegExp(r'^(download_[a-zA-Z0-9_]+)\s*:?\s*(.*)$').firstMatch(trimmed);
     if (plainCodeMatch != null) {
       final code = plainCodeMatch.group(1)!;
       final remainder = plainCodeMatch.group(2)!.trim();

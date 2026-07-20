@@ -351,7 +351,7 @@ void main() {
       ),
       findsOneWidget,
     );
-    expect(find.text('Review in Downloads'), findsOneWidget);
+    expect(find.text('Check download lines'), findsOneWidget);
   });
 
   testWidgets(
@@ -438,7 +438,7 @@ void main() {
         ),
         findsOneWidget,
       );
-      expect(find.text('Review in Downloads'), findsOneWidget);
+      expect(find.text('Check download lines'), findsOneWidget);
     },
   );
 

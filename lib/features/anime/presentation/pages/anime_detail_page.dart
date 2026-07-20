@@ -260,9 +260,13 @@ class AnimeDetailPage extends ConsumerWidget {
               Text(downloadEntryFeedbackMessage(context.l10n, result.kind)),
           action: SnackBarAction(
             label: downloadEntryFeedbackActionLabel(context.l10n, result.kind),
-            onPressed: () => context.push(
-              '/downloads?taskId=${Uri.encodeComponent(result.taskId)}',
-            ),
+            onPressed: result.kind == DownloadKind.directFile
+                ? () => context.push(
+                      '/downloads?taskId=${Uri.encodeComponent(result.taskId)}',
+                    )
+                : () => context.push(
+                      '/anime/${Uri.encodeComponent(detail.id)}?focusEpisodeId=${Uri.encodeQueryComponent(episode.id)}&sourceId=${Uri.encodeQueryComponent(sourceResult.sourceId)}',
+                    ),
           ),
         ),
       );

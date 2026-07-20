@@ -1688,7 +1688,9 @@ void main() {
     await tester.tap(find.widgetWithIcon(IconButton, Icons.fullscreen));
     await tester.pump();
     expect(
-      find.text('Please wait until the external player finishes opening before leaving.'),
+      find.text(
+        'Please wait until the external player finishes opening before leaving.',
+      ),
       findsOneWidget,
     );
 
@@ -2718,11 +2720,11 @@ void main() {
 
     final busyBackButton = tester.widget<IconButton>(
       find
-        .descendant(
-          of: find.byType(AppBar),
-          matching: find.byType(IconButton),
-        )
-        .first,
+          .descendant(
+            of: find.byType(AppBar),
+            matching: find.byType(IconButton),
+          )
+          .first,
     );
     expect(busyBackButton.onPressed, isNotNull);
     expect(
@@ -2816,8 +2818,8 @@ void main() {
     await tester.pumpAndSettle();
   });
 
-  testWidgets(
-      'app bar back stays on player while external handoff is opening', (
+  testWidgets('app bar back stays on player while external handoff is opening',
+      (
     tester,
   ) async {
     final launchCompleter = Completer<bool>();
@@ -2931,7 +2933,8 @@ void main() {
   });
 
   testWidgets(
-      'system back stays in fullscreen while next episode is still unresolved', (
+      'system back stays in fullscreen while next episode is still unresolved',
+      (
     tester,
   ) async {
     final pendingRepository = _PendingNextEpisodeAnimeRepository();
@@ -3017,8 +3020,7 @@ void main() {
     await tester.pumpAndSettle();
   });
 
-  testWidgets(
-      'system back stays in fullscreen while external handoff opens', (
+  testWidgets('system back stays in fullscreen while external handoff opens', (
     tester,
   ) async {
     final repository = _TrackingPlayerRepository();
@@ -3027,8 +3029,7 @@ void main() {
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
-          playerRepositoryProvider
-              .overrideWithValue(repository),
+          playerRepositoryProvider.overrideWithValue(repository),
           historyRepositoryProvider.overrideWithValue(_FakeHistoryRepository()),
           danmakuRepositoryProvider.overrideWithValue(_FakeDanmakuRepository()),
           externalPlayerLauncherProvider.overrideWithValue(
@@ -3055,7 +3056,9 @@ void main() {
     expect(find.byType(PlayerPage), findsOneWidget);
     expect(find.byType(AppBar), findsNothing);
     expect(
-      find.text('Please wait until the external player finishes opening before leaving.'),
+      find.text(
+        'Please wait until the external player finishes opening before leaving.',
+      ),
       findsOneWidget,
     );
 
@@ -3063,8 +3066,7 @@ void main() {
     await tester.pumpAndSettle();
   });
 
-  testWidgets(
-      'fullscreen exit is blocked while external handoff is opening', (
+  testWidgets('fullscreen exit is blocked while external handoff is opening', (
     tester,
   ) async {
     final repository = _TrackingPlayerRepository();
@@ -3073,8 +3075,7 @@ void main() {
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
-          playerRepositoryProvider
-              .overrideWithValue(repository),
+          playerRepositoryProvider.overrideWithValue(repository),
           historyRepositoryProvider.overrideWithValue(_FakeHistoryRepository()),
           danmakuRepositoryProvider.overrideWithValue(_FakeDanmakuRepository()),
           externalPlayerLauncherProvider.overrideWithValue(
@@ -3319,8 +3320,7 @@ void main() {
     expect(find.text('Retry'), findsNothing);
   });
 
-  testWidgets(
-      'recovery button routes to focused anime source list entry',
+  testWidgets('recovery button routes to focused anime source list entry',
       (tester) async {
     await tester.pumpWidget(
       ProviderScope(
@@ -3363,7 +3363,7 @@ void main() {
             ),
           ),
         ],
-        child: _buildPlayerApp(_args),
+        child: _buildPlayerRecoveryApp(_args),
       ),
     );
     await tester.pumpAndSettle();
@@ -3386,7 +3386,18 @@ void main() {
       ),
       findsOneWidget,
     );
-    expect(find.text('Review in Downloads'), findsOneWidget);
+    expect(find.text('Check download lines'), findsOneWidget);
+
+    final snackBar = tester.widget<SnackBar>(find.byType(SnackBar));
+    final snackBarAction = snackBar.action;
+    expect(snackBarAction, isNotNull);
+    snackBarAction!.onPressed?.call();
+    await tester.pumpAndSettle();
+
+    expect(find.text('Recovered anime detail'), findsOneWidget);
+    expect(find.text('Anime: anime-1'), findsOneWidget);
+    expect(find.text('Source: sakura'), findsOneWidget);
+    expect(find.text('Episode: episode-1'), findsOneWidget);
   });
 
   testWidgets('download action says direct downloads still need a start step', (

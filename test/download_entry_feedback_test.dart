@@ -19,7 +19,7 @@ void main() {
     );
   });
 
-  test('unsupported downloads point directly at review in Downloads', () {
+  test('unsupported downloads point to download lines', () {
     const l10n = AppLocalizations(Locale('en'));
 
     expect(
@@ -28,7 +28,7 @@ void main() {
     );
     expect(
       downloadEntryFeedbackActionLabel(l10n, DownloadKind.hls),
-      'Review in Downloads',
+      'Check download lines',
     );
   });
 
@@ -140,7 +140,8 @@ void main() {
     );
   });
 
-  test('download action errors decode known code from AppException message', () {
+  test('download action errors decode known code from AppException message',
+      () {
     const l10n = AppLocalizations(Locale('en'));
 
     expect(
