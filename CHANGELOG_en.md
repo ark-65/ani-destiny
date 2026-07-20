@@ -10,6 +10,7 @@
 - Added a tighter issue-reporting flow: tapping Report issue copies a sanitized diagnostics summary and opens a prefilled GitHub issue, while users who are not signed in to GitHub can paste the same report into any support channel.
 
 ### 🐛 Fixed
+- Fixed playback no-playable-source regression coverage by updating `player_page_test` expectation text to match current `sourceUnavailableSuggestion` copy (`go back to this episode's source list, switch to another source, then retry`), preventing CI failures from stale copy drift.
 - Reduced diagnostics implementation noise further: `SourceFallbackServiceImpl` no longer writes boilerplate fallback messages into diagnostic records; records now keep readable reasons only and fallback message lines are empty, avoiding empty technical placeholders in diagnostic rows.
 - Refined `sourceUnavailableSuggestion` into one executable recovery line: return to the episode source list, switch to another source, then retry, so no-source recovery no longer appears to require extra hidden steps.
 - Refined no-playable-source guidance by making `sourceUnavailableSuggestion` a single executable recovery step: return to the episode source list, switch source, then retry, so users see a clear next action in source-failure states.
