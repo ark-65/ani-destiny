@@ -267,6 +267,68 @@ void main() {
   });
 
   test(
+    'collector keeps fallback attempt reasons readable in copied feedback summary',
+    () {
+      final now = DateTime.utc(2026, 7, 18, 10, 12, 13);
+      const l10n = AppLocalizations(Locale('en'));
+      final package = FeedbackPackageCollector(
+        l10n: l10n,
+        appName: 'AniDestiny',
+        appVersion: '1.0.4',
+        platform: 'Windows',
+        currentSourceId: 'sakura',
+        sourceHealth: const [],
+        sourceDiagnostics: [
+          SourceDiagnostic(
+            sourceId: 'sakura',
+            operation: 'detail',
+            level: SourceDiagnosticLevel.warning,
+            message:
+                'Source attempt 1: DNS timeout while reading metadata · Source attempt 2: Remote source returned 503.',
+            usedFallback: true,
+            fromSourceId: 'remote-proxy',
+            toSourceId: 'sakura',
+            reason:
+                'Source attempt 1: DNS timeout while reading metadata · Source attempt 2: Remote source returned 503.',
+            timestamp: now,
+          ),
+        ],
+        fallbackEvents: [
+          SourceFallbackEvent(
+            fromSourceId: 'remote-proxy',
+            toSourceId: 'sakura',
+            operation: 'detail',
+            reason:
+                'Source attempt 1: DNS timeout while reading metadata · Source attempt 2: Remote source returned 503.',
+            timestamp: now,
+          ),
+        ],
+        playbackDiagnostics: null,
+        danmakuEnabled: false,
+        dandanplayAppIdConfigured: false,
+        dandanplayAppSecretConfigured: false,
+        downloadTasks: const [],
+        sourceLabelForId: (sourceId) {
+          return switch (sourceId) {
+            'remote-proxy' => 'Remote Source Proxy',
+            _ => _sourceLabelForId(sourceId),
+          };
+        },
+      ).collect(generatedAt: now);
+
+      final markdown =
+          const FeedbackPackageFormatter(l10n: l10n).format(package);
+
+      expect(markdown, contains('Remote Source Proxy -> Sakura Anime'));
+      expect(markdown, contains('DNS timeout while reading metadata'));
+      expect(markdown, contains('Remote source returned 503.'));
+      expect(markdown, isNot(contains('Source attempt 1:')));
+      expect(markdown, isNot(contains('Source attempt 2:')));
+      expect(markdown, isNot(contains('Source fallback used')));
+    },
+  );
+
+  test(
       'collector keeps bracketed fallback reasons readable in copied feedback summary',
       () {
     final now = DateTime.utc(2026, 7, 17, 11, 12, 13);

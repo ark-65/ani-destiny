@@ -10,6 +10,7 @@
 - Added a tighter issue-reporting flow: tapping Report issue copies a sanitized diagnostics summary and opens a prefilled GitHub issue, while users who are not signed in to GitHub can paste the same report into any support channel.
 
 ### 🐛 Fixed
+- Continued feedback-summary fallback cleanup convergence: feedback snapshots now reuse the same sanitizer path as diagnostics pages, removing duplicate fallback-phrase parsing and adding regression coverage so exported summaries no longer surface implementation noise like `Source fallback used` or `Source attempt N`.
 - Unified runtime diagnostics fallback reason + message rendering to go through the same sanitizer path used by source settings fallback notices, preventing the same upstream report from showing different verbosity across diagnostics entry points.
 - Unified source diagnostics in Source Settings with the shared fallback sanitizer so fallback reasons are stripped with one consistent rule path across pages, removing internal `Source fallback used` / `Fallback reason` prefixes from the main user-visible flow.
 - Fixed anime-detail download behavior so when no downloadable line exists, it now uses the no-download-source copy and tells users to switch source and retry on the current episode, avoiding confusion with the playback no-source message.
