@@ -11,6 +11,7 @@
 
 ### 🐛 Fixed
 - Reduced diagnostics implementation noise further: `SourceFallbackServiceImpl` no longer writes boilerplate fallback messages into diagnostic records; records now keep readable reasons only and fallback message lines are empty, avoiding empty technical placeholders in diagnostic rows.
+- Refined no-playable-source guidance by making `sourceUnavailableSuggestion` a single executable recovery step: return to the episode source list, switch source, then retry, so users see a clear next action in source-failure states.
 - Continued feedback-summary fallback cleanup convergence: feedback snapshots now reuse the same sanitizer path as diagnostics pages, removing duplicate fallback-phrase parsing and adding regression coverage so exported summaries no longer surface implementation noise like `Source fallback used` or `Source attempt N`.
 - Fixed feedback snapshots so source health `lastError` messages also pass through the shared fallback-sanitizer path, preventing `Source fallback used` prefixed health copy from leaking into exported issue reports.
 - Unified runtime diagnostics fallback reason + message rendering to go through the same sanitizer path used by source settings fallback notices, preventing the same upstream report from showing different verbosity across diagnostics entry points.
