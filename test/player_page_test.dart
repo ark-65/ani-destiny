@@ -40,6 +40,7 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:go_router/go_router.dart';
 
 String _formatCapturedAtForDisplay(
   WidgetTester tester,
@@ -3318,6 +3319,31 @@ void main() {
     expect(find.text('Retry'), findsNothing);
   });
 
+  testWidgets(
+      'recovery button routes to focused anime source list entry',
+      (tester) async {
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          playerRepositoryProvider
+              .overrideWithValue(const _FakePlayerRepository()),
+          historyRepositoryProvider.overrideWithValue(_FakeHistoryRepository()),
+          danmakuRepositoryProvider.overrideWithValue(_FakeDanmakuRepository()),
+        ],
+        child: _buildPlayerRecoveryApp(_missingPlayUrlArgs),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Select playback line'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Recovered anime detail'), findsOneWidget);
+    expect(find.text('Anime: anime-1'), findsOneWidget);
+    expect(find.text('Source: sakura'), findsOneWidget);
+    expect(find.text('Episode: episode-3'), findsOneWidget);
+  });
+
   testWidgets('download action explains unsupported streams honestly', (
     tester,
   ) async {
@@ -3536,6 +3562,46 @@ Widget _buildApp([PlayerRouteArgs args = _args]) {
       GlobalCupertinoLocalizations.delegate,
     ],
     home: _HostPage(args: args),
+  );
+}
+
+Widget _buildPlayerRecoveryApp(PlayerRouteArgs args) {
+  final router = GoRouter(
+    initialLocation: '/player',
+    routes: [
+      GoRoute(
+        path: '/player',
+        builder: (context, state) => PlayerPage(args: args),
+      ),
+      GoRoute(
+        path: '/anime/:animeId',
+        builder: (context, state) => Scaffold(
+          body: Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Text('Recovered anime detail'),
+                Text('Anime: ${state.pathParameters['animeId']}'),
+                Text('Source: ${state.uri.queryParameters['sourceId']}'),
+                Text('Episode: ${state.uri.queryParameters['focusEpisodeId']}'),
+              ],
+            ),
+          ),
+        ),
+      ),
+    ],
+  );
+
+  return MaterialApp.router(
+    locale: const Locale('en'),
+    supportedLocales: AppLocalizations.supportedLocales,
+    localizationsDelegates: const [
+      AppLocalizations.delegate,
+      GlobalMaterialLocalizations.delegate,
+      GlobalWidgetsLocalizations.delegate,
+      GlobalCupertinoLocalizations.delegate,
+    ],
+    routerConfig: router,
   );
 }
 
