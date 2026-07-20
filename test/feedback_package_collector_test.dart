@@ -133,6 +133,46 @@ void main() {
     );
   });
 
+  test(
+    'collector cleans source health fallback boilerplate in feedback snapshots',
+    () {
+      final now = DateTime.utc(2026, 7, 20, 10, 10, 10);
+          const l10n = AppLocalizations(Locale('en'));
+      const fallbackError =
+          'Source fallback used: DNS timeout while fetching metadata';
+      const sourceId = 'sakura';
+      final package = FeedbackPackageCollector(
+        l10n: l10n,
+        appName: 'AniDestiny',
+        appVersion: '1.0.4',
+        platform: 'Android',
+        currentSourceId: sourceId,
+        sourceHealth: [
+          SourceHealth(
+            sourceId: sourceId,
+            status: SourceHealthStatus.values.byName('degraded'),
+            failureCount: 3,
+            lastErrorMessage: fallbackError,
+          ),
+        ],
+        sourceDiagnostics: const [],
+        fallbackEvents: const [],
+        playbackDiagnostics: null,
+        danmakuEnabled: true,
+        dandanplayAppIdConfigured: false,
+        dandanplayAppSecretConfigured: false,
+        downloadTasks: const [],
+        sourceLabelForId: (String value) => value,
+      ).collect(generatedAt: now);
+
+      final markdown = const FeedbackPackageFormatter(l10n: l10n).format(package);
+
+      expect(markdown, contains('DNS timeout while fetching metadata'));
+      expect(markdown, isNot(contains('Source fallback used:')));
+      expect(markdown, isNot(contains('Source fallback used')));
+    },
+  );
+
   test('collector localizes copied feedback summary for Chinese support copy',
       () {
     final now = DateTime.utc(2026, 6, 8, 1, 2, 3);

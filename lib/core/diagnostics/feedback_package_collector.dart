@@ -77,9 +77,12 @@ class FeedbackPackageCollector {
         );
         lines.add('    ${l10n.sourceFailureCount(health.failureCount)}');
         if (health.lastErrorMessage != null) {
-          lines.add(
-            '    ${l10n.sourceLastError(sanitizeError(health.lastErrorMessage!))}',
+          final sanitizedLastError = _sanitizeSourceFallbackReason(
+            sanitizeError(health.lastErrorMessage!),
           );
+          if (sanitizedLastError != null && sanitizedLastError.isNotEmpty) {
+            lines.add('    ${l10n.sourceLastError(sanitizedLastError)}');
+          }
         }
       }
     }
