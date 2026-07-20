@@ -18,6 +18,7 @@
 - Fixed anime-detail download behavior so when no downloadable line exists, it now uses the no-download-source copy and tells users to switch source and retry on the current episode, avoiding confusion with the playback no-source message.
 - Fixed no-download-source copy in the Downloads path so when no downloadable source is available, it now explicitly tells users to return to the episode, switch source, and retry, so recovery remains one clear path instead of a dead end.
 - Fixed shared `sourceUnavailableSuggestion` copy to use page-agnostic, current-page follow-up wording instead of episode-specific phrasing, so Home/Search/Schedule/Detail/player no-source prompts stay consistent and immediately actionable.
+- Refined source-fallback messaging in service output: stop returning the `Fallback reason:` prefix in `message` and only append readable causes when available, so fallback notifications stay more user-readable.
 - Clarified source-unavailable recovery copy by stating users should switch episode source first when needed, then retry, reducing guesswork in no-playable-source recovery.
 - Improved fallback download copy for the detail flow so when AniDestiny must use an alternate source for downloads, users are told to return to the episode and switch source before retrying, avoiding a passive “source switched” state.
 - Refined playback failure copy so the first action is a direct retry, then only suggesting switching lines if retry doesn't recover, reducing hesitation during transient playback interruptions.

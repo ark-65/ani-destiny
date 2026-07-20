@@ -57,8 +57,9 @@ void main() {
         contains(
           'Selected source is temporarily unavailable. AniDestiny is showing another source instead.',
         ),
-        contains('Fallback reason: Exception: selected unavailable'),
-        contains('Exception: selected unavailable'),
+        contains('selected unavailable'),
+        isNot(contains('Fallback reason:')),
+        isNot(contains('Exception:')),
       ]),
     );
   });
@@ -86,8 +87,9 @@ void main() {
         contains(
           'Selected source is temporarily unavailable. AniDestiny is showing another source instead.',
         ),
-        contains('Fallback reason: Exception: real source failed'),
-        contains('Exception: real source failed'),
+        contains('real source failed'),
+        isNot(contains('Fallback reason:')),
+        isNot(contains('Exception:')),
       ]),
     );
   });
