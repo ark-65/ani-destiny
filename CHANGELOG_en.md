@@ -10,6 +10,7 @@
 - Added a tighter issue-reporting flow: tapping Report issue copies a sanitized diagnostics summary and opens a prefilled GitHub issue, while users who are not signed in to GitHub can paste the same report into any support channel.
 
 ### 🐛 Fixed
+- Fixed a `flutter analyze` failure by replacing the nullable callback invocation in `player_page_test.dart` with a direct callback call, resolving the `invalid_null_aware_operator` warning and keeping CI checks passing.
 - Fixed unsupported download feedback actions so they no longer send users to a generic "Review in Downloads" dead end; unsupported types now stay with `Check download lines` and route back to the same episode's source list with `animeId`, `focusEpisodeId`, and `sourceId` for an immediate recovery loop.
 - Fixed playback no-playable-source regression coverage by updating `player_page_test` expectation text to match current `sourceUnavailableSuggestion` copy (`go back to this episode's source list, switch to another source, then retry`), preventing CI failures from stale copy drift.
 - Improved the no-playback-source recovery path in the player: added a direct `Select play source` entry in the error panel so users can jump back to the episode source list immediately, rather than leaving the failed state without a clear next action.

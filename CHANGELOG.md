@@ -10,6 +10,7 @@
 - 新增“反馈问题”闭环：点击后会复制已脱敏的诊断摘要，并打开预填的 GitHub issue；如果用户没有登录 GitHub，也可以把同一份报告直接粘贴到其他反馈渠道。
 
 ### 🐛 修复
+- 修复测试静态分析告警：将 `player_page_test.dart` 中 `SnackBar` 动作回调从可空调用改为直接调用，以消除 `flutter analyze` 的 `invalid_null_aware_operator` 失败。
 - 修复下载动作失败场景的落点：不再把不支持下载类型误导到“Review in Downloads”，现在不支持离线保存的条目回到“查看下载线路”（携带该集 `focusEpisodeId` 与来源 `sourceId`），并直接跳回到对应集的源列表，形成更完整的恢复路径。
 - 修复播放器无可播放源场景下的回归用例：同步 `player_page_test` 对应断言到当前 `sourceUnavailableSuggestion` 文案（回到该集源列表后切换源再重试），防止 CI 因文案漂移误报。
 - 优化播放器无可播放源恢复链路：在错误面板加入“选择播放线路”入口，用户可直接跳回该集源列表确认可用线路，减少“看见建议不知下一步怎么做”的认知中断。

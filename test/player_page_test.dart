@@ -3391,7 +3391,7 @@ void main() {
     final snackBar = tester.widget<SnackBar>(find.byType(SnackBar));
     final snackBarAction = snackBar.action;
     expect(snackBarAction, isNotNull);
-    snackBarAction!.onPressed?.call();
+    snackBarAction!.onPressed.call();
     await tester.pumpAndSettle();
 
     expect(find.text('Recovered anime detail'), findsOneWidget);
