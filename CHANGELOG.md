@@ -11,6 +11,7 @@
 
 ### 🐛 修复
 - 继续减少源诊断噪音：`SourceFallbackServiceImpl` 不再在 fallback 诊断记录里保留工程化兜底 message，改为保持空 message 并保留可读原因，防止用户在诊断页只看到占位文本。
+- 优化 `sourceUnavailableSuggestion` 文案为一条可执行单路径：回到该集源列表，切换到其他数据源后重试，减少用户在无可播放源场景里重复确认“下一步”的认知成本。
 - 继续收敛缺源恢复引导文案：将 `sourceUnavailableSuggestion` 改为“先返回该集源列表再切换数据源、重试”的统一动作入口，减少无源场景下用户判断“下一步该做什么”的空窗期。
 - 继续收敛反馈摘要中的 fallback 原因清洗：让反馈快照与运行/源诊断复用同一清洗路径，移除重复实现并补充回归，避免导出摘要里仍出现 `Source fallback used` 或 `Source attempt N` 技术噪音。
 - 修复反馈快照源健康 `lastError` 字段仍会保留回退前缀（如 `Source fallback used`）的场景：统一从健康报错字段也走同一清洗路径，导出问题包里只保留可读原因。

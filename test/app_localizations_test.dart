@@ -213,19 +213,19 @@ void main() {
     const zh = AppLocalizations(Locale('zh'));
     expect(
       zh.sourceUnavailableSuggestion,
-      contains('先切换到其他数据源后重试'),
+      contains('先回到该集源列表，切换到其他数据源后重试。'),
     );
 
     const en = AppLocalizations(Locale('en'));
     expect(
       en.sourceUnavailableSuggestion,
-      contains('Switch to another source before retrying'),
+      contains('Go back to this episode\'s source list, switch to another source, and retry.'),
     );
 
     const ja = AppLocalizations(Locale('ja'));
     expect(
       ja.sourceUnavailableSuggestion,
-      contains('まず別のソースへ切り替えてから再試行してください'),
+      contains('先にこのエピソードのソース一覧に戻り、他のソースへ切り替えて再試行してください。'),
     );
   });
 
