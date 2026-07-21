@@ -453,6 +453,7 @@ void main() {
     'unsupported BT downloads replace placeholder copy with honest guidance',
     (tester) async {
       var removeTapped = false;
+      var reviewSourceTapped = false;
       await tester.pumpWidget(
         _buildTileApp(
           DownloadTaskTile(
@@ -468,6 +469,9 @@ void main() {
             onCancel: () {},
             onRemove: () {
               removeTapped = true;
+            },
+            onReviewSource: () {
+              reviewSourceTapped = true;
             },
           ),
         ),
@@ -490,6 +494,15 @@ void main() {
       );
       expect(
         find.descendant(
+          of: find.byKey(
+            const ValueKey('download-task-review-source-task-1'),
+          ),
+          matching: find.text('Check download lines'),
+        ),
+        findsOneWidget,
+      );
+      expect(
+        find.descendant(
           of: find.byKey(const ValueKey('download-task-remove-task-1')),
           matching: find.text('Remove from list'),
         ),
@@ -504,10 +517,15 @@ void main() {
       );
       expect(find.textContaining('Progress:'), findsNothing);
 
+      await tester.tap(
+        find.byKey(const ValueKey('download-task-review-source-task-1')),
+      );
+      await tester.pump();
       await tester
           .tap(find.byKey(const ValueKey('download-task-remove-task-1')));
       await tester.pump();
 
+      expect(reviewSourceTapped, isTrue);
       expect(removeTapped, isTrue);
     },
   );

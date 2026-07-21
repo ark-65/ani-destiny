@@ -477,6 +477,14 @@ class _DownloadPageState extends ConsumerState<DownloadPage>
                                       .removeEndedTask(task.id),
                                 ),
                               ),
+                              onReviewSource:
+                                  task.status == DownloadStatus.unsupported
+                                      ? () => context.push(
+                                            '/anime/${Uri.encodeComponent(task.animeId)}'
+                                            '?sourceId=${Uri.encodeComponent(task.sourceId)}'
+                                            '&focusEpisodeId=${Uri.encodeComponent(task.episodeId)}',
+                                          )
+                                      : null,
                               onRefreshCleanupStatus:
                                   downloadTaskNeedsManualCleanup(task)
                                       ? () => _refreshCleanupStatus(task)
