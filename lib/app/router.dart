@@ -46,6 +46,7 @@ final appRouter = GoRouter(
           builder: (context, state) => AnimeDetailPage(
             animeId: state.pathParameters['animeId'] ?? '',
             sourceId: state.uri.queryParameters['sourceId'],
+            focusEpisodeId: state.uri.queryParameters['focusEpisodeId'],
           ),
         ),
         GoRoute(

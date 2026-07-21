@@ -300,35 +300,13 @@ class _FallbackEventTile extends StatelessWidget {
   }
 }
 
-final _fallbackAttemptPrefix = RegExp(r'^Source attempt \d+:\s*');
-
 String _formatFallbackEventReason(String reason) {
   final normalized = sanitizeError(reason).trim();
   if (normalized.isEmpty) {
-    return normalized;
+    return '';
   }
 
-  if (!_fallbackAttemptPrefix.hasMatch(normalized)) {
-    return normalized;
-  }
-
-  final reasons = normalized
-      .split(' · ')
-      .map((entry) => entry.trim())
-      .where((entry) => entry.isNotEmpty)
-      .map((entry) => entry.replaceFirst(_fallbackAttemptPrefix, ''))
-      .where((entry) => entry.isNotEmpty)
-      .toList(growable: false);
-
-  if (reasons.isEmpty) {
-    return normalized;
-  }
-
-  if (reasons.length == 1) {
-    return reasons.single;
-  }
-
-  return reasons.join('\n');
+  return sanitizeSourceFallbackNoticeReason(normalized) ?? normalized;
 }
 
 class _SourceDiagnosticTile extends StatelessWidget {
@@ -382,13 +360,20 @@ String? _diagnosticMessageLine(SourceDiagnostic diagnostic) {
   if (message.isEmpty) {
     return null;
   }
-  final reason = diagnostic.reason?.trim() ?? '';
-  if (_isSourceFallbackMessageBoilerplate(message) && reason.isNotEmpty) {
+
+  final sanitizedMessage = _sanitizeSourceFallbackMessage(message);
+  if (sanitizedMessage == null) {
     return null;
   }
-  return message;
+
+  return sanitizedMessage;
 }
 
-bool _isSourceFallbackMessageBoilerplate(String message) {
-  return message == 'Source fallback used.' || message == 'Source fallback used';
+String? _sanitizeSourceFallbackMessage(String message) {
+  final normalized = sanitizeError(message).trim();
+  if (normalized.isEmpty) {
+    return null;
+  }
+
+  return sanitizeSourceFallbackNoticeReason(normalized) ?? normalized;
 }

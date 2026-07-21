@@ -484,7 +484,7 @@ void main() {
       );
       expect(
         find.text(
-          'AniDestiny cannot take over this type of download yet. You can remove this task from the list for now.',
+          'This entry stays in Downloads. If you want to retry, return to the episode first and confirm a supported source is available, then decide to retry or remove.',
         ),
         findsOneWidget,
       );

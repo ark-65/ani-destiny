@@ -1,4 +1,5 @@
 import '../../../../core/constants/app_constants.dart';
+import '../../../../core/diagnostics/diagnostic_sanitizer.dart';
 import '../../../../core/error/app_exception.dart';
 import '../../domain/adapters/anime_source_adapter.dart';
 import '../../domain/entities/source_diagnostic.dart';
@@ -95,7 +96,7 @@ class SourceFallbackServiceImpl implements SourceFallbackService {
             sourceId: adapter.id,
             operation: operation,
             level: SourceDiagnosticLevel.warning,
-            message: 'Temporary source issue.',
+            message: '',
             exceptionType: error.runtimeType.toString(),
             timestamp: DateTime.now(),
             reason: summarizeSourceFailure(error, maxLength: 120),
@@ -156,7 +157,7 @@ class SourceFallbackServiceImpl implements SourceFallbackService {
         sourceId: fromSourceId,
         operation: operation,
         level: SourceDiagnosticLevel.warning,
-        message: 'Source fallback used.',
+        message: '',
         timestamp: event.timestamp,
         fromSourceId: fromSourceId,
         toSourceId: toSourceId,
@@ -174,8 +175,10 @@ class SourceFallbackServiceImpl implements SourceFallbackService {
   }
 
   String _buildFallbackResultMessage(List<String> failures) {
-    final reason = _buildFallbackReason(failures);
-    return 'Selected source is temporarily unavailable. AniDestiny is showing another source instead. '
-        'Fallback reason: $reason';
+    final reason = sanitizeSourceFallbackNoticeReason(_buildFallbackReason(failures));
+    return reason == null || reason.isEmpty
+        ? 'Selected source is temporarily unavailable. AniDestiny is showing another source instead.'
+        : 'Selected source is temporarily unavailable. AniDestiny is showing another source instead. '
+            '$reason';
   }
 }

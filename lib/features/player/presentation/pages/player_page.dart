@@ -235,23 +235,23 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
         appBar: _isFullscreen
             ? null
             : AppBar(
-                  automaticallyImplyLeading: false,
-                    leading: canLeavePlayer
-                        ? IconButton(
-                            tooltip: isRouteBusyForExit
-                                ? playerExitBusyMessage
-                                : context.l10n.back,
-                            style: isRouteBusyForExit
-                                ? IconButton.styleFrom(
-                                    foregroundColor: unavailableActionColor,
-                                  )
-                                : null,
-                            onPressed: isRouteBusyForExit
-                                ? () => _showSnackBar(playerExitBusyMessage)
-                                : () => Navigator.of(context).maybePop(),
-                            icon: const BackButtonIcon(),
-                          )
-                        : null,
+                automaticallyImplyLeading: false,
+                leading: canLeavePlayer
+                    ? IconButton(
+                        tooltip: isRouteBusyForExit
+                            ? playerExitBusyMessage
+                            : context.l10n.back,
+                        style: isRouteBusyForExit
+                            ? IconButton.styleFrom(
+                                foregroundColor: unavailableActionColor,
+                              )
+                            : null,
+                        onPressed: isRouteBusyForExit
+                            ? () => _showSnackBar(playerExitBusyMessage)
+                            : () => Navigator.of(context).maybePop(),
+                        icon: const BackButtonIcon(),
+                      )
+                    : null,
                 title: _PlayerAppBarTitle(
                   title: appBarEpisodeTitle,
                   status: appBarStatus,
@@ -390,6 +390,23 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
                                       spacing: 8,
                                       runSpacing: 8,
                                       children: [
+                                        if (_state.errorMessage ==
+                                            context.l10n.playerNoPlayUrl)
+                                          TextButton.icon(
+                                            onPressed: () => context.push(
+                                              '/anime/${Uri.encodeComponent(
+                                                _args.animeId,
+                                              )}?sourceId=${Uri.encodeQueryComponent(
+                                                _args.sourceId,
+                                              )}&focusEpisodeId=${Uri.encodeQueryComponent(
+                                                _args.episodeId,
+                                              )}',
+                                            ),
+                                            icon: const Icon(Icons.list),
+                                            label: Text(
+                                              context.l10n.selectPlaySource,
+                                            ),
+                                          ),
                                         if (keepRetryActionVisible)
                                           Tooltip(
                                             message: retryActionTooltip,
@@ -997,9 +1014,13 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
               Text(downloadEntryFeedbackMessage(context.l10n, result.kind)),
           action: SnackBarAction(
             label: downloadEntryFeedbackActionLabel(context.l10n, result.kind),
-            onPressed: () => context.push(
-              '/downloads?taskId=${Uri.encodeComponent(result.taskId)}',
-            ),
+            onPressed: result.kind == DownloadKind.directFile
+                ? () => context.push(
+                      '/downloads?taskId=${Uri.encodeComponent(result.taskId)}',
+                    )
+                : () => context.push(
+                      '/anime/${Uri.encodeComponent(_args.animeId)}?focusEpisodeId=${Uri.encodeQueryComponent(_args.episodeId)}&sourceId=${Uri.encodeQueryComponent(_args.sourceId)}',
+                    ),
           ),
         ),
       );

@@ -318,35 +318,13 @@ class _FallbackEventTile extends StatelessWidget {
   }
 }
 
-final _fallbackAttemptPrefix = RegExp(r'^Source attempt \d+:\s*');
-
 String _formatFallbackEventReason(String reason) {
   final normalized = sanitizeError(reason).trim();
   if (normalized.isEmpty) {
-    return normalized;
+    return '';
   }
 
-  if (!_fallbackAttemptPrefix.hasMatch(normalized)) {
-    return normalized;
-  }
-
-  final reasons = normalized
-      .split(' · ')
-      .map((entry) => entry.trim())
-      .where((entry) => entry.isNotEmpty)
-      .map((entry) => entry.replaceFirst(_fallbackAttemptPrefix, ''))
-      .where((entry) => entry.isNotEmpty)
-      .toList(growable: false);
-
-  if (reasons.isEmpty) {
-    return normalized;
-  }
-
-  if (reasons.length == 1) {
-    return reasons.single;
-  }
-
-  return reasons.join('\n');
+  return sanitizeSourceFallbackNoticeReason(normalized) ?? normalized;
 }
 
 class _DiagnosticTile extends StatelessWidget {
@@ -401,7 +379,10 @@ class _SourceDiagnosticTile extends StatelessWidget {
           if (_diagnosticMessageLine(diagnostic) != null)
             _diagnosticMessageLine(diagnostic),
           if (details.isNotEmpty) details.join(' · '),
-        ].whereType<String>().where((line) => line.trim().isNotEmpty).join('\n'),
+        ]
+            .whereType<String>()
+            .where((line) => line.trim().isNotEmpty)
+            .join('\n'),
       ),
     );
   }
@@ -420,15 +401,8 @@ String? _diagnosticMessageLine(SourceDiagnostic diagnostic) {
   if (message.isEmpty) {
     return null;
   }
-  final reason = diagnostic.reason?.trim() ?? '';
-  if (_isSourceFallbackMessageBoilerplate(message) && reason.isNotEmpty) {
-    return null;
-  }
-  return message;
-}
 
-bool _isSourceFallbackMessageBoilerplate(String message) {
-  return message == 'Source fallback used.' || message == 'Source fallback used';
+  return sanitizeSourceFallbackNoticeReason(message) ?? message;
 }
 
 Future<void> _copyDiagnostics(BuildContext context, WidgetRef ref) async {

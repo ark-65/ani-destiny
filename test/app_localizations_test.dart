@@ -181,7 +181,7 @@ void main() {
     );
     expect(
       zh.noDownloadSource,
-      contains('请先切换到其他数据源再重试'),
+      contains('返回该集并切换到其他数据源再重试'),
     );
 
     const en = AppLocalizations(Locale('en'));
@@ -191,7 +191,11 @@ void main() {
     );
     expect(
       en.noDownloadSource,
-      contains('Switch to another source before retrying'),
+      contains('Return to this episode'),
+    );
+    expect(
+      en.noDownloadSource,
+      contains('switch to another source'),
     );
 
     const ja = AppLocalizations(Locale('ja'));
@@ -201,7 +205,7 @@ void main() {
     );
     expect(
       ja.noDownloadSource,
-      contains('先に別のソースへ切り替えてから再試行してください'),
+      contains('先にこの話に戻って別のソースを切り替え'),
     );
   });
 
@@ -209,20 +213,27 @@ void main() {
     const zh = AppLocalizations(Locale('zh'));
     expect(
       zh.sourceUnavailableSuggestion,
-      contains('先切换到其他数据源再重试'),
+      contains('先回到该集源列表，切换到其他数据源后重试。'),
     );
 
     const en = AppLocalizations(Locale('en'));
     expect(
       en.sourceUnavailableSuggestion,
-      contains('Switch to another source before retrying'),
+      contains('Go back to this episode\'s source list, switch to another source, and retry.'),
     );
 
     const ja = AppLocalizations(Locale('ja'));
     expect(
       ja.sourceUnavailableSuggestion,
-      contains('先に別のソースへ切り替えてから再試行してください'),
+      contains('先にこのエピソードのソース一覧に戻り、他のソースへ切り替えて再試行してください。'),
     );
+  });
+
+  test('playback failure guidance in Chinese stays calm and actionable', () {
+    const zh = AppLocalizations(Locale('zh'));
+    expect(zh.playbackFailedSuggestion, contains('播放暂时中断了'));
+    expect(zh.playbackFailedSuggestion, contains('先点“重试”恢复'));
+    expect(zh.playbackFailedSuggestion, contains('切换到其他播放线路'));
   });
 
   test('player fallback copy stays calm and avoids fallback jargon', () {
@@ -278,6 +289,38 @@ void main() {
     expect(ja.sourceFallbackNotice, contains('別のソース'));
     expect(ja.sourceFallbackNotice, contains('別のソースに切り替えて再試行'));
     expect(ja.sourceFallbackNotice, isNot(contains('代替データ')));
+  });
+
+  test('download fallback notice stays calm and actionable', () {
+    const zh = AppLocalizations(Locale('zh'));
+    final zhNotice = zh.sourceFallbackDownloadNotice(
+      'Mock Anime Source',
+      'Sakura Anime',
+    );
+    expect(zhNotice, contains('Mock Anime Source'));
+    expect(zhNotice, contains('Sakura Anime'));
+    expect(zhNotice, contains('返回该集'));
+    expect(zhNotice, contains('切换源'));
+
+    const en = AppLocalizations(Locale('en'));
+    final enNotice = en.sourceFallbackDownloadNotice(
+      'Mock Anime Source',
+      'Sakura Anime',
+    );
+    expect(enNotice, contains('Mock Anime Source'));
+    expect(enNotice, contains('Sakura Anime'));
+    expect(enNotice, contains('return to this episode'));
+    expect(enNotice, isNot(contains('fallback')));
+
+    const ja = AppLocalizations(Locale('ja'));
+    final jaNotice = ja.sourceFallbackDownloadNotice(
+      'Mock Anime Source',
+      'Sakura Anime',
+    );
+    expect(jaNotice, contains('Mock Anime Source'));
+    expect(jaNotice, contains('Sakura Anime'));
+    expect(jaNotice, contains('このエピソード'));
+    expect(jaNotice, contains('再試行'));
   });
 
   test('busy player exit copy matches the active handoff', () {

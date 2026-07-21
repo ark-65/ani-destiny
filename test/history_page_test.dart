@@ -52,23 +52,23 @@ void main() {
       'history continue strips fallback boilerplate from service message', (
     tester,
   ) async {
-    await tester.pumpWidget(
-      ProviderScope(
-        overrides: [
-          historyRepositoryProvider.overrideWithValue(
-            const _FakeHistoryRepository(),
-          ),
-          animeRepositoryProvider.overrideWithValue(
-            const _FakeAnimeRepository(
-              usedFallback: true,
-              fromSourceId: 'mock',
-              fallbackMessage:
-                  'Selected source is temporarily unavailable. AniDestiny is showing another source instead. Fallback reason: Mock source temporarily returned DNS error.',
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            historyRepositoryProvider.overrideWithValue(
+              const _FakeHistoryRepository(),
             ),
-          ),
-        ],
-        child: _buildApp(),
-      ),
+            animeRepositoryProvider.overrideWithValue(
+              const _FakeAnimeRepository(
+                usedFallback: true,
+                fromSourceId: 'mock',
+                fallbackMessage:
+                    'Source fallback used -> Mock source temporarily returned DNS error.',
+              ),
+            ),
+          ],
+          child: _buildApp(),
+        ),
     );
 
     await tester.pumpAndSettle();
@@ -80,6 +80,7 @@ void main() {
       find.textContaining('Mock source temporarily returned DNS error.'),
       findsOneWidget,
     );
+    expect(find.textContaining('Source fallback used'), findsNothing);
     expect(find.textContaining('Fallback reason:'), findsNothing);
   });
 }

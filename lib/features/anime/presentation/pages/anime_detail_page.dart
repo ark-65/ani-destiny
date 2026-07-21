@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../../../app/l10n/app_localizations.dart';
 import '../../../../core/widgets/app_error_view.dart';
 import '../../../../core/widgets/app_loading_view.dart';
+import '../../../../core/diagnostics/diagnostic_sanitizer.dart';
 import '../../../../shared/widgets/adaptive_page.dart';
 import '../../../download/domain/entities/download_kind.dart';
 import '../../../download/domain/services/download_type_detector.dart';
@@ -25,10 +26,12 @@ class AnimeDetailPage extends ConsumerWidget {
     required this.animeId,
     super.key,
     this.sourceId,
+    this.focusEpisodeId,
   });
 
   final String animeId;
   final String? sourceId;
+  final String? focusEpisodeId;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -109,6 +112,7 @@ class AnimeDetailPage extends ConsumerWidget {
                 const SizedBox(height: 24),
                 EpisodeList(
                   episodes: detail.episodes,
+                  focusEpisodeId: focusEpisodeId,
                   onPlay: (episode) =>
                       _playEpisode(context, ref, detail, episode),
                   onDownload: (episode) =>
@@ -149,7 +153,17 @@ class AnimeDetailPage extends ConsumerWidget {
     final sources = sourceResult.value;
     if (sources.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(context.l10n.noPlayableSourceFound)),
+        SnackBar(
+          content: Text(context.l10n.noPlayableSourceFound),
+          action: SnackBarAction(
+            label: context.l10n.selectPlaySource,
+            onPressed: () => context.push(
+              '/anime/${Uri.encodeComponent(detail.id)}?sourceId=${Uri.encodeQueryComponent(
+                    sourceResult.sourceId,
+                  )}&focusEpisodeId=${Uri.encodeQueryComponent(episode.id)}',
+            ),
+          ),
+        ),
       );
       return;
     }
@@ -207,7 +221,7 @@ class AnimeDetailPage extends ConsumerWidget {
       final sources = sourceResult.value;
       if (sources.isEmpty) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(context.l10n.noPlayableSourceFound)),
+          SnackBar(content: Text(context.l10n.noDownloadSource)),
         );
         return;
       }
@@ -256,9 +270,13 @@ class AnimeDetailPage extends ConsumerWidget {
               Text(downloadEntryFeedbackMessage(context.l10n, result.kind)),
           action: SnackBarAction(
             label: downloadEntryFeedbackActionLabel(context.l10n, result.kind),
-            onPressed: () => context.push(
-              '/downloads?taskId=${Uri.encodeComponent(result.taskId)}',
-            ),
+            onPressed: result.kind == DownloadKind.directFile
+                ? () => context.push(
+                      '/downloads?taskId=${Uri.encodeComponent(result.taskId)}',
+                    )
+                : () => context.push(
+                      '/anime/${Uri.encodeComponent(detail.id)}?focusEpisodeId=${Uri.encodeQueryComponent(episode.id)}&sourceId=${Uri.encodeQueryComponent(sourceResult.sourceId)}',
+                    ),
           ),
         ),
       );
@@ -405,20 +423,10 @@ class AnimeDetailPage extends ConsumerWidget {
   }) {
     final normalizedReason = reason?.trim();
     if (normalizedReason == null || normalizedReason.isEmpty) return base;
-    final displayReason = _extractReadableFallbackReason(normalizedReason);
+    final displayReason = sanitizeSourceFallbackNoticeReason(normalizedReason);
     if (displayReason == null || displayReason.isEmpty) return base;
     return '$base\n$displayReason';
   }
-}
-
-String? _extractReadableFallbackReason(String reason) {
-  final normalized = reason.trim();
-  if (normalized.isEmpty) return null;
-  const marker = 'Fallback reason:';
-  final markerIndex = normalized.indexOf(marker);
-  if (markerIndex < 0) return normalized;
-  final extracted = normalized.substring(markerIndex + marker.length).trim();
-  return extracted.isEmpty ? null : extracted;
 }
 
 class _FallbackNotice extends StatelessWidget {

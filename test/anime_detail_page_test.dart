@@ -24,6 +24,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:go_router/go_router.dart';
 
 void main() {
   testWidgets(
@@ -172,6 +173,149 @@ void main() {
     );
     expect(find.textContaining('Fallback reason:'), findsNothing);
   });
+
+  testWidgets('anime detail strips exception prefix from fallback reason', (
+    tester,
+  ) async {
+    const repository = _FakeAnimeRepository(
+      detail: _detail,
+      playSources: [
+        PlaySource(
+          id: 'source-0',
+          episodeId: 'episode-1',
+          title: 'Direct line',
+          url: 'https://cdn.example.com/episode-1.mp4',
+        ),
+      ],
+      detailUsedFallback: true,
+      detailFromSourceId: 'mock',
+      playSourcesUsedFallback: true,
+      playSourcesFromSourceId: 'mock',
+      fallbackMessage:
+          'Selected source is temporarily unavailable. AniDestiny is showing another source instead. Fallback reason: Exception: Mock source temporarily returned DNS error.',
+    );
+
+    await _pumpPage(
+      tester,
+      animeRepository: repository,
+      downloadService: const _FakeDownloadService(),
+    );
+
+    expect(
+      find.textContaining('Mock source temporarily returned DNS error.'),
+      findsAtLeastNWidgets(1),
+    );
+    expect(find.textContaining('Exception:'), findsNothing);
+    expect(find.textContaining('Fallback reason:'), findsNothing);
+  });
+
+  testWidgets(
+      'anime detail strips source fallback attempt boilerplate from service message',
+      (
+    tester,
+  ) async {
+    const repository = _FakeAnimeRepository(
+      detail: _detail,
+      playSources: [
+        PlaySource(
+          id: 'source-0',
+          episodeId: 'episode-1',
+          title: 'Direct line',
+          url: 'https://cdn.example.com/episode-1.mp4',
+        ),
+      ],
+      detailUsedFallback: true,
+      detailFromSourceId: 'mock',
+      playSourcesUsedFallback: true,
+      playSourcesFromSourceId: 'mock',
+      fallbackMessage:
+          'Source fallback used -> Mock source temporarily returned DNS error.',
+    );
+
+    await _pumpPage(
+      tester,
+      animeRepository: repository,
+      downloadService: const _FakeDownloadService(),
+    );
+
+    expect(
+      find.textContaining('Mock source temporarily returned DNS error.'),
+      findsAtLeastNWidgets(1),
+    );
+    expect(find.textContaining('Source fallback used'), findsNothing);
+    expect(find.textContaining('Fallback reason:'), findsNothing);
+  });
+
+  testWidgets('anime detail highlights focused episode from query',
+      (tester) async {
+    const repository = _FakeAnimeRepository(
+      detail: _detailWithFocus,
+      playSources: [
+        PlaySource(
+          id: 'source-0',
+          episodeId: 'episode-1',
+          title: 'Direct line',
+          url: 'https://cdn.example.com/episode-1.mp4',
+        ),
+      ],
+    );
+
+    await _pumpPage(
+      tester,
+      animeRepository: repository,
+      downloadService: const _FakeDownloadService(),
+      focusEpisodeId: 'episode-2',
+    );
+
+    final focusedTileFinder = find.ancestor(
+      of: find.text('Episode 2'),
+      matching: find.byType(ListTile),
+      matchRoot: true,
+    );
+    final unfocusedTileFinder = find.ancestor(
+      of: find.text('Episode 1'),
+      matching: find.byType(ListTile),
+      matchRoot: true,
+    );
+
+    expect(focusedTileFinder, findsOneWidget);
+    expect(unfocusedTileFinder, findsOneWidget);
+    expect(tester.widget<ListTile>(focusedTileFinder).selected, isTrue);
+    expect(tester.widget<ListTile>(unfocusedTileFinder).selected, isFalse);
+  });
+
+  testWidgets(
+    'anime detail offers recovery action when no playable source is found',
+    (tester) async {
+    const repository = _FakeAnimeRepository(
+      detail: _detail,
+      playSources: [],
+    );
+
+    await _pumpRecoveryPage(
+      tester,
+      animeRepository: repository,
+      downloadService: const _FakeDownloadService(),
+    );
+
+    await tester.tap(find.byIcon(Icons.play_arrow));
+    await tester.pumpAndSettle();
+
+    final snackBar = tester.widget<SnackBar>(find.byType(SnackBar));
+    final recoveryAction = snackBar.action;
+
+    expect(recoveryAction, isNotNull);
+    expect(recoveryAction!.label, 'Select playback line');
+
+    await tester.tap(find.text('Select playback line'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Recovered anime detail'), findsOneWidget);
+    expect(find.text('Anime: anime-1'), findsOneWidget);
+    expect(find.text('Source: sakura'), findsOneWidget);
+    expect(find.text('Episode: episode-1'), findsOneWidget);
+  });
+
   testWidgets('anime detail download keeps unsupported feedback honest', (
     tester,
   ) async {
@@ -236,11 +380,43 @@ void main() {
 
     expect(
       find.text(
-        'This download currently uses an HLS / m3u8 stream, and AniDestiny cannot save that type offline yet. This entry stays in Downloads so you can review it, try another download source, and decide whether to keep or remove it.',
+        'This download currently uses an HLS / m3u8 stream, and AniDestiny cannot save that type offline yet. This entry stays in Downloads. If you want to retry, return to the episode first and confirm a supported source is available, then decide to retry or remove.',
       ),
       findsOneWidget,
     );
-    expect(find.text('Review in Downloads'), findsOneWidget);
+    expect(find.text('Check download lines'), findsOneWidget);
+  });
+
+  testWidgets(
+      'anime detail download shows no-download source message when empty', (
+    tester,
+  ) async {
+    const repository = _FakeAnimeRepository(
+      detail: _detail,
+      playSources: [],
+    );
+
+    await _pumpPage(
+      tester,
+      animeRepository: repository,
+      downloadService: const _FakeDownloadService(),
+    );
+
+    await tester.tap(find.byTooltip('Check download lines'));
+    await tester.pump();
+
+    expect(
+      find.text(
+        'No downloadable source found. Return to this episode, switch to another source, then retry.',
+      ),
+      findsOneWidget,
+    );
+    expect(
+      find.text(
+        'This download currently uses an HLS / m3u8 stream, and AniDestiny cannot save that type offline yet. This entry stays in Downloads. If you want to retry, return to the episode first and confirm a supported source is available, then decide to retry or remove.',
+      ),
+      findsNothing,
+    );
   });
 
   testWidgets(
@@ -291,11 +467,11 @@ void main() {
       expect(createdDownloads, 1);
       expect(
         find.text(
-          'This download currently uses an HLS / m3u8 stream, and AniDestiny cannot save that type offline yet. This entry stays in Downloads so you can review it, try another download source, and decide whether to keep or remove it.',
+          'This download currently uses an HLS / m3u8 stream, and AniDestiny cannot save that type offline yet. This entry stays in Downloads. If you want to retry, return to the episode first and confirm a supported source is available, then decide to retry or remove.',
         ),
         findsOneWidget,
       );
-      expect(find.text('Review in Downloads'), findsOneWidget);
+      expect(find.text('Check download lines'), findsOneWidget);
     },
   );
 
@@ -440,11 +616,41 @@ const _detail = AnimeDetail(
     ),
   ],
 );
+const _detailWithFocus = AnimeDetail(
+  id: 'anime-1',
+  title: 'Starlight Voyage',
+  description: 'An interstellar test detail page.',
+  sourceId: 'sakura',
+  episodes: [
+    Episode(
+      id: 'episode-1',
+      animeId: 'anime-1',
+      title: 'Episode 1',
+      index: 1,
+      sourceId: 'sakura',
+    ),
+    Episode(
+      id: 'episode-2',
+      animeId: 'anime-1',
+      title: 'Episode 2',
+      index: 2,
+      sourceId: 'sakura',
+    ),
+    Episode(
+      id: 'episode-3',
+      animeId: 'anime-1',
+      title: 'Episode 3',
+      index: 3,
+      sourceId: 'sakura',
+    ),
+  ],
+);
 
 Future<void> _pumpPage(
   WidgetTester tester, {
   required AnimeRepository animeRepository,
   required DownloadService downloadService,
+  String? focusEpisodeId,
 }) async {
   await tester.pumpWidget(
     ProviderScope(
@@ -457,21 +663,87 @@ Future<void> _pumpPage(
           (ref) => DownloadTaskCreator(downloadService),
         ),
       ],
-      child: const MaterialApp(
-        localizationsDelegates: [
+      child: MaterialApp(
+        localizationsDelegates: const [
           AppLocalizations.delegate,
           GlobalMaterialLocalizations.delegate,
           GlobalWidgetsLocalizations.delegate,
           GlobalCupertinoLocalizations.delegate,
         ],
         supportedLocales: AppLocalizations.supportedLocales,
-        locale: Locale('en'),
+        locale: const Locale('en'),
         home: Scaffold(
+          body: AnimeDetailPage(
+            animeId: 'anime-1',
+            sourceId: 'sakura',
+            focusEpisodeId: focusEpisodeId,
+          ),
+        ),
+      ),
+    ),
+  );
+  await tester.pumpAndSettle();
+}
+
+Future<void> _pumpRecoveryPage(
+  WidgetTester tester, {
+  required AnimeRepository animeRepository,
+  required DownloadService downloadService,
+}) async {
+  final router = GoRouter(
+    initialLocation: '/',
+    routes: [
+      GoRoute(
+        path: '/',
+        builder: (context, state) => const Scaffold(
           body: AnimeDetailPage(
             animeId: 'anime-1',
             sourceId: 'sakura',
           ),
         ),
+      ),
+      GoRoute(
+        path: '/anime/:animeId',
+        builder: (context, state) => Scaffold(
+          body: Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Text('Recovered anime detail'),
+                Text('Anime: ${state.pathParameters['animeId']}'),
+                Text('Source: ${state.uri.queryParameters['sourceId']}'),
+                Text(
+                  'Episode: ${state.uri.queryParameters['focusEpisodeId']}',
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    ],
+  );
+
+  await tester.pumpWidget(
+    ProviderScope(
+      overrides: [
+        animeRepositoryProvider.overrideWithValue(animeRepository),
+        favoriteRepositoryProvider.overrideWithValue(
+          const _FakeFavoriteRepository(),
+        ),
+        downloadTaskCreatorProvider.overrideWith(
+          (ref) => DownloadTaskCreator(downloadService),
+        ),
+      ],
+      child: MaterialApp.router(
+        localizationsDelegates: const [
+          AppLocalizations.delegate,
+          GlobalMaterialLocalizations.delegate,
+          GlobalWidgetsLocalizations.delegate,
+          GlobalCupertinoLocalizations.delegate,
+        ],
+        supportedLocales: AppLocalizations.supportedLocales,
+        locale: const Locale('en'),
+        routerConfig: router,
       ),
     ),
   );

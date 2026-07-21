@@ -19,16 +19,16 @@ void main() {
     );
   });
 
-  test('unsupported downloads point directly at review in Downloads', () {
+  test('unsupported downloads point to download lines', () {
     const l10n = AppLocalizations(Locale('en'));
 
     expect(
       downloadEntryFeedbackMessage(l10n, DownloadKind.hls),
-      'This download currently uses an HLS / m3u8 stream, and AniDestiny cannot save that type offline yet. This entry stays in Downloads so you can review it, try another download source, and decide whether to keep or remove it.',
+      'This download currently uses an HLS / m3u8 stream, and AniDestiny cannot save that type offline yet. This entry stays in Downloads. If you want to retry, return to the episode first and confirm a supported source is available, then decide to retry or remove.',
     );
     expect(
       downloadEntryFeedbackActionLabel(l10n, DownloadKind.hls),
-      'Review in Downloads',
+      'Check download lines',
     );
   });
 
@@ -140,7 +140,8 @@ void main() {
     );
   });
 
-  test('download action errors decode known code from AppException message', () {
+  test('download action errors decode known code from AppException message',
+      () {
     const l10n = AppLocalizations(Locale('en'));
 
     expect(

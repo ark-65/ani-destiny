@@ -923,7 +923,8 @@ const _localizedValues = {
     'downloads': '下载',
     'loadingDetail': '正在加载详情',
     'noPlaySource': '未找到可播放线路。请先切换到其他数据源再重试。',
-    'noDownloadSource': '未找到可下载线路。请先切换到其他数据源再重试。',
+    'noDownloadSource':
+        '未找到可下载线路。请先返回该集并切换到其他数据源再重试。',
     'selectPlaySource': '选择播放线路',
     'selectDownloadSource': '选择下载线路',
     'checkDownloadLines': '查看下载线路',
@@ -1036,7 +1037,7 @@ const _localizedValues = {
     'downloadRemovingListOnlyNote': 'AniDestiny 正在把这条任务从列表移除，请稍候片刻。',
     'downloadUnsupportedRemoveNote': 'AniDestiny 还不能接管这类下载；确认后可以先把这条任务从列表移除。',
     'downloadUnsupportedListReviewNote':
-        '这条记录会留在下载列表，方便你先查看问题，再尝试其他下载源后决定是否移除。',
+        '这条记录会留在下载列表。要重试，请先返回该集并确认有可直接下载的来源；若无可用来源，先移除这条记录。',
     'downloadDiscardedNeedsManualCleanupNote':
         '这个下载已放弃，但 AniDestiny 没能自动清掉残留的未完成文件；如果你不再需要它，请按下面的本地路径手动删除，删完后回到这里点一下“重新检查”。',
     'downloadActionFailedMessage': 'AniDestiny 暂时没能完成这一步下载操作；请稍后再试。',
@@ -1172,12 +1173,12 @@ const _localizedValues = {
     'sourceFallbackPlayerNotice':
         '当前所选数据源 {requestedSource} 暂时不可用，已改用 {activeSource} 继续播放。',
     'sourceFallbackDownloadNotice':
-        '当前所选数据源 {requestedSource} 暂时不可用，下面这些下载线路来自 {activeSource}。',
+        '当前所选数据源 {requestedSource} 暂时不可用，下载线路当前由 {activeSource} 提供。若仍需调整，请返回该集先切换源后再重试。',
     'playbackDiagnosticCapturedAt': '采集时间',
     'sourceTemporarilyUnavailable': '数据源暂时不可用',
-    'sourceUnavailableSuggestion': '上游数据源可能已变化或暂时不可用，请先切换到其他数据源再重试。',
+    'sourceUnavailableSuggestion': '上游数据源可能已变化或暂时不可用。先回到该集源列表，切换到其他数据源后重试。',
     'noPlayableSourceFound': '未找到可播放线路。请先切换到其他数据源再重试。',
-    'playbackFailedSuggestion': '播放暂时失败，请重试或尝试其他播放线路。',
+    'playbackFailedSuggestion': '播放暂时中断了。先点“重试”恢复；如果仍不通，再先切换到其他播放线路再试。',
     'sources': '数据源',
     'loadingCurrentSource': '正在加载当前数据源',
     'sourceSetTo': '数据源已切换为',
@@ -1285,7 +1286,7 @@ const _localizedValues = {
     'noPlaySource':
         'No playable source found. Switch to another source before retrying.',
     'noDownloadSource':
-        'No downloadable source found. Switch to another source before retrying.',
+        'No downloadable source found. Return to this episode, switch to another source, then retry.',
     'selectPlaySource': 'Select playback line',
     'selectDownloadSource': 'Select download line',
     'checkDownloadLines': 'Check download lines',
@@ -1417,7 +1418,7 @@ const _localizedValues = {
     'downloadUnsupportedRemoveNote':
         'AniDestiny cannot take over this type of download yet. You can remove this task from the list for now.',
     'downloadUnsupportedListReviewNote':
-        'This entry stays in Downloads so you can review it, try another download source, and decide whether to keep or remove it.',
+        'This entry stays in Downloads. If you want to retry, return to the episode first and confirm a supported source is available, then decide to retry or remove.',
     'downloadDiscardedNeedsManualCleanupNote':
         'This download was discarded, but AniDestiny could not clear the partial file automatically. Remove the leftover file from your device if you no longer need it, then return here and tap Check again.',
     'downloadActionFailedMessage':
@@ -1576,11 +1577,11 @@ const _localizedValues = {
     'sourceFallbackPlayerNotice':
         '{requestedSource} is temporarily unavailable. AniDestiny is playing from {activeSource} instead.',
     'sourceFallbackDownloadNotice':
-        '{requestedSource} is temporarily unavailable. These download lines are coming from {activeSource} instead.',
+        'The selected source {requestedSource} is temporarily unavailable. The download lines shown come from {activeSource}. If you want to try another source, return to this episode, switch source, and retry.',
     'playbackDiagnosticCapturedAt': 'Captured at',
     'sourceTemporarilyUnavailable': 'Source temporarily unavailable',
     'sourceUnavailableSuggestion':
-        'The source changed or is temporarily unavailable. Switch to another source before retrying.',
+        'The source may have changed or is temporarily unavailable. Go back to this episode\'s source list, switch to another source, and retry.',
     'noPlayableSourceFound':
         'No playable source found. Switch to another source before retrying.',
     'playbackFailedSuggestion':
@@ -1691,7 +1692,7 @@ const _localizedValues = {
     'downloads': 'ダウンロード',
     'loadingDetail': '詳細を読み込み中',
     'noPlaySource': '再生可能なソースが見つかりません。先に別のソースへ切り替えてから再試行してください。',
-    'noDownloadSource': 'ダウンロード可能なソースが見つかりません。先に別のソースへ切り替えてから再試行してください。',
+    'noDownloadSource': 'ダウンロード可能なソースが見つかりません。先にこの話に戻って別のソースを切り替え、再試行してください。',
     'selectPlaySource': '再生ラインを選択',
     'selectDownloadSource': 'ダウンロードラインを選択',
     'checkDownloadLines': 'ダウンロードラインを確認',
@@ -1812,7 +1813,7 @@ const _localizedValues = {
     'downloadUnsupportedRemoveNote':
         'AniDestiny はまだこの種類のダウンロードを引き継げません。今はこのタスクを一覧から消せます。',
     'downloadUnsupportedListReviewNote':
-        'この記録はダウンロード一覧に残るため、内容を確認し、別のダウンロードソースを試したうえで、保持するか削除するかを決められます。',
+        'この記録はダウンロード一覧に残ります。再試行するには、まずエピソードに戻って対応するダウンロード可能なソースを確認し、利用可能なら再試行してください。見つからない場合は先にこの記録を削除します。',
     'downloadDiscardedNeedsManualCleanupNote':
         'このダウンロードは破棄されましたが、AniDestiny は未完了ファイルを自動で削除できませんでした。不要なら下のローカルパスをもとに手動で削除し、戻ってきたら「再確認」を押してください。',
     'downloadActionFailedMessage':
@@ -1956,11 +1957,11 @@ const _localizedValues = {
     'sourceFallbackPlayerNotice':
         '選択していたソース {requestedSource} は一時的に利用できないため、現在は {activeSource} に切り替えて再生しています。',
     'sourceFallbackDownloadNotice':
-        '選択していたソース {requestedSource} は一時的に利用できないため、以下のダウンロードラインは {activeSource} から取得しています。',
+        '選択していたソース {requestedSource} は一時的に利用できないため、ダウンロードラインは現在 {activeSource} から取得しています。別のソースを試す場合は、このエピソードに戻ってソースを切り替えてから再試行してください。',
     'playbackDiagnosticCapturedAt': '取得時刻',
     'sourceTemporarilyUnavailable': 'ソースが一時的に利用できません',
     'sourceUnavailableSuggestion':
-        '上流ソースが変更されたか、一時的に利用できません。先に別のソースへ切り替えてから再試行してください。',
+        '上流ソースが変更されたか、一時的に利用できない状態になっています。先にこのエピソードのソース一覧に戻り、他のソースへ切り替えて再試行してください。',
     'noPlayableSourceFound': '再生可能なソースが見つかりません。別のソースに切り替えてから再試行してください。',
     'playbackFailedSuggestion': '再生に一時的に失敗しました。再試行するか、別の再生ラインを試してください。',
     'sources': 'ソース',

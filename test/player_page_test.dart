@@ -40,6 +40,7 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:go_router/go_router.dart';
 
 String _formatCapturedAtForDisplay(
   WidgetTester tester,
@@ -1687,7 +1688,9 @@ void main() {
     await tester.tap(find.widgetWithIcon(IconButton, Icons.fullscreen));
     await tester.pump();
     expect(
-      find.text('Please wait until the external player finishes opening before leaving.'),
+      find.text(
+        'Please wait until the external player finishes opening before leaving.',
+      ),
       findsOneWidget,
     );
 
@@ -2717,11 +2720,11 @@ void main() {
 
     final busyBackButton = tester.widget<IconButton>(
       find
-        .descendant(
-          of: find.byType(AppBar),
-          matching: find.byType(IconButton),
-        )
-        .first,
+          .descendant(
+            of: find.byType(AppBar),
+            matching: find.byType(IconButton),
+          )
+          .first,
     );
     expect(busyBackButton.onPressed, isNotNull);
     expect(
@@ -2815,8 +2818,8 @@ void main() {
     await tester.pumpAndSettle();
   });
 
-  testWidgets(
-      'app bar back stays on player while external handoff is opening', (
+  testWidgets('app bar back stays on player while external handoff is opening',
+      (
     tester,
   ) async {
     final launchCompleter = Completer<bool>();
@@ -2930,7 +2933,8 @@ void main() {
   });
 
   testWidgets(
-      'system back stays in fullscreen while next episode is still unresolved', (
+      'system back stays in fullscreen while next episode is still unresolved',
+      (
     tester,
   ) async {
     final pendingRepository = _PendingNextEpisodeAnimeRepository();
@@ -3016,8 +3020,7 @@ void main() {
     await tester.pumpAndSettle();
   });
 
-  testWidgets(
-      'system back stays in fullscreen while external handoff opens', (
+  testWidgets('system back stays in fullscreen while external handoff opens', (
     tester,
   ) async {
     final repository = _TrackingPlayerRepository();
@@ -3026,8 +3029,7 @@ void main() {
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
-          playerRepositoryProvider
-              .overrideWithValue(repository),
+          playerRepositoryProvider.overrideWithValue(repository),
           historyRepositoryProvider.overrideWithValue(_FakeHistoryRepository()),
           danmakuRepositoryProvider.overrideWithValue(_FakeDanmakuRepository()),
           externalPlayerLauncherProvider.overrideWithValue(
@@ -3054,7 +3056,9 @@ void main() {
     expect(find.byType(PlayerPage), findsOneWidget);
     expect(find.byType(AppBar), findsNothing);
     expect(
-      find.text('Please wait until the external player finishes opening before leaving.'),
+      find.text(
+        'Please wait until the external player finishes opening before leaving.',
+      ),
       findsOneWidget,
     );
 
@@ -3062,8 +3066,7 @@ void main() {
     await tester.pumpAndSettle();
   });
 
-  testWidgets(
-      'fullscreen exit is blocked while external handoff is opening', (
+  testWidgets('fullscreen exit is blocked while external handoff is opening', (
     tester,
   ) async {
     final repository = _TrackingPlayerRepository();
@@ -3072,8 +3075,7 @@ void main() {
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
-          playerRepositoryProvider
-              .overrideWithValue(repository),
+          playerRepositoryProvider.overrideWithValue(repository),
           historyRepositoryProvider.overrideWithValue(_FakeHistoryRepository()),
           danmakuRepositoryProvider.overrideWithValue(_FakeDanmakuRepository()),
           externalPlayerLauncherProvider.overrideWithValue(
@@ -3271,13 +3273,14 @@ void main() {
       ),
       findsOneWidget,
     );
+    expect(find.text('Select playback line'), findsOneWidget);
     expect(find.text('Anime: Anime 1'), findsOneWidget);
     expect(find.text('Episode: Episode 3'), findsOneWidget);
     expect(find.text('Active playback source: Sakura Anime'), findsOneWidget);
     expect(find.text('Line: Missing Line'), findsOneWidget);
     expect(
       find.text(
-        'The source changed or is temporarily unavailable. Switch to another source before retrying.',
+        'The source may have changed or is temporarily unavailable. Go back to this episode\'s source list, switch to another source, and retry.',
       ),
       findsOneWidget,
     );
@@ -3317,6 +3320,30 @@ void main() {
     expect(find.text('Retry'), findsNothing);
   });
 
+  testWidgets('recovery button routes to focused anime source list entry',
+      (tester) async {
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          playerRepositoryProvider
+              .overrideWithValue(const _FakePlayerRepository()),
+          historyRepositoryProvider.overrideWithValue(_FakeHistoryRepository()),
+          danmakuRepositoryProvider.overrideWithValue(_FakeDanmakuRepository()),
+        ],
+        child: _buildPlayerRecoveryApp(_missingPlayUrlArgs),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Select playback line'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Recovered anime detail'), findsOneWidget);
+    expect(find.text('Anime: anime-1'), findsOneWidget);
+    expect(find.text('Source: sakura'), findsOneWidget);
+    expect(find.text('Episode: episode-3'), findsOneWidget);
+  });
+
   testWidgets('download action explains unsupported streams honestly', (
     tester,
   ) async {
@@ -3336,7 +3363,7 @@ void main() {
             ),
           ),
         ],
-        child: _buildPlayerApp(_args),
+        child: _buildPlayerRecoveryApp(_args),
       ),
     );
     await tester.pumpAndSettle();
@@ -3346,7 +3373,7 @@ void main() {
     );
     expect(
       downloadButton.tooltip,
-      'This download currently uses an HLS / m3u8 stream, and AniDestiny cannot save that type offline yet. This entry stays in Downloads so you can review it, try another download source, and decide whether to keep or remove it.',
+      'This download currently uses an HLS / m3u8 stream, and AniDestiny cannot save that type offline yet. This entry stays in Downloads. If you want to retry, return to the episode first and confirm a supported source is available, then decide to retry or remove.',
     );
 
     await tester.tap(find.widgetWithIcon(IconButton, Icons.download_outlined));
@@ -3355,11 +3382,22 @@ void main() {
     expect(createdDownloads, 1);
     expect(
       find.text(
-        'This download currently uses an HLS / m3u8 stream, and AniDestiny cannot save that type offline yet. This entry stays in Downloads so you can review it, try another download source, and decide whether to keep or remove it.',
+        'This download currently uses an HLS / m3u8 stream, and AniDestiny cannot save that type offline yet. This entry stays in Downloads. If you want to retry, return to the episode first and confirm a supported source is available, then decide to retry or remove.',
       ),
       findsOneWidget,
     );
-    expect(find.text('Review in Downloads'), findsOneWidget);
+    expect(find.text('Check download lines'), findsOneWidget);
+
+    final snackBar = tester.widget<SnackBar>(find.byType(SnackBar));
+    final snackBarAction = snackBar.action;
+    expect(snackBarAction, isNotNull);
+    snackBarAction!.onPressed.call();
+    await tester.pumpAndSettle();
+
+    expect(find.text('Recovered anime detail'), findsOneWidget);
+    expect(find.text('Anime: anime-1'), findsOneWidget);
+    expect(find.text('Source: sakura'), findsOneWidget);
+    expect(find.text('Episode: episode-1'), findsOneWidget);
   });
 
   testWidgets('download action says direct downloads still need a start step', (
@@ -3535,6 +3573,46 @@ Widget _buildApp([PlayerRouteArgs args = _args]) {
       GlobalCupertinoLocalizations.delegate,
     ],
     home: _HostPage(args: args),
+  );
+}
+
+Widget _buildPlayerRecoveryApp(PlayerRouteArgs args) {
+  final router = GoRouter(
+    initialLocation: '/player',
+    routes: [
+      GoRoute(
+        path: '/player',
+        builder: (context, state) => PlayerPage(args: args),
+      ),
+      GoRoute(
+        path: '/anime/:animeId',
+        builder: (context, state) => Scaffold(
+          body: Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Text('Recovered anime detail'),
+                Text('Anime: ${state.pathParameters['animeId']}'),
+                Text('Source: ${state.uri.queryParameters['sourceId']}'),
+                Text('Episode: ${state.uri.queryParameters['focusEpisodeId']}'),
+              ],
+            ),
+          ),
+        ),
+      ),
+    ],
+  );
+
+  return MaterialApp.router(
+    locale: const Locale('en'),
+    supportedLocales: AppLocalizations.supportedLocales,
+    localizationsDelegates: const [
+      AppLocalizations.delegate,
+      GlobalMaterialLocalizations.delegate,
+      GlobalWidgetsLocalizations.delegate,
+      GlobalCupertinoLocalizations.delegate,
+    ],
+    routerConfig: router,
   );
 }
 

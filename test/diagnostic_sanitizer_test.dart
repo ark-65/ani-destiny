@@ -56,4 +56,43 @@ void main() {
       'HTML document omitted',
     );
   });
+
+  test('sanitizeSourceFallbackNoticeReason extracts reason with equal separator', () {
+    expect(
+      sanitizeSourceFallbackNoticeReason(
+        'Fallback reason = DNS timeout while reading metadata.',
+      ),
+      'DNS timeout while reading metadata.',
+    );
+
+    expect(
+      sanitizeSourceFallbackNoticeReason(
+        'Fallback reason＝DNS timeout while reading metadata.',
+      ),
+      'DNS timeout while reading metadata.',
+    );
+  });
+
+  test('sanitizeSourceFallbackNoticeReason strips common exception prefixes', () {
+    expect(
+      sanitizeSourceFallbackNoticeReason(
+        'Exception: DNS timeout while reading metadata.',
+      ),
+      'DNS timeout while reading metadata.',
+    );
+
+    expect(
+      sanitizeSourceFallbackNoticeReason(
+        'AppException: [source_fallback_exhausted] DNS timeout while reading metadata.',
+      ),
+      'DNS timeout while reading metadata.',
+    );
+
+    expect(
+      sanitizeSourceFallbackNoticeReason(
+        'Source fallback used -> Exception: DNS timeout while reading metadata.',
+      ),
+      'DNS timeout while reading metadata.',
+    );
+  });
 }

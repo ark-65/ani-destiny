@@ -77,9 +77,12 @@ class FeedbackPackageCollector {
         );
         lines.add('    ${l10n.sourceFailureCount(health.failureCount)}');
         if (health.lastErrorMessage != null) {
-          lines.add(
-            '    ${l10n.sourceLastError(sanitizeError(health.lastErrorMessage!))}',
+          final sanitizedLastError = _sanitizeSourceFallbackReason(
+            sanitizeError(health.lastErrorMessage!),
           );
+          if (sanitizedLastError != null && sanitizedLastError.isNotEmpty) {
+            lines.add('    ${l10n.sourceLastError(sanitizedLastError)}');
+          }
         }
       }
     }
@@ -89,12 +92,14 @@ class FeedbackPackageCollector {
     } else {
       lines.add('- ${l10n.sourceFallbackEvents}:');
       for (final event in fallbackEvents.take(6)) {
+        final reason = _sanitizeSourceFallbackReason(event.reason) ??
+            l10n.feedbackPackageUnavailable;
         lines.add(
           '  - ${l10n.sourceOperationLabel(event.operation)}: '
           '${l10n.sourceTransitionLabel(event.fromSourceId, event.toSourceId)}',
         );
         lines.add(
-          '    ${l10n.feedbackPackageReason}: ${sanitizeError(event.reason)}',
+          '    ${l10n.feedbackPackageReason}: $reason',
         );
       }
     }
@@ -118,11 +123,20 @@ class FeedbackPackageCollector {
               diagnostic.toSourceId!,
             ),
         ].join(' · ');
+        final diagnosticsLine = _sanitizeSourceFallbackReason(
+          diagnostic.message,
+        );
+        final fallbackReason = _sanitizeSourceFallbackReason(diagnostic.reason);
         lines.add(
           '  - ${_sourceLabel(diagnostic.sourceId)} · '
           '${l10n.sourceOperationLabel(diagnostic.operation)}',
         );
-        lines.add('    ${sanitizeError(diagnostic.message)}');
+        if (diagnosticsLine != null) {
+          lines.add('    $diagnosticsLine');
+        }
+        if (fallbackReason != null) {
+          lines.add('    ${l10n.feedbackPackageReason}: $fallbackReason');
+        }
         if (details.isNotEmpty) {
           lines.add('    $details');
         }
@@ -175,6 +189,13 @@ class FeedbackPackageCollector {
   String _sourceLabelOrUnavailable(String? sourceId) {
     if (sourceId == null) return l10n.feedbackPackageUnavailable;
     return _sourceLabel(sourceId);
+  }
+
+  String? _sanitizeSourceFallbackReason(String? reason) {
+    if (reason == null) {
+      return null;
+    }
+    return sanitizeSourceFallbackNoticeReason(sanitizeError(reason));
   }
 
   String _downloadSummary() {
