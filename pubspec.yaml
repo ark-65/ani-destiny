@@ -1,7 +1,7 @@
 name: ani_destiny
 description: AniDestiny is a non-profit Flutter anime discovery, playback and danmaku learning project.
 publish_to: "none"
-version: 1.0.5+6
+version: 1.0.6+7
 
 environment:
   sdk: ">=3.4.0 <4.0.0"
