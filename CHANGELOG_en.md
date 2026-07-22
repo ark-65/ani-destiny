@@ -6,6 +6,8 @@
 
 ## [Unreleased]
 
+## [1.0.6] - 2026-07-21
+
 ### ✨ Added
 - Added a tighter issue-reporting flow: tapping Report issue copies a sanitized diagnostics summary and opens a prefilled GitHub issue, while users who are not signed in to GitHub can paste the same report into any support channel.
 
@@ -143,7 +145,6 @@
 - Fixed About and runtime diagnostics still reading a stale hard-coded version after release; version labels now prefer runtime package metadata and use the constant only as a fallback.
 - Fixed the danmaku settings bottom sheet on macOS / desktop being able to sit behind the main bottom navigation, hiding lower controls such as speed; the sheet now covers the bottom navigation and remains scrollable.
 - Fixed source-empty prompts (`noPlaySource`, `noDownloadSource`) in Chinese, English, and Japanese to consistently say switch to another source before retrying, including download-source guidance, so fallback flow keeps one clear next action.
-
 ## [1.0.5] - 2026-07-08
 
 ### ✨ Added
