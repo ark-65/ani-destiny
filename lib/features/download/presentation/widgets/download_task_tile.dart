@@ -21,6 +21,7 @@ class DownloadTaskTile extends StatelessWidget {
     required this.onPause,
     required this.onCancel,
     required this.onRemove,
+    this.onReviewSource,
     this.isHighlighted = false,
     this.onRefreshCleanupStatus,
     this.manualCleanupBatchRecheckLabel,
@@ -36,6 +37,7 @@ class DownloadTaskTile extends StatelessWidget {
   final VoidCallback onPause;
   final VoidCallback onCancel;
   final VoidCallback onRemove;
+  final VoidCallback? onReviewSource;
   final bool isHighlighted;
   final VoidCallback? onRefreshCleanupStatus;
   final String? manualCleanupBatchRecheckLabel;
@@ -380,6 +382,14 @@ class DownloadTaskTile extends StatelessWidget {
           _removeTextAction(context),
         ],
       DownloadStatus.unsupported => [
+          if (onReviewSource != null)
+            _textAction(
+              context,
+              key: ValueKey('download-task-review-source-${task.id}'),
+              label: context.l10n.checkDownloadLines,
+              onPressed: isBusy ? null : onReviewSource,
+              icon: Icons.alt_route,
+            ),
           _removeTextAction(context),
         ],
       DownloadStatus.canceled => downloadTaskNeedsManualCleanup(task)
