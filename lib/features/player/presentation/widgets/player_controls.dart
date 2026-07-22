@@ -146,6 +146,16 @@ class PlayerControls extends StatelessWidget {
           children: [
             Slider(
               value: durationMs == 0 ? 0 : positionMs / durationMs,
+              semanticFormatterCallback: durationMs == 0
+                  ? null
+                  : (value) => context.l10n.playbackProgress(
+                        _formatDuration(
+                          Duration(
+                            milliseconds: (durationMs * value).round(),
+                          ),
+                        ),
+                        _formatDuration(displayedDuration),
+                      ),
               onChanged: playbackActionsEnabled
                   ? (value) {
                       onSeek(
