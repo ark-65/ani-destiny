@@ -6,6 +6,9 @@
 
 ## [Unreleased]
 
+### ✨ Added
+- The playback progress slider now announces its current seek time and total duration to screen readers, replacing an abstract percentage with meaningful time feedback.
+
 ## [1.0.6] - 2026-07-21
 
 ### ✨ Added

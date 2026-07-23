@@ -135,6 +135,10 @@ class AppLocalizations {
   String get playerPreparingPlayback => _t('playerPreparingPlayback');
   String get pause => _t('pause');
   String get playbackSpeed => _t('playbackSpeed');
+  String playbackProgress(String current, String total) =>
+      _t('playbackProgress')
+          .replaceFirst('{current}', current)
+          .replaceFirst('{total}', total);
   String get hideDanmaku => _t('hideDanmaku');
   String get showDanmaku => _t('showDanmaku');
   String get enterFullscreen => _t('enterFullscreen');
@@ -937,6 +941,7 @@ const _localizedValues = {
     'playerPreparingPlayback': '正在准备播放…',
     'pause': '暂停',
     'playbackSpeed': '播放速度',
+    'playbackProgress': '播放进度：{current} / {total}',
     'hideDanmaku': '隐藏弹幕',
     'showDanmaku': '显示弹幕',
     'enterFullscreen': '进入全屏',
@@ -1301,6 +1306,7 @@ const _localizedValues = {
     'playerPreparingPlayback': 'Preparing playback...',
     'pause': 'Pause',
     'playbackSpeed': 'Playback speed',
+    'playbackProgress': 'Playback position: {current} of {total}',
     'hideDanmaku': 'Hide danmaku',
     'showDanmaku': 'Show danmaku',
     'enterFullscreen': 'Enter fullscreen',
@@ -1705,6 +1711,7 @@ const _localizedValues = {
     'playerPreparingPlayback': '再生を準備中…',
     'pause': '一時停止',
     'playbackSpeed': '再生速度',
+    'playbackProgress': '再生位置：{current} / {total}',
     'hideDanmaku': '弾幕を隠す',
     'showDanmaku': '弾幕を表示',
     'enterFullscreen': '全画面で表示',
