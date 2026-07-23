@@ -865,6 +865,13 @@ class HttpDownloadService implements DownloadService {
         latest.status != DownloadStatus.canceled) {
       return;
     }
+    final shouldClearLocalDownload = switch (taskKind) {
+      DownloadKind.hls => latest.status == DownloadStatus.canceled,
+      DownloadKind.directFile || DownloadKind.bt || DownloadKind.unknown => true,
+    };
+    if (!shouldClearLocalDownload) {
+      return;
+    }
 
     final clearedLocalPath = await _clearDiscardedDownload(
       localPath: originalLocalPath ?? latest.localPath,

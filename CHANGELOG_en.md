@@ -10,6 +10,7 @@
 - The playback progress slider now announces its current seek time and total duration to screen readers, replacing an abstract percentage with meaningful time feedback.
 
 ### 🐛 Fixed
+- Closed HLS (m3u8) resume-gap after pause: when an active HLS task is paused, cancel settlement now keeps the local `index.m3u8` and `segments/*` artifacts so restart can reuse downloaded segments; existing canceled-flow cleanup behavior for HLS remains intact.
 - Completed the HLS (m3u8) offline deletion gap: removing a completed/failed/canceled HLS task now deletes its entire `downloads/{taskId}` directory (`index.m3u8` and `segments/*`) so residual media assets cannot remain behind while direct-file cleanup behavior stays unchanged.
 - Completed the first HLS (m3u8) offline slice: after parsing and validating master/media manifests, `start()` now downloads media segments, writes a local `index.m3u8`, and marks the task `completed`; manifest-chain failures still fail as `invalidManifest` / `networkError` / `unknown`, and live media remains `unsupported`, with new regression coverage for segment download and local playlist output.
 - Closed the resumable-download slice in the offline HLS loop: retries now reuse already-downloaded segment files on disk, failed HLS attempts keep `localPath` for resume, and new tests verify only missing segments are re-downloaded and cross-platform path assertions use `path.separator`.
