@@ -105,6 +105,183 @@ void main() {
     expect(task.failureMessage, isNull);
   });
 
+  test('starting HLS task with master playlist resolves highest-bandwidth variant first', () async {
+    final database = AppDatabase(NativeDatabase.memory());
+    addTearDown(database.close);
+
+    final loadLog = <String>[];
+    final repository = DownloadRepositoryImpl(database);
+    final service = HttpDownloadService(
+      dio: Dio(),
+      repository: repository,
+      hlsManifestLoader: _FakeHlsManifestLoader(
+        (manifestUri, headers) async {
+          loadLog.add(manifestUri.toString());
+          if (manifestUri.path == '/index.m3u8') {
+            return HlsManifest(
+              uri: manifestUri,
+              segments: const [],
+              variants: [
+                HlsVariant(
+                  uri: Uri.parse('https://cdn.example.test/720/index.m3u8'),
+                  bandwidth: 100000,
+                  resolution: '960x540',
+                ),
+                HlsVariant(
+                  uri: Uri.parse('https://cdn.example.test/1080/index.m3u8'),
+                  bandwidth: 3200000,
+                  resolution: '1920x1080',
+                ),
+              ],
+              isLive: false,
+              targetDuration: null,
+            );
+          }
+          if (manifestUri.path == '/1080/index.m3u8') {
+            return HlsManifest(
+              uri: manifestUri,
+              segments: [
+                HlsSegment(uri: Uri.parse('https://cdn.example.test/segment-1.ts')),
+              ],
+              variants: const [],
+              isLive: false,
+              targetDuration: const Duration(seconds: 6),
+            );
+          }
+          throw const FormatException('unexpected manifest uri');
+        },
+      ),
+    );
+
+    final taskId = await service.createTask(
+      animeId: 'anime-1',
+      episodeId: 'episode-1',
+      sourceId: 'sakura',
+      source: const DownloadSource(
+        url: 'https://cdn.example.test/index.m3u8',
+        kind: DownloadKind.hls,
+      ),
+      title: 'HLS Test',
+      episodeTitle: 'Episode 1',
+    );
+
+    await service.start(taskId);
+
+    final task = await repository.getTask(taskId);
+
+    expect(task, isNotNull);
+    expect(task!.status, DownloadStatus.unsupported);
+    expect(task.failureReason, DownloadFailureReason.unsupportedType);
+    expect(task.failureMessage, isNull);
+    expect(
+      loadLog,
+      const <String>[
+        'https://cdn.example.test/index.m3u8',
+        'https://cdn.example.test/1080/index.m3u8',
+      ],
+    );
+  });
+
+  test('starting HLS task with invalid variant manifest reports invalid-manifest failure', () async {
+    final database = AppDatabase(NativeDatabase.memory());
+    addTearDown(database.close);
+
+    final repository = DownloadRepositoryImpl(database);
+    final service = HttpDownloadService(
+      dio: Dio(),
+      repository: repository,
+      hlsManifestLoader: _FakeHlsManifestLoader(
+        (manifestUri, headers) async {
+          if (manifestUri.path == '/index.m3u8') {
+            return HlsManifest(
+              uri: manifestUri,
+              segments: const [],
+              variants: [
+                HlsVariant(
+                  uri: Uri.parse('https://cdn.example.test/720/index.m3u8'),
+                  bandwidth: 100000,
+                  resolution: '960x540',
+                ),
+              ],
+              isLive: false,
+              targetDuration: null,
+            );
+          }
+          if (manifestUri.path == '/720/index.m3u8') {
+            throw const FormatException('variant manifest invalid');
+          }
+          throw const FormatException('unexpected manifest uri');
+        },
+      ),
+    );
+
+    final taskId = await service.createTask(
+      animeId: 'anime-1',
+      episodeId: 'episode-1',
+      sourceId: 'sakura',
+      source: const DownloadSource(
+        url: 'https://cdn.example.test/index.m3u8',
+        kind: DownloadKind.hls,
+      ),
+      title: 'HLS Test',
+      episodeTitle: 'Episode 1',
+    );
+
+    await service.start(taskId);
+
+    final task = await repository.getTask(taskId);
+
+    expect(task, isNotNull);
+    expect(task!.status, DownloadStatus.failed);
+    expect(task.failureReason, DownloadFailureReason.invalidManifest);
+    expect(task.failureMessage, 'variant manifest invalid');
+  });
+
+  test('starting HLS task with live media playlist stays unsupported for now', () async {
+    final database = AppDatabase(NativeDatabase.memory());
+    addTearDown(database.close);
+
+    final repository = DownloadRepositoryImpl(database);
+    final service = HttpDownloadService(
+      dio: Dio(),
+      repository: repository,
+      hlsManifestLoader: _FakeHlsManifestLoader(
+        (manifestUri, headers) async {
+          return HlsManifest(
+            uri: manifestUri,
+            segments: [
+              HlsSegment(uri: Uri.parse('https://cdn.example.test/segment-1.ts')),
+            ],
+            variants: const [],
+            isLive: true,
+            targetDuration: const Duration(seconds: 6),
+          );
+        },
+      ),
+    );
+
+    final taskId = await service.createTask(
+      animeId: 'anime-1',
+      episodeId: 'episode-1',
+      sourceId: 'sakura',
+      source: const DownloadSource(
+        url: 'https://cdn.example.test/index.m3u8',
+        kind: DownloadKind.hls,
+      ),
+      title: 'HLS Test',
+      episodeTitle: 'Episode 1',
+    );
+
+    await service.start(taskId);
+
+    final task = await repository.getTask(taskId);
+
+    expect(task, isNotNull);
+    expect(task!.status, DownloadStatus.unsupported);
+    expect(task.failureReason, DownloadFailureReason.unsupportedType);
+    expect(task.failureMessage, isNull);
+  });
+
   test('starting HLS task with invalid manifest records invalid-manifest failure', () async {
     final database = AppDatabase(NativeDatabase.memory());
     addTearDown(database.close);

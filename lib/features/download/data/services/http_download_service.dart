@@ -9,6 +9,7 @@ import '../../../../core/error/app_exception.dart';
 import '../../domain/entities/download_failure_reason.dart';
 import '../../domain/entities/download_kind.dart';
 import '../../domain/entities/download_progress.dart';
+import '../../domain/entities/hls_manifest.dart';
 import '../../domain/entities/download_source.dart';
 import '../../domain/entities/download_task.dart';
 import '../../domain/repositories/download_repository.dart';
@@ -290,7 +291,22 @@ class HttpDownloadService implements DownloadService {
     _emitTask(preparingTask);
 
     try {
-      await manifestLoader.load(sourceUri, headers: existingTask.headers);
+      final mediaManifest = await _loadHlsMediaManifest(
+        manifestLoader: manifestLoader,
+        sourceUri: sourceUri,
+        headers: existingTask.headers,
+      );
+      if (mediaManifest.isLive) {
+        final unsupported = preparingTask.copyWith(
+          status: DownloadStatus.unsupported,
+          failureReason: DownloadFailureReason.unsupportedType,
+          failureMessage: null,
+          updatedAt: DateTime.now(),
+        );
+        await _repository.upsertTask(unsupported);
+        _emitTask(unsupported);
+        return;
+      }
       final unsupported = preparingTask.copyWith(
         status: DownloadStatus.unsupported,
         failureReason: DownloadFailureReason.unsupportedType,
@@ -331,6 +347,48 @@ class HttpDownloadService implements DownloadService {
       _emitTask(failed);
       return;
     }
+  }
+
+  Future<HlsManifest> _loadHlsMediaManifest({
+    required HlsManifestLoader manifestLoader,
+    required Uri sourceUri,
+    required Map<String, String> headers,
+  }) async {
+    HlsManifest manifest = await manifestLoader.load(
+      sourceUri,
+      headers: headers,
+    );
+    if (!manifest.isMasterPlaylist) {
+      return manifest;
+    }
+
+    final selectedVariantUri = _selectMediaVariantUri(manifest.variants);
+    manifest = await manifestLoader.load(
+      selectedVariantUri,
+      headers: headers,
+    );
+    if (manifest.isMasterPlaylist) {
+      throw const FormatException('HLS manifest contains nested master playlist.');
+    }
+    return manifest;
+  }
+
+  Uri _selectMediaVariantUri(List<HlsVariant> variants) {
+    if (variants.isEmpty) {
+      throw const FormatException('HLS manifest contains no media entries.');
+    }
+    final mediaVariants = variants
+        .whereType<HlsVariant>()
+        .toList()
+      ..sort((a, b) {
+          final bandwidthA = a.bandwidth ?? 0;
+          final bandwidthB = b.bandwidth ?? 0;
+          return bandwidthB.compareTo(bandwidthA);
+        });
+    if (mediaVariants.isEmpty) {
+      throw const FormatException('HLS manifest contains no media entries.');
+    }
+    return mediaVariants.first.uri;
   }
 
   @override

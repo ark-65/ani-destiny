@@ -10,7 +10,7 @@
 - 播放进度滑块现在会向读屏软件播报当前定位时间与总时长，让视障用户在拖动进度时获得真实的时间反馈，而不是只有抽象百分比。
 
 ### 🐛 修复
-- 为 HLS（m3u8）下载任务补齐最小执行分支：`start()` 阶段开始尝试加载并解析清单，只有解析失败才落到 `unsupported`，并新增 `invalidManifest`/`networkError`/`unknown` 级别的失败码与测试。
+- 为 HLS（m3u8）下载任务补齐起始验证闭环：`start()` 阶段会先加载并校验清单；若为 master playlist 会解析并选择最高码率 variant，再加载 media playlist；仅当清单链路异常才转为 `failed`（`invalidManifest`/`networkError`/`unknown`），而非仅在首次解析失败后才直接 `unsupported`；对应行为新增切片级单测覆盖。
 
 ## [1.0.6] - 2026-07-21
 

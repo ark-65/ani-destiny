@@ -10,7 +10,7 @@
 - The playback progress slider now announces its current seek time and total duration to screen readers, replacing an abstract percentage with meaningful time feedback.
 
 ### 🐛 Fixed
-- Completed the first HLS (m3u8) download-path slice by attempting manifest load during `start()`: HLS tasks now go through a parser-capability check first, only become `unsupported` when manifest validation fails, and keep `invalidManifest` / `networkError` / `unknown` failure categories with matching tests.
+- Expanded the HLS (m3u8) start-path slice: `start()` now fully validates the manifest chain by loading master playlists, selecting the highest-bandwidth variant, then loading media playlist content; tasks only fail with `invalidManifest` / `networkError` / `unknown` when the manifest flow breaks, otherwise non-live media ends in `unsupported` with existing actionable recovery behavior; added focused slice tests for this validation path.
 
 ## [1.0.6] - 2026-07-21
 
