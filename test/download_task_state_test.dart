@@ -250,6 +250,75 @@ void main() {
     expect(retryDio.downloadedUris, ['https://cdn.example.test/segment-2.ts']);
   });
 
+  test('starting HLS task fails when a downloaded segment is empty', () async {
+    final database = AppDatabase(NativeDatabase.memory());
+    addTearDown(database.close);
+
+    final tempDir =
+        await Directory.systemTemp.createTemp('ani-destiny-download-hls-empty-segment');
+    addTearDown(() async {
+      if (tempDir.existsSync()) {
+        await tempDir.delete(recursive: true);
+      }
+    });
+    _mockApplicationDocumentsDirectory(tempDir.path);
+
+    const segmentOne = <int>[];
+    const segmentTwo = <int>[6, 7, 8, 9, 10, 11];
+    final repository = DownloadRepositoryImpl(database);
+    final service = HttpDownloadService(
+      dio: _FakeHlsSegmentDownloadDio({
+        'https://cdn.example.test/segment-1.ts': segmentOne,
+        'https://cdn.example.test/segment-2.ts': segmentTwo,
+      }),
+      repository: repository,
+      hlsManifestLoader: _FakeHlsManifestLoader(
+        (manifestUri, headers) async {
+          expect(manifestUri.toString(), 'https://cdn.example.test/index.m3u8');
+          return HlsManifest(
+            uri: manifestUri,
+            segments: [
+              HlsSegment(uri: Uri.parse('https://cdn.example.test/segment-1.ts')),
+              HlsSegment(uri: Uri.parse('https://cdn.example.test/segment-2.ts')),
+            ],
+            variants: const [],
+            isLive: false,
+            targetDuration: null,
+          );
+        },
+      ),
+    );
+
+    final taskId = await service.createTask(
+      animeId: 'anime-1',
+      episodeId: 'episode-1',
+      sourceId: 'sakura',
+      source: const DownloadSource(
+        url: 'https://cdn.example.test/index.m3u8',
+        kind: DownloadKind.hls,
+      ),
+      title: 'HLS Test',
+      episodeTitle: 'Episode 1',
+    );
+
+    await service.start(taskId);
+
+    final task = await repository.getTask(taskId);
+
+    expect(task, isNotNull);
+    expect(task!.status, DownloadStatus.failed);
+    expect(task.failureReason, DownloadFailureReason.invalidManifest);
+    expect(task.failureMessage, contains('empty segment file'));
+
+    expect(task.localPath, isNotNull);
+    final manifestDirectory = p.dirname(task.localPath!);
+    final segmentDir = Directory(p.join(manifestDirectory, 'segments'));
+    expect(File(p.join(segmentDir.path, 'segment-000000.ts')).existsSync(), isTrue);
+    expect(File(p.join(segmentDir.path, 'segment-000000.ts')).readAsBytesSync(), isEmpty);
+    expect(File(p.join(segmentDir.path, 'segment-000001.ts')).existsSync(), isTrue);
+    expect(File(p.join(segmentDir.path, 'segment-000001.ts')).readAsBytesSync(), segmentTwo);
+  });
+
   test('starting HLS task with master playlist resolves highest-bandwidth variant first', () async {
     final database = AppDatabase(NativeDatabase.memory());
     addTearDown(database.close);

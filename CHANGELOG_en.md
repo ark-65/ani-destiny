@@ -13,6 +13,7 @@
 - Completed the first HLS (m3u8) offline slice: after parsing and validating master/media manifests, `start()` now downloads media segments, writes a local `index.m3u8`, and marks the task `completed`; manifest-chain failures still fail as `invalidManifest` / `networkError` / `unknown`, and live media remains `unsupported`, with new regression coverage for segment download and local playlist output.
 - Closed the resumable-download slice in the offline HLS loop: retries now reuse already-downloaded segment files on disk, failed HLS attempts keep `localPath` for resume, and new tests verify only missing segments are re-downloaded and cross-platform path assertions use `path.separator`.
 - Completed the offline-playback continuity slice: completed HLS downloads that have a local file now expose a `Play` action in the download card, which routes to the existing player flow with `playUrl` set to the local path; added tile test coverage for the completed-card play action.
+- Hardened offline HLS integrity by validating downloaded segments after fetch: every segment referenced by the media manifest must exist and be non-empty, otherwise the task fails as `invalidManifest`; this blocks false-positive completion before local playback.
 
 ## [1.0.6] - 2026-07-21
 

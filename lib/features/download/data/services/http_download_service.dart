@@ -327,6 +327,10 @@ class HttpDownloadService implements DownloadService {
         headers: existingTask.headers,
         cancelToken: token,
       );
+      await _validateHlsManifestAssets(
+        mediaManifest: mediaManifest,
+        manifestPath: prepareLocalManifestPath,
+      );
       await _writeHlsManifest(mediaManifest, segmentDownloadedBytes, prepareLocalManifestPath);
       final completed = preparingTask.copyWith(
         status: DownloadStatus.completed,
@@ -448,6 +452,37 @@ class HttpDownloadService implements DownloadService {
     }
 
     return downloadedBytes;
+  }
+
+  Future<void> _validateHlsManifestAssets({
+    required HlsManifest mediaManifest,
+    required String manifestPath,
+  }) async {
+    final segmentDirectory = Directory(
+      p.join(
+        p.dirname(manifestPath),
+        'segments',
+      ),
+    );
+
+    for (var index = 0; index < mediaManifest.segments.length; index++) {
+      final segment = mediaManifest.segments[index];
+      final segmentName = _hlsSegmentFileName(segment.uri, index);
+      final segmentPath = p.join(segmentDirectory.path, segmentName);
+      final segmentFile = File(segmentPath);
+
+      if (!await segmentFile.exists()) {
+        throw FormatException(
+          'HLS manifest integrity check failed: missing segment file $segmentName',
+        );
+      }
+
+      if (await segmentFile.length() == 0) {
+        throw FormatException(
+          'HLS manifest integrity check failed: empty segment file $segmentName',
+        );
+      }
+    }
   }
 
   Future<int> _downloadHlsSegment({
