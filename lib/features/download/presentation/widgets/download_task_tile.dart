@@ -21,6 +21,8 @@ class DownloadTaskTile extends StatelessWidget {
     required this.onPause,
     required this.onCancel,
     required this.onRemove,
+    this.onClearSameAnimeEndedDownloads,
+    this.clearSameAnimeEndedDownloadsLabel,
     this.onPlayOffline,
     this.onReviewSource,
     this.isHighlighted = false,
@@ -38,6 +40,8 @@ class DownloadTaskTile extends StatelessWidget {
   final VoidCallback onPause;
   final VoidCallback onCancel;
   final VoidCallback onRemove;
+  final VoidCallback? onClearSameAnimeEndedDownloads;
+  final String? clearSameAnimeEndedDownloadsLabel;
   final VoidCallback? onPlayOffline;
   final VoidCallback? onReviewSource;
   final bool isHighlighted;
@@ -369,6 +373,11 @@ class DownloadTaskTile extends StatelessWidget {
           _discardTextAction(context),
         ],
       DownloadStatus.failed => [
+          if (onClearSameAnimeEndedDownloads != null)
+            _removeSameAnimeTextAction(
+              context,
+              onClearSameAnimeEndedDownloads,
+            ),
           _textAction(
             context,
             key: ValueKey('download-task-retry-${task.id}'),
@@ -381,6 +390,11 @@ class DownloadTaskTile extends StatelessWidget {
               : _removeTextAction(context),
         ],
       DownloadStatus.completed => [
+          if (onClearSameAnimeEndedDownloads != null)
+            _removeSameAnimeTextAction(
+              context,
+              onClearSameAnimeEndedDownloads,
+            ),
           if (task.localPath != null &&
               task.localPath!.trim().isNotEmpty &&
               onPlayOffline != null)
@@ -394,6 +408,11 @@ class DownloadTaskTile extends StatelessWidget {
           _removeTextAction(context),
         ],
       DownloadStatus.unsupported => [
+          if (onClearSameAnimeEndedDownloads != null)
+            _removeSameAnimeTextAction(
+              context,
+              onClearSameAnimeEndedDownloads,
+            ),
           if (onReviewSource != null)
             _textAction(
               context,
@@ -414,6 +433,11 @@ class DownloadTaskTile extends StatelessWidget {
               ),
             ]
           : [
+              if (onClearSameAnimeEndedDownloads != null)
+                _removeSameAnimeTextAction(
+                  context,
+                  onClearSameAnimeEndedDownloads,
+                ),
               _removeTextAction(context),
             ],
     };
@@ -426,6 +450,23 @@ class DownloadTaskTile extends StatelessWidget {
       label: context.l10n.removeFromList,
       onPressed: isBusy ? null : onRemove,
       icon: Icons.delete_outline,
+    );
+  }
+
+  Widget _removeSameAnimeTextAction(
+    BuildContext context,
+    VoidCallback? onPressed,
+  ) {
+    final label = clearSameAnimeEndedDownloadsLabel;
+    if (label == null) {
+      return const SizedBox.shrink();
+    }
+    return _textAction(
+      context,
+      key: ValueKey('download-task-clear-anime-${task.id}'),
+      label: label,
+      onPressed: isBusy ? null : onPressed,
+      icon: Icons.clear_all,
     );
   }
 

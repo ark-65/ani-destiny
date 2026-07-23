@@ -262,6 +262,7 @@ class _DownloadPageState extends ConsumerState<DownloadPage>
                         ];
                   final removableTaskIds = _removableTaskIds(items);
                   final clearableTaskIds = _clearableTaskIds(items);
+                  final clearableTaskIdsByAnime = _clearableTaskIdsByAnime(items);
                   final manualCleanupTaskIds = _manualCleanupTaskIds(items);
                   final manualCleanupTaskCount = manualCleanupTaskIds.length;
                   final showClearEndedTasksAction = clearableTaskIds.length > 1;
@@ -427,6 +428,13 @@ class _DownloadPageState extends ConsumerState<DownloadPage>
                             final task = visibleItems[index];
                             final batchRemovingTask = _isClearingEndedTasks &&
                                 clearableTaskIds.contains(task.id);
+                            final sameAnimeTaskIds =
+                                clearableTaskIdsByAnime[task.animeId] ??
+                                    const <String>[];
+                            final showSameAnimeClearAction =
+                                sameAnimeTaskIds.isNotEmpty &&
+                                    sameAnimeTaskIds.first == task.id &&
+                                    sameAnimeTaskIds.length > 1;
                             final isBusy =
                                 _busyTaskActions.containsKey(task.id) ||
                                     batchRemovingTask;
@@ -473,11 +481,22 @@ class _DownloadPageState extends ConsumerState<DownloadPage>
                                   context,
                                   task.id,
                                   DownloadTaskBusyAction.remove,
-                                  () => ref
-                                      .read(httpDownloadServiceProvider)
-                                      .removeEndedTask(task.id),
+                                        () => ref
+                                          .read(httpDownloadServiceProvider)
+                                          .removeEndedTask(task.id),
                                 ),
                               ),
+                              onClearSameAnimeEndedDownloads: showSameAnimeClearAction
+                                  ? () => _handleClearSameAnimeEndedTasks(
+                                      task.animeId,
+                                    )
+                                  : null,
+                              clearSameAnimeEndedDownloadsLabel:
+                                  showSameAnimeClearAction
+                                      ? context.l10n.clearEndedDownloadsCount(
+                                          sameAnimeTaskIds.length,
+                                        )
+                                      : null,
                               onPlayOffline:
                                   task.status == DownloadStatus.completed &&
                                           task.localPath != null &&
@@ -790,6 +809,19 @@ class _DownloadPageState extends ConsumerState<DownloadPage>
         .toList(growable: false);
   }
 
+  Map<String, List<String>> _clearableTaskIdsByAnime(List<DownloadTask> items) {
+    final groupedTaskIds = <String, List<String>>{};
+    for (final task in items) {
+      if (!_isRemovableTask(task) ||
+          downloadTaskNeedsManualCleanup(task) ||
+          _busyTaskActions.containsKey(task.id)) {
+        continue;
+      }
+      (groupedTaskIds[task.animeId] ??= <String>[]).add(task.id);
+    }
+    return groupedTaskIds;
+  }
+
   Set<String> _manualCleanupTaskIds(List<DownloadTask> items) {
     return items
         .where(downloadTaskNeedsManualCleanup)
@@ -890,6 +922,24 @@ class _DownloadPageState extends ConsumerState<DownloadPage>
       return;
     }
     unawaited(_handleClearRemovableTasks(clearableTaskIds));
+  }
+
+  Future<void> _handleClearSameAnimeEndedTasks(String animeId) async {
+    final tasks = ref.read(downloadTasksProvider).valueOrNull;
+    if (tasks == null) {
+      return;
+    }
+    final sameAnimeClearableTaskIds = tasks
+        .where((task) => task.animeId == animeId)
+        .where(_isRemovableTask)
+        .where((task) => !downloadTaskNeedsManualCleanup(task))
+        .map((task) => task.id)
+        .where((taskId) => !_busyTaskActions.containsKey(taskId))
+        .toList(growable: false);
+    if (sameAnimeClearableTaskIds.length <= 1) {
+      return;
+    }
+    await _handleClearRemovableTasks(sameAnimeClearableTaskIds);
   }
 
   void _handleRemoveSingleReadyTask(String taskId) {

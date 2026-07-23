@@ -18,6 +18,53 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
+  testWidgets(
+    'same-anime clear button removes only that anime ended tasks',
+    (tester) async {
+      final repository = _FakeDownloadRepository([
+        _task('same-anime-completed', DownloadStatus.completed, animeId: 'anime-1'),
+        _task('same-anime-failed', DownloadStatus.failed, animeId: 'anime-1'),
+        _task('other-anime-completed', DownloadStatus.completed, animeId: 'anime-2'),
+      ]);
+
+      await _pumpDownloadPage(tester, repository);
+
+      expect(
+        find.byKey(const ValueKey('download-task-clear-anime-same-anime-completed')),
+        findsOneWidget,
+      );
+      expect(
+        find.byKey(const ValueKey('download-task-clear-anime-same-anime-failed')),
+        findsNothing,
+      );
+      expect(
+        find.byKey(
+          const ValueKey('download-task-clear-anime-other-anime-completed'),
+        ),
+        findsNothing,
+      );
+      expect(find.text('Clear 2 ended tasks from list'), findsOneWidget);
+
+      await tester.tap(
+        find.byKey(const ValueKey('download-task-clear-anime-same-anime-completed')),
+      );
+      await tester.pump();
+
+      expect(
+        repository.deleteAttempts,
+        ['same-anime-completed', 'same-anime-failed'],
+      );
+      expect(repository.deletedTaskIds, ['same-anime-completed', 'same-anime-failed']);
+      expect(find.byKey(const ValueKey('download-task-card-same-anime-completed')), findsNothing);
+      expect(find.byKey(const ValueKey('download-task-card-same-anime-failed')), findsNothing);
+      expect(
+        find.byKey(const ValueKey('download-task-card-other-anime-completed')),
+        findsOneWidget,
+      );
+      expect(find.byKey(const ValueKey('downloads-clear-ended-tasks')), findsNothing);
+    },
+  );
+
   testWidgets('clear ended tasks removes removable download entries', (
     tester,
   ) async {
@@ -34,7 +81,7 @@ void main() {
     final clearButton =
         find.byKey(const ValueKey('downloads-clear-ended-tasks'));
     expect(clearButton, findsOneWidget);
-    expect(find.text('Clear 4 ended tasks from list'), findsOneWidget);
+    expect(find.byKey(const ValueKey('downloads-clear-ended-tasks')), findsOneWidget);
 
     await tester.tap(clearButton);
     await tester.pump();
@@ -604,7 +651,7 @@ void main() {
         ),
         findsOneWidget,
       );
-      expect(find.text('Clear 2 ended tasks from list'), findsNWidgets(2));
+      expect(find.byKey(const ValueKey('downloads-clear-ended-tasks')), findsOneWidget);
       expect(
         find.byKey(const ValueKey('downloads-clear-ended-tasks')),
         findsOneWidget,
@@ -1760,7 +1807,7 @@ void main() {
 
       await _pumpDownloadPage(tester, repository);
 
-      expect(find.text('Clear 2 ended tasks from list'), findsOneWidget);
+      expect(find.byKey(const ValueKey('downloads-clear-ended-tasks')), findsOneWidget);
       expect(find.text('Check 2 leftover files again'), findsOneWidget);
       expect(
         find.text(
@@ -1868,7 +1915,7 @@ void main() {
         find.textContaining('still needs cleanup'),
         findsOneWidget,
       );
-      expect(find.text('Clear 2 ended tasks from list'), findsNWidgets(2));
+      expect(find.byKey(const ValueKey('downloads-clear-ended-tasks')), findsOneWidget);
     },
   );
 
@@ -1907,7 +1954,7 @@ void main() {
         ),
         findsOneWidget,
       );
-      expect(find.text('Clear 2 ended tasks from list'), findsNWidgets(2));
+      expect(find.byKey(const ValueKey('downloads-clear-ended-tasks')), findsOneWidget);
       expect(
         find.byKey(const ValueKey('downloads-clear-ended-tasks')),
         findsOneWidget,
@@ -1962,7 +2009,7 @@ void main() {
         ),
         findsOneWidget,
       );
-      expect(find.text('Clear 3 ended tasks from list'), findsNWidgets(2));
+      expect(find.byKey(const ValueKey('downloads-clear-ended-tasks')), findsOneWidget);
 
       tester
           .widget<TextButton>(
@@ -2006,7 +2053,7 @@ void main() {
         ),
         findsOneWidget,
       );
-      expect(find.text('Clear 2 ended tasks from list'), findsNWidgets(2));
+      expect(find.byKey(const ValueKey('downloads-clear-ended-tasks')), findsOneWidget);
       expect(
         find.byKey(const ValueKey('download-task-remove-canceled')),
         findsOneWidget,
@@ -2051,11 +2098,7 @@ void main() {
         find.textContaining('1 still needs cleanup. Delete that leftover file first'),
         findsOneWidget,
       );
-      expect(find.text('Clear 2 ended tasks from list'), findsNWidgets(2));
-      expect(
-        find.byKey(const ValueKey('download-task-remove-canceled-a')),
-        findsOneWidget,
-      );
+      expect(find.byKey(const ValueKey('downloads-clear-ended-tasks')), findsOneWidget);
     },
   );
 
@@ -2598,11 +2641,15 @@ class _FakeDownloadRepository implements DownloadRepository {
   }
 }
 
-DownloadTask _task(String id, DownloadStatus status) {
+DownloadTask _task(
+  String id,
+  DownloadStatus status, {
+  String animeId = 'anime-1',
+}) {
   final now = DateTime(2026, 6, 5, 1, 0);
   return DownloadTask(
     id: id,
-    animeId: 'anime-1',
+    animeId: animeId,
     episodeId: 'episode-1',
     sourceId: 'sakura',
     title: 'AniDestiny',

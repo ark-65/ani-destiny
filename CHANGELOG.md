@@ -10,6 +10,7 @@
 - 播放进度滑块现在会向读屏软件播报当前定位时间与总时长，让视障用户在拖动进度时获得真实的时间反馈，而不是只有抽象百分比。
 
 ### 🐛 修复
+- 增补下载列表关闭动作：在“已完成/失败/取消”卡片下增加“同番剧清除已结束任务”批量清理动作（同番剧下仅显示一次，且只清理已结束任务，保留 `clearAllEndedDownloads` 原有批量语义）；补充 `test/download_page_test.dart` 回归覆盖，同步对失败和已取消状态下按钮文案与可见性。
 - 修复 HLS（m3u8）暂停后的恢复闭环：当已开始下载的 HLS 任务被 `pause` 终止时，暂停结算不再清理 `index.m3u8` 与 `segments/*`，而是保留 `localPath`，让任务在暂停/重启后可复用已下载片段继续下载；`cancel` 仍保持对已下载片段目录的清理行为。
 - 补齐 HLS（m3u8）离线下载“删除本地媒体”闭环：当已完成/失败/取消的 HLS 任务被移除时，清理动作会删除对应 `downloads/{taskId}` 目录（含 `index.m3u8` 与 `segments/*`），避免目录残留占用存储；direct 文件清理路径保持不变。
 - 为 HLS（m3u8）离线下载完成首阶段闭环：在解析并校验 master/media 清单后，`start()` 现在会下载分片、落地 `index.m3u8` 并将任务置为 `completed`；清单链路异常仍按 `invalidManifest` / `networkError` / `unknown` 失败，Live 清单仍为 `unsupported`，并补充分片下载与本地清单产出的回归覆盖。
