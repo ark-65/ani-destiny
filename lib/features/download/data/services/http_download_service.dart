@@ -278,7 +278,19 @@ class HttpDownloadService implements DownloadService {
       return;
     }
 
+    final prepareLocalManifestPath = p.join(
+      (await getApplicationDocumentsDirectory()).path,
+      'downloads',
+      existingTask.id,
+      'index.m3u8',
+    );
+    final settleCompleter = Completer<void>();
+    _settleCompleters[existingTask.id] = settleCompleter;
+    final token = CancelToken();
+    _tokens[existingTask.id] = token;
+
     final preparingTask = existingTask.copyWith(
+      localPath: prepareLocalManifestPath,
       status: DownloadStatus.preparing,
       failureReason: DownloadFailureReason.none,
       failureMessage: null,
@@ -298,6 +310,7 @@ class HttpDownloadService implements DownloadService {
       );
       if (mediaManifest.isLive) {
         final unsupported = preparingTask.copyWith(
+          localPath: null,
           status: DownloadStatus.unsupported,
           failureReason: DownloadFailureReason.unsupportedType,
           failureMessage: null,
@@ -307,27 +320,36 @@ class HttpDownloadService implements DownloadService {
         _emitTask(unsupported);
         return;
       }
-      final unsupported = preparingTask.copyWith(
-        status: DownloadStatus.unsupported,
-        failureReason: DownloadFailureReason.unsupportedType,
+
+      final segmentDownloadedBytes = await _downloadHlsSegments(
+        task: preparingTask,
+        mediaManifest: mediaManifest,
+        headers: existingTask.headers,
+        cancelToken: token,
+      );
+      await _writeHlsManifest(mediaManifest, segmentDownloadedBytes, prepareLocalManifestPath);
+      final completed = preparingTask.copyWith(
+        status: DownloadStatus.completed,
+        failureReason: DownloadFailureReason.none,
         failureMessage: null,
+        progress: 1,
+        downloadedBytes: segmentDownloadedBytes,
+        totalBytes: segmentDownloadedBytes,
         updatedAt: DateTime.now(),
       );
-      await _repository.upsertTask(unsupported);
-      _emitTask(unsupported);
-      return;
-    } on FormatException catch (error) {
-      final invalidManifest = preparingTask.copyWith(
-        status: DownloadStatus.failed,
-        failureReason: DownloadFailureReason.invalidManifest,
-        failureMessage: error.message,
-        updatedAt: DateTime.now(),
-      );
-      await _repository.upsertTask(invalidManifest);
-      _emitTask(invalidManifest);
+      await _repository.upsertTask(completed);
+      _emitTask(completed);
       return;
     } on DioException catch (error) {
+      if (CancelToken.isCancel(error)) {
+        await _finalizeCanceledDownload(
+          existingTask.id,
+          originalLocalPath: prepareLocalManifestPath,
+        );
+        return;
+      }
       final failed = preparingTask.copyWith(
+        localPath: null,
         status: DownloadStatus.failed,
         failureReason: DownloadFailureReason.networkError,
         failureMessage: _messageFromError(error),
@@ -336,8 +358,20 @@ class HttpDownloadService implements DownloadService {
       await _repository.upsertTask(failed);
       _emitTask(failed);
       return;
+    } on FormatException catch (error) {
+      final invalidManifest = preparingTask.copyWith(
+        localPath: null,
+        status: DownloadStatus.failed,
+        failureReason: DownloadFailureReason.invalidManifest,
+        failureMessage: error.message,
+        updatedAt: DateTime.now(),
+      );
+      await _repository.upsertTask(invalidManifest);
+      _emitTask(invalidManifest);
+      return;
     } on Object {
       final failed = preparingTask.copyWith(
+        localPath: null,
         status: DownloadStatus.failed,
         failureReason: DownloadFailureReason.unknown,
         failureMessage: unexpectedDownloadFailureMessage,
@@ -346,7 +380,118 @@ class HttpDownloadService implements DownloadService {
       await _repository.upsertTask(failed);
       _emitTask(failed);
       return;
+    } finally {
+      _tokens.remove(existingTask.id);
+      if (identical(_settleCompleters[existingTask.id], settleCompleter)) {
+        _settleCompleters.remove(existingTask.id);
+      }
+      if (!settleCompleter.isCompleted) {
+        settleCompleter.complete();
+      }
     }
+  }
+
+  Future<int> _downloadHlsSegments({
+    required DownloadTask task,
+    required HlsManifest mediaManifest,
+    required Map<String, String> headers,
+    required CancelToken cancelToken,
+  }) async {
+    if (mediaManifest.segments.isEmpty) {
+      throw const FormatException('HLS manifest contains no media entries.');
+    }
+
+    final segmentDirectory = Directory(
+      p.join(
+        p.dirname(task.localPath ?? ''),
+        'segments',
+      ),
+    );
+    await segmentDirectory.create(recursive: true);
+
+    var downloadedBytes = 0;
+
+    for (var index = 0; index < mediaManifest.segments.length; index++) {
+      final segment = mediaManifest.segments[index];
+      final safeSegmentName = _hlsSegmentFileName(segment.uri, index);
+      final segmentPath = p.join(segmentDirectory.path, safeSegmentName);
+      final segmentBytes = await _downloadHlsSegment(
+        segmentUri: segment.uri,
+        localPath: segmentPath,
+        headers: headers,
+        cancelToken: cancelToken,
+      );
+
+      downloadedBytes += segmentBytes;
+      final progress = (index + 1) / mediaManifest.segments.length;
+      _emit(
+        task.id,
+        progress,
+        DownloadStatus.downloading,
+        downloadedBytes: downloadedBytes,
+      );
+    }
+
+    return downloadedBytes;
+  }
+
+  Future<int> _downloadHlsSegment({
+    required Uri segmentUri,
+    required String localPath,
+    required Map<String, String> headers,
+    required CancelToken cancelToken,
+  }) async {
+    var downloadedBytes = 0;
+
+    await _dio.download(
+      segmentUri.toString(),
+      localPath,
+      cancelToken: cancelToken,
+      options: Options(headers: headers.isEmpty ? null : headers),
+      onReceiveProgress: (received, total) {
+        downloadedBytes = received;
+      },
+    );
+
+    return downloadedBytes;
+  }
+
+  Future<void> _writeHlsManifest(
+    HlsManifest manifest,
+    int downloadedBytes,
+    String manifestPath,
+  ) async {
+    final manifestLines = <String>[
+      '#EXTM3U',
+      if (manifest.targetDuration != null)
+        '#EXT-X-TARGETDURATION:${manifest.targetDuration!.inSeconds}',
+      '#EXT-X-VERSION:3',
+      '#EXT-X-MEDIA-SEQUENCE:0',
+      '#EXT-X-PLAYLIST-TYPE:VOD',
+    ];
+
+    for (var index = 0; index < manifest.segments.length; index++) {
+      final segment = manifest.segments[index];
+      final segmentName =
+          _hlsSegmentFileName(segment.uri, index);
+      final duration = segment.duration ?? const Duration(seconds: 1);
+      final durationText = (duration.inMilliseconds / 1000).toStringAsFixed(3);
+      manifestLines.add('#EXTINF:$durationText,${segment.title ?? ''}');
+      manifestLines.add('segments/$segmentName');
+    }
+
+    manifestLines.add('#EXT-X-ENDLIST');
+    manifestLines.add('# AniDestiny downloaded bytes: $downloadedBytes');
+
+    await Directory(p.dirname(manifestPath)).create(recursive: true);
+    final file = File(manifestPath);
+    await file.writeAsString('${manifestLines.join('\n')}\n');
+  }
+
+  String _hlsSegmentFileName(Uri segmentUri, int index) {
+    final extension = p.extension(segmentUri.path);
+    return 'segment-${index.toString().padLeft(6, '0')} '
+        '${extension.isEmpty ? '.ts' : extension}'.replaceAll(' ', '');
   }
 
   Future<HlsManifest> _loadHlsMediaManifest({

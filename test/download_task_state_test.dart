@@ -19,9 +19,10 @@ import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:path/path.dart' as p;
 
+const pathProviderChannel = MethodChannel('plugins.flutter.io/path_provider');
+
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
-  const pathProviderChannel = MethodChannel('plugins.flutter.io/path_provider');
 
   tearDown(() async {
     TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
@@ -57,13 +58,30 @@ void main() {
     expect(task.failureReason, DownloadFailureReason.none);
   });
 
-  test('starting HLS task with valid manifest keeps unsupported-type placeholder', () async {
+  test('starting HLS task with valid manifest downloads segments and writes local manifest',
+      () async {
     final database = AppDatabase(NativeDatabase.memory());
     addTearDown(database.close);
 
+    final tempDir =
+        await Directory.systemTemp.createTemp('ani-destiny-download-hls-complete');
+    addTearDown(() async {
+      if (tempDir.existsSync()) {
+        await tempDir.delete(recursive: true);
+      }
+    });
+    _mockApplicationDocumentsDirectory(tempDir.path);
+
+    const segmentOne = <int>[1, 2, 3, 4, 5];
+    const segmentTwo = <int>[6, 7, 8, 9, 10, 11];
+    final dio = _FakeHlsSegmentDownloadDio({
+      'https://cdn.example.test/segment-1.ts': segmentOne,
+      'https://cdn.example.test/segment-2.ts': segmentTwo,
+    });
+
     final repository = DownloadRepositoryImpl(database);
     final service = HttpDownloadService(
-      dio: Dio(),
+      dio: dio,
       repository: repository,
       hlsManifestLoader: _FakeHlsManifestLoader(
         (manifestUri, headers) async {
@@ -71,9 +89,8 @@ void main() {
           return HlsManifest(
             uri: Uri.parse('https://cdn.example.test/index.m3u8'),
             segments: [
-              HlsSegment(
-                uri: Uri.parse('https://cdn.example.test/segment-1.ts'),
-              ),
+              HlsSegment(uri: Uri.parse('https://cdn.example.test/segment-1.ts')),
+              HlsSegment(uri: Uri.parse('https://cdn.example.test/segment-2.ts')),
             ],
             variants: [],
             isLive: false,
@@ -100,8 +117,31 @@ void main() {
     final task = await repository.getTask(taskId);
 
     expect(task, isNotNull);
-    expect(task!.status, DownloadStatus.unsupported);
-    expect(task.failureReason, DownloadFailureReason.unsupportedType);
+    expect(task!.status, DownloadStatus.completed);
+    expect(task.failureReason, DownloadFailureReason.none);
+    expect(task.failureMessage, isNull);
+    expect(task.progress, 1);
+    expect(task.downloadedBytes, segmentOne.length + segmentTwo.length);
+    expect(task.totalBytes, segmentOne.length + segmentTwo.length);
+    expect(task.localPath, isNotNull);
+    expect(task.localPath, contains('/downloads/'));
+
+    final manifestPath = task.localPath!;
+    final manifestContent = await File(manifestPath).readAsString();
+    expect(manifestContent, contains('#EXTM3U'));
+    expect(manifestContent, contains('segments/segment-000000.ts'));
+    expect(manifestContent, contains('segments/segment-000001.ts'));
+    expect(manifestContent, contains('#EXT-X-ENDLIST'));
+    expect(
+      File(p.join(p.dirname(manifestPath), 'segments', 'segment-000000.ts')).existsSync(),
+      isTrue,
+    );
+    expect(
+      File(p.join(p.dirname(manifestPath), 'segments', 'segment-000001.ts')).existsSync(),
+      isTrue,
+    );
+
+    expect(dio.downloadedUris, ['https://cdn.example.test/segment-1.ts', 'https://cdn.example.test/segment-2.ts']);
     expect(task.failureMessage, isNull);
   });
 
@@ -109,10 +149,22 @@ void main() {
     final database = AppDatabase(NativeDatabase.memory());
     addTearDown(database.close);
 
+    final tempDir =
+        await Directory.systemTemp.createTemp('ani-destiny-download-hls-master');
+    addTearDown(() async {
+      if (tempDir.existsSync()) {
+        await tempDir.delete(recursive: true);
+      }
+    });
+    _mockApplicationDocumentsDirectory(tempDir.path);
+
     final loadLog = <String>[];
     final repository = DownloadRepositoryImpl(database);
+    const segmentBytes = <int>[1, 2, 3, 4, 5, 6];
     final service = HttpDownloadService(
-      dio: Dio(),
+      dio: _FakeHlsSegmentDownloadDio({
+        'https://cdn.example.test/1080/segment-1.ts': segmentBytes,
+      }),
       repository: repository,
       hlsManifestLoader: _FakeHlsManifestLoader(
         (manifestUri, headers) async {
@@ -141,7 +193,11 @@ void main() {
             return HlsManifest(
               uri: manifestUri,
               segments: [
-                HlsSegment(uri: Uri.parse('https://cdn.example.test/segment-1.ts')),
+                HlsSegment(
+                  uri: Uri.parse('https://cdn.example.test/1080/segment-1.ts'),
+                  duration: const Duration(seconds: 8),
+                  title: 'segment-1',
+                ),
               ],
               variants: const [],
               isLive: false,
@@ -170,8 +226,8 @@ void main() {
     final task = await repository.getTask(taskId);
 
     expect(task, isNotNull);
-    expect(task!.status, DownloadStatus.unsupported);
-    expect(task.failureReason, DownloadFailureReason.unsupportedType);
+    expect(task!.status, DownloadStatus.completed);
+    expect(task.failureReason, DownloadFailureReason.none);
     expect(task.failureMessage, isNull);
     expect(
       loadLog,
@@ -180,11 +236,30 @@ void main() {
         'https://cdn.example.test/1080/index.m3u8',
       ],
     );
+    expect(task.localPath, isNotNull);
+    final manifestContent = await File(task.localPath!).readAsString();
+    expect(manifestContent, contains('#EXTINF:8.000,segment-1'));
+    expect(task.totalBytes, segmentBytes.length);
+    expect(task.downloadedBytes, segmentBytes.length);
+    expect(task.progress, 1);
+    expect(
+      File(p.join(p.dirname(task.localPath!), 'segments', 'segment-000000.ts')).existsSync(),
+      isTrue,
+    );
   });
 
   test('starting HLS task with invalid variant manifest reports invalid-manifest failure', () async {
     final database = AppDatabase(NativeDatabase.memory());
     addTearDown(database.close);
+
+    final tempDir =
+        await Directory.systemTemp.createTemp('ani-destiny-download-hls-invalid-variant');
+    addTearDown(() async {
+      if (tempDir.existsSync()) {
+        await tempDir.delete(recursive: true);
+      }
+    });
+    _mockApplicationDocumentsDirectory(tempDir.path);
 
     final repository = DownloadRepositoryImpl(database);
     final service = HttpDownloadService(
@@ -241,6 +316,15 @@ void main() {
     final database = AppDatabase(NativeDatabase.memory());
     addTearDown(database.close);
 
+    final tempDir =
+        await Directory.systemTemp.createTemp('ani-destiny-download-hls-live');
+    addTearDown(() async {
+      if (tempDir.existsSync()) {
+        await tempDir.delete(recursive: true);
+      }
+    });
+    _mockApplicationDocumentsDirectory(tempDir.path);
+
     final repository = DownloadRepositoryImpl(database);
     final service = HttpDownloadService(
       dio: Dio(),
@@ -285,6 +369,15 @@ void main() {
   test('starting HLS task with invalid manifest records invalid-manifest failure', () async {
     final database = AppDatabase(NativeDatabase.memory());
     addTearDown(database.close);
+
+    final tempDir =
+        await Directory.systemTemp.createTemp('ani-destiny-download-hls-invalid');
+    addTearDown(() async {
+      if (tempDir.existsSync()) {
+        await tempDir.delete(recursive: true);
+      }
+    });
+    _mockApplicationDocumentsDirectory(tempDir.path);
 
     final repository = DownloadRepositoryImpl(database);
     final service = HttpDownloadService(
@@ -1221,6 +1314,52 @@ class _UnexpectedFailureDio extends DioForNative {
     Options? options,
   }) async {
     throw StateError('filesystem sync failed');
+  }
+}
+
+void _mockApplicationDocumentsDirectory(String path) {
+  TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+      .setMockMethodCallHandler(pathProviderChannel, (call) async {
+    if (call.method == 'getApplicationDocumentsDirectory') {
+      return path;
+    }
+    return null;
+  });
+}
+
+class _FakeHlsSegmentDownloadDio extends DioForNative {
+  _FakeHlsSegmentDownloadDio(this.segmentBytesByUri);
+
+  final Map<String, List<int>> segmentBytesByUri;
+  final List<String> downloadedUris = <String>[];
+
+  @override
+  Future<Response> download(
+    String urlPath,
+    dynamic savePath, {
+    ProgressCallback? onReceiveProgress,
+    Map<String, dynamic>? queryParameters,
+    CancelToken? cancelToken,
+    bool deleteOnError = true,
+    FileAccessMode fileAccessMode = FileAccessMode.write,
+    String lengthHeader = Headers.contentLengthHeader,
+    Object? data,
+    Options? options,
+  }) async {
+    downloadedUris.add(urlPath);
+    final bytes = segmentBytesByUri[urlPath] ?? const <int>[];
+    final content = Uint8List.fromList(bytes);
+
+    final file = File(savePath as String);
+    await file.parent.create(recursive: true);
+    await file.writeAsBytes(content);
+    onReceiveProgress?.call(content.length, content.length);
+
+    return Response(
+      requestOptions: RequestOptions(path: urlPath),
+      statusCode: 200,
+      data: content,
+    );
   }
 }
 
