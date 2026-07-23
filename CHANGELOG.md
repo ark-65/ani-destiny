@@ -11,6 +11,7 @@
 
 ### 🐛 修复
 - 为 HLS（m3u8）离线下载完成首阶段闭环：在解析并校验 master/media 清单后，`start()` 现在会下载分片、落地 `index.m3u8` 并将任务置为 `completed`；清单链路异常仍按 `invalidManifest` / `networkError` / `unknown` 失败，Live 清单仍为 `unsupported`，并补充分片下载与本地清单产出的回归覆盖。
+- 补齐 HLS 离线闭环中的“重启可续传”切片：任务重试时会复用已落盘的分片文件，失败任务保留 `localPath` 以便恢复；补充回归测试验证仅下载缺失片段，并修复跨平台测试断言（以 `path.separator` 区分）。
 
 ## [1.0.6] - 2026-07-21
 

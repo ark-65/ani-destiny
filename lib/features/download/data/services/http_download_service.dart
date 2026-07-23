@@ -349,7 +349,7 @@ class HttpDownloadService implements DownloadService {
         return;
       }
       final failed = preparingTask.copyWith(
-        localPath: null,
+        localPath: prepareLocalManifestPath,
         status: DownloadStatus.failed,
         failureReason: DownloadFailureReason.networkError,
         failureMessage: _messageFromError(error),
@@ -360,7 +360,7 @@ class HttpDownloadService implements DownloadService {
       return;
     } on FormatException catch (error) {
       final invalidManifest = preparingTask.copyWith(
-        localPath: null,
+        localPath: prepareLocalManifestPath,
         status: DownloadStatus.failed,
         failureReason: DownloadFailureReason.invalidManifest,
         failureMessage: error.message,
@@ -371,7 +371,7 @@ class HttpDownloadService implements DownloadService {
       return;
     } on Object {
       final failed = preparingTask.copyWith(
-        localPath: null,
+        localPath: prepareLocalManifestPath,
         status: DownloadStatus.failed,
         failureReason: DownloadFailureReason.unknown,
         failureMessage: unexpectedDownloadFailureMessage,
@@ -415,6 +415,21 @@ class HttpDownloadService implements DownloadService {
       final segment = mediaManifest.segments[index];
       final safeSegmentName = _hlsSegmentFileName(segment.uri, index);
       final segmentPath = p.join(segmentDirectory.path, safeSegmentName);
+      final existingSegmentFile = File(segmentPath);
+      if (await existingSegmentFile.exists()) {
+        final existingBytes = await existingSegmentFile.length();
+        if (existingBytes > 0) {
+          downloadedBytes += existingBytes;
+          final progress = (index + 1) / mediaManifest.segments.length;
+          _emit(
+            task.id,
+            progress,
+            DownloadStatus.downloading,
+            downloadedBytes: downloadedBytes,
+          );
+          continue;
+        }
+      }
       final segmentBytes = await _downloadHlsSegment(
         segmentUri: segment.uri,
         localPath: segmentPath,

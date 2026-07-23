@@ -124,7 +124,7 @@ void main() {
     expect(task.downloadedBytes, segmentOne.length + segmentTwo.length);
     expect(task.totalBytes, segmentOne.length + segmentTwo.length);
     expect(task.localPath, isNotNull);
-    expect(task.localPath, contains('/downloads/'));
+    expect(task.localPath, contains('downloads${p.separator}'));
 
     final manifestPath = task.localPath!;
     final manifestContent = await File(manifestPath).readAsString();
@@ -143,6 +143,108 @@ void main() {
 
     expect(dio.downloadedUris, ['https://cdn.example.test/segment-1.ts', 'https://cdn.example.test/segment-2.ts']);
     expect(task.failureMessage, isNull);
+  });
+
+  test('starting HLS task resumes from existing segment files', () async {
+    final database = AppDatabase(NativeDatabase.memory());
+    addTearDown(database.close);
+
+    final tempDir =
+        await Directory.systemTemp.createTemp('ani-destiny-download-hls-resume');
+    addTearDown(() async {
+      if (tempDir.existsSync()) {
+        await tempDir.delete(recursive: true);
+      }
+    });
+    _mockApplicationDocumentsDirectory(tempDir.path);
+
+    const segmentOne = <int>[1, 2, 3, 4, 5];
+    const segmentTwo = <int>[6, 7, 8, 9, 10, 11];
+    final manifestLoader = _FakeHlsManifestLoader(
+      (manifestUri, headers) async {
+        expect(manifestUri.toString(), 'https://cdn.example.test/index.m3u8');
+        return HlsManifest(
+          uri: manifestUri,
+          segments: [
+            HlsSegment(uri: Uri.parse('https://cdn.example.test/segment-1.ts')),
+            HlsSegment(uri: Uri.parse('https://cdn.example.test/segment-2.ts')),
+          ],
+          variants: const [],
+          isLive: false,
+          targetDuration: null,
+        );
+      },
+    );
+
+    final firstAttemptDio = _FlakyHlsSegmentDownloadDio({
+      'https://cdn.example.test/segment-1.ts': segmentOne,
+      'https://cdn.example.test/segment-2.ts': segmentTwo,
+    }, failOnFirst: {'https://cdn.example.test/segment-2.ts'});
+
+    final repository = DownloadRepositoryImpl(database);
+    final firstAttemptService = HttpDownloadService(
+      dio: firstAttemptDio,
+      repository: repository,
+      hlsManifestLoader: manifestLoader,
+    );
+
+    final taskId = await firstAttemptService.createTask(
+      animeId: 'anime-1',
+      episodeId: 'episode-1',
+      sourceId: 'sakura',
+      source: const DownloadSource(
+        url: 'https://cdn.example.test/index.m3u8',
+        kind: DownloadKind.hls,
+      ),
+      title: 'HLS Test',
+      episodeTitle: 'Episode 1',
+    );
+
+    await firstAttemptService.start(taskId);
+
+    final failedTask = await repository.getTask(taskId);
+    expect(failedTask, isNotNull);
+    expect(failedTask!.status, DownloadStatus.failed);
+    expect(failedTask.localPath, isNotNull);
+
+    final manifestDirectory = p.dirname(failedTask.localPath!);
+    final segmentDir = Directory(p.join(manifestDirectory, 'segments'));
+    expect(
+      File(p.join(segmentDir.path, 'segment-000000.ts')).existsSync(),
+      isTrue,
+    );
+    expect(
+      File(p.join(segmentDir.path, 'segment-000001.ts')).existsSync(),
+      isFalse,
+    );
+
+    final retryDio = _FakeHlsSegmentDownloadDio({
+      'https://cdn.example.test/segment-1.ts': segmentOne,
+      'https://cdn.example.test/segment-2.ts': segmentTwo,
+    });
+    final retryService = HttpDownloadService(
+      dio: retryDio,
+      repository: repository,
+      hlsManifestLoader: manifestLoader,
+    );
+
+    await retryService.start(taskId);
+
+    final completedTask = await repository.getTask(taskId);
+    expect(completedTask, isNotNull);
+    expect(completedTask!.status, DownloadStatus.completed);
+    expect(completedTask.progress, 1);
+    expect(completedTask.downloadedBytes, segmentOne.length + segmentTwo.length);
+    expect(completedTask.totalBytes, segmentOne.length + segmentTwo.length);
+    expect(
+      File(p.join(segmentDir.path, 'segment-000000.ts')).existsSync(),
+      isTrue,
+    );
+    expect(
+      File(p.join(segmentDir.path, 'segment-000001.ts')).existsSync(),
+      isTrue,
+    );
+    expect(retryDio.downloadedUris, ['https://cdn.example.test/segment-2.ts']);
   });
 
   test('starting HLS task with master playlist resolves highest-bandwidth variant first', () async {
@@ -1347,6 +1449,57 @@ class _FakeHlsSegmentDownloadDio extends DioForNative {
     Options? options,
   }) async {
     downloadedUris.add(urlPath);
+    final bytes = segmentBytesByUri[urlPath] ?? const <int>[];
+    final content = Uint8List.fromList(bytes);
+
+    final file = File(savePath as String);
+    await file.parent.create(recursive: true);
+    await file.writeAsBytes(content);
+    onReceiveProgress?.call(content.length, content.length);
+
+    return Response(
+      requestOptions: RequestOptions(path: urlPath),
+      statusCode: 200,
+      data: content,
+    );
+  }
+}
+
+class _FlakyHlsSegmentDownloadDio extends DioForNative {
+  _FlakyHlsSegmentDownloadDio(
+    this.segmentBytesByUri, {
+    Set<String> failOnFirst = const {},
+  }) : failOnFirst = Set<String>.from(failOnFirst);
+
+  final Map<String, List<int>> segmentBytesByUri;
+  final Set<String> failOnFirst;
+  final Map<String, int> _attemptsByUri = {};
+  final List<String> downloadedUris = <String>[];
+
+  @override
+  Future<Response> download(
+    String urlPath,
+    dynamic savePath, {
+    ProgressCallback? onReceiveProgress,
+    Map<String, dynamic>? queryParameters,
+    CancelToken? cancelToken,
+    bool deleteOnError = true,
+    FileAccessMode fileAccessMode = FileAccessMode.write,
+    String lengthHeader = Headers.contentLengthHeader,
+    Object? data,
+    Options? options,
+  }) async {
+    downloadedUris.add(urlPath);
+    final attempt = (_attemptsByUri[urlPath] ?? 0) + 1;
+    _attemptsByUri[urlPath] = attempt;
+    if (failOnFirst.contains(urlPath) && attempt == 1) {
+      throw DioException(
+        requestOptions: RequestOptions(path: urlPath),
+        type: DioExceptionType.connectionError,
+        message: 'network unavailable',
+      );
+    }
+
     final bytes = segmentBytesByUri[urlPath] ?? const <int>[];
     final content = Uint8List.fromList(bytes);
 
