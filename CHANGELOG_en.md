@@ -10,6 +10,7 @@
 - The playback progress slider now announces its current seek time and total duration to screen readers, replacing an abstract percentage with meaningful time feedback.
 
 ### 🐛 Fixed
+- Hardened the download-page batch-cleanup regression against flaky widget matching by switching the `test/download_page_test.dart` batch-clear trigger lookup from label-based matching to the stable `downloads-clear-ended-tasks` key, eliminating `Bad state: Too many elements` false negatives while preserving the same user-facing clear-end action behavior.
 - Added a same-anime cleanup action on the download page: completed/failed/canceled entries now expose a batched “clear same anime ended downloads” action (once per anime group, only on the first visible row) that removes ended tasks from that anime group, while preserving the existing “clear all ended downloads” behavior. This includes `test/download_page_test.dart` regression coverage and aligns visible labels/visibility.
 - Closed HLS (m3u8) resume-gap after pause: when an active HLS task is paused, cancel settlement now keeps the local `index.m3u8` and `segments/*` artifacts so restart can reuse downloaded segments; existing canceled-flow cleanup behavior for HLS remains intact.
 - Completed the HLS (m3u8) offline deletion gap: removing a completed/failed/canceled HLS task now deletes its entire `downloads/{taskId}` directory (`index.m3u8` and `segments/*`) so residual media assets cannot remain behind while direct-file cleanup behavior stays unchanged.

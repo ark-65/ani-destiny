@@ -657,11 +657,9 @@ void main() {
         findsOneWidget,
       );
 
-      tester
-          .widget<TextButton>(
-            find.widgetWithText(TextButton, 'Clear 2 ended tasks from list'),
-          )
-          .onPressed!();
+      await tester.tap(
+        find.byKey(const ValueKey('downloads-clear-ended-tasks')),
+      );
       await tester.pumpAndSettle();
 
       expect(repository.deletedTaskIds, ['completed', 'canceled']);
@@ -1961,11 +1959,9 @@ void main() {
       );
       expect(find.text('Check 2 leftover files again'), findsNothing);
 
-      tester
-          .widget<TextButton>(
-            find.widgetWithText(TextButton, 'Clear 2 ended tasks from list'),
-          )
-          .onPressed!();
+      await tester.tap(
+        find.byKey(const ValueKey('downloads-clear-ended-tasks')),
+      );
       await tester.pumpAndSettle();
 
       expect(repository.deletedTaskIds, ['canceled-a', 'canceled-b']);
@@ -2011,11 +2007,9 @@ void main() {
       );
       expect(find.byKey(const ValueKey('downloads-clear-ended-tasks')), findsOneWidget);
 
-      tester
-          .widget<TextButton>(
-            find.widgetWithText(TextButton, 'Clear 3 ended tasks from list'),
-          )
-          .onPressed!();
+      await tester.tap(
+        find.byKey(const ValueKey('downloads-clear-ended-tasks')),
+      );
       await tester.pumpAndSettle();
 
       expect(
