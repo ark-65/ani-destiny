@@ -176,10 +176,13 @@ void main() {
       },
     );
 
-    final firstAttemptDio = _FlakyHlsSegmentDownloadDio({
-      'https://cdn.example.test/segment-1.ts': segmentOne,
-      'https://cdn.example.test/segment-2.ts': segmentTwo,
-    }, failOnFirst: {'https://cdn.example.test/segment-2.ts'});
+    final firstAttemptDio = _FlakyHlsSegmentDownloadDio(
+      {
+        'https://cdn.example.test/segment-1.ts': segmentOne,
+        'https://cdn.example.test/segment-2.ts': segmentTwo,
+      },
+      failOnFirst: {'https://cdn.example.test/segment-2.ts'},
+    );
 
     final repository = DownloadRepositoryImpl(database);
     final firstAttemptService = HttpDownloadService(
