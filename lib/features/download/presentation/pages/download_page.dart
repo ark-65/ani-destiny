@@ -10,6 +10,7 @@ import '../../../../core/error/app_exception.dart';
 import '../../../../core/widgets/app_empty_view.dart';
 import '../../../../core/widgets/app_error_view.dart';
 import '../../../../core/widgets/app_loading_view.dart';
+import '../../../../features/player/domain/entities/player_route_args.dart';
 import '../../../../shared/widgets/adaptive_page.dart';
 import '../../domain/entities/download_task.dart';
 import '../download_entry_feedback.dart';
@@ -477,6 +478,22 @@ class _DownloadPageState extends ConsumerState<DownloadPage>
                                       .removeEndedTask(task.id),
                                 ),
                               ),
+                              onPlayOffline:
+                                  task.status == DownloadStatus.completed &&
+                                          task.localPath != null &&
+                                          task.localPath!.trim().isNotEmpty
+                                      ? () => context.push(
+                                            '/player',
+                                            extra: PlayerRouteArgs(
+                                              animeId: task.animeId,
+                                              episodeId: task.episodeId,
+                                              animeTitle: task.title,
+                                              episodeTitle: task.episodeTitle,
+                                              playUrl: Uri.file(task.localPath!).toString(),
+                                              sourceId: task.sourceId,
+                                            ),
+                                          )
+                                      : null,
                               onReviewSource:
                                   task.status == DownloadStatus.unsupported
                                       ? () => context.push(

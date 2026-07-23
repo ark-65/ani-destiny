@@ -21,6 +21,7 @@ class DownloadTaskTile extends StatelessWidget {
     required this.onPause,
     required this.onCancel,
     required this.onRemove,
+    this.onPlayOffline,
     this.onReviewSource,
     this.isHighlighted = false,
     this.onRefreshCleanupStatus,
@@ -37,6 +38,7 @@ class DownloadTaskTile extends StatelessWidget {
   final VoidCallback onPause;
   final VoidCallback onCancel;
   final VoidCallback onRemove;
+  final VoidCallback? onPlayOffline;
   final VoidCallback? onReviewSource;
   final bool isHighlighted;
   final VoidCallback? onRefreshCleanupStatus;
@@ -379,6 +381,16 @@ class DownloadTaskTile extends StatelessWidget {
               : _removeTextAction(context),
         ],
       DownloadStatus.completed => [
+          if (task.localPath != null &&
+              task.localPath!.trim().isNotEmpty &&
+              onPlayOffline != null)
+            _textAction(
+              context,
+              key: ValueKey('download-task-play-${task.id}'),
+              label: context.l10n.play,
+              onPressed: isBusy ? null : onPlayOffline,
+              icon: Icons.play_arrow,
+            ),
           _removeTextAction(context),
         ],
       DownloadStatus.unsupported => [
