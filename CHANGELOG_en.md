@@ -6,6 +6,9 @@
 
 ## [Unreleased]
 
+### Added
+- Check the latest stable GitHub Release in Settings > About and show an update prompt that opens the matching release page when a newer version is available.
+
 ### ✨ Added
 - The playback progress slider now announces its current seek time and total duration to screen readers, replacing an abstract percentage with meaningful time feedback.
 

@@ -640,6 +640,11 @@ class AppLocalizations {
   String get dark => _t('dark');
   String get about => _t('about');
   String get aboutAniDestiny => _t('aboutAniDestiny');
+  String get updateAvailable => _t('updateAvailable');
+  String updateAvailableSubtitle(String version) =>
+      _t('updateAvailableSubtitle').replaceFirst('{version}', version);
+  String get updateNow => _t('updateNow');
+  String get later => _t('later');
   String appVersion(String version) => '${_t('appVersionPrefix')}$version';
   String get appDescription => _t('appDescription');
   String get supportedPlatforms => _t('supportedPlatforms');
@@ -927,8 +932,7 @@ const _localizedValues = {
     'downloads': '下载',
     'loadingDetail': '正在加载详情',
     'noPlaySource': '未找到可播放线路。请先切换到其他数据源再重试。',
-    'noDownloadSource':
-        '未找到可下载线路。请先返回该集并切换到其他数据源再重试。',
+    'noDownloadSource': '未找到可下载线路。请先返回该集并切换到其他数据源再重试。',
     'selectPlaySource': '选择播放线路',
     'selectDownloadSource': '选择下载线路',
     'checkDownloadLines': '查看下载线路',
@@ -1094,6 +1098,10 @@ const _localizedValues = {
     'dark': '深色',
     'about': '关于',
     'aboutAniDestiny': 'AniDestiny',
+    'updateAvailable': '发现新版本',
+    'updateAvailableSubtitle': 'AniDestiny {version} 已发布，查看更新内容并下载安装。',
+    'updateNow': '去更新',
+    'later': '稍后',
     'appVersionPrefix': '非盈利学习项目 · v',
     'appDescription': '一个跨平台动漫发现与播放应用。',
     'supportedPlatforms': '支持平台',
@@ -1486,6 +1494,11 @@ const _localizedValues = {
     'dark': 'Dark',
     'about': 'About',
     'aboutAniDestiny': 'AniDestiny',
+    'updateAvailable': 'Update available',
+    'updateAvailableSubtitle':
+        'AniDestiny {version} is available. View the release to download and update.',
+    'updateNow': 'Update',
+    'later': 'Later',
     'appVersionPrefix': 'Non-profit learning project · v',
     'appDescription': 'A cross-platform anime discovery and playback app.',
     'supportedPlatforms': 'Supported platforms',
@@ -1825,8 +1838,7 @@ const _localizedValues = {
         'このダウンロードは破棄されましたが、AniDestiny は未完了ファイルを自動で削除できませんでした。不要なら下のローカルパスをもとに手動で削除し、戻ってきたら「再確認」を押してください。',
     'downloadActionFailedMessage':
         'AniDestiny はこのダウンロード操作を今は完了できませんでした。少し待ってからもう一度お試しください。',
-    'downloadActionBusyMessage':
-        'このダウンロード操作はまだ進行中です。少し待ってからもう一度お試しください。',
+    'downloadActionBusyMessage': 'このダウンロード操作はまだ進行中です。少し待ってからもう一度お試しください。',
     'downloadPageLoadFailedMessage': 'ダウンロード一覧は一時的に利用できません。少し待ってからもう一度お試しください。',
     'downloadStartingStatus': '開始中...',
     'downloadRetryingStatus': '再試行中...',
@@ -1875,6 +1887,11 @@ const _localizedValues = {
     'dark': 'ダーク',
     'about': '情報',
     'aboutAniDestiny': 'AniDestiny',
+    'updateAvailable': '新しいバージョンがあります',
+    'updateAvailableSubtitle':
+        'AniDestiny {version} が公開されました。リリースを開いてダウンロードと更新を行えます。',
+    'updateNow': '更新する',
+    'later': '後で',
     'appVersionPrefix': '非営利の学習プロジェクト · v',
     'appDescription': 'クロスプラットフォームのアニメ検索・再生アプリです。',
     'supportedPlatforms': '対応プラットフォーム',
