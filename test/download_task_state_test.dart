@@ -1563,6 +1563,119 @@ void main() {
     expect(segmentDirectory.existsSync(), isFalse);
   });
 
+  test('removing a failed HLS task clears downloaded segment directory',
+      () async {
+    final database = AppDatabase(NativeDatabase.memory());
+    addTearDown(database.close);
+    final tempDir =
+        await Directory.systemTemp.createTemp('ani-destiny-remove-failed-hls');
+    addTearDown(() async {
+      if (tempDir.existsSync()) {
+        await tempDir.delete(recursive: true);
+      }
+    });
+    _mockApplicationDocumentsDirectory(tempDir.path);
+
+    final repository = DownloadRepositoryImpl(database);
+    final service = HttpDownloadService(
+      dio: Dio(),
+      repository: repository,
+    );
+    final manifestDirectory = Directory(
+      p.join(tempDir.path, 'downloads', 'hls-failed-task'),
+    );
+    final segmentDirectory = Directory(
+      p.join(manifestDirectory.path, 'segments'),
+    );
+    await segmentDirectory.create(recursive: true);
+    final manifestFile = File(p.join(manifestDirectory.path, 'index.m3u8'));
+    final firstSegment = File(p.join(segmentDirectory.path, 'segment-000000.ts'));
+    await manifestFile.writeAsString('#EXTM3U');
+    await firstSegment.writeAsString('segment-1');
+    final now = DateTime(2026, 7, 24, 1, 0);
+
+    await repository.upsertTask(
+      DownloadTask(
+        id: 'task-remove-failed-hls',
+        animeId: 'anime-2',
+        episodeId: 'episode-1',
+        sourceId: 'sakura',
+        title: 'HLS Failed Test',
+        episodeTitle: 'Episode 1',
+        url: 'https://cdn.example.test/index.m3u8',
+        kind: DownloadKind.hls,
+        status: DownloadStatus.failed,
+        failureReason: DownloadFailureReason.networkError,
+        failureMessage: 'offline',
+        progress: 0.4,
+        downloadedBytes: 400,
+        totalBytes: 1000,
+        localPath: manifestFile.path,
+        createdAt: now,
+        updatedAt: now,
+      ),
+    );
+
+    await service.removeEndedTask('task-remove-failed-hls');
+
+    final task = await repository.getTask('task-remove-failed-hls');
+    expect(task, isNull);
+    expect(manifestDirectory.existsSync(), isFalse);
+    expect(manifestFile.existsSync(), isFalse);
+    expect(firstSegment.existsSync(), isFalse);
+    expect(segmentDirectory.existsSync(), isFalse);
+  });
+
+  test('removing a failed HLS task remains idempotent if files are already gone',
+      () async {
+    final database = AppDatabase(NativeDatabase.memory());
+    addTearDown(database.close);
+    final tempDir = await Directory.systemTemp
+        .createTemp('ani-destiny-remove-failed-hls-missing-dir');
+    addTearDown(() async {
+      if (tempDir.existsSync()) {
+        await tempDir.delete(recursive: true);
+      }
+    });
+
+    final repository = DownloadRepositoryImpl(database);
+    final service = HttpDownloadService(
+      dio: Dio(),
+      repository: repository,
+    );
+    final manifestDirectory = Directory(
+      p.join(tempDir.path, 'downloads', 'hls-missing-task'),
+    );
+
+    await repository.upsertTask(
+      DownloadTask(
+        id: 'task-remove-failed-hls-missing-dir',
+        animeId: 'anime-3',
+        episodeId: 'episode-1',
+        sourceId: 'sakura',
+        title: 'HLS Missing Test',
+        episodeTitle: 'Episode 1',
+        url: 'https://cdn.example.test/index.m3u8',
+        kind: DownloadKind.hls,
+        status: DownloadStatus.failed,
+        failureReason: DownloadFailureReason.networkError,
+        failureMessage: 'offline',
+        progress: 0,
+        downloadedBytes: 0,
+        totalBytes: 1000,
+        localPath: p.join(manifestDirectory.path, 'index.m3u8'),
+        createdAt: DateTime(2026, 7, 24, 2, 0),
+        updatedAt: DateTime(2026, 7, 24, 2, 0),
+      ),
+    );
+
+    await service.removeEndedTask('task-remove-failed-hls-missing-dir');
+
+    final task = await repository.getTask('task-remove-failed-hls-missing-dir');
+    expect(task, isNull);
+    expect(manifestDirectory.existsSync(), isFalse);
+  });
+
   test('unexpected direct-download failures stay calm in stored task state',
       () async {
     final database = AppDatabase(NativeDatabase.memory());
