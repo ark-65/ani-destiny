@@ -192,6 +192,7 @@ class HttpDownloadService implements DownloadService {
       if (CancelToken.isCancel(error)) {
         await _finalizeCanceledDownload(
           taskId,
+          taskKind: existingTask.kind,
           originalLocalPath: activeLocalPath,
         );
         return;
@@ -348,6 +349,7 @@ class HttpDownloadService implements DownloadService {
       if (CancelToken.isCancel(error)) {
         await _finalizeCanceledDownload(
           existingTask.id,
+          taskKind: existingTask.kind,
           originalLocalPath: prepareLocalManifestPath,
         );
         return;
@@ -595,6 +597,7 @@ class HttpDownloadService implements DownloadService {
     if (!_canPause(task.status)) return;
     final clearedLocalPath = await _clearDiscardedDownload(
       localPath: task.localPath,
+      taskKind: task.kind,
       clearNow: !hadActiveDownload,
     );
     final updated = task.copyWith(
@@ -624,6 +627,7 @@ class HttpDownloadService implements DownloadService {
     final cleanupTargetPath = task.localPath;
     final clearedLocalPath = await _clearDiscardedDownload(
       localPath: cleanupTargetPath,
+      taskKind: task.kind,
       clearNow: !hadActiveDownload,
     );
     final updated = task.copyWith(
@@ -662,6 +666,7 @@ class HttpDownloadService implements DownloadService {
     if (_requiresLocalCleanupBeforeRemoval(task)) {
       final clearedLocalPath = await _clearDiscardedDownload(
         localPath: task.localPath,
+        taskKind: task.kind,
         clearNow: true,
       );
       if (clearedLocalPath != null) {
@@ -783,9 +788,12 @@ class HttpDownloadService implements DownloadService {
     if (localPath == null || localPath.isEmpty) {
       return false;
     }
-    return task.status == DownloadStatus.canceled ||
-        (task.status == DownloadStatus.failed &&
-            task.kind == DownloadKind.directFile);
+    if (task.status == DownloadStatus.completed) {
+      return task.kind == DownloadKind.hls;
+    }
+    return (task.status == DownloadStatus.canceled ||
+            task.status == DownloadStatus.failed) &&
+        (task.kind == DownloadKind.directFile || task.kind == DownloadKind.hls);
   }
 
   DownloadTask _manualCleanupBlockedRemovalTask(
@@ -848,6 +856,7 @@ class HttpDownloadService implements DownloadService {
 
   Future<void> _finalizeCanceledDownload(
     String taskId, {
+    required DownloadKind taskKind,
     String? originalLocalPath,
   }) async {
     final latest = await _repository.getTask(taskId);
@@ -859,6 +868,7 @@ class HttpDownloadService implements DownloadService {
 
     final clearedLocalPath = await _clearDiscardedDownload(
       localPath: originalLocalPath ?? latest.localPath,
+      taskKind: taskKind,
       clearNow: true,
     );
     if (clearedLocalPath == latest.localPath) return;
@@ -873,11 +883,20 @@ class HttpDownloadService implements DownloadService {
 
   Future<String?> _clearDiscardedDownload({
     required String? localPath,
+    required DownloadKind taskKind,
     required bool clearNow,
   }) async {
     if (localPath == null) return null;
     if (!clearNow) return localPath;
     try {
+      if (taskKind == DownloadKind.hls) {
+        final segmentDirectory = Directory(p.dirname(localPath));
+        if (await segmentDirectory.exists()) {
+          await segmentDirectory.delete(recursive: true);
+        }
+        return null;
+      }
+
       final file = File(localPath);
       if (await file.exists()) {
         await file.delete();

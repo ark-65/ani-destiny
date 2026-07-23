@@ -1285,6 +1285,72 @@ void main() {
     expect(partialFile.existsSync(), isFalse);
   });
 
+  test('removing a completed HLS task clears downloaded segment directory',
+      () async {
+    final database = AppDatabase(NativeDatabase.memory());
+    addTearDown(database.close);
+    final tempDir =
+        await Directory.systemTemp.createTemp('ani-destiny-remove-hls-completed');
+    addTearDown(() async {
+      if (tempDir.existsSync()) {
+        await tempDir.delete(recursive: true);
+      }
+    });
+    _mockApplicationDocumentsDirectory(tempDir.path);
+
+    final repository = DownloadRepositoryImpl(database);
+    final service = HttpDownloadService(
+      dio: Dio(),
+      repository: repository,
+    );
+    final manifestDirectory = Directory(
+      p.join(tempDir.path, 'downloads', 'hls-completed-task'),
+    );
+    final segmentDirectory = Directory(
+      p.join(manifestDirectory.path, 'segments'),
+    );
+    await segmentDirectory.create(recursive: true);
+    final manifestFile = File(p.join(manifestDirectory.path, 'index.m3u8'));
+    final firstSegment = File(p.join(segmentDirectory.path, 'segment-000000.ts'));
+    final secondSegment = File(p.join(segmentDirectory.path, 'segment-000001.ts'));
+    await manifestFile.writeAsString('#EXTM3U');
+    await firstSegment.writeAsString('segment-1');
+    await secondSegment.writeAsString('segment-2');
+    final now = DateTime(2026, 7, 24, 0, 0);
+
+    await repository.upsertTask(
+      DownloadTask(
+        id: 'task-remove-completed-hls',
+        animeId: 'anime-1',
+        episodeId: 'episode-1',
+        sourceId: 'sakura',
+        title: 'HLS Test',
+        episodeTitle: 'Episode 1',
+        url: 'https://cdn.example.test/index.m3u8',
+        kind: DownloadKind.hls,
+        status: DownloadStatus.completed,
+        failureReason: DownloadFailureReason.none,
+        failureMessage: null,
+        progress: 1,
+        downloadedBytes: 12,
+        totalBytes: 12,
+        localPath: manifestFile.path,
+        createdAt: now,
+        updatedAt: now,
+      ),
+    );
+
+    await service.removeEndedTask('task-remove-completed-hls');
+
+    final task = await repository.getTask('task-remove-completed-hls');
+    expect(task, isNull);
+    expect(manifestDirectory.existsSync(), isFalse);
+    expect(manifestFile.existsSync(), isFalse);
+    expect(firstSegment.existsSync(), isFalse);
+    expect(secondSegment.existsSync(), isFalse);
+    expect(segmentDirectory.existsSync(), isFalse);
+  });
+
   test('unexpected direct-download failures stay calm in stored task state',
       () async {
     final database = AppDatabase(NativeDatabase.memory());
