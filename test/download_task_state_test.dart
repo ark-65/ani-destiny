@@ -250,6 +250,126 @@ void main() {
     expect(retryDio.downloadedUris, ['https://cdn.example.test/segment-2.ts']);
   });
 
+  test('starting HLS task resumes after service restart with existing segments', () async {
+    final tempDir =
+        await Directory.systemTemp.createTemp('ani-destiny-download-hls-restart');
+    addTearDown(() async {
+      if (tempDir.existsSync()) {
+        await tempDir.delete(recursive: true);
+      }
+    });
+    _mockApplicationDocumentsDirectory(tempDir.path);
+
+    const segmentOne = <int>[1, 2, 3, 4, 5];
+    const segmentTwo = <int>[6, 7, 8, 9, 10, 11];
+    final manifestLoader = _FakeHlsManifestLoader(
+      (manifestUri, headers) async {
+        expect(manifestUri.toString(), 'https://cdn.example.test/index.m3u8');
+        return HlsManifest(
+          uri: Uri.parse('https://cdn.example.test/index.m3u8'),
+          segments: [
+            HlsSegment(uri: Uri.parse('https://cdn.example.test/segment-1.ts')),
+            HlsSegment(uri: Uri.parse('https://cdn.example.test/segment-2.ts')),
+          ],
+          variants: const [],
+          isLive: false,
+          targetDuration: null,
+        );
+      },
+    );
+
+    final databasePath = File(p.join(tempDir.path, 'download_tasks.sqlite'));
+    final firstAttemptDio = _FlakyHlsSegmentDownloadDio(
+      {
+        'https://cdn.example.test/segment-1.ts': segmentOne,
+        'https://cdn.example.test/segment-2.ts': segmentTwo,
+      },
+      failOnFirst: {'https://cdn.example.test/segment-2.ts'},
+    );
+    final firstRestartCheck = <AppDatabase>[];
+    addTearDown(() async {
+      for (final database in firstRestartCheck) {
+        await database.close();
+      }
+    });
+
+    final firstDatabase = AppDatabase(NativeDatabase(databasePath));
+    firstRestartCheck.add(firstDatabase);
+    final firstRepository = DownloadRepositoryImpl(firstDatabase);
+    final firstService = HttpDownloadService(
+      dio: firstAttemptDio,
+      repository: firstRepository,
+      hlsManifestLoader: manifestLoader,
+    );
+
+    final taskId = await firstService.createTask(
+      animeId: 'anime-1',
+      episodeId: 'episode-1',
+      sourceId: 'sakura',
+      source: const DownloadSource(
+        url: 'https://cdn.example.test/index.m3u8',
+        kind: DownloadKind.hls,
+      ),
+      title: 'HLS Test',
+      episodeTitle: 'Episode 1',
+    );
+
+    await firstService.start(taskId);
+
+    final failedTask = await firstRepository.getTask(taskId);
+    expect(failedTask, isNotNull);
+    expect(failedTask!.status, DownloadStatus.failed);
+    expect(failedTask.localPath, isNotNull);
+    expect(File(failedTask.localPath!).existsSync(), isFalse);
+
+    final restartManifestDir = Directory(p.dirname(failedTask.localPath!));
+    final restartSegmentsDir = Directory(
+      p.join(restartManifestDir.path, 'segments'),
+    );
+    expect(
+      File(p.join(restartSegmentsDir.path, 'segment-000000.ts')).existsSync(),
+      isTrue,
+    );
+    expect(
+      File(p.join(restartSegmentsDir.path, 'segment-000001.ts')).existsSync(),
+      isFalse,
+    );
+    await firstDatabase.close();
+    firstRestartCheck.clear();
+
+    final restartDio = _FakeHlsSegmentDownloadDio({
+      'https://cdn.example.test/segment-1.ts': segmentOne,
+      'https://cdn.example.test/segment-2.ts': segmentTwo,
+    });
+    final secondDatabase = AppDatabase(NativeDatabase(databasePath));
+    firstRestartCheck.add(secondDatabase);
+    final secondRepository = DownloadRepositoryImpl(secondDatabase);
+    final secondService = HttpDownloadService(
+      dio: restartDio,
+      repository: secondRepository,
+      hlsManifestLoader: manifestLoader,
+    );
+
+    await secondService.start(taskId);
+
+    final completedTask = await secondRepository.getTask(taskId);
+    expect(completedTask, isNotNull);
+    expect(completedTask!.status, DownloadStatus.completed);
+    expect(completedTask.progress, 1);
+    expect(completedTask.downloadedBytes, segmentOne.length + segmentTwo.length);
+    expect(completedTask.totalBytes, segmentOne.length + segmentTwo.length);
+    expect(completedTask.localPath, isNotNull);
+    final manifestPath = completedTask.localPath!;
+    final manifestContent = await File(manifestPath).readAsString();
+    expect(manifestContent, contains('segments/segment-000000.ts'));
+    expect(manifestContent, contains('segments/segment-000001.ts'));
+    expect(
+      File(p.join(restartSegmentsDir.path, 'segment-000001.ts')).existsSync(),
+      isTrue,
+    );
+    expect(restartDio.downloadedUris, ['https://cdn.example.test/segment-2.ts']);
+  });
+
   test('starting HLS task fails when a downloaded segment is empty', () async {
     final database = AppDatabase(NativeDatabase.memory());
     addTearDown(database.close);

@@ -17,6 +17,7 @@
 - Completed the offline-playback continuity slice: completed HLS downloads that have a local file now expose a `Play` action in the download card, which routes to the existing player flow with `playUrl` set to the local path; added tile test coverage for the completed-card play action.
 - Hardened offline HLS integrity by validating downloaded segments after fetch: every segment referenced by the media manifest must exist and be non-empty, otherwise the task fails as `invalidManifest`; this blocks false-positive completion before local playback.
 - Hardened player bootstrap for `file://` offline URLs: local offline playback now rejects missing manifest files before loading and falls back to the no-playable-source path, with `test/player_page_test.dart` coverage for both existing and missing local file scenarios.
+- Added a restart-resumption proof for the HLS offline loop: added regression coverage for service instance restart with persisted task state, verifying that partially downloaded segments are reused after restart and only missing segments are re-fetched to complete `index.m3u8`.
 
 ## [1.0.6] - 2026-07-21
 
