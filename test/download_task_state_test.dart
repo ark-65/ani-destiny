@@ -6,10 +6,12 @@ import 'package:ani_destiny/core/storage/app_database.dart';
 import 'package:ani_destiny/features/download/data/repositories/download_repository_impl.dart';
 import 'package:ani_destiny/features/download/data/services/http_download_service.dart';
 import 'package:ani_destiny/features/download/domain/entities/download_failure_reason.dart';
+import 'package:ani_destiny/features/download/domain/entities/hls_manifest.dart';
 import 'package:ani_destiny/features/download/domain/entities/download_kind.dart';
 import 'package:ani_destiny/features/download/domain/entities/download_progress.dart';
 import 'package:ani_destiny/features/download/domain/entities/download_source.dart';
 import 'package:ani_destiny/features/download/domain/entities/download_task.dart';
+import 'package:ani_destiny/features/download/domain/services/hls_manifest_loader.dart';
 import 'package:dio/dio.dart';
 import 'package:dio/io.dart';
 import 'package:drift/native.dart';
@@ -26,7 +28,7 @@ void main() {
         .setMockMethodCallHandler(pathProviderChannel, null);
   });
 
-  test('unsupported HLS task records unsupported failure reason', () async {
+  test('HLS task enters pending state when created', () async {
     final database = AppDatabase(NativeDatabase.memory());
     addTearDown(database.close);
 
@@ -51,9 +53,90 @@ void main() {
     final task = await repository.getTask(taskId);
 
     expect(task, isNotNull);
+    expect(task!.status, DownloadStatus.pending);
+    expect(task.failureReason, DownloadFailureReason.none);
+  });
+
+  test('starting HLS task with valid manifest keeps unsupported-type placeholder', () async {
+    final database = AppDatabase(NativeDatabase.memory());
+    addTearDown(database.close);
+
+    final repository = DownloadRepositoryImpl(database);
+    final service = HttpDownloadService(
+      dio: Dio(),
+      repository: repository,
+      hlsManifestLoader: _FakeHlsManifestLoader(
+        (manifestUri, headers) async {
+          expect(manifestUri.toString(), 'https://cdn.example.test/index.m3u8');
+          return HlsManifest(
+            uri: Uri.parse('https://cdn.example.test/index.m3u8'),
+            segments: [
+              HlsSegment(
+                uri: Uri.parse('https://cdn.example.test/segment-1.ts'),
+              ),
+            ],
+            variants: [],
+            isLive: false,
+            targetDuration: null,
+          );
+        },
+      ),
+    );
+
+    final taskId = await service.createTask(
+      animeId: 'anime-1',
+      episodeId: 'episode-1',
+      sourceId: 'sakura',
+      source: const DownloadSource(
+        url: 'https://cdn.example.test/index.m3u8',
+        kind: DownloadKind.hls,
+      ),
+      title: 'HLS Test',
+      episodeTitle: 'Episode 1',
+    );
+
+    await service.start(taskId);
+
+    final task = await repository.getTask(taskId);
+
+    expect(task, isNotNull);
     expect(task!.status, DownloadStatus.unsupported);
     expect(task.failureReason, DownloadFailureReason.unsupportedType);
     expect(task.failureMessage, isNull);
+  });
+
+  test('starting HLS task with invalid manifest records invalid-manifest failure', () async {
+    final database = AppDatabase(NativeDatabase.memory());
+    addTearDown(database.close);
+
+    final repository = DownloadRepositoryImpl(database);
+    final service = HttpDownloadService(
+      dio: Dio(),
+      repository: repository,
+      hlsManifestLoader: _FakeHlsManifestLoader(
+        (_, __) async => throw const FormatException('Invalid HLS manifest.'),
+      ),
+    );
+
+    final taskId = await service.createTask(
+      animeId: 'anime-1',
+      episodeId: 'episode-1',
+      sourceId: 'sakura',
+      source: const DownloadSource(
+        url: 'https://cdn.example.test/index.m3u8',
+        kind: DownloadKind.hls,
+      ),
+      title: 'HLS Test',
+      episodeTitle: 'Episode 1',
+    );
+
+    await service.start(taskId);
+
+    final task = await repository.getTask(taskId);
+
+    expect(task, isNotNull);
+    expect(task!.status, DownloadStatus.failed);
+    expect(task.failureReason, DownloadFailureReason.invalidManifest);
   });
 
   test('unsupported tasks drop implementation placeholder messages on read',
@@ -961,5 +1044,19 @@ class _UnexpectedFailureDio extends DioForNative {
     Options? options,
   }) async {
     throw StateError('filesystem sync failed');
+  }
+}
+
+class _FakeHlsManifestLoader implements HlsManifestLoader {
+  const _FakeHlsManifestLoader(this.loadManifest);
+
+  final Future<HlsManifest> Function(Uri, Map<String, String>) loadManifest;
+
+  @override
+  Future<HlsManifest> load(
+    Uri manifestUri, {
+    Map<String, String> headers = const {},
+  }) {
+    return loadManifest(manifestUri, headers);
   }
 }

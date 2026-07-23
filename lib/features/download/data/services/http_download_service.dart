@@ -12,6 +12,7 @@ import '../../domain/entities/download_progress.dart';
 import '../../domain/entities/download_source.dart';
 import '../../domain/entities/download_task.dart';
 import '../../domain/repositories/download_repository.dart';
+import '../../domain/services/hls_manifest_loader.dart';
 import '../../domain/services/download_service.dart';
 
 const _downloadNetworkFailureMessage =
@@ -21,11 +22,14 @@ class HttpDownloadService implements DownloadService {
   HttpDownloadService({
     required Dio dio,
     required DownloadRepository repository,
+    HlsManifestLoader? hlsManifestLoader,
   })  : _dio = dio,
-        _repository = repository;
+        _repository = repository,
+        _hlsManifestLoader = hlsManifestLoader;
 
   final Dio _dio;
   final DownloadRepository _repository;
+  final HlsManifestLoader? _hlsManifestLoader;
   final Map<String, CancelToken> _tokens = {};
   final Map<String, StreamController<DownloadProgress>> _controllers = {};
   final Map<String, Completer<void>> _settleCompleters = {};
@@ -89,6 +93,10 @@ class HttpDownloadService implements DownloadService {
       }
     }
     if (existingTask.kind != DownloadKind.directFile) {
+      if (existingTask.kind == DownloadKind.hls) {
+        await _startHlsTask(existingTask);
+        return;
+      }
       final updated = existingTask.copyWith(
         status: DownloadStatus.unsupported,
         failureReason: DownloadFailureReason.unsupportedType,
@@ -239,6 +247,89 @@ class HttpDownloadService implements DownloadService {
       if (!settleCompleter.isCompleted) {
         settleCompleter.complete();
       }
+    }
+  }
+
+  Future<void> _startHlsTask(DownloadTask existingTask) async {
+    final manifestLoader = _hlsManifestLoader;
+    if (manifestLoader == null) {
+      final failed = existingTask.copyWith(
+        status: DownloadStatus.failed,
+        failureReason: DownloadFailureReason.unknown,
+        failureMessage: 'HLS manifest loader unavailable.',
+        updatedAt: DateTime.now(),
+      );
+      await _repository.upsertTask(failed);
+      _emitTask(failed);
+      return;
+    }
+
+    final sourceUri = Uri.tryParse(existingTask.url);
+    if (sourceUri == null || !sourceUri.hasAbsolutePath) {
+      final failed = existingTask.copyWith(
+        status: DownloadStatus.failed,
+        failureReason: DownloadFailureReason.invalidUrl,
+        failureMessage: null,
+        updatedAt: DateTime.now(),
+      );
+      await _repository.upsertTask(failed);
+      _emitTask(failed);
+      return;
+    }
+
+    final preparingTask = existingTask.copyWith(
+      status: DownloadStatus.preparing,
+      failureReason: DownloadFailureReason.none,
+      failureMessage: null,
+      progress: 0,
+      downloadedBytes: 0,
+      totalBytes: null,
+      updatedAt: DateTime.now(),
+    );
+    await _repository.upsertTask(preparingTask);
+    _emitTask(preparingTask);
+
+    try {
+      await manifestLoader.load(sourceUri, headers: existingTask.headers);
+      final unsupported = preparingTask.copyWith(
+        status: DownloadStatus.unsupported,
+        failureReason: DownloadFailureReason.unsupportedType,
+        failureMessage: null,
+        updatedAt: DateTime.now(),
+      );
+      await _repository.upsertTask(unsupported);
+      _emitTask(unsupported);
+      return;
+    } on FormatException catch (error) {
+      final invalidManifest = preparingTask.copyWith(
+        status: DownloadStatus.failed,
+        failureReason: DownloadFailureReason.invalidManifest,
+        failureMessage: error.message,
+        updatedAt: DateTime.now(),
+      );
+      await _repository.upsertTask(invalidManifest);
+      _emitTask(invalidManifest);
+      return;
+    } on DioException catch (error) {
+      final failed = preparingTask.copyWith(
+        status: DownloadStatus.failed,
+        failureReason: DownloadFailureReason.networkError,
+        failureMessage: _messageFromError(error),
+        updatedAt: DateTime.now(),
+      );
+      await _repository.upsertTask(failed);
+      _emitTask(failed);
+      return;
+    } on Object {
+      final failed = preparingTask.copyWith(
+        status: DownloadStatus.failed,
+        failureReason: DownloadFailureReason.unknown,
+        failureMessage: unexpectedDownloadFailureMessage,
+        updatedAt: DateTime.now(),
+      );
+      await _repository.upsertTask(failed);
+      _emitTask(failed);
+      return;
     }
   }
 
@@ -489,7 +580,8 @@ class HttpDownloadService implements DownloadService {
   bool _isUnsupportedKind(DownloadKind kind) {
     return switch (kind) {
       DownloadKind.directFile => false,
-      DownloadKind.hls || DownloadKind.bt || DownloadKind.unknown => true,
+      DownloadKind.hls => false,
+      DownloadKind.bt || DownloadKind.unknown => true,
     };
   }
 

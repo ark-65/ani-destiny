@@ -9,6 +9,9 @@
 ### ✨ Added
 - The playback progress slider now announces its current seek time and total duration to screen readers, replacing an abstract percentage with meaningful time feedback.
 
+### 🐛 Fixed
+- Completed the first HLS (m3u8) download-path slice by attempting manifest load during `start()`: HLS tasks now go through a parser-capability check first, only become `unsupported` when manifest validation fails, and keep `invalidManifest` / `networkError` / `unknown` failure categories with matching tests.
+
 ## [1.0.6] - 2026-07-21
 
 ### ✨ Added
