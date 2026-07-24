@@ -11,6 +11,7 @@
 - Check the latest stable GitHub Release in Settings > About and show an update prompt that opens the matching release page when a newer version is available.
 
 ### 🐛 Fixed
+- Fixed a Windows-only offline-media integrity test fixture failure by switching the first reserved-character segment fixture in `test/offline_media_integrity_test.dart` to a path-safe encoded filename while preserving `segment%3Fname%23part.ts?download_cache=true` query parsing coverage, preventing `PathNotFoundException` on Windows builds.
 - Fixed local manifest segment parsing for encoded `?` / `#` in segment file names: `offline_media_integrity.dart` now parses query/fragment boundaries at URI level and only decodes path components, so `segment%3Fname%23part.ts?download=true` is no longer treated as a missing file.
 - Hardened offline manifest segment parsing for encoded path separators: `offline_media_integrity.dart` now normalizes backslash separators after decoding, so encoded entries such as `segments%5Csegment%20name.ts` and `segments%5Cnested%252Fspace%20name.ts` resolve to the actual local segment files on non-Windows platforms instead of being marked unplayable.
 - Hardened offline manifest segment parsing for double-encoded paths by adding second-pass decoded candidates, so entries like `segments%5Cnested%252Fspace%20name.ts` still resolve to real files when `%252F` / `%2520` combinations appear together.

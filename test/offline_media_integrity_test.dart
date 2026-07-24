@@ -15,13 +15,14 @@ void main() {
       await temporaryDir.delete(recursive: true);
     });
 
-    final segmentPath = p.join(temporaryDir.path, 'segments', 'segment?name#part.ts');
+    const encodedSegmentFileName = 'segment%3Fname%23part.ts';
+    final segmentPath = p.join(temporaryDir.path, 'segments', encodedSegmentFileName);
     await Directory(p.dirname(segmentPath)).create(recursive: true);
     await File(segmentPath).writeAsString('ok');
 
     final manifestPath = p.join(temporaryDir.path, 'index.m3u8');
     await File(manifestPath).writeAsString(
-      '#EXTM3U\nsegments/segment%3Fname%23part.ts?download_cache=true\n',
+      '#EXTM3U\nsegments/$encodedSegmentFileName?download_cache=true\n',
     );
 
     expect(isPlayableOfflineMediaPath(manifestPath), isTrue);
