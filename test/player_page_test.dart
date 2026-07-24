@@ -3531,14 +3531,60 @@ void main() {
     addTearDown(() async {
       await temporaryDir.delete(recursive: true);
     });
-    final localManifest = File('${temporaryDir.path}/index.m3u8');
-    await localManifest.writeAsString('#EXTM3U\n');
+    final manifestPath = '${temporaryDir.path}/index.m3u8';
+    final segmentPath = '${temporaryDir.path}/segments/segment-000000.ts';
+    await Directory('${temporaryDir.path}/segments').create(recursive: true);
+    await File(segmentPath).writeAsString('segment');
+    final localManifest = File(manifestPath);
+    await localManifest.writeAsString(
+      '#EXTM3U\n#EXTINF:10,\nsegments/segment-000000.ts\n#EXT-X-ENDLIST',
+    );
 
     expect(
       isPlayableUrl(Uri.file(localManifest.path).toString()),
       isTrue,
     );
   });
+
+  test(
+    'offline local file play url is false when referenced segment is missing',
+    () async {
+      final temporaryDir = await Directory.systemTemp.createTemp(
+        'ani-destiny-offline-localfile-missing-segment',
+      );
+      addTearDown(() async {
+        await temporaryDir.delete(recursive: true);
+      });
+      final manifestPath = '${temporaryDir.path}/index.m3u8';
+      final localManifest = File(manifestPath);
+      await localManifest.writeAsString(
+        '#EXTM3U\n#EXTINF:10,\nsegments/missing.ts\n#EXT-X-ENDLIST',
+      );
+
+      expect(isPlayableUrl(Uri.file(localManifest.path).toString()), isFalse);
+    },
+  );
+
+  test(
+    'offline local file play url is false when referenced segment file is empty',
+    () async {
+      final temporaryDir = await Directory.systemTemp.createTemp(
+        'ani-destiny-offline-localfile-empty-segment',
+      );
+      addTearDown(() async {
+        await temporaryDir.delete(recursive: true);
+      });
+      final segmentPath = '${temporaryDir.path}/segments/segment-000000.ts';
+      await Directory('${temporaryDir.path}/segments').create(recursive: true);
+      await File(segmentPath).writeAsString('');
+      final localManifest = File('${temporaryDir.path}/index.m3u8');
+      await localManifest.writeAsString(
+        '#EXTM3U\n#EXTINF:10,\nsegments/segment-000000.ts\n#EXT-X-ENDLIST',
+      );
+
+      expect(isPlayableUrl(Uri.file(localManifest.path).toString()), isFalse);
+    },
+  );
 
   test('missing offline local file is treated as unavailable before playback',
       () async {
