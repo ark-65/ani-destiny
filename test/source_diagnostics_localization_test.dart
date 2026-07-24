@@ -1,6 +1,7 @@
 import 'package:ani_destiny/app/l10n/app_localizations.dart';
 import 'package:ani_destiny/core/diagnostics/playback_diagnostic_snapshot_preview.dart';
 import 'package:ani_destiny/core/diagnostics/playback_diagnostic_summary.dart';
+import 'package:ani_destiny/core/update/app_update_checker.dart';
 import 'package:ani_destiny/features/danmaku/domain/entities/danmaku_settings.dart';
 import 'package:ani_destiny/features/danmaku/presentation/providers/danmaku_providers.dart';
 import 'package:ani_destiny/features/player/domain/services/playback_diagnostics.dart';
@@ -239,6 +240,38 @@ void main() {
       find.textContaining('Copy sanitized diagnostics and open'),
       findsOneWidget,
     );
+  });
+
+  testWidgets('settings page surfaces a newer stable app release',
+      (tester) async {
+    SharedPreferences.setMockInitialValues({});
+
+    await tester.pumpWidget(
+      _buildApp(
+        home: const SettingsPage(),
+        overrides: [
+          ..._providerOverrides,
+          appUpdateProvider.overrideWith(
+            (ref) async => const AppUpdate(
+              version: 'v1.1.0',
+              releaseUrl:
+                  'https://github.com/ark-65/ani-destiny/releases/tag/v1.1.0',
+            ),
+          ),
+        ],
+      ),
+    );
+
+    await tester.pumpAndSettle();
+    await tester.scrollUntilVisible(
+      find.text('Update available'),
+      200,
+      scrollable: find.byType(Scrollable).first,
+    );
+
+    expect(find.text('Update available'), findsOneWidget);
+    expect(find.text('Update'), findsOneWidget);
+    expect(find.textContaining('v1.1.0'), findsOneWidget);
   });
 
   testWidgets('runtime diagnostics page hides fallback boilerplate message', (

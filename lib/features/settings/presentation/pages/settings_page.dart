@@ -26,6 +26,7 @@ class SettingsPage extends ConsumerWidget {
         ref.watch(playbackBufferingSettingsProvider);
     final version = ref.watch(appVersionLabelProvider).valueOrNull ??
         AppConstants.appVersion;
+    final appUpdate = ref.watch(appUpdateProvider).valueOrNull;
 
     return SafeArea(
       child: AdaptivePage(
@@ -111,6 +112,19 @@ class SettingsPage extends ConsumerWidget {
             SettingsSection(
               title: context.l10n.about,
               children: [
+                if (appUpdate != null)
+                  ListTile(
+                    leading: const Icon(Icons.system_update_outlined),
+                    title: Text(context.l10n.updateAvailable),
+                    subtitle: Text(
+                      context.l10n.updateAvailableSubtitle(appUpdate.version),
+                    ),
+                    trailing: FilledButton(
+                      onPressed: () => _openExternalUrl(appUpdate.releaseUrl),
+                      child: Text(context.l10n.updateNow),
+                    ),
+                    onTap: () => _openExternalUrl(appUpdate.releaseUrl),
+                  ),
                 ListTile(
                   leading: const Icon(Icons.auto_awesome),
                   title: Text(context.l10n.aboutAniDestiny),

@@ -6,6 +6,7 @@ import 'l10n/app_localizations.dart';
 import 'router.dart';
 import 'theme/app_theme.dart';
 import 'theme/theme_providers.dart';
+import '../features/settings/presentation/widgets/app_update_reminder.dart';
 
 class AniDestinyApp extends ConsumerWidget {
   const AniDestinyApp({super.key});
@@ -28,6 +29,9 @@ class AniDestinyApp extends ConsumerWidget {
         GlobalCupertinoLocalizations.delegate,
         GlobalWidgetsLocalizations.delegate,
       ],
+      builder: (context, child) => AppUpdateReminder(
+        child: child ?? const SizedBox.shrink(),
+      ),
       routerConfig: appRouter,
     );
   }

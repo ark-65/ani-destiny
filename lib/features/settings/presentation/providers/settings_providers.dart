@@ -10,6 +10,8 @@ import '../../../../core/constants/app_constants.dart';
 import '../../../../core/diagnostics/feedback_package.dart';
 import '../../../../core/diagnostics/feedback_package_collector.dart';
 import '../../../../core/diagnostics/feedback_package_formatter.dart';
+import '../../../../core/network/dio_provider.dart';
+import '../../../../core/update/app_update_checker.dart';
 import '../../../danmaku/presentation/providers/danmaku_providers.dart';
 import '../../../download/domain/entities/download_task.dart';
 import '../../../download/presentation/providers/download_providers.dart';
@@ -20,6 +22,15 @@ import '../../../source/presentation/providers/source_providers.dart';
 final appVersionLabelProvider = FutureProvider<String>(
   (ref) => _loadAppVersionLabel(),
 );
+
+final appUpdateProvider = FutureProvider.autoDispose<AppUpdate?>((ref) async {
+  try {
+    final installedVersion = await ref.watch(appVersionLabelProvider.future);
+    return AppUpdateChecker(ref.watch(dioProvider)).check(installedVersion);
+  } on Object {
+    return null;
+  }
+});
 
 final feedbackPackageProvider =
     FutureProvider.autoDispose<FeedbackPackage>((ref) async {
