@@ -82,11 +82,17 @@ Iterable<String> _segmentPathCandidatesFromManifestLine(
   final windowsPathPattern = RegExp(r'^[a-zA-Z]:[\\/].+');
 
   if (parsedUri.hasScheme && parsedUri.scheme.length == 1) {
-    final windowsDrivePath = _normalizeAndDecodePath(
-      '${parsedUri.scheme}:${parsedUri.path}',
-    );
-    if (windowsPathPattern.hasMatch(windowsDrivePath)) {
-      return [windowsDrivePath];
+    final windowsDrivePath = '${parsedUri.scheme}:${parsedUri.path}';
+    final windowsDriveCandidates = <String>{
+      _normalizeAndDecodePath(windowsDrivePath),
+      ..._decodePathCandidateVariants(windowsDrivePath),
+    };
+    final validWindowsDrivePaths = windowsDriveCandidates
+        .where((segmentPath) => segmentPath.isNotEmpty)
+        .where(windowsPathPattern.hasMatch)
+        .toList(growable: false);
+    if (validWindowsDrivePaths.isNotEmpty) {
+      return validWindowsDrivePaths;
     }
     return const Iterable<String>.empty();
   }
