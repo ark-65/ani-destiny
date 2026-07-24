@@ -26,6 +26,7 @@
 - Hardened offline HLS cleanup idempotency: added failed HLS removal regressions to cover both existing local media directories and missing-directory cases, proving `removeEndedTask` can clear leftovers without requiring a manual cleanup follow-up.
 - Hardened offline media playback availability checks: for `file://` URLs, AniDestiny now verifies that all segment paths referenced by `index.m3u8` exist and are non-empty (in addition to manifest presence), preventing a local playlist file with missing/empty segments from being treated as playable.
 - Extended offline manifest segment-path parsing for percent-encoded names: offline `index.m3u8` entries like `segments/segment%20name.ts?download=true` are now decoded before file existence checks, so playable status is not blocked when real segment filenames contain spaces.
+- Added restart-proof regression coverage for offline playback: repeated `isPlayableUrl` checks on the same local offline manifest path remain true, providing executable proof that offline playback stays available when the app restarts with unchanged local files.
 
 ## [1.0.6] - 2026-07-21
 

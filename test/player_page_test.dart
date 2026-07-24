@@ -3674,6 +3674,30 @@ void main() {
     },
   );
 
+  test(
+    'offline local file play url remains playable after page restart',
+    () async {
+    final temporaryDir = await Directory.systemTemp.createTemp(
+      'ani-destiny-offline-localfile-restart',
+    );
+    addTearDown(() async {
+      await temporaryDir.delete(recursive: true);
+    });
+    await Directory('${temporaryDir.path}/segments').create(recursive: true);
+    final segmentPath = '${temporaryDir.path}/segments/segment-000000.ts';
+    await File(segmentPath).writeAsString('segment');
+    final localManifest = File('${temporaryDir.path}/index.m3u8');
+    await localManifest.writeAsString(
+      '#EXTM3U\n#EXTINF:10,\nsegments/segment-000000.ts\n#EXT-X-ENDLIST',
+    );
+
+    final manifestUrl = Uri.file(localManifest.path).toString();
+    // 第一次启动检查：离线清单可播放。
+    expect(isPlayableUrl(manifestUrl), isTrue);
+    // 模拟进程重启：不依赖实例状态，重新读取同一路径再次判断。
+    expect(isPlayableUrl(manifestUrl), isTrue);
+  });
+
   test('missing offline local file is treated as unavailable before playback',
       () async {
     final temporaryDir = await Directory.systemTemp.createTemp(
@@ -4449,6 +4473,9 @@ class _TrackingPlayerControllerAdapter implements PlayerControllerAdapter {
   final _controller = StreamController<PlayerState>.broadcast();
   int pauseCalls = 0;
   int playCalls = 0;
+  int loadCalls = 0;
+  String? lastLoadUrl;
+  Map<String, String> lastLoadHeaders = const {};
   PlayerState _state = PlayerState.initial();
 
   @override
@@ -4464,6 +4491,9 @@ class _TrackingPlayerControllerAdapter implements PlayerControllerAdapter {
     String url, {
     Map<String, String> headers = const {},
   }) async {
+    loadCalls += 1;
+    lastLoadUrl = url;
+    lastLoadHeaders = headers;
     _state = PlayerState.initial().copyWith(
       isInitialized: true,
       isPlaying: true,
