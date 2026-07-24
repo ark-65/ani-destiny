@@ -70,17 +70,19 @@ String? _segmentPathFromManifestLine(
     return null;
   }
 
-  final normalizedPath = _removeQueryAndFragment(normalizedLine);
+  final normalizedPath = _removeQueryAndFragment(normalizedLine)
+      .replaceAll('\\', '/');
+  final decodedPath = _decodeManifestPath(normalizedPath);
 
   final windowsPathPattern = RegExp(r'^[a-zA-Z]:[\\/].+');
-  if (windowsPathPattern.hasMatch(normalizedPath)) {
-    return Uri.decodeFull(normalizedPath);
+  if (windowsPathPattern.hasMatch(decodedPath)) {
+    return decodedPath;
   }
 
-  final parsedUri = Uri.tryParse(normalizedPath);
+  final parsedUri = Uri.tryParse(decodedPath);
   if (parsedUri == null) return null;
   if (!parsedUri.hasScheme) {
-    final segmentPath = Uri.decodeFull(parsedUri.path);
+    final segmentPath = _decodeManifestPath(parsedUri.path);
     if (segmentPath.isEmpty) {
       return null;
     }
@@ -95,4 +97,12 @@ String? _segmentPathFromManifestLine(
 String _removeQueryAndFragment(String rawValue) {
   final withoutQuery = rawValue.split('?').first;
   return withoutQuery.split('#').first;
+}
+
+String _decodeManifestPath(String value) {
+  try {
+    return Uri.decodeFull(value);
+  } on FormatException {
+    return value;
+  }
 }
