@@ -44,15 +44,19 @@ bool isPlayableOfflineMediaPath(String manifestPath) {
   var hasPlayableSegment = false;
   for (final line in lines.skip(1)) {
     if (line.startsWith('#')) continue;
-    final segmentPath = _segmentPathFromManifestLine(
+    final segmentPaths = _segmentPathCandidatesFromManifestLine(
       line,
       manifestDirectory,
     );
-    if (segmentPath == null) {
+    if (segmentPaths.isEmpty) {
       return false;
     }
-    final segmentFile = File(segmentPath);
-    if (!segmentFile.existsSync() || segmentFile.lengthSync() == 0) {
+
+    final hasPlayableSegmentFile = segmentPaths.any((segmentPath) {
+      final segmentFile = File(segmentPath);
+      return segmentFile.existsSync() && segmentFile.lengthSync() > 0;
+    });
+    if (!hasPlayableSegmentFile) {
       return false;
     }
     hasPlayableSegment = true;
@@ -61,47 +65,56 @@ bool isPlayableOfflineMediaPath(String manifestPath) {
   return hasPlayableSegment;
 }
 
-String? _segmentPathFromManifestLine(
+Iterable<String> _segmentPathCandidatesFromManifestLine(
   String manifestLine,
   String manifestDirectory,
 ) {
   final normalizedLine = manifestLine.trim();
   if (normalizedLine.isEmpty) {
-    return null;
+    return const Iterable<String>.empty();
   }
 
   final parsedUri = Uri.tryParse(normalizedLine);
   if (parsedUri == null) {
-    return null;
+    return const Iterable<String>.empty();
   }
 
   final windowsPathPattern = RegExp(r'^[a-zA-Z]:[\\/].+');
 
   if (parsedUri.hasScheme && parsedUri.scheme.length == 1) {
-    final windowsDrivePath = _normalizeSegmentPath(
+    final windowsDrivePath = _normalizeAndDecodePath(
       '${parsedUri.scheme}:${parsedUri.path}',
     );
     if (windowsPathPattern.hasMatch(windowsDrivePath)) {
-      return windowsDrivePath;
+      return [windowsDrivePath];
     }
+    return const Iterable<String>.empty();
   }
 
   if (parsedUri.hasScheme) {
     if (parsedUri.scheme.toLowerCase() == 'file') {
-      return parsedUri.toFilePath();
+      return [parsedUri.toFilePath()];
     }
-    return null;
+    return const Iterable<String>.empty();
   }
 
-  final segmentPath = _normalizeSegmentPath(_decodeManifestPath(parsedUri.path));
-  if (segmentPath.isEmpty) {
-    return null;
-  }
-  if (windowsPathPattern.hasMatch(segmentPath)) {
-    return segmentPath;
+  final segmentPathCandidates = <String>{
+    _normalizePath(parsedUri.path),
+    ..._decodePathCandidateVariants(parsedUri.path),
+  };
+  final candidateValues = segmentPathCandidates
+      .where((segmentPath) => segmentPath.isNotEmpty)
+      .map(
+        (segmentPath) => windowsPathPattern.hasMatch(segmentPath)
+            ? segmentPath
+            : p.join(manifestDirectory, segmentPath),
+      )
+      .toList(growable: false);
+  if (candidateValues.isEmpty) {
+    return const Iterable<String>.empty();
   }
 
-  return p.join(manifestDirectory, segmentPath);
+  return candidateValues;
 }
 
 String _decodeManifestPath(String value) {
@@ -112,7 +125,24 @@ String _decodeManifestPath(String value) {
   }
 }
 
-String _normalizeSegmentPath(String value) {
-  final decodedPath = _decodeManifestPath(value);
-  return decodedPath.replaceAll('\\', '/');
+Iterable<String> _decodePathCandidateVariants(String value) sync* {
+  var decodedPath = value;
+  for (var i = 0; i < 2; i++) {
+    final nextPath = _decodeManifestPath(decodedPath);
+    if (nextPath == decodedPath) {
+      break;
+    }
+    decodedPath = nextPath;
+    if (decodedPath.isNotEmpty) {
+      yield _normalizePath(decodedPath);
+    }
+  }
+}
+
+String _normalizePath(String value) {
+  return value.replaceAll('\\', '/');
+}
+
+String _normalizeAndDecodePath(String value) {
+  return _normalizePath(_decodeManifestPath(value));
 }
