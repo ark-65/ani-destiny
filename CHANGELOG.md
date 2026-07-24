@@ -11,6 +11,7 @@
 - 在设置的“关于”区域检查 GitHub 最新正式 Release；有更高版本时显示更新提示，并直接打开对应发布页下载安装。
 
 ### 🐛 修复
+- 修复离线清单片段解析对百分号编码路径分隔符的边界：`offline_media_integrity.dart` 现在在去 query/fragment 后先统一解码并归一化 `\\` 到 `/`，`segments%5Csegment%20name.ts` 与 `segments%5Cnested%252Fspace%20name.ts` 这类清单引用可在非 Windows 运行时正确映射到真实文件路径，避免已下载分片因路径编码而被误判为缺失。
 - 修复下载页下载任务批量清理按钮的测试交互脆弱性：将 `test/download_page_test.dart` 中批量清理按钮的定位从文本匹配改为稳定的 `downloads-clear-ended-tasks` key，避免同页出现多处同文案导致的 `Bad state: Too many elements` 假性 CI 失败，保留现有清理行为与边界。
 - 修复本地播放可用性判断在 `file://` 路径上的误判：当存在普通本地媒体文件（非 m3u8）时直接视为可播放；仅对 manifest 文件做片段完整性校验。新增 `test/player_page_test.dart` 回归“非 manifest 文件也应判定可播放”。
 - 修复离线清单引用带有查询参数或片段标识的本地分段路径：`offline_media_integrity.dart` 现在解析本地 segment 行时会忽略查询参数/锚点，仅按真实文件名校验，避免 `segments/file.ts?download=true` 或 `segments/file.ts#retry` 被误判为无法播放。
