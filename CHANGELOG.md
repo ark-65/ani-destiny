@@ -26,6 +26,7 @@
 - 增补 HLS 本地清理幂等回归：新增失败态移除测试，覆盖目录仍在与目录已缺失两种场景，确认 `removeEndedTask` 在失败 HLS 任务上无需外部手工介入即可清空本地 `downloads/{taskId}` 残留。
 - 完善播放器离线可播放性校验：`file://` URL 除了校验 `index.m3u8` 存在外，还会校验清单内引用的 `segments` 文件是否都存在且非空，避免 manifest 有文件但本地资源缺失导致误播；补充 `test/player_page_test.dart` 覆盖“正常/缺失分片/空分片”三类本地清单。
 - 扩展离线清单片段路径解析对百分号编码支持：离线 `index.m3u8` 中出现 `segments/segment%20name.ts?download=true` 这类编码路径时，播放器会先解码路径后再校验本地文件，避免真实下载目录文件名含空格时误判不可播放。
+- 补齐离线清单分段路径解析对 Windows 风格绝对路径的查询兼容：在 `offline_media_integrity.dart` 中先清理 `?`/`#` 后再解码 `C:\...` 路径，避免 Windows 端本地清单携带参数时误判为不可播放。
 - 增补离线播放重启闭环验证：补充 `test/player_page_test.dart` 用例，验证同一路径的离线清单在重复调用 `isPlayableUrl`（类比进程重建读取）下保持可播放，收敛“关闭网络并重启后仍能播放”到可执行回归证明。
 
 ## [1.0.6] - 2026-07-21

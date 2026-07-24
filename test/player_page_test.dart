@@ -3611,6 +3611,36 @@ void main() {
   );
 
   test(
+    'offline local file play url is true for windows-style segment path with query',
+    () async {
+      final temporaryDir = await Directory.systemTemp.createTemp(
+        'ani-destiny-offline-localfile-segment-windows-query',
+      );
+      addTearDown(() async {
+        await temporaryDir.delete(recursive: true);
+      });
+      final windowsSegmentId = DateTime.now().microsecondsSinceEpoch;
+      final windowsSegmentPath =
+          'C:/ani-destiny-offline/windows-segment-$windowsSegmentId.ts';
+      await Directory('C:/ani-destiny-offline').create(recursive: true);
+      await File(windowsSegmentPath).writeAsString('segment');
+      addTearDown(() async {
+        await File(windowsSegmentPath).delete();
+        await Directory('C:').delete(recursive: true);
+      });
+      final localManifest = File('${temporaryDir.path}/index.m3u8');
+      await localManifest.writeAsString(
+        '#EXTM3U\n#EXTINF:10,\n$windowsSegmentPath?download_cache=true\n#EXT-X-ENDLIST',
+      );
+
+      expect(
+        isPlayableUrl(Uri.file(localManifest.path).toString()),
+        isTrue,
+      );
+    },
+  );
+
+  test(
     'offline local file play url is true for manifest segments with fragment',
     () async {
       final temporaryDir = await Directory.systemTemp.createTemp(

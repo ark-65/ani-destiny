@@ -70,12 +70,14 @@ String? _segmentPathFromManifestLine(
     return null;
   }
 
+  final normalizedPath = _removeQueryAndFragment(normalizedLine);
+
   final windowsPathPattern = RegExp(r'^[a-zA-Z]:[\\/].+');
-  if (windowsPathPattern.hasMatch(normalizedLine)) {
-    return Uri.decodeFull(normalizedLine);
+  if (windowsPathPattern.hasMatch(normalizedPath)) {
+    return Uri.decodeFull(normalizedPath);
   }
 
-  final parsedUri = Uri.tryParse(normalizedLine);
+  final parsedUri = Uri.tryParse(normalizedPath);
   if (parsedUri == null) return null;
   if (!parsedUri.hasScheme) {
     final segmentPath = Uri.decodeFull(parsedUri.path);
@@ -88,4 +90,9 @@ String? _segmentPathFromManifestLine(
     return parsedUri.toFilePath();
   }
   return null;
+}
+
+String _removeQueryAndFragment(String rawValue) {
+  final withoutQuery = rawValue.split('?').first;
+  return withoutQuery.split('#').first;
 }
