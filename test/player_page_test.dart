@@ -3546,6 +3546,22 @@ void main() {
     );
   });
 
+  test('offline local file play url is true for non-manifest media files', () async {
+    final temporaryDir = await Directory.systemTemp.createTemp(
+      'ani-destiny-offline-localfile-direct',
+    );
+    addTearDown(() async {
+      await temporaryDir.delete(recursive: true);
+    });
+    final mediaPath = '${temporaryDir.path}/episode.mp4';
+    await File(mediaPath).writeAsString('video bytes');
+
+    expect(
+      isPlayableUrl(Uri.file(mediaPath).toString()),
+      isTrue,
+    );
+  });
+
   test(
     'offline local file play url is false when referenced segment is missing',
     () async {

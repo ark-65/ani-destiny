@@ -34,8 +34,11 @@ bool isPlayableOfflineMediaPath(String manifestPath) {
       .map((line) => line.trim())
       .where((line) => line.isNotEmpty)
       .toList(growable: false);
-  if (lines.isEmpty || lines.first != '#EXTM3U') {
+  if (lines.isEmpty) {
     return false;
+  }
+  if (lines.first != '#EXTM3U') {
+    return true;
   }
 
   var hasPlayableSegment = false;
@@ -72,4 +75,3 @@ String? _segmentPathFromManifestLine(
   }
   return null;
 }
-
