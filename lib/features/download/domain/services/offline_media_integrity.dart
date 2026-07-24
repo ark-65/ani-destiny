@@ -70,33 +70,38 @@ String? _segmentPathFromManifestLine(
     return null;
   }
 
-  final normalizedPath =
-      _normalizeSegmentPath(_removeQueryAndFragment(normalizedLine));
-  final decodedPath = _decodeManifestPath(normalizedPath);
+  final parsedUri = Uri.tryParse(normalizedLine);
+  if (parsedUri == null) {
+    return null;
+  }
 
   final windowsPathPattern = RegExp(r'^[a-zA-Z]:[\\/].+');
-  if (windowsPathPattern.hasMatch(decodedPath)) {
-    return decodedPath;
-  }
 
-  final parsedUri = Uri.tryParse(decodedPath);
-  if (parsedUri == null) return null;
-  if (!parsedUri.hasScheme) {
-    final segmentPath = _normalizeSegmentPath(parsedUri.path);
-    if (segmentPath.isEmpty) {
-      return null;
+  if (parsedUri.hasScheme && parsedUri.scheme.length == 1) {
+    final windowsDrivePath = _normalizeSegmentPath(
+      '${parsedUri.scheme}:${parsedUri.path}',
+    );
+    if (windowsPathPattern.hasMatch(windowsDrivePath)) {
+      return windowsDrivePath;
     }
-    return p.join(manifestDirectory, segmentPath);
   }
-  if (parsedUri.scheme.toLowerCase() == 'file') {
-    return parsedUri.toFilePath();
-  }
-  return null;
-}
 
-String _removeQueryAndFragment(String rawValue) {
-  final withoutQuery = rawValue.split('?').first;
-  return withoutQuery.split('#').first;
+  if (parsedUri.hasScheme) {
+    if (parsedUri.scheme.toLowerCase() == 'file') {
+      return parsedUri.toFilePath();
+    }
+    return null;
+  }
+
+  final segmentPath = _normalizeSegmentPath(_decodeManifestPath(parsedUri.path));
+  if (segmentPath.isEmpty) {
+    return null;
+  }
+  if (windowsPathPattern.hasMatch(segmentPath)) {
+    return segmentPath;
+  }
+
+  return p.join(manifestDirectory, segmentPath);
 }
 
 String _decodeManifestPath(String value) {

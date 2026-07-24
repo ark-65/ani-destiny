@@ -11,6 +11,7 @@
 - Check the latest stable GitHub Release in Settings > About and show an update prompt that opens the matching release page when a newer version is available.
 
 ### 🐛 Fixed
+- Fixed local manifest segment parsing for encoded `?` / `#` in segment file names: `offline_media_integrity.dart` now parses query/fragment boundaries at URI level and only decodes path components, so `segment%3Fname%23part.ts?download=true` is no longer treated as a missing file.
 - Hardened offline manifest segment parsing for encoded path separators: `offline_media_integrity.dart` now normalizes backslash separators after decoding, so encoded entries such as `segments%5Csegment%20name.ts` and `segments%5Cnested%252Fspace%20name.ts` resolve to the actual local segment files on non-Windows platforms instead of being marked unplayable.
 - Hardened the download-page batch-cleanup regression against flaky widget matching by switching the `test/download_page_test.dart` batch-clear trigger lookup from label-based matching to the stable `downloads-clear-ended-tasks` key, eliminating `Bad state: Too many elements` false negatives while preserving the same user-facing clear-end action behavior.
 - Fixed offline-playable judgment for local `file://` URLs: local media files that are not `index.m3u8` are now treated as playable as long as they exist, while manifest files continue to require segment-file integrity checks. Added a regression in `test/player_page_test.dart` to cover non-manifest local files.

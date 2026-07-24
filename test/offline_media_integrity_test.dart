@@ -6,6 +6,28 @@ import 'package:path/path.dart' as p;
 
 void main() {
   test(
+      'isPlayableOfflineMediaPath handles reserved characters encoded in segment file names',
+      () async {
+    final temporaryDir = await Directory.systemTemp.createTemp(
+      'ani-destiny-offline-media-query-chars',
+    );
+    addTearDown(() async {
+      await temporaryDir.delete(recursive: true);
+    });
+
+    final segmentPath = p.join(temporaryDir.path, 'segments', 'segment?name#part.ts');
+    await Directory(p.dirname(segmentPath)).create(recursive: true);
+    await File(segmentPath).writeAsString('ok');
+
+    final manifestPath = p.join(temporaryDir.path, 'index.m3u8');
+    await File(manifestPath).writeAsString(
+      '#EXTM3U\nsegments/segment%3Fname%23part.ts?download_cache=true\n',
+    );
+
+    expect(isPlayableOfflineMediaPath(manifestPath), isTrue);
+  });
+
+  test(
       'isPlayableOfflineMediaPath handles encoded backslash segment separators',
       () async {
     final temporaryDir = await Directory.systemTemp.createTemp(
