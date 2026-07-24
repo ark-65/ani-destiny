@@ -4,10 +4,12 @@ import '../../../../core/network/dio_provider.dart';
 import '../../../../core/storage/database_provider.dart';
 import '../../data/repositories/download_repository_impl.dart';
 import '../../data/services/download_task_creator.dart';
+import '../../data/services/hls_manifest_loader.dart';
 import '../../data/services/http_download_service.dart';
 import '../../data/services/unsupported_bt_download_service.dart';
 import '../../domain/entities/download_progress.dart';
 import '../../domain/entities/download_task.dart';
+import '../../domain/services/hls_manifest_loader.dart';
 import '../../domain/repositories/download_repository.dart';
 import '../../domain/services/download_service.dart';
 
@@ -15,10 +17,17 @@ final downloadRepositoryProvider = Provider<DownloadRepository>((ref) {
   return DownloadRepositoryImpl(ref.watch(appDatabaseProvider));
 });
 
+final hlsManifestLoaderProvider = Provider<HlsManifestLoader>((ref) {
+  return DioHlsManifestLoader(
+    dio: ref.watch(dioProvider),
+  );
+});
+
 final httpDownloadServiceProvider = Provider<DownloadService>((ref) {
   return HttpDownloadService(
     dio: ref.watch(dioProvider),
     repository: ref.watch(downloadRepositoryProvider),
+    hlsManifestLoader: ref.watch(hlsManifestLoaderProvider),
   );
 });
 

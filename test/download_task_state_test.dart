@@ -6,10 +6,12 @@ import 'package:ani_destiny/core/storage/app_database.dart';
 import 'package:ani_destiny/features/download/data/repositories/download_repository_impl.dart';
 import 'package:ani_destiny/features/download/data/services/http_download_service.dart';
 import 'package:ani_destiny/features/download/domain/entities/download_failure_reason.dart';
+import 'package:ani_destiny/features/download/domain/entities/hls_manifest.dart';
 import 'package:ani_destiny/features/download/domain/entities/download_kind.dart';
 import 'package:ani_destiny/features/download/domain/entities/download_progress.dart';
 import 'package:ani_destiny/features/download/domain/entities/download_source.dart';
 import 'package:ani_destiny/features/download/domain/entities/download_task.dart';
+import 'package:ani_destiny/features/download/domain/services/hls_manifest_loader.dart';
 import 'package:dio/dio.dart';
 import 'package:dio/io.dart';
 import 'package:drift/native.dart';
@@ -17,16 +19,17 @@ import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:path/path.dart' as p;
 
+const pathProviderChannel = MethodChannel('plugins.flutter.io/path_provider');
+
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
-  const pathProviderChannel = MethodChannel('plugins.flutter.io/path_provider');
 
   tearDown(() async {
     TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
         .setMockMethodCallHandler(pathProviderChannel, null);
   });
 
-  test('unsupported HLS task records unsupported failure reason', () async {
+  test('HLS task enters pending state when created', () async {
     final database = AppDatabase(NativeDatabase.memory());
     addTearDown(database.close);
 
@@ -51,9 +54,653 @@ void main() {
     final task = await repository.getTask(taskId);
 
     expect(task, isNotNull);
+    expect(task!.status, DownloadStatus.pending);
+    expect(task.failureReason, DownloadFailureReason.none);
+  });
+
+  test('starting HLS task with valid manifest downloads segments and writes local manifest',
+      () async {
+    final database = AppDatabase(NativeDatabase.memory());
+    addTearDown(database.close);
+
+    final tempDir =
+        await Directory.systemTemp.createTemp('ani-destiny-download-hls-complete');
+    addTearDown(() async {
+      if (tempDir.existsSync()) {
+        await tempDir.delete(recursive: true);
+      }
+    });
+    _mockApplicationDocumentsDirectory(tempDir.path);
+
+    const segmentOne = <int>[1, 2, 3, 4, 5];
+    const segmentTwo = <int>[6, 7, 8, 9, 10, 11];
+    final dio = _FakeHlsSegmentDownloadDio({
+      'https://cdn.example.test/segment-1.ts': segmentOne,
+      'https://cdn.example.test/segment-2.ts': segmentTwo,
+    });
+
+    final repository = DownloadRepositoryImpl(database);
+    final service = HttpDownloadService(
+      dio: dio,
+      repository: repository,
+      hlsManifestLoader: _FakeHlsManifestLoader(
+        (manifestUri, headers) async {
+          expect(manifestUri.toString(), 'https://cdn.example.test/index.m3u8');
+          return HlsManifest(
+            uri: Uri.parse('https://cdn.example.test/index.m3u8'),
+            segments: [
+              HlsSegment(uri: Uri.parse('https://cdn.example.test/segment-1.ts')),
+              HlsSegment(uri: Uri.parse('https://cdn.example.test/segment-2.ts')),
+            ],
+            variants: [],
+            isLive: false,
+            targetDuration: null,
+          );
+        },
+      ),
+    );
+
+    final taskId = await service.createTask(
+      animeId: 'anime-1',
+      episodeId: 'episode-1',
+      sourceId: 'sakura',
+      source: const DownloadSource(
+        url: 'https://cdn.example.test/index.m3u8',
+        kind: DownloadKind.hls,
+      ),
+      title: 'HLS Test',
+      episodeTitle: 'Episode 1',
+    );
+
+    await service.start(taskId);
+
+    final task = await repository.getTask(taskId);
+
+    expect(task, isNotNull);
+    expect(task!.status, DownloadStatus.completed);
+    expect(task.failureReason, DownloadFailureReason.none);
+    expect(task.failureMessage, isNull);
+    expect(task.progress, 1);
+    expect(task.downloadedBytes, segmentOne.length + segmentTwo.length);
+    expect(task.totalBytes, segmentOne.length + segmentTwo.length);
+    expect(task.localPath, isNotNull);
+    expect(task.localPath, contains('downloads${p.separator}'));
+
+    final manifestPath = task.localPath!;
+    final manifestContent = await File(manifestPath).readAsString();
+    expect(manifestContent, contains('#EXTM3U'));
+    expect(manifestContent, contains('segments/segment-000000.ts'));
+    expect(manifestContent, contains('segments/segment-000001.ts'));
+    expect(manifestContent, contains('#EXT-X-ENDLIST'));
+    expect(
+      File(p.join(p.dirname(manifestPath), 'segments', 'segment-000000.ts')).existsSync(),
+      isTrue,
+    );
+    expect(
+      File(p.join(p.dirname(manifestPath), 'segments', 'segment-000001.ts')).existsSync(),
+      isTrue,
+    );
+
+    expect(dio.downloadedUris, ['https://cdn.example.test/segment-1.ts', 'https://cdn.example.test/segment-2.ts']);
+    expect(task.failureMessage, isNull);
+  });
+
+  test('starting HLS task resumes from existing segment files', () async {
+    final database = AppDatabase(NativeDatabase.memory());
+    addTearDown(database.close);
+
+    final tempDir =
+        await Directory.systemTemp.createTemp('ani-destiny-download-hls-resume');
+    addTearDown(() async {
+      if (tempDir.existsSync()) {
+        await tempDir.delete(recursive: true);
+      }
+    });
+    _mockApplicationDocumentsDirectory(tempDir.path);
+
+    const segmentOne = <int>[1, 2, 3, 4, 5];
+    const segmentTwo = <int>[6, 7, 8, 9, 10, 11];
+    final manifestLoader = _FakeHlsManifestLoader(
+      (manifestUri, headers) async {
+        expect(manifestUri.toString(), 'https://cdn.example.test/index.m3u8');
+        return HlsManifest(
+          uri: manifestUri,
+          segments: [
+            HlsSegment(uri: Uri.parse('https://cdn.example.test/segment-1.ts')),
+            HlsSegment(uri: Uri.parse('https://cdn.example.test/segment-2.ts')),
+          ],
+          variants: const [],
+          isLive: false,
+          targetDuration: null,
+        );
+      },
+    );
+
+    final firstAttemptDio = _FlakyHlsSegmentDownloadDio(
+      {
+        'https://cdn.example.test/segment-1.ts': segmentOne,
+        'https://cdn.example.test/segment-2.ts': segmentTwo,
+      },
+      failOnFirst: {'https://cdn.example.test/segment-2.ts'},
+    );
+
+    final repository = DownloadRepositoryImpl(database);
+    final firstAttemptService = HttpDownloadService(
+      dio: firstAttemptDio,
+      repository: repository,
+      hlsManifestLoader: manifestLoader,
+    );
+
+    final taskId = await firstAttemptService.createTask(
+      animeId: 'anime-1',
+      episodeId: 'episode-1',
+      sourceId: 'sakura',
+      source: const DownloadSource(
+        url: 'https://cdn.example.test/index.m3u8',
+        kind: DownloadKind.hls,
+      ),
+      title: 'HLS Test',
+      episodeTitle: 'Episode 1',
+    );
+
+    await firstAttemptService.start(taskId);
+
+    final failedTask = await repository.getTask(taskId);
+    expect(failedTask, isNotNull);
+    expect(failedTask!.status, DownloadStatus.failed);
+    expect(failedTask.localPath, isNotNull);
+
+    final manifestDirectory = p.dirname(failedTask.localPath!);
+    final segmentDir = Directory(p.join(manifestDirectory, 'segments'));
+    expect(
+      File(p.join(segmentDir.path, 'segment-000000.ts')).existsSync(),
+      isTrue,
+    );
+    expect(
+      File(p.join(segmentDir.path, 'segment-000001.ts')).existsSync(),
+      isFalse,
+    );
+
+    final retryDio = _FakeHlsSegmentDownloadDio({
+      'https://cdn.example.test/segment-1.ts': segmentOne,
+      'https://cdn.example.test/segment-2.ts': segmentTwo,
+    });
+    final retryService = HttpDownloadService(
+      dio: retryDio,
+      repository: repository,
+      hlsManifestLoader: manifestLoader,
+    );
+
+    await retryService.start(taskId);
+
+    final completedTask = await repository.getTask(taskId);
+    expect(completedTask, isNotNull);
+    expect(completedTask!.status, DownloadStatus.completed);
+    expect(completedTask.progress, 1);
+    expect(completedTask.downloadedBytes, segmentOne.length + segmentTwo.length);
+    expect(completedTask.totalBytes, segmentOne.length + segmentTwo.length);
+    expect(
+      File(p.join(segmentDir.path, 'segment-000000.ts')).existsSync(),
+      isTrue,
+    );
+    expect(
+      File(p.join(segmentDir.path, 'segment-000001.ts')).existsSync(),
+      isTrue,
+    );
+    expect(retryDio.downloadedUris, ['https://cdn.example.test/segment-2.ts']);
+  });
+
+  test('starting HLS task resumes after service restart with existing segments', () async {
+    final tempDir =
+        await Directory.systemTemp.createTemp('ani-destiny-download-hls-restart');
+    addTearDown(() async {
+      if (tempDir.existsSync()) {
+        await tempDir.delete(recursive: true);
+      }
+    });
+    _mockApplicationDocumentsDirectory(tempDir.path);
+
+    const segmentOne = <int>[1, 2, 3, 4, 5];
+    const segmentTwo = <int>[6, 7, 8, 9, 10, 11];
+    final manifestLoader = _FakeHlsManifestLoader(
+      (manifestUri, headers) async {
+        expect(manifestUri.toString(), 'https://cdn.example.test/index.m3u8');
+        return HlsManifest(
+          uri: Uri.parse('https://cdn.example.test/index.m3u8'),
+          segments: [
+            HlsSegment(uri: Uri.parse('https://cdn.example.test/segment-1.ts')),
+            HlsSegment(uri: Uri.parse('https://cdn.example.test/segment-2.ts')),
+          ],
+          variants: const [],
+          isLive: false,
+          targetDuration: null,
+        );
+      },
+    );
+
+    final databasePath = File(p.join(tempDir.path, 'download_tasks.sqlite'));
+    final firstAttemptDio = _FlakyHlsSegmentDownloadDio(
+      {
+        'https://cdn.example.test/segment-1.ts': segmentOne,
+        'https://cdn.example.test/segment-2.ts': segmentTwo,
+      },
+      failOnFirst: {'https://cdn.example.test/segment-2.ts'},
+    );
+    final firstRestartCheck = <AppDatabase>[];
+    addTearDown(() async {
+      for (final database in firstRestartCheck) {
+        await database.close();
+      }
+    });
+
+    final firstDatabase = AppDatabase(NativeDatabase(databasePath));
+    firstRestartCheck.add(firstDatabase);
+    final firstRepository = DownloadRepositoryImpl(firstDatabase);
+    final firstService = HttpDownloadService(
+      dio: firstAttemptDio,
+      repository: firstRepository,
+      hlsManifestLoader: manifestLoader,
+    );
+
+    final taskId = await firstService.createTask(
+      animeId: 'anime-1',
+      episodeId: 'episode-1',
+      sourceId: 'sakura',
+      source: const DownloadSource(
+        url: 'https://cdn.example.test/index.m3u8',
+        kind: DownloadKind.hls,
+      ),
+      title: 'HLS Test',
+      episodeTitle: 'Episode 1',
+    );
+
+    await firstService.start(taskId);
+
+    final failedTask = await firstRepository.getTask(taskId);
+    expect(failedTask, isNotNull);
+    expect(failedTask!.status, DownloadStatus.failed);
+    expect(failedTask.localPath, isNotNull);
+    expect(File(failedTask.localPath!).existsSync(), isFalse);
+
+    final restartManifestDir = Directory(p.dirname(failedTask.localPath!));
+    final restartSegmentsDir = Directory(
+      p.join(restartManifestDir.path, 'segments'),
+    );
+    expect(
+      File(p.join(restartSegmentsDir.path, 'segment-000000.ts')).existsSync(),
+      isTrue,
+    );
+    expect(
+      File(p.join(restartSegmentsDir.path, 'segment-000001.ts')).existsSync(),
+      isFalse,
+    );
+    await firstDatabase.close();
+    firstRestartCheck.clear();
+
+    final restartDio = _FakeHlsSegmentDownloadDio({
+      'https://cdn.example.test/segment-1.ts': segmentOne,
+      'https://cdn.example.test/segment-2.ts': segmentTwo,
+    });
+    final secondDatabase = AppDatabase(NativeDatabase(databasePath));
+    firstRestartCheck.add(secondDatabase);
+    final secondRepository = DownloadRepositoryImpl(secondDatabase);
+    final secondService = HttpDownloadService(
+      dio: restartDio,
+      repository: secondRepository,
+      hlsManifestLoader: manifestLoader,
+    );
+
+    await secondService.start(taskId);
+
+    final completedTask = await secondRepository.getTask(taskId);
+    expect(completedTask, isNotNull);
+    expect(completedTask!.status, DownloadStatus.completed);
+    expect(completedTask.progress, 1);
+    expect(completedTask.downloadedBytes, segmentOne.length + segmentTwo.length);
+    expect(completedTask.totalBytes, segmentOne.length + segmentTwo.length);
+    expect(completedTask.localPath, isNotNull);
+    final manifestPath = completedTask.localPath!;
+    final manifestContent = await File(manifestPath).readAsString();
+    expect(manifestContent, contains('segments/segment-000000.ts'));
+    expect(manifestContent, contains('segments/segment-000001.ts'));
+    expect(
+      File(p.join(restartSegmentsDir.path, 'segment-000001.ts')).existsSync(),
+      isTrue,
+    );
+    expect(restartDio.downloadedUris, ['https://cdn.example.test/segment-2.ts']);
+  });
+
+  test('starting HLS task fails when a downloaded segment is empty', () async {
+    final database = AppDatabase(NativeDatabase.memory());
+    addTearDown(database.close);
+
+    final tempDir =
+        await Directory.systemTemp.createTemp('ani-destiny-download-hls-empty-segment');
+    addTearDown(() async {
+      if (tempDir.existsSync()) {
+        await tempDir.delete(recursive: true);
+      }
+    });
+    _mockApplicationDocumentsDirectory(tempDir.path);
+
+    const segmentOne = <int>[];
+    const segmentTwo = <int>[6, 7, 8, 9, 10, 11];
+    final repository = DownloadRepositoryImpl(database);
+    final service = HttpDownloadService(
+      dio: _FakeHlsSegmentDownloadDio({
+        'https://cdn.example.test/segment-1.ts': segmentOne,
+        'https://cdn.example.test/segment-2.ts': segmentTwo,
+      }),
+      repository: repository,
+      hlsManifestLoader: _FakeHlsManifestLoader(
+        (manifestUri, headers) async {
+          expect(manifestUri.toString(), 'https://cdn.example.test/index.m3u8');
+          return HlsManifest(
+            uri: manifestUri,
+            segments: [
+              HlsSegment(uri: Uri.parse('https://cdn.example.test/segment-1.ts')),
+              HlsSegment(uri: Uri.parse('https://cdn.example.test/segment-2.ts')),
+            ],
+            variants: const [],
+            isLive: false,
+            targetDuration: null,
+          );
+        },
+      ),
+    );
+
+    final taskId = await service.createTask(
+      animeId: 'anime-1',
+      episodeId: 'episode-1',
+      sourceId: 'sakura',
+      source: const DownloadSource(
+        url: 'https://cdn.example.test/index.m3u8',
+        kind: DownloadKind.hls,
+      ),
+      title: 'HLS Test',
+      episodeTitle: 'Episode 1',
+    );
+
+    await service.start(taskId);
+
+    final task = await repository.getTask(taskId);
+
+    expect(task, isNotNull);
+    expect(task!.status, DownloadStatus.failed);
+    expect(task.failureReason, DownloadFailureReason.invalidManifest);
+    expect(task.failureMessage, contains('empty segment file'));
+
+    expect(task.localPath, isNotNull);
+    final manifestDirectory = p.dirname(task.localPath!);
+    final segmentDir = Directory(p.join(manifestDirectory, 'segments'));
+    expect(File(p.join(segmentDir.path, 'segment-000000.ts')).existsSync(), isTrue);
+    expect(File(p.join(segmentDir.path, 'segment-000000.ts')).readAsBytesSync(), isEmpty);
+    expect(File(p.join(segmentDir.path, 'segment-000001.ts')).existsSync(), isTrue);
+    expect(File(p.join(segmentDir.path, 'segment-000001.ts')).readAsBytesSync(), segmentTwo);
+  });
+
+  test('starting HLS task with master playlist resolves highest-bandwidth variant first', () async {
+    final database = AppDatabase(NativeDatabase.memory());
+    addTearDown(database.close);
+
+    final tempDir =
+        await Directory.systemTemp.createTemp('ani-destiny-download-hls-master');
+    addTearDown(() async {
+      if (tempDir.existsSync()) {
+        await tempDir.delete(recursive: true);
+      }
+    });
+    _mockApplicationDocumentsDirectory(tempDir.path);
+
+    final loadLog = <String>[];
+    final repository = DownloadRepositoryImpl(database);
+    const segmentBytes = <int>[1, 2, 3, 4, 5, 6];
+    final service = HttpDownloadService(
+      dio: _FakeHlsSegmentDownloadDio({
+        'https://cdn.example.test/1080/segment-1.ts': segmentBytes,
+      }),
+      repository: repository,
+      hlsManifestLoader: _FakeHlsManifestLoader(
+        (manifestUri, headers) async {
+          loadLog.add(manifestUri.toString());
+          if (manifestUri.path == '/index.m3u8') {
+            return HlsManifest(
+              uri: manifestUri,
+              segments: const [],
+              variants: [
+                HlsVariant(
+                  uri: Uri.parse('https://cdn.example.test/720/index.m3u8'),
+                  bandwidth: 100000,
+                  resolution: '960x540',
+                ),
+                HlsVariant(
+                  uri: Uri.parse('https://cdn.example.test/1080/index.m3u8'),
+                  bandwidth: 3200000,
+                  resolution: '1920x1080',
+                ),
+              ],
+              isLive: false,
+              targetDuration: null,
+            );
+          }
+          if (manifestUri.path == '/1080/index.m3u8') {
+            return HlsManifest(
+              uri: manifestUri,
+              segments: [
+                HlsSegment(
+                  uri: Uri.parse('https://cdn.example.test/1080/segment-1.ts'),
+                  duration: const Duration(seconds: 8),
+                  title: 'segment-1',
+                ),
+              ],
+              variants: const [],
+              isLive: false,
+              targetDuration: const Duration(seconds: 6),
+            );
+          }
+          throw const FormatException('unexpected manifest uri');
+        },
+      ),
+    );
+
+    final taskId = await service.createTask(
+      animeId: 'anime-1',
+      episodeId: 'episode-1',
+      sourceId: 'sakura',
+      source: const DownloadSource(
+        url: 'https://cdn.example.test/index.m3u8',
+        kind: DownloadKind.hls,
+      ),
+      title: 'HLS Test',
+      episodeTitle: 'Episode 1',
+    );
+
+    await service.start(taskId);
+
+    final task = await repository.getTask(taskId);
+
+    expect(task, isNotNull);
+    expect(task!.status, DownloadStatus.completed);
+    expect(task.failureReason, DownloadFailureReason.none);
+    expect(task.failureMessage, isNull);
+    expect(
+      loadLog,
+      const <String>[
+        'https://cdn.example.test/index.m3u8',
+        'https://cdn.example.test/1080/index.m3u8',
+      ],
+    );
+    expect(task.localPath, isNotNull);
+    final manifestContent = await File(task.localPath!).readAsString();
+    expect(manifestContent, contains('#EXTINF:8.000,segment-1'));
+    expect(task.totalBytes, segmentBytes.length);
+    expect(task.downloadedBytes, segmentBytes.length);
+    expect(task.progress, 1);
+    expect(
+      File(p.join(p.dirname(task.localPath!), 'segments', 'segment-000000.ts')).existsSync(),
+      isTrue,
+    );
+  });
+
+  test('starting HLS task with invalid variant manifest reports invalid-manifest failure', () async {
+    final database = AppDatabase(NativeDatabase.memory());
+    addTearDown(database.close);
+
+    final tempDir =
+        await Directory.systemTemp.createTemp('ani-destiny-download-hls-invalid-variant');
+    addTearDown(() async {
+      if (tempDir.existsSync()) {
+        await tempDir.delete(recursive: true);
+      }
+    });
+    _mockApplicationDocumentsDirectory(tempDir.path);
+
+    final repository = DownloadRepositoryImpl(database);
+    final service = HttpDownloadService(
+      dio: Dio(),
+      repository: repository,
+      hlsManifestLoader: _FakeHlsManifestLoader(
+        (manifestUri, headers) async {
+          if (manifestUri.path == '/index.m3u8') {
+            return HlsManifest(
+              uri: manifestUri,
+              segments: const [],
+              variants: [
+                HlsVariant(
+                  uri: Uri.parse('https://cdn.example.test/720/index.m3u8'),
+                  bandwidth: 100000,
+                  resolution: '960x540',
+                ),
+              ],
+              isLive: false,
+              targetDuration: null,
+            );
+          }
+          if (manifestUri.path == '/720/index.m3u8') {
+            throw const FormatException('variant manifest invalid');
+          }
+          throw const FormatException('unexpected manifest uri');
+        },
+      ),
+    );
+
+    final taskId = await service.createTask(
+      animeId: 'anime-1',
+      episodeId: 'episode-1',
+      sourceId: 'sakura',
+      source: const DownloadSource(
+        url: 'https://cdn.example.test/index.m3u8',
+        kind: DownloadKind.hls,
+      ),
+      title: 'HLS Test',
+      episodeTitle: 'Episode 1',
+    );
+
+    await service.start(taskId);
+
+    final task = await repository.getTask(taskId);
+
+    expect(task, isNotNull);
+    expect(task!.status, DownloadStatus.failed);
+    expect(task.failureReason, DownloadFailureReason.invalidManifest);
+    expect(task.failureMessage, 'variant manifest invalid');
+  });
+
+  test('starting HLS task with live media playlist stays unsupported for now', () async {
+    final database = AppDatabase(NativeDatabase.memory());
+    addTearDown(database.close);
+
+    final tempDir =
+        await Directory.systemTemp.createTemp('ani-destiny-download-hls-live');
+    addTearDown(() async {
+      if (tempDir.existsSync()) {
+        await tempDir.delete(recursive: true);
+      }
+    });
+    _mockApplicationDocumentsDirectory(tempDir.path);
+
+    final repository = DownloadRepositoryImpl(database);
+    final service = HttpDownloadService(
+      dio: Dio(),
+      repository: repository,
+      hlsManifestLoader: _FakeHlsManifestLoader(
+        (manifestUri, headers) async {
+          return HlsManifest(
+            uri: manifestUri,
+            segments: [
+              HlsSegment(uri: Uri.parse('https://cdn.example.test/segment-1.ts')),
+            ],
+            variants: const [],
+            isLive: true,
+            targetDuration: const Duration(seconds: 6),
+          );
+        },
+      ),
+    );
+
+    final taskId = await service.createTask(
+      animeId: 'anime-1',
+      episodeId: 'episode-1',
+      sourceId: 'sakura',
+      source: const DownloadSource(
+        url: 'https://cdn.example.test/index.m3u8',
+        kind: DownloadKind.hls,
+      ),
+      title: 'HLS Test',
+      episodeTitle: 'Episode 1',
+    );
+
+    await service.start(taskId);
+
+    final task = await repository.getTask(taskId);
+
+    expect(task, isNotNull);
     expect(task!.status, DownloadStatus.unsupported);
     expect(task.failureReason, DownloadFailureReason.unsupportedType);
     expect(task.failureMessage, isNull);
+  });
+
+  test('starting HLS task with invalid manifest records invalid-manifest failure', () async {
+    final database = AppDatabase(NativeDatabase.memory());
+    addTearDown(database.close);
+
+    final tempDir =
+        await Directory.systemTemp.createTemp('ani-destiny-download-hls-invalid');
+    addTearDown(() async {
+      if (tempDir.existsSync()) {
+        await tempDir.delete(recursive: true);
+      }
+    });
+    _mockApplicationDocumentsDirectory(tempDir.path);
+
+    final repository = DownloadRepositoryImpl(database);
+    final service = HttpDownloadService(
+      dio: Dio(),
+      repository: repository,
+      hlsManifestLoader: _FakeHlsManifestLoader(
+        (_, __) async => throw const FormatException('Invalid HLS manifest.'),
+      ),
+    );
+
+    final taskId = await service.createTask(
+      animeId: 'anime-1',
+      episodeId: 'episode-1',
+      sourceId: 'sakura',
+      source: const DownloadSource(
+        url: 'https://cdn.example.test/index.m3u8',
+        kind: DownloadKind.hls,
+      ),
+      title: 'HLS Test',
+      episodeTitle: 'Episode 1',
+    );
+
+    await service.start(taskId);
+
+    final task = await repository.getTask(taskId);
+
+    expect(task, isNotNull);
+    expect(task!.status, DownloadStatus.failed);
+    expect(task.failureReason, DownloadFailureReason.invalidManifest);
   });
 
   test('unsupported tasks drop implementation placeholder messages on read',
@@ -659,6 +1306,98 @@ void main() {
     expect(pauseSettled, isTrue);
   });
 
+  test(
+      'pausing an active HLS download keeps downloaded segments for resume',
+      () async {
+    final database = AppDatabase(NativeDatabase.memory());
+    addTearDown(database.close);
+    final tempDir =
+        await Directory.systemTemp.createTemp('ani-destiny-active-hls-pause');
+    addTearDown(() async {
+      if (tempDir.existsSync()) {
+        await tempDir.delete(recursive: true);
+      }
+    });
+
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMethodCallHandler(pathProviderChannel, (call) async {
+      if (call.method == 'getApplicationDocumentsDirectory') {
+        return tempDir.path;
+      }
+      return null;
+    });
+
+    final repository = DownloadRepositoryImpl(database);
+    final dio = _BlockingCancelDio();
+    final service = HttpDownloadService(
+      dio: dio,
+      repository: repository,
+      hlsManifestLoader: _FakeHlsManifestLoader(
+        (manifestUri, headers) async {
+          expect(manifestUri.toString(), 'https://cdn.example.test/index.m3u8');
+          return HlsManifest(
+            uri: Uri.parse('https://cdn.example.test/index.m3u8'),
+            segments: [
+              HlsSegment(
+                uri: Uri.parse('https://cdn.example.test/segment-1.ts'),
+              ),
+            ],
+            variants: const [],
+            isLive: false,
+            targetDuration: null,
+          );
+        },
+      ),
+    );
+
+    final taskId = await service.createTask(
+      animeId: 'anime-1',
+      episodeId: 'episode-1',
+      sourceId: 'sakura',
+      source: const DownloadSource(
+        url: 'https://cdn.example.test/index.m3u8',
+        kind: DownloadKind.hls,
+      ),
+      title: 'HLS Test',
+      episodeTitle: 'Episode 1',
+    );
+
+    final startFuture = service.start(taskId);
+    await dio.downloadStarted.future;
+
+    final partialFile = File(dio.savePath!);
+    expect(partialFile.existsSync(), isTrue);
+
+    var pauseSettled = false;
+    final pauseFuture = service.pause(taskId).then((_) {
+      pauseSettled = true;
+    });
+    await Future<void>.delayed(Duration.zero);
+
+    final pausedTask = await repository.getTask(taskId);
+    expect(pausedTask, isNotNull);
+    expect(pausedTask!.status, DownloadStatus.paused);
+    expect(pausedTask.failureReason, DownloadFailureReason.none);
+    expect(pausedTask.failureMessage, isNull);
+    expect(pausedTask.progress, 0);
+    expect(pausedTask.totalBytes, isNull);
+    expect(pausedTask.downloadedBytes, 0);
+    expect(pausedTask.localPath, isNotNull);
+    expect(partialFile.existsSync(), isTrue);
+    expect(pauseSettled, isFalse);
+
+    dio.allowCancelCompletion.complete();
+    await pauseFuture;
+    await startFuture;
+
+    final finalizedTask = await repository.getTask(taskId);
+    expect(finalizedTask, isNotNull);
+    expect(finalizedTask!.status, DownloadStatus.paused);
+    expect(finalizedTask.localPath, pausedTask.localPath);
+    expect(partialFile.existsSync(), isTrue);
+    expect(pauseSettled, isTrue);
+  });
+
   test('removing a discarded task clears any leftover partial file first',
       () async {
     final database = AppDatabase(NativeDatabase.memory());
@@ -756,6 +1495,185 @@ void main() {
     final task = await repository.getTask('task-remove-failed');
     expect(task, isNull);
     expect(partialFile.existsSync(), isFalse);
+  });
+
+  test('removing a completed HLS task clears downloaded segment directory',
+      () async {
+    final database = AppDatabase(NativeDatabase.memory());
+    addTearDown(database.close);
+    final tempDir =
+        await Directory.systemTemp.createTemp('ani-destiny-remove-hls-completed');
+    addTearDown(() async {
+      if (tempDir.existsSync()) {
+        await tempDir.delete(recursive: true);
+      }
+    });
+    _mockApplicationDocumentsDirectory(tempDir.path);
+
+    final repository = DownloadRepositoryImpl(database);
+    final service = HttpDownloadService(
+      dio: Dio(),
+      repository: repository,
+    );
+    final manifestDirectory = Directory(
+      p.join(tempDir.path, 'downloads', 'hls-completed-task'),
+    );
+    final segmentDirectory = Directory(
+      p.join(manifestDirectory.path, 'segments'),
+    );
+    await segmentDirectory.create(recursive: true);
+    final manifestFile = File(p.join(manifestDirectory.path, 'index.m3u8'));
+    final firstSegment = File(p.join(segmentDirectory.path, 'segment-000000.ts'));
+    final secondSegment = File(p.join(segmentDirectory.path, 'segment-000001.ts'));
+    await manifestFile.writeAsString('#EXTM3U');
+    await firstSegment.writeAsString('segment-1');
+    await secondSegment.writeAsString('segment-2');
+    final now = DateTime(2026, 7, 24, 0, 0);
+
+    await repository.upsertTask(
+      DownloadTask(
+        id: 'task-remove-completed-hls',
+        animeId: 'anime-1',
+        episodeId: 'episode-1',
+        sourceId: 'sakura',
+        title: 'HLS Test',
+        episodeTitle: 'Episode 1',
+        url: 'https://cdn.example.test/index.m3u8',
+        kind: DownloadKind.hls,
+        status: DownloadStatus.completed,
+        failureReason: DownloadFailureReason.none,
+        failureMessage: null,
+        progress: 1,
+        downloadedBytes: 12,
+        totalBytes: 12,
+        localPath: manifestFile.path,
+        createdAt: now,
+        updatedAt: now,
+      ),
+    );
+
+    await service.removeEndedTask('task-remove-completed-hls');
+
+    final task = await repository.getTask('task-remove-completed-hls');
+    expect(task, isNull);
+    expect(manifestDirectory.existsSync(), isFalse);
+    expect(manifestFile.existsSync(), isFalse);
+    expect(firstSegment.existsSync(), isFalse);
+    expect(secondSegment.existsSync(), isFalse);
+    expect(segmentDirectory.existsSync(), isFalse);
+  });
+
+  test('removing a failed HLS task clears downloaded segment directory',
+      () async {
+    final database = AppDatabase(NativeDatabase.memory());
+    addTearDown(database.close);
+    final tempDir =
+        await Directory.systemTemp.createTemp('ani-destiny-remove-failed-hls');
+    addTearDown(() async {
+      if (tempDir.existsSync()) {
+        await tempDir.delete(recursive: true);
+      }
+    });
+    _mockApplicationDocumentsDirectory(tempDir.path);
+
+    final repository = DownloadRepositoryImpl(database);
+    final service = HttpDownloadService(
+      dio: Dio(),
+      repository: repository,
+    );
+    final manifestDirectory = Directory(
+      p.join(tempDir.path, 'downloads', 'hls-failed-task'),
+    );
+    final segmentDirectory = Directory(
+      p.join(manifestDirectory.path, 'segments'),
+    );
+    await segmentDirectory.create(recursive: true);
+    final manifestFile = File(p.join(manifestDirectory.path, 'index.m3u8'));
+    final firstSegment = File(p.join(segmentDirectory.path, 'segment-000000.ts'));
+    await manifestFile.writeAsString('#EXTM3U');
+    await firstSegment.writeAsString('segment-1');
+    final now = DateTime(2026, 7, 24, 1, 0);
+
+    await repository.upsertTask(
+      DownloadTask(
+        id: 'task-remove-failed-hls',
+        animeId: 'anime-2',
+        episodeId: 'episode-1',
+        sourceId: 'sakura',
+        title: 'HLS Failed Test',
+        episodeTitle: 'Episode 1',
+        url: 'https://cdn.example.test/index.m3u8',
+        kind: DownloadKind.hls,
+        status: DownloadStatus.failed,
+        failureReason: DownloadFailureReason.networkError,
+        failureMessage: 'offline',
+        progress: 0.4,
+        downloadedBytes: 400,
+        totalBytes: 1000,
+        localPath: manifestFile.path,
+        createdAt: now,
+        updatedAt: now,
+      ),
+    );
+
+    await service.removeEndedTask('task-remove-failed-hls');
+
+    final task = await repository.getTask('task-remove-failed-hls');
+    expect(task, isNull);
+    expect(manifestDirectory.existsSync(), isFalse);
+    expect(manifestFile.existsSync(), isFalse);
+    expect(firstSegment.existsSync(), isFalse);
+    expect(segmentDirectory.existsSync(), isFalse);
+  });
+
+  test('removing a failed HLS task remains idempotent if files are already gone',
+      () async {
+    final database = AppDatabase(NativeDatabase.memory());
+    addTearDown(database.close);
+    final tempDir = await Directory.systemTemp
+        .createTemp('ani-destiny-remove-failed-hls-missing-dir');
+    addTearDown(() async {
+      if (tempDir.existsSync()) {
+        await tempDir.delete(recursive: true);
+      }
+    });
+
+    final repository = DownloadRepositoryImpl(database);
+    final service = HttpDownloadService(
+      dio: Dio(),
+      repository: repository,
+    );
+    final manifestDirectory = Directory(
+      p.join(tempDir.path, 'downloads', 'hls-missing-task'),
+    );
+
+    await repository.upsertTask(
+      DownloadTask(
+        id: 'task-remove-failed-hls-missing-dir',
+        animeId: 'anime-3',
+        episodeId: 'episode-1',
+        sourceId: 'sakura',
+        title: 'HLS Missing Test',
+        episodeTitle: 'Episode 1',
+        url: 'https://cdn.example.test/index.m3u8',
+        kind: DownloadKind.hls,
+        status: DownloadStatus.failed,
+        failureReason: DownloadFailureReason.networkError,
+        failureMessage: 'offline',
+        progress: 0,
+        downloadedBytes: 0,
+        totalBytes: 1000,
+        localPath: p.join(manifestDirectory.path, 'index.m3u8'),
+        createdAt: DateTime(2026, 7, 24, 2, 0),
+        updatedAt: DateTime(2026, 7, 24, 2, 0),
+      ),
+    );
+
+    await service.removeEndedTask('task-remove-failed-hls-missing-dir');
+
+    final task = await repository.getTask('task-remove-failed-hls-missing-dir');
+    expect(task, isNull);
+    expect(manifestDirectory.existsSync(), isFalse);
   });
 
   test('unexpected direct-download failures stay calm in stored task state',
@@ -961,5 +1879,116 @@ class _UnexpectedFailureDio extends DioForNative {
     Options? options,
   }) async {
     throw StateError('filesystem sync failed');
+  }
+}
+
+void _mockApplicationDocumentsDirectory(String path) {
+  TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+      .setMockMethodCallHandler(pathProviderChannel, (call) async {
+    if (call.method == 'getApplicationDocumentsDirectory') {
+      return path;
+    }
+    return null;
+  });
+}
+
+class _FakeHlsSegmentDownloadDio extends DioForNative {
+  _FakeHlsSegmentDownloadDio(this.segmentBytesByUri);
+
+  final Map<String, List<int>> segmentBytesByUri;
+  final List<String> downloadedUris = <String>[];
+
+  @override
+  Future<Response> download(
+    String urlPath,
+    dynamic savePath, {
+    ProgressCallback? onReceiveProgress,
+    Map<String, dynamic>? queryParameters,
+    CancelToken? cancelToken,
+    bool deleteOnError = true,
+    FileAccessMode fileAccessMode = FileAccessMode.write,
+    String lengthHeader = Headers.contentLengthHeader,
+    Object? data,
+    Options? options,
+  }) async {
+    downloadedUris.add(urlPath);
+    final bytes = segmentBytesByUri[urlPath] ?? const <int>[];
+    final content = Uint8List.fromList(bytes);
+
+    final file = File(savePath as String);
+    await file.parent.create(recursive: true);
+    await file.writeAsBytes(content);
+    onReceiveProgress?.call(content.length, content.length);
+
+    return Response(
+      requestOptions: RequestOptions(path: urlPath),
+      statusCode: 200,
+      data: content,
+    );
+  }
+}
+
+class _FlakyHlsSegmentDownloadDio extends DioForNative {
+  _FlakyHlsSegmentDownloadDio(
+    this.segmentBytesByUri, {
+    Set<String> failOnFirst = const {},
+  }) : failOnFirst = Set<String>.from(failOnFirst);
+
+  final Map<String, List<int>> segmentBytesByUri;
+  final Set<String> failOnFirst;
+  final Map<String, int> _attemptsByUri = {};
+  final List<String> downloadedUris = <String>[];
+
+  @override
+  Future<Response> download(
+    String urlPath,
+    dynamic savePath, {
+    ProgressCallback? onReceiveProgress,
+    Map<String, dynamic>? queryParameters,
+    CancelToken? cancelToken,
+    bool deleteOnError = true,
+    FileAccessMode fileAccessMode = FileAccessMode.write,
+    String lengthHeader = Headers.contentLengthHeader,
+    Object? data,
+    Options? options,
+  }) async {
+    downloadedUris.add(urlPath);
+    final attempt = (_attemptsByUri[urlPath] ?? 0) + 1;
+    _attemptsByUri[urlPath] = attempt;
+    if (failOnFirst.contains(urlPath) && attempt == 1) {
+      throw DioException(
+        requestOptions: RequestOptions(path: urlPath),
+        type: DioExceptionType.connectionError,
+        message: 'network unavailable',
+      );
+    }
+
+    final bytes = segmentBytesByUri[urlPath] ?? const <int>[];
+    final content = Uint8List.fromList(bytes);
+
+    final file = File(savePath as String);
+    await file.parent.create(recursive: true);
+    await file.writeAsBytes(content);
+    onReceiveProgress?.call(content.length, content.length);
+
+    return Response(
+      requestOptions: RequestOptions(path: urlPath),
+      statusCode: 200,
+      data: content,
+    );
+  }
+}
+
+class _FakeHlsManifestLoader implements HlsManifestLoader {
+  const _FakeHlsManifestLoader(this.loadManifest);
+
+  final Future<HlsManifest> Function(Uri, Map<String, String>) loadManifest;
+
+  @override
+  Future<HlsManifest> load(
+    Uri manifestUri, {
+    Map<String, String> headers = const {},
+  }) {
+    return loadManifest(manifestUri, headers);
   }
 }

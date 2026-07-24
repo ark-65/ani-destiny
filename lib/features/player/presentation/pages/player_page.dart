@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -1444,7 +1445,24 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
 bool _isPlayableUrl(String value) {
   final rawUrl = value.trim();
   final uri = Uri.tryParse(rawUrl);
-  return rawUrl.isNotEmpty && uri != null && uri.hasScheme;
+  if (rawUrl.isEmpty || uri == null || !uri.hasScheme) {
+    return false;
+  }
+  if (uri.scheme.toLowerCase() != 'file') {
+    return true;
+  }
+  try {
+    final filePath = uri.toFilePath();
+    return File(filePath).existsSync();
+  } on FormatException {
+    return false;
+  } on FileSystemException {
+    return false;
+  }
+}
+
+bool isPlayableUrl(String value) {
+  return _isPlayableUrl(value);
 }
 
 class _DiagnosticRow extends StatelessWidget {

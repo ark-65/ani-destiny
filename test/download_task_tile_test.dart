@@ -54,6 +54,45 @@ void main() {
     expect(removeTapped, isTrue);
   });
 
+  testWidgets('completed download tasks can be played from local file', (
+    tester,
+  ) async {
+    var playTapped = false;
+
+    await tester.pumpWidget(
+      _buildTileApp(
+        DownloadTaskTile(
+          task: _task(status: DownloadStatus.completed),
+          isBusy: false,
+          onStart: () {},
+          onPause: () {},
+          onCancel: () {},
+          onRemove: () {},
+          onPlayOffline: () {
+            playTapped = true;
+          },
+        ),
+      ),
+    );
+    await tester.pump();
+
+    final playButton = find.byKey(const ValueKey('download-task-play-task-1'));
+    expect(playButton, findsOneWidget);
+    expect(find.byTooltip('Play'), findsOneWidget);
+    expect(
+      find.descendant(
+        of: playButton,
+        matching: find.text('Play'),
+      ),
+      findsOneWidget,
+    );
+
+    await tester.tap(playButton);
+    await tester.pump();
+
+    expect(playTapped, isTrue);
+  });
+
   testWidgets(
       'failed download tasks with partial files expose retry and discard actions',
       (

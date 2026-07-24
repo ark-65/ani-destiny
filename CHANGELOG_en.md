@@ -10,6 +10,19 @@
 - The playback progress slider now announces its current seek time and total duration to screen readers, replacing an abstract percentage with meaningful time feedback.
 - Check the latest stable GitHub Release in Settings > About and show an update prompt that opens the matching release page when a newer version is available.
 
+### 🐛 Fixed
+- Hardened the download-page batch-cleanup regression against flaky widget matching by switching the `test/download_page_test.dart` batch-clear trigger lookup from label-based matching to the stable `downloads-clear-ended-tasks` key, eliminating `Bad state: Too many elements` false negatives while preserving the same user-facing clear-end action behavior.
+- Added a same-anime cleanup action on the download page: completed/failed/canceled entries now expose a batched “clear same anime ended downloads” action (once per anime group, only on the first visible row) that removes ended tasks from that anime group, while preserving the existing “clear all ended downloads” behavior. This includes `test/download_page_test.dart` regression coverage and aligns visible labels/visibility.
+- Closed HLS (m3u8) resume-gap after pause: when an active HLS task is paused, cancel settlement now keeps the local `index.m3u8` and `segments/*` artifacts so restart can reuse downloaded segments; existing canceled-flow cleanup behavior for HLS remains intact.
+- Completed the HLS (m3u8) offline deletion gap: removing a completed/failed/canceled HLS task now deletes its entire `downloads/{taskId}` directory (`index.m3u8` and `segments/*`) so residual media assets cannot remain behind while direct-file cleanup behavior stays unchanged.
+- Completed the first HLS (m3u8) offline slice: after parsing and validating master/media manifests, `start()` now downloads media segments, writes a local `index.m3u8`, and marks the task `completed`; manifest-chain failures still fail as `invalidManifest` / `networkError` / `unknown`, and live media remains `unsupported`, with new regression coverage for segment download and local playlist output.
+- Closed the resumable-download slice in the offline HLS loop: retries now reuse already-downloaded segment files on disk, failed HLS attempts keep `localPath` for resume, and new tests verify only missing segments are re-downloaded and cross-platform path assertions use `path.separator`.
+- Completed the offline-playback continuity slice: completed HLS downloads that have a local file now expose a `Play` action in the download card, which routes to the existing player flow with `playUrl` set to the local path; added tile test coverage for the completed-card play action.
+- Hardened offline HLS integrity by validating downloaded segments after fetch: every segment referenced by the media manifest must exist and be non-empty, otherwise the task fails as `invalidManifest`; this blocks false-positive completion before local playback.
+- Hardened player bootstrap for `file://` offline URLs: local offline playback now rejects missing manifest files before loading and falls back to the no-playable-source path, with `test/player_page_test.dart` coverage for both existing and missing local file scenarios.
+- Added a restart-resumption proof for the HLS offline loop: added regression coverage for service instance restart with persisted task state, verifying that partially downloaded segments are reused after restart and only missing segments are re-fetched to complete `index.m3u8`.
+- Hardened offline HLS cleanup idempotency: added failed HLS removal regressions to cover both existing local media directories and missing-directory cases, proving `removeEndedTask` can clear leftovers without requiring a manual cleanup follow-up.
+
 ## [1.0.6] - 2026-07-21
 
 ### ✨ Added

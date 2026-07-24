@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io';
 
 import 'package:ani_destiny/app/l10n/app_localizations.dart';
 import 'package:ani_destiny/core/error/app_exception.dart';
@@ -3521,6 +3522,37 @@ void main() {
       expect(find.text('Open Downloads'), findsNothing);
     },
   );
+
+  test('offline local file play url validates only when manifest exists',
+      () async {
+    final temporaryDir = await Directory.systemTemp.createTemp(
+      'ani-destiny-offline-localfile-play',
+    );
+    addTearDown(() async {
+      await temporaryDir.delete(recursive: true);
+    });
+    final localManifest = File('${temporaryDir.path}/index.m3u8');
+    await localManifest.writeAsString('#EXTM3U\n');
+
+    expect(
+      isPlayableUrl(Uri.file(localManifest.path).toString()),
+      isTrue,
+    );
+  });
+
+  test('missing offline local file is treated as unavailable before playback',
+      () async {
+    final temporaryDir = await Directory.systemTemp.createTemp(
+      'ani-destiny-offline-missing-localfile-play',
+    );
+    addTearDown(() async {
+      await temporaryDir.delete(recursive: true);
+    });
+    final missingManifestUrl =
+        Uri.file('${temporaryDir.path}/index.m3u8').toString();
+
+    expect(isPlayableUrl(missingManifestUrl), isFalse);
+  });
 
   testWidgets('invalid playback urls are treated as unavailable before load',
       (tester) async {
