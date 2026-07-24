@@ -12,6 +12,10 @@
 
 ### 🐛 修复
 - 修复下载页下载任务批量清理按钮的测试交互脆弱性：将 `test/download_page_test.dart` 中批量清理按钮的定位从文本匹配改为稳定的 `downloads-clear-ended-tasks` key，避免同页出现多处同文案导致的 `Bad state: Too many elements` 假性 CI 失败，保留现有清理行为与边界。
+- 修复本地播放可用性判断在 `file://` 路径上的误判：当存在普通本地媒体文件（非 m3u8）时直接视为可播放；仅对 manifest 文件做片段完整性校验。新增 `test/player_page_test.dart` 回归“非 manifest 文件也应判定可播放”。
+- 修复离线清单引用带有查询参数或片段标识的本地分段路径：`offline_media_integrity.dart` 现在解析本地 segment 行时会忽略查询参数/锚点，仅按真实文件名校验，避免 `segments/file.ts?download=true` 或 `segments/file.ts#retry` 被误判为无法播放。
+- 修复离线清单引用 windows 风格相对路径分隔符的误判：`offline_media_integrity.dart` 现将 `\` 路径分隔符规范为路径分隔形式并解码再校验，保证来自 `segments\\...` 形态的本地清单在非 Windows 运行时不会因路径拼接失败被误判为不可播放。
+- 修复 Windows 风格离线清单片段场景的测试清理安全性：`offline local file play url is true for windows-style segment path with query` 不再在 Windows 测试中误删 `C:` 根目录；改为仅清理 `C:/ani-destiny-offline` 测试目录，避免 `FileSystemException: Deletion failed, path = 'C:'` 造成 Windows Build 误失败。
 - 增补下载列表关闭动作：在“已完成/失败/取消”卡片下增加“同番剧清除已结束任务”批量清理动作（同番剧下仅显示一次，且只清理已结束任务，保留 `clearAllEndedDownloads` 原有批量语义）；补充 `test/download_page_test.dart` 回归覆盖，同步对失败和已取消状态下按钮文案与可见性。
 - 修复 HLS（m3u8）暂停后的恢复闭环：当已开始下载的 HLS 任务被 `pause` 终止时，暂停结算不再清理 `index.m3u8` 与 `segments/*`，而是保留 `localPath`，让任务在暂停/重启后可复用已下载片段继续下载；`cancel` 仍保持对已下载片段目录的清理行为。
 - 补齐 HLS（m3u8）离线下载“删除本地媒体”闭环：当已完成/失败/取消的 HLS 任务被移除时，清理动作会删除对应 `downloads/{taskId}` 目录（含 `index.m3u8` 与 `segments/*`），避免目录残留占用存储；direct 文件清理路径保持不变。
@@ -22,6 +26,10 @@
 - 规范播放器离线入口对 `file://` URL 的处理：在本地清单文件不存在时直接判定为“无可播放源”，避免误走加载链路，并补充 `test/player_page_test.dart` 覆盖本地文件存在/缺失两种离线播放前置校验。
 - 补齐 HLS 离线闭环的应用重启后续传证据：新增服务实例重建场景回归测试，验证落盘任务在 app 重启后可复用已下载片段，仅补下载缺失分片并完成 `index.m3u8` 落盘。
 - 增补 HLS 本地清理幂等回归：新增失败态移除测试，覆盖目录仍在与目录已缺失两种场景，确认 `removeEndedTask` 在失败 HLS 任务上无需外部手工介入即可清空本地 `downloads/{taskId}` 残留。
+- 完善播放器离线可播放性校验：`file://` URL 除了校验 `index.m3u8` 存在外，还会校验清单内引用的 `segments` 文件是否都存在且非空，避免 manifest 有文件但本地资源缺失导致误播；补充 `test/player_page_test.dart` 覆盖“正常/缺失分片/空分片”三类本地清单。
+- 扩展离线清单片段路径解析对百分号编码支持：离线 `index.m3u8` 中出现 `segments/segment%20name.ts?download=true` 这类编码路径时，播放器会先解码路径后再校验本地文件，避免真实下载目录文件名含空格时误判不可播放。
+- 补齐离线清单分段路径解析对 Windows 风格绝对路径的查询兼容：在 `offline_media_integrity.dart` 中先清理 `?`/`#` 后再解码 `C:\...` 路径，避免 Windows 端本地清单携带参数时误判为不可播放。
+- 增补离线播放重启闭环验证：补充 `test/player_page_test.dart` 用例，验证同一路径的离线清单在重复调用 `isPlayableUrl`（类比进程重建读取）下保持可播放，收敛“关闭网络并重启后仍能播放”到可执行回归证明。
 
 ## [1.0.6] - 2026-07-21
 

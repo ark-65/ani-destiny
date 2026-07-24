@@ -3531,13 +3531,230 @@ void main() {
     addTearDown(() async {
       await temporaryDir.delete(recursive: true);
     });
-    final localManifest = File('${temporaryDir.path}/index.m3u8');
-    await localManifest.writeAsString('#EXTM3U\n');
+    final manifestPath = '${temporaryDir.path}/index.m3u8';
+    final segmentPath = '${temporaryDir.path}/segments/segment-000000.ts';
+    await Directory('${temporaryDir.path}/segments').create(recursive: true);
+    await File(segmentPath).writeAsString('segment');
+    final localManifest = File(manifestPath);
+    await localManifest.writeAsString(
+      '#EXTM3U\n#EXTINF:10,\nsegments/segment-000000.ts\n#EXT-X-ENDLIST',
+    );
 
     expect(
       isPlayableUrl(Uri.file(localManifest.path).toString()),
       isTrue,
     );
+  });
+
+  test('offline local file play url is true for non-manifest media files', () async {
+    final temporaryDir = await Directory.systemTemp.createTemp(
+      'ani-destiny-offline-localfile-direct',
+    );
+    addTearDown(() async {
+      await temporaryDir.delete(recursive: true);
+    });
+    final mediaPath = '${temporaryDir.path}/episode.mp4';
+    await File(mediaPath).writeAsString('video bytes');
+
+    expect(
+      isPlayableUrl(Uri.file(mediaPath).toString()),
+      isTrue,
+    );
+  });
+
+  test(
+    'offline local file play url is true for relative manifest segments with query',
+    () async {
+      final temporaryDir = await Directory.systemTemp.createTemp(
+        'ani-destiny-offline-localfile-segment-query',
+      );
+      addTearDown(() async {
+        await temporaryDir.delete(recursive: true);
+      });
+      final segmentPath = '${temporaryDir.path}/segments/segment-000001.ts';
+      await Directory('${temporaryDir.path}/segments').create(recursive: true);
+      await File(segmentPath).writeAsString('segment');
+      final localManifest = File('${temporaryDir.path}/index.m3u8');
+      await localManifest.writeAsString(
+        '#EXTM3U\n#EXTINF:10,\nsegments/segment-000001.ts?download_cache=true\n#EXT-X-ENDLIST',
+      );
+
+      expect(
+        isPlayableUrl(Uri.file(localManifest.path).toString()),
+        isTrue,
+      );
+    },
+  );
+
+  test(
+    'offline local file play url is true for encoded segment path and query',
+    () async {
+      final temporaryDir = await Directory.systemTemp.createTemp(
+        'ani-destiny-offline-localfile-segment-encoded',
+      );
+      addTearDown(() async {
+        await temporaryDir.delete(recursive: true);
+      });
+      final segmentPath = '${temporaryDir.path}/segments/segment space.ts';
+      await Directory('${temporaryDir.path}/segments').create(recursive: true);
+      await File(segmentPath).writeAsString('segment');
+      final localManifest = File('${temporaryDir.path}/index.m3u8');
+      await localManifest.writeAsString(
+        '#EXTM3U\n#EXTINF:10,\nsegments/segment%20space.ts?download_cache=true\n#EXT-X-ENDLIST',
+      );
+
+      expect(
+        isPlayableUrl(Uri.file(localManifest.path).toString()),
+        isTrue,
+      );
+    },
+  );
+
+  test(
+    'offline local file play url is true for windows-style segment path with query',
+    () async {
+      final temporaryDir = await Directory.systemTemp.createTemp(
+        'ani-destiny-offline-localfile-segment-windows-query',
+      );
+      addTearDown(() async {
+        await temporaryDir.delete(recursive: true);
+      });
+      final windowsSegmentId = DateTime.now().microsecondsSinceEpoch;
+      final windowsSegmentDirectory = Directory('C:/ani-destiny-offline');
+      final windowsSegmentPath =
+          '${windowsSegmentDirectory.path}\\windows-segment-$windowsSegmentId.ts';
+      await windowsSegmentDirectory.create(recursive: true);
+      await File(windowsSegmentPath).writeAsString('segment');
+      addTearDown(() async {
+        if (await windowsSegmentDirectory.exists()) {
+          await windowsSegmentDirectory.delete(recursive: true);
+        }
+      });
+      final localManifest = File('${temporaryDir.path}/index.m3u8');
+      await localManifest.writeAsString(
+        '#EXTM3U\n#EXTINF:10,\n$windowsSegmentPath?download_cache=true\n#EXT-X-ENDLIST',
+      );
+
+      expect(
+        isPlayableUrl(Uri.file(localManifest.path).toString()),
+        isTrue,
+      );
+    },
+    testOn: 'windows',
+  );
+
+  test(
+    'offline local file play url is true for windows-style relative segment path with query',
+    () async {
+      final temporaryDir = await Directory.systemTemp.createTemp(
+        'ani-destiny-offline-localfile-segment-windows-relative',
+      );
+      addTearDown(() async {
+        await temporaryDir.delete(recursive: true);
+      });
+      final segmentPath =
+          '${temporaryDir.path}/segments/episode-000001/segment-000010.ts';
+      await Directory('${temporaryDir.path}/segments/episode-000001')
+          .create(recursive: true);
+      await File(segmentPath).writeAsString('segment');
+      final localManifest = File('${temporaryDir.path}/index.m3u8');
+      await localManifest.writeAsString(
+        '#EXTM3U\n#EXTINF:10,\nsegments\\episode-000001\\segment-000010.ts?download_cache=true\n#EXT-X-ENDLIST',
+      );
+
+      expect(
+        isPlayableUrl(Uri.file(localManifest.path).toString()),
+        isTrue,
+      );
+    },
+  );
+
+  test(
+    'offline local file play url is true for manifest segments with fragment',
+    () async {
+      final temporaryDir = await Directory.systemTemp.createTemp(
+        'ani-destiny-offline-localfile-segment-fragment',
+      );
+      addTearDown(() async {
+        await temporaryDir.delete(recursive: true);
+      });
+      final segmentPath = '${temporaryDir.path}/segments/segment-000002.ts';
+      await Directory('${temporaryDir.path}/segments').create(recursive: true);
+      await File(segmentPath).writeAsString('segment');
+      final localManifest = File('${temporaryDir.path}/index.m3u8');
+      await localManifest.writeAsString(
+        '#EXTM3U\n#EXTINF:10,\nsegments/segment-000002.ts#retry-tag\n#EXT-X-ENDLIST',
+      );
+
+      expect(
+        isPlayableUrl(Uri.file(localManifest.path).toString()),
+        isTrue,
+      );
+    },
+  );
+
+  test(
+    'offline local file play url is false when referenced segment is missing',
+    () async {
+      final temporaryDir = await Directory.systemTemp.createTemp(
+        'ani-destiny-offline-localfile-missing-segment',
+      );
+      addTearDown(() async {
+        await temporaryDir.delete(recursive: true);
+      });
+      final manifestPath = '${temporaryDir.path}/index.m3u8';
+      final localManifest = File(manifestPath);
+      await localManifest.writeAsString(
+        '#EXTM3U\n#EXTINF:10,\nsegments/missing.ts\n#EXT-X-ENDLIST',
+      );
+
+      expect(isPlayableUrl(Uri.file(localManifest.path).toString()), isFalse);
+    },
+  );
+
+  test(
+    'offline local file play url is false when referenced segment file is empty',
+    () async {
+      final temporaryDir = await Directory.systemTemp.createTemp(
+        'ani-destiny-offline-localfile-empty-segment',
+      );
+      addTearDown(() async {
+        await temporaryDir.delete(recursive: true);
+      });
+      final segmentPath = '${temporaryDir.path}/segments/segment-000000.ts';
+      await Directory('${temporaryDir.path}/segments').create(recursive: true);
+      await File(segmentPath).writeAsString('');
+      final localManifest = File('${temporaryDir.path}/index.m3u8');
+      await localManifest.writeAsString(
+        '#EXTM3U\n#EXTINF:10,\nsegments/segment-000000.ts\n#EXT-X-ENDLIST',
+      );
+
+      expect(isPlayableUrl(Uri.file(localManifest.path).toString()), isFalse);
+    },
+  );
+
+  test(
+    'offline local file play url remains playable after page restart',
+    () async {
+    final temporaryDir = await Directory.systemTemp.createTemp(
+      'ani-destiny-offline-localfile-restart',
+    );
+    addTearDown(() async {
+      await temporaryDir.delete(recursive: true);
+    });
+    await Directory('${temporaryDir.path}/segments').create(recursive: true);
+    final segmentPath = '${temporaryDir.path}/segments/segment-000000.ts';
+    await File(segmentPath).writeAsString('segment');
+    final localManifest = File('${temporaryDir.path}/index.m3u8');
+    await localManifest.writeAsString(
+      '#EXTM3U\n#EXTINF:10,\nsegments/segment-000000.ts\n#EXT-X-ENDLIST',
+    );
+
+    final manifestUrl = Uri.file(localManifest.path).toString();
+    // 第一次启动检查：离线清单可播放。
+    expect(isPlayableUrl(manifestUrl), isTrue);
+    // 模拟进程重启：不依赖实例状态，重新读取同一路径再次判断。
+    expect(isPlayableUrl(manifestUrl), isTrue);
   });
 
   test('missing offline local file is treated as unavailable before playback',
@@ -4315,6 +4532,9 @@ class _TrackingPlayerControllerAdapter implements PlayerControllerAdapter {
   final _controller = StreamController<PlayerState>.broadcast();
   int pauseCalls = 0;
   int playCalls = 0;
+  int loadCalls = 0;
+  String? lastLoadUrl;
+  Map<String, String> lastLoadHeaders = const {};
   PlayerState _state = PlayerState.initial();
 
   @override
@@ -4330,6 +4550,9 @@ class _TrackingPlayerControllerAdapter implements PlayerControllerAdapter {
     String url, {
     Map<String, String> headers = const {},
   }) async {
+    loadCalls += 1;
+    lastLoadUrl = url;
+    lastLoadHeaders = headers;
     _state = PlayerState.initial().copyWith(
       isInitialized: true,
       isPlaying: true,

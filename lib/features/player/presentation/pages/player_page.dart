@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:io';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -17,6 +16,7 @@ import '../../../danmaku/presentation/widgets/danmaku_overlay.dart';
 import '../../../download/presentation/download_entry_feedback.dart';
 import '../../../download/presentation/providers/download_providers.dart';
 import '../../../download/domain/entities/download_kind.dart';
+import '../../../download/domain/services/offline_media_integrity.dart';
 import '../../../download/domain/services/download_type_detector.dart';
 import '../../../history/domain/entities/watch_history.dart';
 import '../../../history/domain/repositories/history_repository.dart';
@@ -1443,22 +1443,7 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
 }
 
 bool _isPlayableUrl(String value) {
-  final rawUrl = value.trim();
-  final uri = Uri.tryParse(rawUrl);
-  if (rawUrl.isEmpty || uri == null || !uri.hasScheme) {
-    return false;
-  }
-  if (uri.scheme.toLowerCase() != 'file') {
-    return true;
-  }
-  try {
-    final filePath = uri.toFilePath();
-    return File(filePath).existsSync();
-  } on FormatException {
-    return false;
-  } on FileSystemException {
-    return false;
-  }
+  return isPlayableOfflineMediaUrl(value);
 }
 
 bool isPlayableUrl(String value) {
