@@ -72,16 +72,17 @@ String? _segmentPathFromManifestLine(
 
   final windowsPathPattern = RegExp(r'^[a-zA-Z]:[\\/].+');
   if (windowsPathPattern.hasMatch(normalizedLine)) {
-    return normalizedLine;
+    return Uri.decodeFull(normalizedLine);
   }
 
   final parsedUri = Uri.tryParse(normalizedLine);
   if (parsedUri == null) return null;
   if (!parsedUri.hasScheme) {
-    if (parsedUri.path.isEmpty) {
+    final segmentPath = Uri.decodeFull(parsedUri.path);
+    if (segmentPath.isEmpty) {
       return null;
     }
-    return p.join(manifestDirectory, parsedUri.path);
+    return p.join(manifestDirectory, segmentPath);
   }
   if (parsedUri.scheme.toLowerCase() == 'file') {
     return parsedUri.toFilePath();

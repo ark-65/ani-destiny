@@ -25,6 +25,7 @@
 - Added a restart-resumption proof for the HLS offline loop: added regression coverage for service instance restart with persisted task state, verifying that partially downloaded segments are reused after restart and only missing segments are re-fetched to complete `index.m3u8`.
 - Hardened offline HLS cleanup idempotency: added failed HLS removal regressions to cover both existing local media directories and missing-directory cases, proving `removeEndedTask` can clear leftovers without requiring a manual cleanup follow-up.
 - Hardened offline media playback availability checks: for `file://` URLs, AniDestiny now verifies that all segment paths referenced by `index.m3u8` exist and are non-empty (in addition to manifest presence), preventing a local playlist file with missing/empty segments from being treated as playable.
+- Extended offline manifest segment-path parsing for percent-encoded names: offline `index.m3u8` entries like `segments/segment%20name.ts?download=true` are now decoded before file existence checks, so playable status is not blocked when real segment filenames contain spaces.
 
 ## [1.0.6] - 2026-07-21
 

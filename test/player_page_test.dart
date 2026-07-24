@@ -3587,6 +3587,30 @@ void main() {
   );
 
   test(
+    'offline local file play url is true for encoded segment path and query',
+    () async {
+      final temporaryDir = await Directory.systemTemp.createTemp(
+        'ani-destiny-offline-localfile-segment-encoded',
+      );
+      addTearDown(() async {
+        await temporaryDir.delete(recursive: true);
+      });
+      final segmentPath = '${temporaryDir.path}/segments/segment space.ts';
+      await Directory('${temporaryDir.path}/segments').create(recursive: true);
+      await File(segmentPath).writeAsString('segment');
+      final localManifest = File('${temporaryDir.path}/index.m3u8');
+      await localManifest.writeAsString(
+        '#EXTM3U\n#EXTINF:10,\nsegments/segment%20space.ts?download_cache=true\n#EXT-X-ENDLIST',
+      );
+
+      expect(
+        isPlayableUrl(Uri.file(localManifest.path).toString()),
+        isTrue,
+      );
+    },
+  );
+
+  test(
     'offline local file play url is true for manifest segments with fragment',
     () async {
       final temporaryDir = await Directory.systemTemp.createTemp(
