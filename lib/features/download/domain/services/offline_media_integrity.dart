@@ -65,10 +65,23 @@ String? _segmentPathFromManifestLine(
   String manifestLine,
   String manifestDirectory,
 ) {
-  final parsedUri = Uri.tryParse(manifestLine);
+  final normalizedLine = manifestLine.trim();
+  if (normalizedLine.isEmpty) {
+    return null;
+  }
+
+  final windowsPathPattern = RegExp(r'^[a-zA-Z]:[\\/].+');
+  if (windowsPathPattern.hasMatch(normalizedLine)) {
+    return normalizedLine;
+  }
+
+  final parsedUri = Uri.tryParse(normalizedLine);
   if (parsedUri == null) return null;
   if (!parsedUri.hasScheme) {
-    return p.join(manifestDirectory, manifestLine);
+    if (parsedUri.path.isEmpty) {
+      return null;
+    }
+    return p.join(manifestDirectory, parsedUri.path);
   }
   if (parsedUri.scheme.toLowerCase() == 'file') {
     return parsedUri.toFilePath();
