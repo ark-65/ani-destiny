@@ -3620,13 +3620,15 @@ void main() {
         await temporaryDir.delete(recursive: true);
       });
       final windowsSegmentId = DateTime.now().microsecondsSinceEpoch;
+      final windowsSegmentDirectory = Directory('C:/ani-destiny-offline');
       final windowsSegmentPath =
-          'C:/ani-destiny-offline/windows-segment-$windowsSegmentId.ts';
-      await Directory('C:/ani-destiny-offline').create(recursive: true);
+          '${windowsSegmentDirectory.path}\\windows-segment-$windowsSegmentId.ts';
+      await windowsSegmentDirectory.create(recursive: true);
       await File(windowsSegmentPath).writeAsString('segment');
       addTearDown(() async {
-        await File(windowsSegmentPath).delete();
-        await Directory('C:').delete(recursive: true);
+        if (await windowsSegmentDirectory.exists()) {
+          await windowsSegmentDirectory.delete(recursive: true);
+        }
       });
       final localManifest = File('${temporaryDir.path}/index.m3u8');
       await localManifest.writeAsString(
@@ -3638,6 +3640,7 @@ void main() {
         isTrue,
       );
     },
+    testOn: 'windows',
   );
 
   test(
