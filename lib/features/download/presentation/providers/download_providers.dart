@@ -7,11 +7,13 @@ import '../../data/repositories/offline_media_repository_impl.dart';
 import '../../data/services/download_task_creator.dart';
 import '../../data/services/hls_manifest_loader.dart';
 import '../../data/services/http_download_service.dart';
+import '../../data/services/local_offline_media_service.dart';
 import '../../data/services/unsupported_bt_download_service.dart';
 import '../../domain/entities/download_progress.dart';
 import '../../domain/entities/download_task.dart';
 import '../../domain/entities/offline_media_item.dart';
 import '../../domain/services/hls_manifest_loader.dart';
+import '../../domain/services/offline_media_service.dart';
 import '../../domain/repositories/download_repository.dart';
 import '../../domain/repositories/offline_media_repository.dart';
 import '../../domain/services/download_service.dart';
@@ -28,6 +30,12 @@ final hlsManifestLoaderProvider = Provider<HlsManifestLoader>((ref) {
 
 final offlineMediaRepositoryProvider = Provider<OfflineMediaRepository>((ref) {
   return OfflineMediaRepositoryImpl(ref.watch(appDatabaseProvider));
+});
+
+final offlineMediaServiceProvider = Provider<OfflineMediaService>((ref) {
+  return LocalOfflineMediaService(
+    repository: ref.watch(offlineMediaRepositoryProvider),
+  );
 });
 
 final httpDownloadServiceProvider = Provider<DownloadService>((ref) {

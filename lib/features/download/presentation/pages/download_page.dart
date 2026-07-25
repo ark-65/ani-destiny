@@ -278,7 +278,23 @@ class _DownloadPageState extends ConsumerState<DownloadPage>
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
                                 ),
-                                trailing: const Icon(Icons.play_arrow),
+                                trailing: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    const Icon(Icons.play_arrow),
+                                    IconButton(
+                                      key: ValueKey(
+                                        'offline-media-remove-${item.id}',
+                                      ),
+                                      tooltip: context.l10n.removeOfflineMedia,
+                                      onPressed: () =>
+                                          _confirmRemoveOfflineMedia(item),
+                                      icon: const Icon(
+                                        Icons.delete_outline,
+                                      ),
+                                    ),
+                                  ],
+                                ),
                                 onTap: () => context.push(
                                   '/player',
                                   extra: offlineMediaPlayerRouteArgs(item),
@@ -1028,6 +1044,36 @@ class _DownloadPageState extends ConsumerState<DownloadPage>
       return downloadActionErrorMessage(context.l10n, error);
     }
     return context.l10n.downloadPageLoadFailedMessage;
+  }
+
+  Future<void> _confirmRemoveOfflineMedia(OfflineMediaItem item) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: Text(context.l10n.removeOfflineMedia),
+        content: Text(context.l10n.removeOfflineMediaConfirmation),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(false),
+            child: Text(context.l10n.cancel),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(dialogContext).pop(true),
+            child: Text(context.l10n.remove),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !mounted) return;
+
+    try {
+      await ref.read(offlineMediaServiceProvider).remove(item);
+      if (!mounted) return;
+      _showDownloadSnackBar(context.l10n.offlineMediaRemoved);
+    } on Object {
+      if (!mounted) return;
+      _showDownloadSnackBar(context.l10n.offlineMediaRemoveFailed);
+    }
   }
 }
 

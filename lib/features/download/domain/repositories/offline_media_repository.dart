@@ -8,4 +8,6 @@ abstract class OfflineMediaRepository {
   Future<OfflineMediaItem?> getByDownloadTaskId(String downloadTaskId);
 
   Future<void> upsert(OfflineMediaItem item);
+
+  Future<void> delete(String id);
 }

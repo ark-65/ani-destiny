@@ -11,6 +11,7 @@ import 'package:ani_destiny/features/download/domain/entities/offline_media_item
 import 'package:ani_destiny/features/download/domain/repositories/download_repository.dart';
 import 'package:ani_destiny/features/download/domain/repositories/offline_media_repository.dart';
 import 'package:ani_destiny/features/download/domain/services/download_service.dart';
+import 'package:ani_destiny/features/download/domain/services/offline_media_service.dart';
 import 'package:ani_destiny/features/download/presentation/download_task_cleanup_state.dart';
 import 'package:ani_destiny/features/download/presentation/pages/download_page.dart';
 import 'package:ani_destiny/features/download/presentation/providers/download_providers.dart';
@@ -56,6 +57,50 @@ void main() {
     expect(routeArgs.playUrl, Uri.file(offlineItem.manifestPath).toString());
     expect(routeArgs.sourceId, 'offline');
     expect(routeArgs.playHeaders, isEmpty);
+  });
+
+  testWidgets('offline media removal requires confirmation', (tester) async {
+    final repository = _FakeDownloadRepository([]);
+    final offlineItem = OfflineMediaItem(
+      id: 'offline-1',
+      downloadTaskId: 'removed-task',
+      animeId: 'anime-1',
+      episodeId: 'episode-1',
+      title: 'Offline Anime',
+      episodeTitle: 'Episode 1',
+      manifestPath: '/downloads/offline-1/index.m3u8',
+      downloadedBytes: 2048,
+      createdAt: DateTime(2026, 7, 25),
+    );
+    final offlineMediaService = _FakeOfflineMediaService();
+
+    await _pumpDownloadPage(
+      tester,
+      repository,
+      offlineMedia: [offlineItem],
+      offlineMediaService: offlineMediaService,
+    );
+    await tester.tap(
+      find.byKey(const ValueKey('offline-media-remove-offline-1')),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('Delete offline episode'), findsOneWidget);
+    expect(
+      find.text(
+        'This deletes the local playlist and every segment for this episode. '
+        'The download task record is not changed.',
+      ),
+      findsOneWidget,
+    );
+    await tester.tap(find.widgetWithText(FilledButton, 'Remove'));
+    await tester.pumpAndSettle();
+
+    expect(offlineMediaService.removedItems, [offlineItem]);
+    expect(
+      find.text('Offline episode and local files deleted.'),
+      findsOneWidget,
+    );
   });
 
   testWidgets(
@@ -2399,6 +2444,7 @@ Future<void> _pumpDownloadPage(
   Stream<List<DownloadTask>>? downloadTasksStream,
   Locale locale = const Locale('en'),
   List<OfflineMediaItem> offlineMedia = const [],
+  OfflineMediaService? offlineMediaService,
 }) async {
   await tester.pumpWidget(
     _TestApp(
@@ -2409,6 +2455,7 @@ Future<void> _pumpDownloadPage(
       downloadTasksStream: downloadTasksStream,
       locale: locale,
       offlineMedia: offlineMedia,
+      offlineMediaService: offlineMediaService,
     ),
   );
   await tester.pumpAndSettle();
@@ -2423,6 +2470,7 @@ class _TestApp extends StatelessWidget {
     this.downloadTasksStream,
     required this.locale,
     required this.offlineMedia,
+    this.offlineMediaService,
   });
 
   final DownloadRepository repository;
@@ -2432,6 +2480,7 @@ class _TestApp extends StatelessWidget {
   final Stream<List<DownloadTask>>? downloadTasksStream;
   final Locale locale;
   final List<OfflineMediaItem> offlineMedia;
+  final OfflineMediaService? offlineMediaService;
 
   @override
   Widget build(BuildContext context) {
@@ -2443,6 +2492,8 @@ class _TestApp extends StatelessWidget {
         offlineMediaRepositoryProvider.overrideWithValue(
           _FakeOfflineMediaRepository(offlineMedia),
         ),
+        if (offlineMediaService != null)
+          offlineMediaServiceProvider.overrideWithValue(offlineMediaService!),
         httpDownloadServiceProvider.overrideWithValue(effectiveDownloadService),
         if (downloadTasksStream != null)
           downloadTasksProvider.overrideWith((ref) => downloadTasksStream!),
@@ -2487,7 +2538,19 @@ class _FakeOfflineMediaRepository implements OfflineMediaRepository {
   Future<void> upsert(OfflineMediaItem item) async {}
 
   @override
+  Future<void> delete(String id) async {}
+
+  @override
   Stream<List<OfflineMediaItem>> watchAll() => Stream.value(items);
+}
+
+class _FakeOfflineMediaService implements OfflineMediaService {
+  final List<OfflineMediaItem> removedItems = [];
+
+  @override
+  Future<void> remove(OfflineMediaItem item) async {
+    removedItems.add(item);
+  }
 }
 
 class _FakeDownloadService implements DownloadService {

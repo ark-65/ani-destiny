@@ -121,6 +121,11 @@ class AppLocalizations {
   String get play => _t('play');
   String get downloads => _t('downloads');
   String get offlineMedia => _t('offlineMedia');
+  String get removeOfflineMedia => _t('removeOfflineMedia');
+  String get removeOfflineMediaConfirmation =>
+      _t('removeOfflineMediaConfirmation');
+  String get offlineMediaRemoved => _t('offlineMediaRemoved');
+  String get offlineMediaRemoveFailed => _t('offlineMediaRemoveFailed');
   String get loadingDetail => _t('loadingDetail');
   String get noPlaySource => _t('noPlaySource');
   String get noDownloadSource => _t('noDownloadSource');
@@ -932,6 +937,10 @@ const _localizedValues = {
     'play': '播放',
     'downloads': '下载',
     'offlineMedia': '离线媒体',
+    'removeOfflineMedia': '删除离线剧集',
+    'removeOfflineMediaConfirmation': '这会删除该集的本地播放清单和全部分片。下载任务记录不会受影响。',
+    'offlineMediaRemoved': '离线剧集及本地文件已删除。',
+    'offlineMediaRemoveFailed': '无法删除全部本地文件。离线剧集仍保留在列表中，请重试。',
     'loadingDetail': '正在加载详情',
     'noPlaySource': '未找到可播放线路。请先切换到其他数据源再重试。',
     'noDownloadSource': '未找到可下载线路。请先返回该集并切换到其他数据源再重试。',
@@ -1298,6 +1307,12 @@ const _localizedValues = {
     'play': 'Play',
     'downloads': 'Downloads',
     'offlineMedia': 'Offline media',
+    'removeOfflineMedia': 'Delete offline episode',
+    'removeOfflineMediaConfirmation':
+        'This deletes the local playlist and every segment for this episode. The download task record is not changed.',
+    'offlineMediaRemoved': 'Offline episode and local files deleted.',
+    'offlineMediaRemoveFailed':
+        'Not all local files could be deleted. The offline episode is still listed so you can retry.',
     'loadingDetail': 'Loading detail',
     'noPlaySource':
         'No playable source found. Switch to another source before retrying.',
@@ -1713,6 +1728,12 @@ const _localizedValues = {
     'play': '再生',
     'downloads': 'ダウンロード',
     'offlineMedia': 'オフラインメディア',
+    'removeOfflineMedia': 'オフラインの話を削除',
+    'removeOfflineMediaConfirmation':
+        'この話のローカルプレイリストと全セグメントを削除します。ダウンロードタスクの記録は変更されません。',
+    'offlineMediaRemoved': 'オフラインの話とローカルファイルを削除しました。',
+    'offlineMediaRemoveFailed':
+        '一部のローカルファイルを削除できませんでした。再試行できるよう、この話は一覧に残しています。',
     'loadingDetail': '詳細を読み込み中',
     'noPlaySource': '再生可能なソースが見つかりません。先に別のソースへ切り替えてから再試行してください。',
     'noDownloadSource': 'ダウンロード可能なソースが見つかりません。先にこの話に戻って別のソースを切り替え、再試行してください。',

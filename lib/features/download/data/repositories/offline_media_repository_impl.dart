@@ -48,6 +48,13 @@ class OfflineMediaRepositoryImpl implements OfflineMediaRepository {
         );
   }
 
+  @override
+  Future<void> delete(String id) {
+    return (_database.delete(_database.offlineMediaTable)
+          ..where((table) => table.id.equals(id)))
+        .go();
+  }
+
   SimpleSelectStatement<$OfflineMediaTableTable, OfflineMediaRow>
       _allItemsQuery() {
     return _database.select(_database.offlineMediaTable)
