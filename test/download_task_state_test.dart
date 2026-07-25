@@ -228,6 +228,132 @@ void main() {
     expect(File(task.localPath!).existsSync(), isTrue);
   });
 
+  for (final statusCode in const [408, 429, 503]) {
+    test('starting HLS task retries HTTP $statusCode segment failure',
+        () async {
+      final database = AppDatabase(NativeDatabase.memory());
+      addTearDown(database.close);
+
+      final tempDir = await Directory.systemTemp
+          .createTemp('ani-destiny-download-hls-http-retry-$statusCode');
+      addTearDown(() async {
+        if (tempDir.existsSync()) {
+          await tempDir.delete(recursive: true);
+        }
+      });
+      _mockApplicationDocumentsDirectory(tempDir.path);
+
+      const segmentBytes = <int>[1, 2, 3, 4, 5];
+      const segmentUri = 'https://cdn.example.test/segment-1.ts';
+      final dio = _FlakyHlsSegmentDownloadDio(
+        {segmentUri: segmentBytes},
+        statusFailuresBeforeSuccess: {
+          segmentUri: [statusCode],
+        },
+      );
+      final repository = DownloadRepositoryImpl(database);
+      final service = HttpDownloadService(
+        dio: dio,
+        repository: repository,
+        hlsManifestLoader: _FakeHlsManifestLoader(
+          (manifestUri, headers) async => HlsManifest(
+            uri: manifestUri,
+            segments: [
+              HlsSegment(uri: Uri.parse(segmentUri)),
+            ],
+            variants: const [],
+            isLive: false,
+            targetDuration: null,
+          ),
+        ),
+        hlsSegmentRetryDelay: Duration.zero,
+      );
+
+      final taskId = await service.createTask(
+        animeId: 'anime-1',
+        episodeId: 'episode-1',
+        sourceId: 'sakura',
+        source: const DownloadSource(
+          url: 'https://cdn.example.test/index.m3u8',
+          kind: DownloadKind.hls,
+        ),
+        title: 'HLS Test',
+        episodeTitle: 'Episode 1',
+      );
+
+      await service.start(taskId);
+
+      final task = await repository.getTask(taskId);
+      expect(task, isNotNull);
+      expect(task!.status, DownloadStatus.completed);
+      expect(dio.downloadedUris, [segmentUri, segmentUri]);
+      expect(File(task.localPath!).existsSync(), isTrue);
+    });
+  }
+
+  for (final statusCode in const [404, 600]) {
+    test('starting HLS task does not retry HTTP $statusCode segment failure',
+        () async {
+      final database = AppDatabase(NativeDatabase.memory());
+      addTearDown(database.close);
+
+      final tempDir = await Directory.systemTemp
+          .createTemp('ani-destiny-download-hls-http-no-retry-$statusCode');
+      addTearDown(() async {
+        if (tempDir.existsSync()) {
+          await tempDir.delete(recursive: true);
+        }
+      });
+      _mockApplicationDocumentsDirectory(tempDir.path);
+
+      const segmentBytes = <int>[1, 2, 3, 4, 5];
+      const segmentUri = 'https://cdn.example.test/segment-1.ts';
+      final dio = _FlakyHlsSegmentDownloadDio(
+        {segmentUri: segmentBytes},
+        statusFailuresBeforeSuccess: {
+          segmentUri: [statusCode],
+        },
+      );
+      final repository = DownloadRepositoryImpl(database);
+      final service = HttpDownloadService(
+        dio: dio,
+        repository: repository,
+        hlsManifestLoader: _FakeHlsManifestLoader(
+          (manifestUri, headers) async => HlsManifest(
+            uri: manifestUri,
+            segments: [
+              HlsSegment(uri: Uri.parse(segmentUri)),
+            ],
+            variants: const [],
+            isLive: false,
+            targetDuration: null,
+          ),
+        ),
+        hlsSegmentRetryDelay: Duration.zero,
+      );
+
+      final taskId = await service.createTask(
+        animeId: 'anime-1',
+        episodeId: 'episode-1',
+        sourceId: 'sakura',
+        source: const DownloadSource(
+          url: 'https://cdn.example.test/index.m3u8',
+          kind: DownloadKind.hls,
+        ),
+        title: 'HLS Test',
+        episodeTitle: 'Episode 1',
+      );
+
+      await service.start(taskId);
+
+      final task = await repository.getTask(taskId);
+      expect(task, isNotNull);
+      expect(task!.status, DownloadStatus.failed);
+      expect(task.failureReason, DownloadFailureReason.networkError);
+      expect(dio.downloadedUris, [segmentUri]);
+    });
+  }
+
   test(
       'exhausted HLS segment retries preserve completed segments for manual resume',
       () async {
@@ -2269,13 +2395,19 @@ class _FlakyHlsSegmentDownloadDio extends DioForNative {
     this.segmentBytesByUri, {
     Set<String> failOnFirst = const {},
     Map<String, int> failuresBeforeSuccess = const {},
+    Map<String, List<int>> statusFailuresBeforeSuccess = const {},
     this.onFailure,
   })  : failOnFirst = Set<String>.from(failOnFirst),
-        failuresBeforeSuccess = Map<String, int>.from(failuresBeforeSuccess);
+        failuresBeforeSuccess = Map<String, int>.from(failuresBeforeSuccess),
+        statusFailuresBeforeSuccess = {
+          for (final entry in statusFailuresBeforeSuccess.entries)
+            entry.key: List<int>.from(entry.value),
+        };
 
   final Map<String, List<int>> segmentBytesByUri;
   final Set<String> failOnFirst;
   final Map<String, int> failuresBeforeSuccess;
+  final Map<String, List<int>> statusFailuresBeforeSuccess;
   final void Function(String uri, int attempt)? onFailure;
   final Map<String, int> _attemptsByUri = {};
   final List<String> downloadedUris = <String>[];
@@ -2296,6 +2428,20 @@ class _FlakyHlsSegmentDownloadDio extends DioForNative {
     downloadedUris.add(urlPath);
     final attempt = (_attemptsByUri[urlPath] ?? 0) + 1;
     _attemptsByUri[urlPath] = attempt;
+    final statusFailures = statusFailuresBeforeSuccess[urlPath] ?? const [];
+    if (attempt <= statusFailures.length) {
+      final statusCode = statusFailures[attempt - 1];
+      onFailure?.call(urlPath, attempt);
+      final requestOptions = RequestOptions(path: urlPath);
+      throw DioException.badResponse(
+        statusCode: statusCode,
+        requestOptions: requestOptions,
+        response: Response(
+          requestOptions: requestOptions,
+          statusCode: statusCode,
+        ),
+      );
+    }
     final configuredFailures = failuresBeforeSuccess[urlPath] ??
         (failOnFirst.contains(urlPath) ? 1 : 0);
     if (attempt <= configuredFailures) {

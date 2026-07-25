@@ -565,7 +565,7 @@ class HttpDownloadService implements DownloadService {
     final statusCode = error.response?.statusCode;
     return statusCode == 408 ||
         statusCode == 429 ||
-        (statusCode != null && statusCode >= 500);
+        (statusCode != null && statusCode >= 500 && statusCode <= 599);
   }
 
   Future<void> _writeHlsManifest(
