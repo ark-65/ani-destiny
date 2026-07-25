@@ -7,6 +7,7 @@
 ## [Unreleased]
 
 ### ✨ Added
+- Opening an offline episode now verifies its local m3u8 and every segment before navigation. Damaged assets remain in the library with delete-and-download-again guidance instead of failing after the player opens, while playable assets still enter playback with only a local path.
 - Offline media is now grouped by anime and can delete every downloaded episode and local HLS file for one anime after confirmation. Batch cleanup preserves the per-episode files-first, asset-record-second boundary, leaves failed items listed for retry, and does not alter download tasks.
 - Added per-episode integrity verification to Offline media: users can check that the local m3u8 and every segment remain playable; missing or empty files now prompt deletion and re-download without removing the damaged asset or reporting false success.
 - Offline media can now delete one episode's local playlist and HLS segments after confirmation; its independent asset record is removed only after file cleanup succeeds, remains retryable on failure, and does not alter the download task lifecycle.

@@ -357,12 +357,7 @@ class _DownloadPageState extends ConsumerState<DownloadPage>
                                               ),
                                             ],
                                           ),
-                                          onTap: () => context.push(
-                                            '/player',
-                                            extra: offlineMediaPlayerRouteArgs(
-                                              item,
-                                            ),
-                                          ),
+                                          onTap: () => _playOfflineMedia(item),
                                         ),
                                       ),
                                     );
@@ -1122,6 +1117,19 @@ class _DownloadPageState extends ConsumerState<DownloadPage>
       status == OfflineMediaIntegrityStatus.playable
           ? context.l10n.offlineMediaVerified
           : context.l10n.offlineMediaDamaged,
+    );
+  }
+
+  Future<void> _playOfflineMedia(OfflineMediaItem item) async {
+    final status = await ref.read(offlineMediaServiceProvider).verify(item);
+    if (!mounted) return;
+    if (status == OfflineMediaIntegrityStatus.damaged) {
+      _showDownloadSnackBar(context.l10n.offlineMediaDamaged);
+      return;
+    }
+    await context.push(
+      '/player',
+      extra: offlineMediaPlayerRouteArgs(item),
     );
   }
 

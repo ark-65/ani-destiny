@@ -142,6 +142,45 @@ void main() {
     );
   });
 
+  testWidgets('damaged offline media is blocked before opening the player', (
+    tester,
+  ) async {
+    final repository = _FakeDownloadRepository([]);
+    final offlineItem = _offlineItem(
+      id: 'offline-1',
+      animeId: 'anime-1',
+      episodeId: 'episode-1',
+      title: 'Offline Anime',
+      episodeTitle: 'Episode 1',
+    );
+    final offlineMediaService = _FakeOfflineMediaService(
+      integrityStatus: OfflineMediaIntegrityStatus.damaged,
+    );
+
+    await _pumpDownloadPage(
+      tester,
+      repository,
+      offlineMedia: [offlineItem],
+      offlineMediaService: offlineMediaService,
+    );
+    await tester.tap(
+      find.byKey(const ValueKey('offline-media-offline-1')),
+    );
+    await tester.pumpAndSettle();
+
+    expect(offlineMediaService.verifiedItems, [offlineItem]);
+    expect(
+      find.text(
+        'Offline episode files are incomplete. Delete and download it again.',
+      ),
+      findsOneWidget,
+    );
+    expect(
+      find.byKey(const ValueKey('offline-media-offline-1')),
+      findsOneWidget,
+    );
+  });
+
   testWidgets('offline media groups episodes and removes only one anime', (
     tester,
   ) async {
