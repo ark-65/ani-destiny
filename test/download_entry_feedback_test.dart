@@ -19,16 +19,16 @@ void main() {
     );
   });
 
-  test('unsupported downloads point to download lines', () {
+  test('HLS downloads open the created download task', () {
     const l10n = AppLocalizations(Locale('en'));
 
     expect(
       downloadEntryFeedbackMessage(l10n, DownloadKind.hls),
-      'This download currently uses an HLS / m3u8 stream, and AniDestiny cannot save that type offline yet. This entry stays in Downloads. If you want to retry, return to the episode first and confirm a supported source is available, then decide to retry or remove.',
+      'Added to Downloads. Open Downloads to start it.',
     );
     expect(
       downloadEntryFeedbackActionLabel(l10n, DownloadKind.hls),
-      'Check download lines',
+      'Open Downloads',
     );
   });
 

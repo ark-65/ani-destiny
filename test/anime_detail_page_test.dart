@@ -316,7 +316,7 @@ void main() {
     expect(find.text('Episode: episode-1'), findsOneWidget);
   });
 
-  testWidgets('anime detail download keeps unsupported feedback honest', (
+  testWidgets('anime detail presents HLS as a supported download line', (
     tester,
   ) async {
     const repository = _FakeAnimeRepository(
@@ -356,7 +356,7 @@ void main() {
                 ) ??
                 false),
       ),
-      findsOneWidget,
+      findsNWidgets(2),
     );
     expect(
       find.text('Added to Downloads. Open Downloads to start it.'),
@@ -364,15 +364,8 @@ void main() {
     );
     expect(find.text('HLS line'), findsOneWidget);
     expect(
-      find.byWidgetPredicate(
-        (widget) =>
-            widget is Text &&
-            (widget.data?.contains(
-                  'AniDestiny cannot save that type offline yet',
-                ) ??
-                false),
-      ),
-      findsOneWidget,
+      find.textContaining('AniDestiny cannot save that type offline yet'),
+      findsNothing,
     );
 
     await tester.tap(find.text('HLS line'));
@@ -380,11 +373,11 @@ void main() {
 
     expect(
       find.text(
-        'This download currently uses an HLS / m3u8 stream, and AniDestiny cannot save that type offline yet. This entry stays in Downloads. If you want to retry, return to the episode first and confirm a supported source is available, then decide to retry or remove.',
+        'Added to Downloads. Open Downloads to start it.',
       ),
       findsOneWidget,
     );
-    expect(find.text('Check download lines'), findsOneWidget);
+    expect(find.text('Open Downloads'), findsOneWidget);
   });
 
   testWidgets(
@@ -420,7 +413,7 @@ void main() {
   });
 
   testWidgets(
-    'anime detail still confirms a single unsupported download line before adding it',
+    'anime detail immediately adds a single supported HLS download line',
     (tester) async {
       var createdDownloads = 0;
       const repository = _FakeAnimeRepository(
@@ -446,32 +439,14 @@ void main() {
       await tester.tap(find.byTooltip('Check download lines'));
       await tester.pumpAndSettle();
 
-      expect(createdDownloads, 0);
-      expect(find.text('Select download line'), findsOneWidget);
-      expect(find.text('HLS line'), findsOneWidget);
-      expect(
-        find.byWidgetPredicate(
-          (widget) =>
-              widget is Text &&
-              (widget.data?.contains(
-                    'AniDestiny cannot save that type offline yet',
-                  ) ??
-                  false),
-        ),
-        findsOneWidget,
-      );
-
-      await tester.tap(find.text('HLS line'));
-      await tester.pump();
-
       expect(createdDownloads, 1);
       expect(
         find.text(
-          'This download currently uses an HLS / m3u8 stream, and AniDestiny cannot save that type offline yet. This entry stays in Downloads. If you want to retry, return to the episode first and confirm a supported source is available, then decide to retry or remove.',
+          'Added to Downloads. Open Downloads to start it.',
         ),
         findsOneWidget,
       );
-      expect(find.text('Check download lines'), findsOneWidget);
+      expect(find.text('Open Downloads'), findsOneWidget);
     },
   );
 

@@ -26,7 +26,7 @@ void main() {
     expect(service.lastEpisodeTitle, 'Episode 1');
   });
 
-  test('create returns unsupported result for HLS urls', () async {
+  test('create returns supported result for HLS urls', () async {
     final service = _CapturingDownloadService();
     final creator = DownloadTaskCreator(service);
 
@@ -41,7 +41,7 @@ void main() {
 
     expect(result.taskId, 'task-1');
     expect(result.kind, DownloadKind.hls);
-    expect(result.isSupported, isFalse);
+    expect(result.isSupported, isTrue);
     expect(service.lastSource?.kind, DownloadKind.hls);
     expect(service.lastEpisodeTitle, 'Episode 2');
   });

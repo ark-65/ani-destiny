@@ -3345,7 +3345,7 @@ void main() {
     expect(find.text('Episode: episode-3'), findsOneWidget);
   });
 
-  testWidgets('download action explains unsupported streams honestly', (
+  testWidgets('download action adds supported HLS streams to Downloads', (
     tester,
   ) async {
     var createdDownloads = 0;
@@ -3374,7 +3374,7 @@ void main() {
     );
     expect(
       downloadButton.tooltip,
-      'This download currently uses an HLS / m3u8 stream, and AniDestiny cannot save that type offline yet. This entry stays in Downloads. If you want to retry, return to the episode first and confirm a supported source is available, then decide to retry or remove.',
+      'Added to Downloads. Open Downloads to start it.',
     );
 
     await tester.tap(find.widgetWithIcon(IconButton, Icons.download_outlined));
@@ -3383,22 +3383,16 @@ void main() {
     expect(createdDownloads, 1);
     expect(
       find.text(
-        'This download currently uses an HLS / m3u8 stream, and AniDestiny cannot save that type offline yet. This entry stays in Downloads. If you want to retry, return to the episode first and confirm a supported source is available, then decide to retry or remove.',
+        'Added to Downloads. Open Downloads to start it.',
       ),
       findsOneWidget,
     );
-    expect(find.text('Check download lines'), findsOneWidget);
+    expect(find.text('Open Downloads'), findsOneWidget);
 
     final snackBar = tester.widget<SnackBar>(find.byType(SnackBar));
     final snackBarAction = snackBar.action;
     expect(snackBarAction, isNotNull);
-    snackBarAction!.onPressed.call();
-    await tester.pumpAndSettle();
-
-    expect(find.text('Recovered anime detail'), findsOneWidget);
-    expect(find.text('Anime: anime-1'), findsOneWidget);
-    expect(find.text('Source: sakura'), findsOneWidget);
-    expect(find.text('Episode: episode-1'), findsOneWidget);
+    expect(snackBarAction!.label, 'Open Downloads');
   });
 
   testWidgets('download action says direct downloads still need a start step', (

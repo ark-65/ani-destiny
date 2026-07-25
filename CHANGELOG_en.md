@@ -7,6 +7,7 @@
 ## [Unreleased]
 
 ### ✨ Added
+- HLS / m3u8 episodes can now be created as supported download tasks from anime details or the player and opened directly in Downloads to start; BT and unknown types remain explicitly unsupported.
 - The playback progress slider now announces its current seek time and total duration to screen readers, replacing an abstract percentage with meaningful time feedback.
 - Check the latest stable GitHub Release in Settings > About and show an update prompt that opens the matching release page when a newer version is available.
 

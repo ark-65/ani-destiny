@@ -270,7 +270,7 @@ class AnimeDetailPage extends ConsumerWidget {
               Text(downloadEntryFeedbackMessage(context.l10n, result.kind)),
           action: SnackBarAction(
             label: downloadEntryFeedbackActionLabel(context.l10n, result.kind),
-            onPressed: result.kind == DownloadKind.directFile
+            onPressed: result.isSupported
                 ? () => context.push(
                       '/downloads?taskId=${Uri.encodeComponent(result.taskId)}',
                     )
@@ -396,14 +396,14 @@ class AnimeDetailPage extends ConsumerWidget {
   }
 
   bool _requiresDownloadSelectionConfirmation(PlaySource source) {
-    return detectDownloadKind(source.url) != DownloadKind.directFile;
+    return !isSupportedDownloadKind(detectDownloadKind(source.url));
   }
 
   String _downloadSourceSubtitle(BuildContext context, PlaySource source) {
     final baseSubtitle = _sourceSubtitle(source);
     final kind = detectDownloadKind(source.url);
-    final downloadNote = kind == DownloadKind.directFile
-        ? '${context.l10n.downloadKindDirectFile} · '
+    final downloadNote = isSupportedDownloadKind(kind)
+        ? '${kind == DownloadKind.hls ? context.l10n.downloadKindHls : context.l10n.downloadKindDirectFile} · '
             '${context.l10n.downloadSelectionPendingNote}'
         : downloadEntryFeedbackMessage(context.l10n, kind);
     return [if (baseSubtitle.isNotEmpty) baseSubtitle, downloadNote].join('\n');
