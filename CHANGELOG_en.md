@@ -7,6 +7,7 @@
 ## [Unreleased]
 
 ### ✨ Added
+- Added per-episode integrity verification to Offline media: users can check that the local m3u8 and every segment remain playable; missing or empty files now prompt deletion and re-download without removing the damaged asset or reporting false success.
 - Offline media can now delete one episode's local playlist and HLS segments after confirmation; its independent asset record is removed only after file cleanup succeeds, remains retryable on failure, and does not alter the download task lifecycle.
 - Downloads now restores and displays completed HLS episodes from the independent offline-media repository. Even after the related download task is removed, the asset remains discoverable after app restart and opens the player from its local m3u8 without network request headers.
 - Completed HLS downloads now publish and persist an independent offline media asset with episode identity, local manifest path, and media size. Offline assets no longer exist only as download-task state, providing a stable domain boundary for the offline library after app restart.

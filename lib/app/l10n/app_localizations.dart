@@ -126,6 +126,9 @@ class AppLocalizations {
       _t('removeOfflineMediaConfirmation');
   String get offlineMediaRemoved => _t('offlineMediaRemoved');
   String get offlineMediaRemoveFailed => _t('offlineMediaRemoveFailed');
+  String get verifyOfflineMedia => _t('verifyOfflineMedia');
+  String get offlineMediaVerified => _t('offlineMediaVerified');
+  String get offlineMediaDamaged => _t('offlineMediaDamaged');
   String get loadingDetail => _t('loadingDetail');
   String get noPlaySource => _t('noPlaySource');
   String get noDownloadSource => _t('noDownloadSource');
@@ -941,6 +944,9 @@ const _localizedValues = {
     'removeOfflineMediaConfirmation': '这会删除该集的本地播放清单和全部分片。下载任务记录不会受影响。',
     'offlineMediaRemoved': '离线剧集及本地文件已删除。',
     'offlineMediaRemoveFailed': '无法删除全部本地文件。离线剧集仍保留在列表中，请重试。',
+    'verifyOfflineMedia': '校验离线剧集',
+    'offlineMediaVerified': '离线剧集完整，可以播放。',
+    'offlineMediaDamaged': '离线剧集文件不完整。请删除后重新下载。',
     'loadingDetail': '正在加载详情',
     'noPlaySource': '未找到可播放线路。请先切换到其他数据源再重试。',
     'noDownloadSource': '未找到可下载线路。请先返回该集并切换到其他数据源再重试。',
@@ -1313,6 +1319,10 @@ const _localizedValues = {
     'offlineMediaRemoved': 'Offline episode and local files deleted.',
     'offlineMediaRemoveFailed':
         'Not all local files could be deleted. The offline episode is still listed so you can retry.',
+    'verifyOfflineMedia': 'Verify offline episode',
+    'offlineMediaVerified': 'Offline episode is complete and playable.',
+    'offlineMediaDamaged':
+        'Offline episode files are incomplete. Delete and download it again.',
     'loadingDetail': 'Loading detail',
     'noPlaySource':
         'No playable source found. Switch to another source before retrying.',
@@ -1734,6 +1744,9 @@ const _localizedValues = {
     'offlineMediaRemoved': 'オフラインの話とローカルファイルを削除しました。',
     'offlineMediaRemoveFailed':
         '一部のローカルファイルを削除できませんでした。再試行できるよう、この話は一覧に残しています。',
+    'verifyOfflineMedia': 'オフラインの話を検証',
+    'offlineMediaVerified': 'オフラインの話は完全で、再生できます。',
+    'offlineMediaDamaged': 'オフラインの話のファイルが不完全です。削除して再ダウンロードしてください。',
     'loadingDetail': '詳細を読み込み中',
     'noPlaySource': '再生可能なソースが見つかりません。先に別のソースへ切り替えてから再試行してください。',
     'noDownloadSource': 'ダウンロード可能なソースが見つかりません。先にこの話に戻って別のソースを切り替え、再試行してください。',

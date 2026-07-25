@@ -103,6 +103,45 @@ void main() {
     );
   });
 
+  testWidgets('offline media verification reports damaged files', (
+    tester,
+  ) async {
+    final repository = _FakeDownloadRepository([]);
+    final offlineItem = OfflineMediaItem(
+      id: 'offline-1',
+      downloadTaskId: 'removed-task',
+      animeId: 'anime-1',
+      episodeId: 'episode-1',
+      title: 'Offline Anime',
+      episodeTitle: 'Episode 1',
+      manifestPath: '/downloads/offline-1/index.m3u8',
+      downloadedBytes: 2048,
+      createdAt: DateTime(2026, 7, 25),
+    );
+    final offlineMediaService = _FakeOfflineMediaService(
+      integrityStatus: OfflineMediaIntegrityStatus.damaged,
+    );
+
+    await _pumpDownloadPage(
+      tester,
+      repository,
+      offlineMedia: [offlineItem],
+      offlineMediaService: offlineMediaService,
+    );
+    await tester.tap(
+      find.byKey(const ValueKey('offline-media-verify-offline-1')),
+    );
+    await tester.pumpAndSettle();
+
+    expect(offlineMediaService.verifiedItems, [offlineItem]);
+    expect(
+      find.text(
+        'Offline episode files are incomplete. Delete and download it again.',
+      ),
+      findsOneWidget,
+    );
+  });
+
   testWidgets(
     'same-anime clear button removes only that anime ended tasks',
     (tester) async {
@@ -2545,7 +2584,19 @@ class _FakeOfflineMediaRepository implements OfflineMediaRepository {
 }
 
 class _FakeOfflineMediaService implements OfflineMediaService {
+  _FakeOfflineMediaService({
+    this.integrityStatus = OfflineMediaIntegrityStatus.playable,
+  });
+
+  final OfflineMediaIntegrityStatus integrityStatus;
+  final List<OfflineMediaItem> verifiedItems = [];
   final List<OfflineMediaItem> removedItems = [];
+
+  @override
+  Future<OfflineMediaIntegrityStatus> verify(OfflineMediaItem item) async {
+    verifiedItems.add(item);
+    return integrityStatus;
+  }
 
   @override
   Future<void> remove(OfflineMediaItem item) async {

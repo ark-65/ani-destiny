@@ -5,6 +5,7 @@ import 'package:path/path.dart' as p;
 import '../../../../core/error/app_exception.dart';
 import '../../domain/entities/offline_media_item.dart';
 import '../../domain/repositories/offline_media_repository.dart';
+import '../../domain/services/offline_media_integrity.dart';
 import '../../domain/services/offline_media_service.dart';
 
 typedef OfflineMediaDirectoryRemover = Future<void> Function(String path);
@@ -18,6 +19,13 @@ class LocalOfflineMediaService implements OfflineMediaService {
 
   final OfflineMediaRepository _repository;
   final OfflineMediaDirectoryRemover _directoryRemover;
+
+  @override
+  Future<OfflineMediaIntegrityStatus> verify(OfflineMediaItem item) async {
+    return isPlayableOfflineMediaPath(item.manifestPath)
+        ? OfflineMediaIntegrityStatus.playable
+        : OfflineMediaIntegrityStatus.damaged;
+  }
 
   @override
   Future<void> remove(OfflineMediaItem item) async {

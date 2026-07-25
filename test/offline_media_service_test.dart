@@ -4,11 +4,44 @@ import 'package:ani_destiny/core/storage/app_database.dart';
 import 'package:ani_destiny/features/download/data/repositories/offline_media_repository_impl.dart';
 import 'package:ani_destiny/features/download/data/services/local_offline_media_service.dart';
 import 'package:ani_destiny/features/download/domain/entities/offline_media_item.dart';
+import 'package:ani_destiny/features/download/domain/services/offline_media_service.dart';
 import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:path/path.dart' as p;
 
 void main() {
+  test('verify reports playable only when manifest segments are complete',
+      () async {
+    final database = AppDatabase(NativeDatabase.memory());
+    addTearDown(database.close);
+    final repository = OfflineMediaRepositoryImpl(database);
+    final tempDirectory =
+        await Directory.systemTemp.createTemp('offline-media-verify-');
+    addTearDown(() async {
+      if (await tempDirectory.exists()) {
+        await tempDirectory.delete(recursive: true);
+      }
+    });
+    final manifest = File(p.join(tempDirectory.path, 'index.m3u8'));
+    final segment = File(p.join(tempDirectory.path, 'segment.ts'));
+    await manifest.writeAsString('#EXTM3U\nsegment.ts\n');
+    await segment.writeAsBytes([1, 2, 3]);
+    final service = LocalOfflineMediaService(repository: repository);
+    final item = _item(manifest.path);
+
+    expect(
+      await service.verify(item),
+      OfflineMediaIntegrityStatus.playable,
+    );
+
+    await segment.delete();
+
+    expect(
+      await service.verify(item),
+      OfflineMediaIntegrityStatus.damaged,
+    );
+  });
+
   test('remove deletes the asset directory before its database record',
       () async {
     final database = AppDatabase(NativeDatabase.memory());

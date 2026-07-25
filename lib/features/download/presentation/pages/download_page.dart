@@ -14,6 +14,7 @@ import '../../../../features/player/domain/entities/player_route_args.dart';
 import '../../../../shared/widgets/adaptive_page.dart';
 import '../../domain/entities/download_task.dart';
 import '../../domain/entities/offline_media_item.dart';
+import '../../domain/services/offline_media_service.dart';
 import '../download_entry_feedback.dart';
 import '../download_task_cleanup_state.dart';
 import '../providers/download_providers.dart';
@@ -282,6 +283,15 @@ class _DownloadPageState extends ConsumerState<DownloadPage>
                                   mainAxisSize: MainAxisSize.min,
                                   children: [
                                     const Icon(Icons.play_arrow),
+                                    IconButton(
+                                      key: ValueKey(
+                                        'offline-media-verify-${item.id}',
+                                      ),
+                                      tooltip: context.l10n.verifyOfflineMedia,
+                                      onPressed: () =>
+                                          _verifyOfflineMedia(item),
+                                      icon: const Icon(Icons.verified_outlined),
+                                    ),
                                     IconButton(
                                       key: ValueKey(
                                         'offline-media-remove-${item.id}',
@@ -1044,6 +1054,16 @@ class _DownloadPageState extends ConsumerState<DownloadPage>
       return downloadActionErrorMessage(context.l10n, error);
     }
     return context.l10n.downloadPageLoadFailedMessage;
+  }
+
+  Future<void> _verifyOfflineMedia(OfflineMediaItem item) async {
+    final status = await ref.read(offlineMediaServiceProvider).verify(item);
+    if (!mounted) return;
+    _showDownloadSnackBar(
+      status == OfflineMediaIntegrityStatus.playable
+          ? context.l10n.offlineMediaVerified
+          : context.l10n.offlineMediaDamaged,
+    );
   }
 
   Future<void> _confirmRemoveOfflineMedia(OfflineMediaItem item) async {
