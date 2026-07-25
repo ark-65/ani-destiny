@@ -73,6 +73,8 @@ void main() {
         manifestPath: '/downloads/task-1/index.m3u8',
         downloadedBytes: 2048,
         createdAt: createdAt,
+        integrityStatus: OfflineMediaIntegrityStatus.damaged,
+        verifiedAt: createdAt.add(const Duration(minutes: 1)),
       ),
     );
 
@@ -82,6 +84,8 @@ void main() {
     expect(restored!.id, 'offline-task-1');
     expect(restored.manifestPath, '/downloads/task-1/index.m3u8');
     expect(restored.downloadedBytes, 2048);
+    expect(restored.integrityStatus, OfflineMediaIntegrityStatus.damaged);
+    expect(restored.verifiedAt, createdAt.add(const Duration(minutes: 1)));
     expect((await repository.getAll()).single.downloadTaskId, 'task-1');
     expect((await watchedItems).single.id, 'offline-task-1');
   });

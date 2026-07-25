@@ -44,6 +44,8 @@ class OfflineMediaRepositoryImpl implements OfflineMediaRepository {
             manifestPath: item.manifestPath,
             downloadedBytes: Value(item.downloadedBytes),
             createdAt: item.createdAt,
+            integrityStatus: Value(item.integrityStatus.name),
+            verifiedAt: Value(item.verifiedAt),
           ),
         );
   }
@@ -77,6 +79,10 @@ class OfflineMediaRepositoryImpl implements OfflineMediaRepository {
       manifestPath: row.manifestPath,
       downloadedBytes: row.downloadedBytes,
       createdAt: row.createdAt,
+      integrityStatus: OfflineMediaIntegrityStatus.values.byName(
+        row.integrityStatus,
+      ),
+      verifiedAt: row.verifiedAt,
     );
   }
 }

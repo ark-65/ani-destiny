@@ -14,7 +14,6 @@ import '../../../../features/player/domain/entities/player_route_args.dart';
 import '../../../../shared/widgets/adaptive_page.dart';
 import '../../domain/entities/download_task.dart';
 import '../../domain/entities/offline_media_item.dart';
-import '../../domain/services/offline_media_service.dart';
 import '../download_entry_feedback.dart';
 import '../download_task_cleanup_state.dart';
 import '../providers/download_providers.dart';
@@ -326,6 +325,19 @@ class _DownloadPageState extends ConsumerState<DownloadPage>
                                           trailing: Row(
                                             mainAxisSize: MainAxisSize.min,
                                             children: [
+                                              if (item.integrityStatus ==
+                                                  OfflineMediaIntegrityStatus
+                                                      .damaged)
+                                                Icon(
+                                                  Icons.warning_amber_rounded,
+                                                  key: ValueKey(
+                                                    'offline-media-damaged-'
+                                                    '${item.id}',
+                                                  ),
+                                                  color: Theme.of(context)
+                                                      .colorScheme
+                                                      .error,
+                                                ),
                                               const Icon(Icons.play_arrow),
                                               IconButton(
                                                 key: ValueKey(

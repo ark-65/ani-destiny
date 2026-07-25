@@ -4,7 +4,6 @@ import 'package:ani_destiny/core/storage/app_database.dart';
 import 'package:ani_destiny/features/download/data/repositories/offline_media_repository_impl.dart';
 import 'package:ani_destiny/features/download/data/services/local_offline_media_service.dart';
 import 'package:ani_destiny/features/download/domain/entities/offline_media_item.dart';
-import 'package:ani_destiny/features/download/domain/services/offline_media_service.dart';
 import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:path/path.dart' as p;
@@ -33,6 +32,9 @@ void main() {
       await service.verify(item),
       OfflineMediaIntegrityStatus.playable,
     );
+    var restored = (await repository.getAll()).single;
+    expect(restored.integrityStatus, OfflineMediaIntegrityStatus.playable);
+    expect(restored.verifiedAt, isNotNull);
 
     await segment.delete();
 
@@ -40,6 +42,9 @@ void main() {
       await service.verify(item),
       OfflineMediaIntegrityStatus.damaged,
     );
+    restored = (await repository.getAll()).single;
+    expect(restored.integrityStatus, OfflineMediaIntegrityStatus.damaged);
+    expect(restored.verifiedAt, isNotNull);
   });
 
   test('remove deletes the asset directory before its database record',

@@ -59,6 +59,36 @@ void main() {
     expect(routeArgs.playHeaders, isEmpty);
   });
 
+  testWidgets('persisted damaged offline media is marked in the library', (
+    tester,
+  ) async {
+    final repository = _FakeDownloadRepository([]);
+    final damagedItem = OfflineMediaItem(
+      id: 'offline-damaged',
+      downloadTaskId: 'task-damaged',
+      animeId: 'anime-1',
+      episodeId: 'episode-damaged',
+      title: 'Offline Anime',
+      episodeTitle: 'Damaged episode',
+      manifestPath: '/downloads/task-damaged/index.m3u8',
+      downloadedBytes: 3,
+      createdAt: DateTime(2026, 7, 26),
+      integrityStatus: OfflineMediaIntegrityStatus.damaged,
+      verifiedAt: DateTime(2026, 7, 26, 1),
+    );
+
+    await _pumpDownloadPage(
+      tester,
+      repository,
+      offlineMedia: [damagedItem],
+    );
+
+    expect(
+      find.byKey(const ValueKey('offline-media-damaged-offline-damaged')),
+      findsOneWidget,
+    );
+  });
+
   testWidgets('offline media removal requires confirmation', (tester) async {
     final repository = _FakeDownloadRepository([]);
     final offlineItem = OfflineMediaItem(

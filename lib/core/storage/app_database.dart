@@ -92,6 +92,9 @@ class OfflineMediaTable extends Table {
   IntColumn get downloadedBytes =>
       integer().named('downloaded_bytes').withDefault(const Constant(0))();
   DateTimeColumn get createdAt => dateTime().named('created_at')();
+  TextColumn get integrityStatus =>
+      text().named('integrity_status').withDefault(const Constant('unknown'))();
+  DateTimeColumn get verifiedAt => dateTime().named('verified_at').nullable()();
 
   @override
   Set<Column> get primaryKey => {id};
@@ -110,7 +113,7 @@ class AppDatabase extends _$AppDatabase {
       : super(executor ?? driftDatabase(name: 'ani_destiny'));
 
   @override
-  int get schemaVersion => 5;
+  int get schemaVersion => 6;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -167,6 +170,16 @@ class AppDatabase extends _$AppDatabase {
           }
           if (from < 5) {
             await migrator.createTable(offlineMediaTable);
+          }
+          if (from == 5) {
+            await migrator.addColumn(
+              offlineMediaTable,
+              offlineMediaTable.integrityStatus,
+            );
+            await migrator.addColumn(
+              offlineMediaTable,
+              offlineMediaTable.verifiedAt,
+            );
           }
         },
       );

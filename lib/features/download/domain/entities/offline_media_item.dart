@@ -1,3 +1,5 @@
+enum OfflineMediaIntegrityStatus { unknown, playable, damaged }
+
 class OfflineMediaItem {
   const OfflineMediaItem({
     required this.id,
@@ -9,6 +11,8 @@ class OfflineMediaItem {
     required this.manifestPath,
     required this.downloadedBytes,
     required this.createdAt,
+    this.integrityStatus = OfflineMediaIntegrityStatus.unknown,
+    this.verifiedAt,
   });
 
   final String id;
@@ -20,4 +24,25 @@ class OfflineMediaItem {
   final String manifestPath;
   final int downloadedBytes;
   final DateTime createdAt;
+  final OfflineMediaIntegrityStatus integrityStatus;
+  final DateTime? verifiedAt;
+
+  OfflineMediaItem copyWith({
+    OfflineMediaIntegrityStatus? integrityStatus,
+    DateTime? verifiedAt,
+  }) {
+    return OfflineMediaItem(
+      id: id,
+      downloadTaskId: downloadTaskId,
+      animeId: animeId,
+      episodeId: episodeId,
+      title: title,
+      episodeTitle: episodeTitle,
+      manifestPath: manifestPath,
+      downloadedBytes: downloadedBytes,
+      createdAt: createdAt,
+      integrityStatus: integrityStatus ?? this.integrityStatus,
+      verifiedAt: verifiedAt ?? this.verifiedAt,
+    );
+  }
 }

@@ -1,7 +1,5 @@
 import '../entities/offline_media_item.dart';
 
-enum OfflineMediaIntegrityStatus { playable, damaged }
-
 abstract class OfflineMediaService {
   Future<OfflineMediaIntegrityStatus> verify(OfflineMediaItem item);
 

@@ -22,9 +22,16 @@ class LocalOfflineMediaService implements OfflineMediaService {
 
   @override
   Future<OfflineMediaIntegrityStatus> verify(OfflineMediaItem item) async {
-    return isPlayableOfflineMediaPath(item.manifestPath)
+    final status = isPlayableOfflineMediaPath(item.manifestPath)
         ? OfflineMediaIntegrityStatus.playable
         : OfflineMediaIntegrityStatus.damaged;
+    await _repository.upsert(
+      item.copyWith(
+        integrityStatus: status,
+        verifiedAt: DateTime.now(),
+      ),
+    );
+    return status;
   }
 
   @override
