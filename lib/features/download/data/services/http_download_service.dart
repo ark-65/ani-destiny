@@ -12,7 +12,9 @@ import '../../domain/entities/download_progress.dart';
 import '../../domain/entities/hls_manifest.dart';
 import '../../domain/entities/download_source.dart';
 import '../../domain/entities/download_task.dart';
+import '../../domain/entities/offline_media_item.dart';
 import '../../domain/repositories/download_repository.dart';
+import '../../domain/repositories/offline_media_repository.dart';
 import '../../domain/services/hls_manifest_loader.dart';
 import '../../domain/services/download_service.dart';
 
@@ -24,13 +26,16 @@ class HttpDownloadService implements DownloadService {
     required Dio dio,
     required DownloadRepository repository,
     HlsManifestLoader? hlsManifestLoader,
+    OfflineMediaRepository? offlineMediaRepository,
   })  : _dio = dio,
         _repository = repository,
-        _hlsManifestLoader = hlsManifestLoader;
+        _hlsManifestLoader = hlsManifestLoader,
+        _offlineMediaRepository = offlineMediaRepository;
 
   final Dio _dio;
   final DownloadRepository _repository;
   final HlsManifestLoader? _hlsManifestLoader;
+  final OfflineMediaRepository? _offlineMediaRepository;
   final Map<String, CancelToken> _tokens = {};
   final Map<String, StreamController<DownloadProgress>> _controllers = {};
   final Map<String, Completer<void>> _settleCompleters = {};
@@ -332,7 +337,11 @@ class HttpDownloadService implements DownloadService {
         mediaManifest: mediaManifest,
         manifestPath: prepareLocalManifestPath,
       );
-      await _writeHlsManifest(mediaManifest, segmentDownloadedBytes, prepareLocalManifestPath);
+      await _writeHlsManifest(
+        mediaManifest,
+        segmentDownloadedBytes,
+        prepareLocalManifestPath,
+      );
       final completed = preparingTask.copyWith(
         status: DownloadStatus.completed,
         failureReason: DownloadFailureReason.none,
@@ -341,6 +350,19 @@ class HttpDownloadService implements DownloadService {
         downloadedBytes: segmentDownloadedBytes,
         totalBytes: segmentDownloadedBytes,
         updatedAt: DateTime.now(),
+      );
+      await _offlineMediaRepository?.upsert(
+        OfflineMediaItem(
+          id: 'offline-${existingTask.id}',
+          downloadTaskId: existingTask.id,
+          animeId: existingTask.animeId,
+          episodeId: existingTask.episodeId,
+          title: existingTask.title,
+          episodeTitle: existingTask.episodeTitle,
+          manifestPath: prepareLocalManifestPath,
+          downloadedBytes: segmentDownloadedBytes,
+          createdAt: completed.updatedAt,
+        ),
       );
       await _repository.upsertTask(completed);
       _emitTask(completed);
@@ -524,8 +546,7 @@ class HttpDownloadService implements DownloadService {
 
     for (var index = 0; index < manifest.segments.length; index++) {
       final segment = manifest.segments[index];
-      final segmentName =
-          _hlsSegmentFileName(segment.uri, index);
+      final segmentName = _hlsSegmentFileName(segment.uri, index);
       final duration = segment.duration ?? const Duration(seconds: 1);
       final durationText = (duration.inMilliseconds / 1000).toStringAsFixed(3);
       manifestLines.add('#EXTINF:$durationText,${segment.title ?? ''}');
@@ -543,7 +564,8 @@ class HttpDownloadService implements DownloadService {
   String _hlsSegmentFileName(Uri segmentUri, int index) {
     final extension = p.extension(segmentUri.path);
     return 'segment-${index.toString().padLeft(6, '0')} '
-        '${extension.isEmpty ? '.ts' : extension}'.replaceAll(' ', '');
+            '${extension.isEmpty ? '.ts' : extension}'
+        .replaceAll(' ', '');
   }
 
   Future<HlsManifest> _loadHlsMediaManifest({
@@ -565,7 +587,9 @@ class HttpDownloadService implements DownloadService {
       headers: headers,
     );
     if (manifest.isMasterPlaylist) {
-      throw const FormatException('HLS manifest contains nested master playlist.');
+      throw const FormatException(
+        'HLS manifest contains nested master playlist.',
+      );
     }
     return manifest;
   }
@@ -574,14 +598,12 @@ class HttpDownloadService implements DownloadService {
     if (variants.isEmpty) {
       throw const FormatException('HLS manifest contains no media entries.');
     }
-    final mediaVariants = variants
-        .whereType<HlsVariant>()
-        .toList()
+    final mediaVariants = variants.whereType<HlsVariant>().toList()
       ..sort((a, b) {
-          final bandwidthA = a.bandwidth ?? 0;
-          final bandwidthB = b.bandwidth ?? 0;
-          return bandwidthB.compareTo(bandwidthA);
-        });
+        final bandwidthA = a.bandwidth ?? 0;
+        final bandwidthB = b.bandwidth ?? 0;
+        return bandwidthB.compareTo(bandwidthA);
+      });
     if (mediaVariants.isEmpty) {
       throw const FormatException('HLS manifest contains no media entries.');
     }
@@ -867,7 +889,10 @@ class HttpDownloadService implements DownloadService {
     }
     final shouldClearLocalDownload = switch (taskKind) {
       DownloadKind.hls => latest.status == DownloadStatus.canceled,
-      DownloadKind.directFile || DownloadKind.bt || DownloadKind.unknown => true,
+      DownloadKind.directFile ||
+      DownloadKind.bt ||
+      DownloadKind.unknown =>
+        true,
     };
     if (!shouldClearLocalDownload) {
       return;

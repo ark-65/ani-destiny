@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/network/dio_provider.dart';
 import '../../../../core/storage/database_provider.dart';
 import '../../data/repositories/download_repository_impl.dart';
+import '../../data/repositories/offline_media_repository_impl.dart';
 import '../../data/services/download_task_creator.dart';
 import '../../data/services/hls_manifest_loader.dart';
 import '../../data/services/http_download_service.dart';
@@ -11,6 +12,7 @@ import '../../domain/entities/download_progress.dart';
 import '../../domain/entities/download_task.dart';
 import '../../domain/services/hls_manifest_loader.dart';
 import '../../domain/repositories/download_repository.dart';
+import '../../domain/repositories/offline_media_repository.dart';
 import '../../domain/services/download_service.dart';
 
 final downloadRepositoryProvider = Provider<DownloadRepository>((ref) {
@@ -23,11 +25,16 @@ final hlsManifestLoaderProvider = Provider<HlsManifestLoader>((ref) {
   );
 });
 
+final offlineMediaRepositoryProvider = Provider<OfflineMediaRepository>((ref) {
+  return OfflineMediaRepositoryImpl(ref.watch(appDatabaseProvider));
+});
+
 final httpDownloadServiceProvider = Provider<DownloadService>((ref) {
   return HttpDownloadService(
     dio: ref.watch(dioProvider),
     repository: ref.watch(downloadRepositoryProvider),
     hlsManifestLoader: ref.watch(hlsManifestLoaderProvider),
+    offlineMediaRepository: ref.watch(offlineMediaRepositoryProvider),
   );
 });
 

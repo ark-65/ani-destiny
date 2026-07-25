@@ -77,11 +77,32 @@ class DownloadTaskTable extends Table {
   Set<Column> get primaryKey => {id};
 }
 
+@DataClassName('OfflineMediaRow')
+class OfflineMediaTable extends Table {
+  @override
+  String get tableName => 'offline_media';
+
+  TextColumn get id => text()();
+  TextColumn get downloadTaskId => text().named('download_task_id').unique()();
+  TextColumn get animeId => text().named('anime_id')();
+  TextColumn get episodeId => text().named('episode_id')();
+  TextColumn get title => text()();
+  TextColumn get episodeTitle => text().named('episode_title')();
+  TextColumn get manifestPath => text().named('manifest_path')();
+  IntColumn get downloadedBytes =>
+      integer().named('downloaded_bytes').withDefault(const Constant(0))();
+  DateTimeColumn get createdAt => dateTime().named('created_at')();
+
+  @override
+  Set<Column> get primaryKey => {id};
+}
+
 @DriftDatabase(
   tables: [
     WatchHistoryTable,
     FavoriteAnimeTable,
     DownloadTaskTable,
+    OfflineMediaTable,
   ],
 )
 class AppDatabase extends _$AppDatabase {
@@ -89,7 +110,7 @@ class AppDatabase extends _$AppDatabase {
       : super(executor ?? driftDatabase(name: 'ani_destiny'));
 
   @override
-  int get schemaVersion => 4;
+  int get schemaVersion => 5;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -143,6 +164,9 @@ class AppDatabase extends _$AppDatabase {
               downloadTaskTable,
               downloadTaskTable.downloadedBytes,
             );
+          }
+          if (from < 5) {
+            await migrator.createTable(offlineMediaTable);
           }
         },
       );

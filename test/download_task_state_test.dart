@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:ani_destiny/core/error/app_exception.dart';
 import 'package:ani_destiny/core/storage/app_database.dart';
 import 'package:ani_destiny/features/download/data/repositories/download_repository_impl.dart';
+import 'package:ani_destiny/features/download/data/repositories/offline_media_repository_impl.dart';
 import 'package:ani_destiny/features/download/data/services/http_download_service.dart';
 import 'package:ani_destiny/features/download/domain/entities/download_failure_reason.dart';
 import 'package:ani_destiny/features/download/domain/entities/hls_manifest.dart';
@@ -58,13 +59,14 @@ void main() {
     expect(task.failureReason, DownloadFailureReason.none);
   });
 
-  test('starting HLS task with valid manifest downloads segments and writes local manifest',
+  test(
+      'starting HLS task with valid manifest downloads segments and writes local manifest',
       () async {
     final database = AppDatabase(NativeDatabase.memory());
     addTearDown(database.close);
 
-    final tempDir =
-        await Directory.systemTemp.createTemp('ani-destiny-download-hls-complete');
+    final tempDir = await Directory.systemTemp
+        .createTemp('ani-destiny-download-hls-complete');
     addTearDown(() async {
       if (tempDir.existsSync()) {
         await tempDir.delete(recursive: true);
@@ -80,17 +82,23 @@ void main() {
     });
 
     final repository = DownloadRepositoryImpl(database);
+    final offlineMediaRepository = OfflineMediaRepositoryImpl(database);
     final service = HttpDownloadService(
       dio: dio,
       repository: repository,
+      offlineMediaRepository: offlineMediaRepository,
       hlsManifestLoader: _FakeHlsManifestLoader(
         (manifestUri, headers) async {
           expect(manifestUri.toString(), 'https://cdn.example.test/index.m3u8');
           return HlsManifest(
             uri: Uri.parse('https://cdn.example.test/index.m3u8'),
             segments: [
-              HlsSegment(uri: Uri.parse('https://cdn.example.test/segment-1.ts')),
-              HlsSegment(uri: Uri.parse('https://cdn.example.test/segment-2.ts')),
+              HlsSegment(
+                uri: Uri.parse('https://cdn.example.test/segment-1.ts'),
+              ),
+              HlsSegment(
+                uri: Uri.parse('https://cdn.example.test/segment-2.ts'),
+              ),
             ],
             variants: [],
             isLive: false,
@@ -133,24 +141,39 @@ void main() {
     expect(manifestContent, contains('segments/segment-000001.ts'));
     expect(manifestContent, contains('#EXT-X-ENDLIST'));
     expect(
-      File(p.join(p.dirname(manifestPath), 'segments', 'segment-000000.ts')).existsSync(),
+      File(p.join(p.dirname(manifestPath), 'segments', 'segment-000000.ts'))
+          .existsSync(),
       isTrue,
     );
     expect(
-      File(p.join(p.dirname(manifestPath), 'segments', 'segment-000001.ts')).existsSync(),
+      File(p.join(p.dirname(manifestPath), 'segments', 'segment-000001.ts'))
+          .existsSync(),
       isTrue,
     );
 
-    expect(dio.downloadedUris, ['https://cdn.example.test/segment-1.ts', 'https://cdn.example.test/segment-2.ts']);
+    expect(dio.downloadedUris, [
+      'https://cdn.example.test/segment-1.ts',
+      'https://cdn.example.test/segment-2.ts',
+    ]);
     expect(task.failureMessage, isNull);
+    final offlineMedia =
+        await offlineMediaRepository.getByDownloadTaskId(taskId);
+    expect(offlineMedia, isNotNull);
+    expect(offlineMedia!.animeId, 'anime-1');
+    expect(offlineMedia.episodeId, 'episode-1');
+    expect(offlineMedia.manifestPath, manifestPath);
+    expect(
+      offlineMedia.downloadedBytes,
+      segmentOne.length + segmentTwo.length,
+    );
   });
 
   test('starting HLS task resumes from existing segment files', () async {
     final database = AppDatabase(NativeDatabase.memory());
     addTearDown(database.close);
 
-    final tempDir =
-        await Directory.systemTemp.createTemp('ani-destiny-download-hls-resume');
+    final tempDir = await Directory.systemTemp
+        .createTemp('ani-destiny-download-hls-resume');
     addTearDown(() async {
       if (tempDir.existsSync()) {
         await tempDir.delete(recursive: true);
@@ -237,7 +260,10 @@ void main() {
     expect(completedTask, isNotNull);
     expect(completedTask!.status, DownloadStatus.completed);
     expect(completedTask.progress, 1);
-    expect(completedTask.downloadedBytes, segmentOne.length + segmentTwo.length);
+    expect(
+      completedTask.downloadedBytes,
+      segmentOne.length + segmentTwo.length,
+    );
     expect(completedTask.totalBytes, segmentOne.length + segmentTwo.length);
     expect(
       File(p.join(segmentDir.path, 'segment-000000.ts')).existsSync(),
@@ -250,9 +276,10 @@ void main() {
     expect(retryDio.downloadedUris, ['https://cdn.example.test/segment-2.ts']);
   });
 
-  test('starting HLS task resumes after service restart with existing segments', () async {
-    final tempDir =
-        await Directory.systemTemp.createTemp('ani-destiny-download-hls-restart');
+  test('starting HLS task resumes after service restart with existing segments',
+      () async {
+    final tempDir = await Directory.systemTemp
+        .createTemp('ani-destiny-download-hls-restart');
     addTearDown(() async {
       if (tempDir.existsSync()) {
         await tempDir.delete(recursive: true);
@@ -356,7 +383,10 @@ void main() {
     expect(completedTask, isNotNull);
     expect(completedTask!.status, DownloadStatus.completed);
     expect(completedTask.progress, 1);
-    expect(completedTask.downloadedBytes, segmentOne.length + segmentTwo.length);
+    expect(
+      completedTask.downloadedBytes,
+      segmentOne.length + segmentTwo.length,
+    );
     expect(completedTask.totalBytes, segmentOne.length + segmentTwo.length);
     expect(completedTask.localPath, isNotNull);
     final manifestPath = completedTask.localPath!;
@@ -367,15 +397,18 @@ void main() {
       File(p.join(restartSegmentsDir.path, 'segment-000001.ts')).existsSync(),
       isTrue,
     );
-    expect(restartDio.downloadedUris, ['https://cdn.example.test/segment-2.ts']);
+    expect(
+      restartDio.downloadedUris,
+      ['https://cdn.example.test/segment-2.ts'],
+    );
   });
 
   test('starting HLS task fails when a downloaded segment is empty', () async {
     final database = AppDatabase(NativeDatabase.memory());
     addTearDown(database.close);
 
-    final tempDir =
-        await Directory.systemTemp.createTemp('ani-destiny-download-hls-empty-segment');
+    final tempDir = await Directory.systemTemp
+        .createTemp('ani-destiny-download-hls-empty-segment');
     addTearDown(() async {
       if (tempDir.existsSync()) {
         await tempDir.delete(recursive: true);
@@ -398,8 +431,12 @@ void main() {
           return HlsManifest(
             uri: manifestUri,
             segments: [
-              HlsSegment(uri: Uri.parse('https://cdn.example.test/segment-1.ts')),
-              HlsSegment(uri: Uri.parse('https://cdn.example.test/segment-2.ts')),
+              HlsSegment(
+                uri: Uri.parse('https://cdn.example.test/segment-1.ts'),
+              ),
+              HlsSegment(
+                uri: Uri.parse('https://cdn.example.test/segment-2.ts'),
+              ),
             ],
             variants: const [],
             isLive: false,
@@ -433,18 +470,32 @@ void main() {
     expect(task.localPath, isNotNull);
     final manifestDirectory = p.dirname(task.localPath!);
     final segmentDir = Directory(p.join(manifestDirectory, 'segments'));
-    expect(File(p.join(segmentDir.path, 'segment-000000.ts')).existsSync(), isTrue);
-    expect(File(p.join(segmentDir.path, 'segment-000000.ts')).readAsBytesSync(), isEmpty);
-    expect(File(p.join(segmentDir.path, 'segment-000001.ts')).existsSync(), isTrue);
-    expect(File(p.join(segmentDir.path, 'segment-000001.ts')).readAsBytesSync(), segmentTwo);
+    expect(
+      File(p.join(segmentDir.path, 'segment-000000.ts')).existsSync(),
+      isTrue,
+    );
+    expect(
+      File(p.join(segmentDir.path, 'segment-000000.ts')).readAsBytesSync(),
+      isEmpty,
+    );
+    expect(
+      File(p.join(segmentDir.path, 'segment-000001.ts')).existsSync(),
+      isTrue,
+    );
+    expect(
+      File(p.join(segmentDir.path, 'segment-000001.ts')).readAsBytesSync(),
+      segmentTwo,
+    );
   });
 
-  test('starting HLS task with master playlist resolves highest-bandwidth variant first', () async {
+  test(
+    'starting HLS task with master playlist resolves highest-bandwidth variant first',
+      () async {
     final database = AppDatabase(NativeDatabase.memory());
     addTearDown(database.close);
 
-    final tempDir =
-        await Directory.systemTemp.createTemp('ani-destiny-download-hls-master');
+    final tempDir = await Directory.systemTemp
+        .createTemp('ani-destiny-download-hls-master');
     addTearDown(() async {
       if (tempDir.existsSync()) {
         await tempDir.delete(recursive: true);
@@ -537,17 +588,20 @@ void main() {
     expect(task.downloadedBytes, segmentBytes.length);
     expect(task.progress, 1);
     expect(
-      File(p.join(p.dirname(task.localPath!), 'segments', 'segment-000000.ts')).existsSync(),
+      File(p.join(p.dirname(task.localPath!), 'segments', 'segment-000000.ts'))
+          .existsSync(),
       isTrue,
     );
   });
 
-  test('starting HLS task with invalid variant manifest reports invalid-manifest failure', () async {
+  test(
+      'starting HLS task with invalid variant manifest reports invalid-manifest failure',
+      () async {
     final database = AppDatabase(NativeDatabase.memory());
     addTearDown(database.close);
 
-    final tempDir =
-        await Directory.systemTemp.createTemp('ani-destiny-download-hls-invalid-variant');
+    final tempDir = await Directory.systemTemp
+        .createTemp('ani-destiny-download-hls-invalid-variant');
     addTearDown(() async {
       if (tempDir.existsSync()) {
         await tempDir.delete(recursive: true);
@@ -606,7 +660,8 @@ void main() {
     expect(task.failureMessage, 'variant manifest invalid');
   });
 
-  test('starting HLS task with live media playlist stays unsupported for now', () async {
+  test('starting HLS task with live media playlist stays unsupported for now',
+      () async {
     final database = AppDatabase(NativeDatabase.memory());
     addTearDown(database.close);
 
@@ -628,7 +683,9 @@ void main() {
           return HlsManifest(
             uri: manifestUri,
             segments: [
-              HlsSegment(uri: Uri.parse('https://cdn.example.test/segment-1.ts')),
+              HlsSegment(
+                uri: Uri.parse('https://cdn.example.test/segment-1.ts'),
+              ),
             ],
             variants: const [],
             isLive: true,
@@ -660,12 +717,14 @@ void main() {
     expect(task.failureMessage, isNull);
   });
 
-  test('starting HLS task with invalid manifest records invalid-manifest failure', () async {
+  test(
+      'starting HLS task with invalid manifest records invalid-manifest failure',
+      () async {
     final database = AppDatabase(NativeDatabase.memory());
     addTearDown(database.close);
 
-    final tempDir =
-        await Directory.systemTemp.createTemp('ani-destiny-download-hls-invalid');
+    final tempDir = await Directory.systemTemp
+        .createTemp('ani-destiny-download-hls-invalid');
     addTearDown(() async {
       if (tempDir.existsSync()) {
         await tempDir.delete(recursive: true);
@@ -1306,8 +1365,7 @@ void main() {
     expect(pauseSettled, isTrue);
   });
 
-  test(
-      'pausing an active HLS download keeps downloaded segments for resume',
+  test('pausing an active HLS download keeps downloaded segments for resume',
       () async {
     final database = AppDatabase(NativeDatabase.memory());
     addTearDown(database.close);
@@ -1501,8 +1559,8 @@ void main() {
       () async {
     final database = AppDatabase(NativeDatabase.memory());
     addTearDown(database.close);
-    final tempDir =
-        await Directory.systemTemp.createTemp('ani-destiny-remove-hls-completed');
+    final tempDir = await Directory.systemTemp
+        .createTemp('ani-destiny-remove-hls-completed');
     addTearDown(() async {
       if (tempDir.existsSync()) {
         await tempDir.delete(recursive: true);
@@ -1523,8 +1581,10 @@ void main() {
     );
     await segmentDirectory.create(recursive: true);
     final manifestFile = File(p.join(manifestDirectory.path, 'index.m3u8'));
-    final firstSegment = File(p.join(segmentDirectory.path, 'segment-000000.ts'));
-    final secondSegment = File(p.join(segmentDirectory.path, 'segment-000001.ts'));
+    final firstSegment =
+        File(p.join(segmentDirectory.path, 'segment-000000.ts'));
+    final secondSegment =
+        File(p.join(segmentDirectory.path, 'segment-000001.ts'));
     await manifestFile.writeAsString('#EXTM3U');
     await firstSegment.writeAsString('segment-1');
     await secondSegment.writeAsString('segment-2');
@@ -1589,7 +1649,8 @@ void main() {
     );
     await segmentDirectory.create(recursive: true);
     final manifestFile = File(p.join(manifestDirectory.path, 'index.m3u8'));
-    final firstSegment = File(p.join(segmentDirectory.path, 'segment-000000.ts'));
+    final firstSegment =
+        File(p.join(segmentDirectory.path, 'segment-000000.ts'));
     await manifestFile.writeAsString('#EXTM3U');
     await firstSegment.writeAsString('segment-1');
     final now = DateTime(2026, 7, 24, 1, 0);
@@ -1626,7 +1687,8 @@ void main() {
     expect(segmentDirectory.existsSync(), isFalse);
   });
 
-  test('removing a failed HLS task remains idempotent if files are already gone',
+  test(
+      'removing a failed HLS task remains idempotent if files are already gone',
       () async {
     final database = AppDatabase(NativeDatabase.memory());
     addTearDown(database.close);
