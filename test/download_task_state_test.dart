@@ -333,6 +333,113 @@ void main() {
     expect(File(completedTask.localPath!).existsSync(), isTrue);
   });
 
+  test('pausing during HLS retry wait stops retries and preserves resume data',
+      () async {
+    final database = AppDatabase(NativeDatabase.memory());
+    addTearDown(database.close);
+    final tempDir =
+        await Directory.systemTemp.createTemp('ani-destiny-hls-retry-pause');
+    addTearDown(() async {
+      if (tempDir.existsSync()) {
+        await tempDir.delete(recursive: true);
+      }
+    });
+
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMethodCallHandler(pathProviderChannel, (call) async {
+      if (call.method == 'getApplicationDocumentsDirectory') {
+        return tempDir.path;
+      }
+      return null;
+    });
+
+    const segmentOneUri = 'https://cdn.example.test/segment-1.ts';
+    const segmentTwoUri = 'https://cdn.example.test/segment-2.ts';
+    const segmentOne = <int>[1, 2, 3, 4, 5];
+    const segmentTwo = <int>[6, 7, 8, 9, 10, 11];
+    final retryWaitStarted = Completer<void>();
+    final manifest = HlsManifest(
+      uri: Uri.parse('https://cdn.example.test/index.m3u8'),
+      segments: [
+        HlsSegment(uri: Uri.parse(segmentOneUri)),
+        HlsSegment(uri: Uri.parse(segmentTwoUri)),
+      ],
+      variants: const [],
+      isLive: false,
+      targetDuration: null,
+    );
+    final repository = DownloadRepositoryImpl(database);
+    final dio = _FlakyHlsSegmentDownloadDio(
+      {segmentOneUri: segmentOne, segmentTwoUri: segmentTwo},
+      failOnFirst: {segmentTwoUri},
+      onFailure: (uri, attempt) {
+        if (uri == segmentTwoUri && !retryWaitStarted.isCompleted) {
+          retryWaitStarted.complete();
+        }
+      },
+    );
+    final service = HttpDownloadService(
+      dio: dio,
+      repository: repository,
+      hlsManifestLoader: _FakeHlsManifestLoader(
+        (manifestUri, headers) async => manifest,
+      ),
+      hlsSegmentRetryDelay: const Duration(minutes: 1),
+    );
+
+    final taskId = await service.createTask(
+      animeId: 'anime-1',
+      episodeId: 'episode-1',
+      sourceId: 'sakura',
+      source: const DownloadSource(
+        url: 'https://cdn.example.test/index.m3u8',
+        kind: DownloadKind.hls,
+      ),
+      title: 'HLS Test',
+      episodeTitle: 'Episode 1',
+    );
+
+    final startFuture = service.start(taskId);
+    await retryWaitStarted.future;
+    await service.pause(taskId);
+    await startFuture;
+
+    final pausedTask = await repository.getTask(taskId);
+    expect(pausedTask, isNotNull);
+    expect(pausedTask!.status, DownloadStatus.paused);
+    expect(pausedTask.localPath, isNotNull);
+    expect(dio.downloadedUris, [segmentOneUri, segmentTwoUri]);
+    final segmentDirectory =
+        p.join(p.dirname(pausedTask.localPath!), 'segments');
+    expect(
+      File(p.join(segmentDirectory, 'segment-000000.ts')).readAsBytesSync(),
+      segmentOne,
+    );
+    expect(
+      File(p.join(segmentDirectory, 'segment-000001.ts')).existsSync(),
+      isFalse,
+    );
+
+    final resumeDio = _FakeHlsSegmentDownloadDio({
+      segmentOneUri: segmentOne,
+      segmentTwoUri: segmentTwo,
+    });
+    final resumeService = HttpDownloadService(
+      dio: resumeDio,
+      repository: repository,
+      hlsManifestLoader: _FakeHlsManifestLoader(
+        (manifestUri, headers) async => manifest,
+      ),
+      hlsSegmentRetryDelay: Duration.zero,
+    );
+    await resumeService.start(taskId);
+
+    final completedTask = await repository.getTask(taskId);
+    expect(completedTask, isNotNull);
+    expect(completedTask!.status, DownloadStatus.completed);
+    expect(resumeDio.downloadedUris, [segmentTwoUri]);
+  });
+
   test('starting HLS task resumes from existing segment files', () async {
     final database = AppDatabase(NativeDatabase.memory());
     addTearDown(database.close);
@@ -2162,12 +2269,14 @@ class _FlakyHlsSegmentDownloadDio extends DioForNative {
     this.segmentBytesByUri, {
     Set<String> failOnFirst = const {},
     Map<String, int> failuresBeforeSuccess = const {},
+    this.onFailure,
   })  : failOnFirst = Set<String>.from(failOnFirst),
         failuresBeforeSuccess = Map<String, int>.from(failuresBeforeSuccess);
 
   final Map<String, List<int>> segmentBytesByUri;
   final Set<String> failOnFirst;
   final Map<String, int> failuresBeforeSuccess;
+  final void Function(String uri, int attempt)? onFailure;
   final Map<String, int> _attemptsByUri = {};
   final List<String> downloadedUris = <String>[];
 
@@ -2190,6 +2299,7 @@ class _FlakyHlsSegmentDownloadDio extends DioForNative {
     final configuredFailures = failuresBeforeSuccess[urlPath] ??
         (failOnFirst.contains(urlPath) ? 1 : 0);
     if (attempt <= configuredFailures) {
+      onFailure?.call(urlPath, attempt);
       throw DioException(
         requestOptions: RequestOptions(path: urlPath),
         type: DioExceptionType.connectionError,

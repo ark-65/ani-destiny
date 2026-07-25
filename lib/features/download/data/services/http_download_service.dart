@@ -542,7 +542,10 @@ class HttpDownloadService implements DownloadService {
           rethrow;
         }
         if (_hlsSegmentRetryDelay > Duration.zero) {
-          await Future<void>.delayed(_hlsSegmentRetryDelay);
+          await Future.any<void>([
+            Future<void>.delayed(_hlsSegmentRetryDelay),
+            cancelToken.whenCancel.then<void>((error) => throw error),
+          ]);
         }
         if (cancelToken.isCancelled) {
           throw cancelToken.cancelError!;
