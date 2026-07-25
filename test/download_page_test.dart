@@ -142,6 +142,69 @@ void main() {
     );
   });
 
+  testWidgets('offline media groups episodes and removes only one anime', (
+    tester,
+  ) async {
+    final repository = _FakeDownloadRepository([]);
+    final animeOneEpisodeOne = _offlineItem(
+      id: 'offline-1',
+      animeId: 'anime-1',
+      episodeId: 'episode-1',
+      title: 'Offline Anime',
+      episodeTitle: 'Episode 1',
+    );
+    final animeOneEpisodeTwo = _offlineItem(
+      id: 'offline-2',
+      animeId: 'anime-1',
+      episodeId: 'episode-2',
+      title: 'Offline Anime',
+      episodeTitle: 'Episode 2',
+    );
+    final otherAnime = _offlineItem(
+      id: 'offline-3',
+      animeId: 'anime-2',
+      episodeId: 'episode-1',
+      title: 'Other Anime',
+      episodeTitle: 'Episode 1',
+    );
+    final offlineMediaService = _FakeOfflineMediaService();
+
+    await _pumpDownloadPage(
+      tester,
+      repository,
+      offlineMedia: [animeOneEpisodeOne, animeOneEpisodeTwo, otherAnime],
+      offlineMediaService: offlineMediaService,
+    );
+
+    expect(find.text('Offline Anime (2)'), findsOneWidget);
+    expect(find.text('Other Anime (1)'), findsOneWidget);
+    await tester.tap(
+      find.byKey(const ValueKey('offline-anime-remove-anime-1')),
+    );
+    await tester.pumpAndSettle();
+    expect(
+      find.descendant(
+        of: find.byType(AlertDialog),
+        matching: find.text('Delete offline anime'),
+      ),
+      findsOneWidget,
+    );
+    await tester.tap(find.widgetWithText(FilledButton, 'Remove'));
+    await tester.pumpAndSettle();
+
+    expect(
+      offlineMediaService.removedBatches,
+      [
+        [animeOneEpisodeOne, animeOneEpisodeTwo],
+      ],
+    );
+    expect(offlineMediaService.removedItems, isEmpty);
+    expect(
+      find.text('All offline media for this anime was deleted.'),
+      findsOneWidget,
+    );
+  });
+
   testWidgets(
     'same-anime clear button removes only that anime ended tasks',
     (tester) async {
@@ -2591,6 +2654,7 @@ class _FakeOfflineMediaService implements OfflineMediaService {
   final OfflineMediaIntegrityStatus integrityStatus;
   final List<OfflineMediaItem> verifiedItems = [];
   final List<OfflineMediaItem> removedItems = [];
+  final List<List<OfflineMediaItem>> removedBatches = [];
 
   @override
   Future<OfflineMediaIntegrityStatus> verify(OfflineMediaItem item) async {
@@ -2602,6 +2666,31 @@ class _FakeOfflineMediaService implements OfflineMediaService {
   Future<void> remove(OfflineMediaItem item) async {
     removedItems.add(item);
   }
+
+  @override
+  Future<void> removeAll(Iterable<OfflineMediaItem> items) async {
+    removedBatches.add(items.toList());
+  }
+}
+
+OfflineMediaItem _offlineItem({
+  required String id,
+  required String animeId,
+  required String episodeId,
+  required String title,
+  required String episodeTitle,
+}) {
+  return OfflineMediaItem(
+    id: id,
+    downloadTaskId: 'task-$id',
+    animeId: animeId,
+    episodeId: episodeId,
+    title: title,
+    episodeTitle: episodeTitle,
+    manifestPath: '/downloads/$id/index.m3u8',
+    downloadedBytes: 2048,
+    createdAt: DateTime(2026, 7, 26),
+  );
 }
 
 class _FakeDownloadService implements DownloadService {

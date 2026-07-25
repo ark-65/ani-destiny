@@ -41,6 +41,13 @@ class LocalOfflineMediaService implements OfflineMediaService {
     await _repository.delete(item.id);
   }
 
+  @override
+  Future<void> removeAll(Iterable<OfflineMediaItem> items) async {
+    for (final item in items) {
+      await remove(item);
+    }
+  }
+
   static Future<void> _removeDirectoryIfPresent(String path) async {
     final directory = Directory(path);
     if (await directory.exists()) {

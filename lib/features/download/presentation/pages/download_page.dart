@@ -246,6 +246,7 @@ class _DownloadPageState extends ConsumerState<DownloadPage>
                 if (items.isEmpty) {
                   return const SizedBox.shrink();
                 }
+                final groups = _groupOfflineMediaByAnime(items);
                 return Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -255,62 +256,120 @@ class _DownloadPageState extends ConsumerState<DownloadPage>
                     ),
                     const SizedBox(height: 8),
                     SizedBox(
-                      height: 96,
+                      height: (groups.length * 136.0)
+                          .clamp(136.0, 272.0)
+                          .toDouble(),
                       child: ListView.separated(
-                        scrollDirection: Axis.horizontal,
-                        itemCount: items.length,
-                        separatorBuilder: (_, __) => const SizedBox(width: 8),
-                        itemBuilder: (context, index) {
-                          final item = items[index];
-                          return SizedBox(
-                            width: 280,
-                            child: Card(
-                              clipBehavior: Clip.antiAlias,
-                              child: ListTile(
-                                key: ValueKey('offline-media-${item.id}'),
-                                leading: const Icon(Icons.offline_pin_outlined),
-                                title: Text(
-                                  item.title,
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                                subtitle: Text(
-                                  item.episodeTitle,
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                                trailing: Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    const Icon(Icons.play_arrow),
-                                    IconButton(
-                                      key: ValueKey(
-                                        'offline-media-verify-${item.id}',
-                                      ),
-                                      tooltip: context.l10n.verifyOfflineMedia,
-                                      onPressed: () =>
-                                          _verifyOfflineMedia(item),
-                                      icon: const Icon(Icons.verified_outlined),
+                        itemCount: groups.length,
+                        separatorBuilder: (_, __) => const SizedBox(height: 8),
+                        itemBuilder: (context, groupIndex) {
+                          final group = groups[groupIndex];
+                          return Column(
+                            children: [
+                              Row(
+                                children: [
+                                  Expanded(
+                                    child: Text(
+                                      '${group.first.title} (${group.length})',
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .labelLarge,
                                     ),
-                                    IconButton(
-                                      key: ValueKey(
-                                        'offline-media-remove-${item.id}',
-                                      ),
-                                      tooltip: context.l10n.removeOfflineMedia,
-                                      onPressed: () =>
-                                          _confirmRemoveOfflineMedia(item),
-                                      icon: const Icon(
-                                        Icons.delete_outline,
-                                      ),
+                                  ),
+                                  TextButton.icon(
+                                    key: ValueKey(
+                                      'offline-anime-remove-'
+                                      '${group.first.animeId}',
                                     ),
-                                  ],
-                                ),
-                                onTap: () => context.push(
-                                  '/player',
-                                  extra: offlineMediaPlayerRouteArgs(item),
+                                    onPressed: () =>
+                                        _confirmRemoveOfflineAnime(group),
+                                    icon: const Icon(
+                                      Icons.delete_sweep_outlined,
+                                    ),
+                                    label:
+                                        Text(context.l10n.removeOfflineAnime),
+                                  ),
+                                ],
+                              ),
+                              SizedBox(
+                                height: 88,
+                                child: ListView.separated(
+                                  scrollDirection: Axis.horizontal,
+                                  itemCount: group.length,
+                                  separatorBuilder: (_, __) =>
+                                      const SizedBox(width: 8),
+                                  itemBuilder: (context, index) {
+                                    final item = group[index];
+                                    return SizedBox(
+                                      width: 280,
+                                      child: Card(
+                                        clipBehavior: Clip.antiAlias,
+                                        child: ListTile(
+                                          key: ValueKey(
+                                            'offline-media-${item.id}',
+                                          ),
+                                          leading: const Icon(
+                                            Icons.offline_pin_outlined,
+                                          ),
+                                          title: Text(
+                                            item.title,
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis,
+                                          ),
+                                          subtitle: Text(
+                                            item.episodeTitle,
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis,
+                                          ),
+                                          trailing: Row(
+                                            mainAxisSize: MainAxisSize.min,
+                                            children: [
+                                              const Icon(Icons.play_arrow),
+                                              IconButton(
+                                                key: ValueKey(
+                                                  'offline-media-verify-'
+                                                  '${item.id}',
+                                                ),
+                                                tooltip: context
+                                                    .l10n.verifyOfflineMedia,
+                                                onPressed: () =>
+                                                    _verifyOfflineMedia(item),
+                                                icon: const Icon(
+                                                  Icons.verified_outlined,
+                                                ),
+                                              ),
+                                              IconButton(
+                                                key: ValueKey(
+                                                  'offline-media-remove-'
+                                                  '${item.id}',
+                                                ),
+                                                tooltip: context
+                                                    .l10n.removeOfflineMedia,
+                                                onPressed: () =>
+                                                    _confirmRemoveOfflineMedia(
+                                                  item,
+                                                ),
+                                                icon: const Icon(
+                                                  Icons.delete_outline,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                          onTap: () => context.push(
+                                            '/player',
+                                            extra: offlineMediaPlayerRouteArgs(
+                                              item,
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                    );
+                                  },
                                 ),
                               ),
-                            ),
+                            ],
                           );
                         },
                       ),
@@ -1095,6 +1154,54 @@ class _DownloadPageState extends ConsumerState<DownloadPage>
       _showDownloadSnackBar(context.l10n.offlineMediaRemoveFailed);
     }
   }
+
+  Future<void> _confirmRemoveOfflineAnime(
+    List<OfflineMediaItem> items,
+  ) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: Text(context.l10n.removeOfflineAnime),
+        content: Text(context.l10n.removeOfflineAnimeConfirmation),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(false),
+            child: Text(context.l10n.cancel),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(dialogContext).pop(true),
+            child: Text(context.l10n.remove),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !mounted) return;
+
+    try {
+      await ref.read(offlineMediaServiceProvider).removeAll(items);
+      if (!mounted) return;
+      _showDownloadSnackBar(context.l10n.offlineAnimeRemoved);
+    } on Object {
+      if (!mounted) return;
+      _showDownloadSnackBar(context.l10n.offlineAnimeRemoveFailed);
+    }
+  }
+}
+
+@visibleForTesting
+List<List<OfflineMediaItem>> groupOfflineMediaByAnime(
+  List<OfflineMediaItem> items,
+) =>
+    _groupOfflineMediaByAnime(items);
+
+List<List<OfflineMediaItem>> _groupOfflineMediaByAnime(
+  List<OfflineMediaItem> items,
+) {
+  final groups = <String, List<OfflineMediaItem>>{};
+  for (final item in items) {
+    groups.putIfAbsent(item.animeId, () => []).add(item);
+  }
+  return groups.values.toList(growable: false);
 }
 
 @visibleForTesting

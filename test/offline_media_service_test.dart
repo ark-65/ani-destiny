@@ -85,6 +85,50 @@ void main() {
 
     expect((await repository.getAll()).single.id, item.id);
   });
+
+  test('removeAll deletes each episode directory and repository record',
+      () async {
+    final database = AppDatabase(NativeDatabase.memory());
+    addTearDown(database.close);
+    final repository = OfflineMediaRepositoryImpl(database);
+    final tempDirectory =
+        await Directory.systemTemp.createTemp('offline-anime-remove-');
+    addTearDown(() async {
+      if (await tempDirectory.exists()) {
+        await tempDirectory.delete(recursive: true);
+      }
+    });
+    final items = <OfflineMediaItem>[];
+    for (var index = 1; index <= 2; index++) {
+      final directory = Directory(p.join(tempDirectory.path, 'task-$index'));
+      await directory.create();
+      final manifest = File(p.join(directory.path, 'index.m3u8'));
+      await manifest.writeAsString('#EXTM3U\n');
+      final item = OfflineMediaItem(
+        id: 'offline-$index',
+        downloadTaskId: 'task-$index',
+        animeId: 'anime-1',
+        episodeId: 'episode-$index',
+        title: 'HLS Test',
+        episodeTitle: 'Episode $index',
+        manifestPath: manifest.path,
+        downloadedBytes: 1,
+        createdAt: DateTime(2026, 7, 26),
+      );
+      items.add(item);
+      await repository.upsert(item);
+    }
+
+    await LocalOfflineMediaService(repository: repository).removeAll(items);
+
+    expect(await repository.getAll(), isEmpty);
+    for (var index = 1; index <= 2; index++) {
+      expect(
+        await Directory(p.join(tempDirectory.path, 'task-$index')).exists(),
+        isFalse,
+      );
+    }
+  });
 }
 
 OfflineMediaItem _item(String manifestPath) {
