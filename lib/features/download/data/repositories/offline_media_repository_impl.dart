@@ -11,14 +11,15 @@ class OfflineMediaRepositoryImpl implements OfflineMediaRepository {
 
   @override
   Future<List<OfflineMediaItem>> getAll() async {
-    final query = _database.select(_database.offlineMediaTable)
-      ..orderBy([
-        (table) => OrderingTerm(
-              expression: table.createdAt,
-              mode: OrderingMode.desc,
-            ),
-      ]);
+    final query = _allItemsQuery();
     return (await query.get()).map(_itemFromRow).toList(growable: false);
+  }
+
+  @override
+  Stream<List<OfflineMediaItem>> watchAll() {
+    return _allItemsQuery().watch().map(
+          (rows) => rows.map(_itemFromRow).toList(growable: false),
+        );
   }
 
   @override
@@ -45,6 +46,17 @@ class OfflineMediaRepositoryImpl implements OfflineMediaRepository {
             createdAt: item.createdAt,
           ),
         );
+  }
+
+  SimpleSelectStatement<$OfflineMediaTableTable, OfflineMediaRow>
+      _allItemsQuery() {
+    return _database.select(_database.offlineMediaTable)
+      ..orderBy([
+        (table) => OrderingTerm(
+              expression: table.createdAt,
+              mode: OrderingMode.desc,
+            ),
+      ]);
   }
 
   OfflineMediaItem _itemFromRow(OfflineMediaRow row) {

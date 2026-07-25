@@ -13,6 +13,7 @@ import '../../../../core/widgets/app_loading_view.dart';
 import '../../../../features/player/domain/entities/player_route_args.dart';
 import '../../../../shared/widgets/adaptive_page.dart';
 import '../../domain/entities/download_task.dart';
+import '../../domain/entities/offline_media_item.dart';
 import '../download_entry_feedback.dart';
 import '../download_task_cleanup_state.dart';
 import '../providers/download_providers.dart';
@@ -74,9 +75,8 @@ class _DownloadPageState extends ConsumerState<DownloadPage>
     if (remainingCount == 0) {
       return null;
     }
-    final manualCleanupTasks = tasks
-        .where(downloadTaskNeedsManualCleanup)
-        .toList(growable: false);
+    final manualCleanupTasks =
+        tasks.where(downloadTaskNeedsManualCleanup).toList(growable: false);
     if (manualCleanupTasks.isEmpty) {
       return null;
     }
@@ -202,6 +202,7 @@ class _DownloadPageState extends ConsumerState<DownloadPage>
   @override
   Widget build(BuildContext context) {
     final tasks = ref.watch(downloadTasksProvider);
+    final offlineMedia = ref.watch(offlineMediaItemsProvider);
 
     return SafeArea(
       child: AdaptivePage(
@@ -237,6 +238,62 @@ class _DownloadPageState extends ConsumerState<DownloadPage>
               ],
             ),
             const SizedBox(height: 12),
+            offlineMedia.when(
+              loading: () => const SizedBox.shrink(),
+              error: (_, __) => const SizedBox.shrink(),
+              data: (items) {
+                if (items.isEmpty) {
+                  return const SizedBox.shrink();
+                }
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      context.l10n.offlineMedia,
+                      style: Theme.of(context).textTheme.titleMedium,
+                    ),
+                    const SizedBox(height: 8),
+                    SizedBox(
+                      height: 96,
+                      child: ListView.separated(
+                        scrollDirection: Axis.horizontal,
+                        itemCount: items.length,
+                        separatorBuilder: (_, __) => const SizedBox(width: 8),
+                        itemBuilder: (context, index) {
+                          final item = items[index];
+                          return SizedBox(
+                            width: 280,
+                            child: Card(
+                              clipBehavior: Clip.antiAlias,
+                              child: ListTile(
+                                key: ValueKey('offline-media-${item.id}'),
+                                leading: const Icon(Icons.offline_pin_outlined),
+                                title: Text(
+                                  item.title,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                                subtitle: Text(
+                                  item.episodeTitle,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                                trailing: const Icon(Icons.play_arrow),
+                                onTap: () => context.push(
+                                  '/player',
+                                  extra: offlineMediaPlayerRouteArgs(item),
+                                ),
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                  ],
+                );
+              },
+            ),
             Expanded(
               child: tasks.when(
                 loading: () =>
@@ -262,16 +319,18 @@ class _DownloadPageState extends ConsumerState<DownloadPage>
                         ];
                   final removableTaskIds = _removableTaskIds(items);
                   final clearableTaskIds = _clearableTaskIds(items);
-                  final clearableTaskIdsByAnime = _clearableTaskIdsByAnime(items);
+                  final clearableTaskIdsByAnime =
+                      _clearableTaskIdsByAnime(items);
                   final manualCleanupTaskIds = _manualCleanupTaskIds(items);
                   final manualCleanupTaskCount = manualCleanupTaskIds.length;
                   final showClearEndedTasksAction = clearableTaskIds.length > 1;
                   final showSingleReadyTaskAction =
                       clearableTaskIds.length == 1 &&
-                      manualCleanupTaskCount > 0;
+                          manualCleanupTaskCount > 0;
                   final showRecheckManualCleanupAction =
                       manualCleanupTaskCount > 1 ||
-                      (manualCleanupTaskCount > 0 && clearableTaskIds.length <= 1);
+                          (manualCleanupTaskCount > 0 &&
+                              clearableTaskIds.length <= 1);
                   final manualCleanupBatchRecheckLabel =
                       showRecheckManualCleanupAction
                           ? context.l10n.recheckLeftoverFilesCount(
@@ -481,16 +540,17 @@ class _DownloadPageState extends ConsumerState<DownloadPage>
                                   context,
                                   task.id,
                                   DownloadTaskBusyAction.remove,
-                                        () => ref
-                                          .read(httpDownloadServiceProvider)
-                                          .removeEndedTask(task.id),
+                                  () => ref
+                                      .read(httpDownloadServiceProvider)
+                                      .removeEndedTask(task.id),
                                 ),
                               ),
-                              onClearSameAnimeEndedDownloads: showSameAnimeClearAction
-                                  ? () => _handleClearSameAnimeEndedTasks(
-                                      task.animeId,
-                                    )
-                                  : null,
+                              onClearSameAnimeEndedDownloads:
+                                  showSameAnimeClearAction
+                                      ? () => _handleClearSameAnimeEndedTasks(
+                                            task.animeId,
+                                          )
+                                      : null,
                               clearSameAnimeEndedDownloadsLabel:
                                   showSameAnimeClearAction
                                       ? context.l10n.clearEndedDownloadsCount(
@@ -508,7 +568,8 @@ class _DownloadPageState extends ConsumerState<DownloadPage>
                                               episodeId: task.episodeId,
                                               animeTitle: task.title,
                                               episodeTitle: task.episodeTitle,
-                                              playUrl: Uri.file(task.localPath!).toString(),
+                                              playUrl: Uri.file(task.localPath!)
+                                                  .toString(),
                                               sourceId: task.sourceId,
                                             ),
                                           )
@@ -713,7 +774,8 @@ class _DownloadPageState extends ConsumerState<DownloadPage>
         clearedCount += 1;
       } catch (error) {
         failedCount += 1;
-        if (downloadActionErrorCode(error) == 'download_manual_cleanup_required') {
+        if (downloadActionErrorCode(error) ==
+            'download_manual_cleanup_required') {
           manualCleanupTaskIds.add(taskId);
         }
         final failureMessage = error is AppException &&
@@ -967,6 +1029,18 @@ class _DownloadPageState extends ConsumerState<DownloadPage>
     }
     return context.l10n.downloadPageLoadFailedMessage;
   }
+}
+
+@visibleForTesting
+PlayerRouteArgs offlineMediaPlayerRouteArgs(OfflineMediaItem item) {
+  return PlayerRouteArgs(
+    animeId: item.animeId,
+    episodeId: item.episodeId,
+    animeTitle: item.title,
+    episodeTitle: item.episodeTitle,
+    playUrl: Uri.file(item.manifestPath).toString(),
+    sourceId: 'offline',
+  );
 }
 
 class _DownloadSnackBarAction {

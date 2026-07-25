@@ -59,6 +59,9 @@ void main() {
 
     final repository = OfflineMediaRepositoryImpl(database);
     final createdAt = DateTime(2026, 7, 25, 20, 30);
+    final watchedItems = repository.watchAll().firstWhere(
+          (items) => items.isNotEmpty,
+        );
     await repository.upsert(
       OfflineMediaItem(
         id: 'offline-task-1',
@@ -80,5 +83,6 @@ void main() {
     expect(restored.manifestPath, '/downloads/task-1/index.m3u8');
     expect(restored.downloadedBytes, 2048);
     expect((await repository.getAll()).single.downloadTaskId, 'task-1');
+    expect((await watchedItems).single.id, 'offline-task-1');
   });
 }

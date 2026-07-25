@@ -7,7 +7,9 @@ import 'package:ani_destiny/features/download/domain/entities/download_kind.dart
 import 'package:ani_destiny/features/download/domain/entities/download_progress.dart';
 import 'package:ani_destiny/features/download/domain/entities/download_source.dart';
 import 'package:ani_destiny/features/download/domain/entities/download_task.dart';
+import 'package:ani_destiny/features/download/domain/entities/offline_media_item.dart';
 import 'package:ani_destiny/features/download/domain/repositories/download_repository.dart';
+import 'package:ani_destiny/features/download/domain/repositories/offline_media_repository.dart';
 import 'package:ani_destiny/features/download/domain/services/download_service.dart';
 import 'package:ani_destiny/features/download/presentation/download_task_cleanup_state.dart';
 import 'package:ani_destiny/features/download/presentation/pages/download_page.dart';
@@ -18,23 +20,73 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
+  testWidgets('persisted offline media stays visible after tasks are removed', (
+    tester,
+  ) async {
+    final repository = _FakeDownloadRepository([]);
+    final offlineItem = OfflineMediaItem(
+      id: 'offline-1',
+      downloadTaskId: 'removed-task',
+      animeId: 'anime-1',
+      episodeId: 'episode-1',
+      title: 'Offline Anime',
+      episodeTitle: 'Episode 1',
+      manifestPath: '/downloads/offline-1/index.m3u8',
+      downloadedBytes: 2048,
+      createdAt: DateTime(2026, 7, 25),
+    );
+
+    await _pumpDownloadPage(
+      tester,
+      repository,
+      offlineMedia: [offlineItem],
+    );
+
+    expect(find.text('Offline media'), findsOneWidget);
+    expect(
+      find.byKey(const ValueKey('offline-media-offline-1')),
+      findsOneWidget,
+    );
+    expect(find.text('Offline Anime'), findsOneWidget);
+    expect(find.text('Download tasks will appear here'), findsOneWidget);
+
+    final routeArgs = offlineMediaPlayerRouteArgs(offlineItem);
+    expect(routeArgs.animeId, 'anime-1');
+    expect(routeArgs.episodeId, 'episode-1');
+    expect(routeArgs.playUrl, Uri.file(offlineItem.manifestPath).toString());
+    expect(routeArgs.sourceId, 'offline');
+    expect(routeArgs.playHeaders, isEmpty);
+  });
+
   testWidgets(
     'same-anime clear button removes only that anime ended tasks',
     (tester) async {
       final repository = _FakeDownloadRepository([
-        _task('same-anime-completed', DownloadStatus.completed, animeId: 'anime-1'),
+        _task(
+          'same-anime-completed',
+          DownloadStatus.completed,
+          animeId: 'anime-1',
+        ),
         _task('same-anime-failed', DownloadStatus.failed, animeId: 'anime-1'),
-        _task('other-anime-completed', DownloadStatus.completed, animeId: 'anime-2'),
+        _task(
+          'other-anime-completed',
+          DownloadStatus.completed,
+          animeId: 'anime-2',
+        ),
       ]);
 
       await _pumpDownloadPage(tester, repository);
 
       expect(
-        find.byKey(const ValueKey('download-task-clear-anime-same-anime-completed')),
+        find.byKey(
+          const ValueKey('download-task-clear-anime-same-anime-completed'),
+        ),
         findsOneWidget,
       );
       expect(
-        find.byKey(const ValueKey('download-task-clear-anime-same-anime-failed')),
+        find.byKey(
+          const ValueKey('download-task-clear-anime-same-anime-failed'),
+        ),
         findsNothing,
       );
       expect(
@@ -46,7 +98,9 @@ void main() {
       expect(find.text('Clear 2 ended tasks from list'), findsOneWidget);
 
       await tester.tap(
-        find.byKey(const ValueKey('download-task-clear-anime-same-anime-completed')),
+        find.byKey(
+          const ValueKey('download-task-clear-anime-same-anime-completed'),
+        ),
       );
       await tester.pump();
 
@@ -54,14 +108,26 @@ void main() {
         repository.deleteAttempts,
         ['same-anime-completed', 'same-anime-failed'],
       );
-      expect(repository.deletedTaskIds, ['same-anime-completed', 'same-anime-failed']);
-      expect(find.byKey(const ValueKey('download-task-card-same-anime-completed')), findsNothing);
-      expect(find.byKey(const ValueKey('download-task-card-same-anime-failed')), findsNothing);
+      expect(
+        repository.deletedTaskIds,
+        ['same-anime-completed', 'same-anime-failed'],
+      );
+      expect(
+        find.byKey(const ValueKey('download-task-card-same-anime-completed')),
+        findsNothing,
+      );
+      expect(
+        find.byKey(const ValueKey('download-task-card-same-anime-failed')),
+        findsNothing,
+      );
       expect(
         find.byKey(const ValueKey('download-task-card-other-anime-completed')),
         findsOneWidget,
       );
-      expect(find.byKey(const ValueKey('downloads-clear-ended-tasks')), findsNothing);
+      expect(
+        find.byKey(const ValueKey('downloads-clear-ended-tasks')),
+        findsNothing,
+      );
     },
   );
 
@@ -81,7 +147,10 @@ void main() {
     final clearButton =
         find.byKey(const ValueKey('downloads-clear-ended-tasks'));
     expect(clearButton, findsOneWidget);
-    expect(find.byKey(const ValueKey('downloads-clear-ended-tasks')), findsOneWidget);
+    expect(
+      find.byKey(const ValueKey('downloads-clear-ended-tasks')),
+      findsOneWidget,
+    );
 
     await tester.tap(clearButton);
     await tester.pump();
@@ -477,7 +546,10 @@ void main() {
         ),
         findsOneWidget,
       );
-      expect(find.byKey(const ValueKey('download-task-remove-canceled')), findsOneWidget);
+      expect(
+        find.byKey(const ValueKey('download-task-remove-canceled')),
+        findsOneWidget,
+      );
     },
   );
 
@@ -651,7 +723,10 @@ void main() {
         ),
         findsOneWidget,
       );
-      expect(find.byKey(const ValueKey('downloads-clear-ended-tasks')), findsOneWidget);
+      expect(
+        find.byKey(const ValueKey('downloads-clear-ended-tasks')),
+        findsOneWidget,
+      );
       expect(
         find.byKey(const ValueKey('downloads-clear-ended-tasks')),
         findsOneWidget,
@@ -1193,7 +1268,10 @@ void main() {
         find.textContaining('Cleared 0 ended tasks from the list, 2 failed.'),
         findsOneWidget,
       );
-      expect(find.textContaining(l10n.downloadActionFailedMessage), findsOneWidget);
+      expect(
+        find.textContaining(l10n.downloadActionFailedMessage),
+        findsOneWidget,
+      );
       expect(find.textContaining('filesystem lock'), findsNothing);
       expect(find.textContaining('StateError'), findsNothing);
     },
@@ -1729,7 +1807,10 @@ void main() {
       await tester.pump();
 
       expect(find.textContaining('1 still needs cleanup.'), findsOneWidget);
-      expect(find.widgetWithText(SnackBarAction, 'Check again'), findsOneWidget);
+      expect(
+        find.widgetWithText(SnackBarAction, 'Check again'),
+        findsOneWidget,
+      );
     },
   );
 
@@ -1805,7 +1886,10 @@ void main() {
 
       await _pumpDownloadPage(tester, repository);
 
-      expect(find.byKey(const ValueKey('downloads-clear-ended-tasks')), findsOneWidget);
+      expect(
+        find.byKey(const ValueKey('downloads-clear-ended-tasks')),
+        findsOneWidget,
+      );
       expect(find.text('Check 2 leftover files again'), findsOneWidget);
       expect(
         find.text(
@@ -1913,7 +1997,10 @@ void main() {
         find.textContaining('still needs cleanup'),
         findsOneWidget,
       );
-      expect(find.byKey(const ValueKey('downloads-clear-ended-tasks')), findsOneWidget);
+      expect(
+        find.byKey(const ValueKey('downloads-clear-ended-tasks')),
+        findsOneWidget,
+      );
     },
   );
 
@@ -1952,7 +2039,10 @@ void main() {
         ),
         findsOneWidget,
       );
-      expect(find.byKey(const ValueKey('downloads-clear-ended-tasks')), findsOneWidget);
+      expect(
+        find.byKey(const ValueKey('downloads-clear-ended-tasks')),
+        findsOneWidget,
+      );
       expect(
         find.byKey(const ValueKey('downloads-clear-ended-tasks')),
         findsOneWidget,
@@ -2005,7 +2095,10 @@ void main() {
         ),
         findsOneWidget,
       );
-      expect(find.byKey(const ValueKey('downloads-clear-ended-tasks')), findsOneWidget);
+      expect(
+        find.byKey(const ValueKey('downloads-clear-ended-tasks')),
+        findsOneWidget,
+      );
 
       await tester.tap(
         find.byKey(const ValueKey('downloads-clear-ended-tasks')),
@@ -2047,7 +2140,10 @@ void main() {
         ),
         findsOneWidget,
       );
-      expect(find.byKey(const ValueKey('downloads-clear-ended-tasks')), findsOneWidget);
+      expect(
+        find.byKey(const ValueKey('downloads-clear-ended-tasks')),
+        findsOneWidget,
+      );
       expect(
         find.byKey(const ValueKey('download-task-remove-canceled')),
         findsOneWidget,
@@ -2089,10 +2185,15 @@ void main() {
         findsOneWidget,
       );
       expect(
-        find.textContaining('1 still needs cleanup. Delete that leftover file first'),
+        find.textContaining(
+          '1 still needs cleanup. Delete that leftover file first',
+        ),
         findsOneWidget,
       );
-      expect(find.byKey(const ValueKey('downloads-clear-ended-tasks')), findsOneWidget);
+      expect(
+        find.byKey(const ValueKey('downloads-clear-ended-tasks')),
+        findsOneWidget,
+      );
     },
   );
 
@@ -2297,6 +2398,7 @@ Future<void> _pumpDownloadPage(
   DownloadService? downloadService,
   Stream<List<DownloadTask>>? downloadTasksStream,
   Locale locale = const Locale('en'),
+  List<OfflineMediaItem> offlineMedia = const [],
 }) async {
   await tester.pumpWidget(
     _TestApp(
@@ -2306,6 +2408,7 @@ Future<void> _pumpDownloadPage(
       downloadService: downloadService,
       downloadTasksStream: downloadTasksStream,
       locale: locale,
+      offlineMedia: offlineMedia,
     ),
   );
   await tester.pumpAndSettle();
@@ -2319,6 +2422,7 @@ class _TestApp extends StatelessWidget {
     this.downloadService,
     this.downloadTasksStream,
     required this.locale,
+    required this.offlineMedia,
   });
 
   final DownloadRepository repository;
@@ -2327,6 +2431,7 @@ class _TestApp extends StatelessWidget {
   final DownloadService? downloadService;
   final Stream<List<DownloadTask>>? downloadTasksStream;
   final Locale locale;
+  final List<OfflineMediaItem> offlineMedia;
 
   @override
   Widget build(BuildContext context) {
@@ -2335,6 +2440,9 @@ class _TestApp extends StatelessWidget {
     return ProviderScope(
       overrides: [
         downloadRepositoryProvider.overrideWithValue(repository),
+        offlineMediaRepositoryProvider.overrideWithValue(
+          _FakeOfflineMediaRepository(offlineMedia),
+        ),
         httpDownloadServiceProvider.overrideWithValue(effectiveDownloadService),
         if (downloadTasksStream != null)
           downloadTasksProvider.overrideWith((ref) => downloadTasksStream!),
@@ -2357,6 +2465,29 @@ class _TestApp extends StatelessWidget {
       ),
     );
   }
+}
+
+class _FakeOfflineMediaRepository implements OfflineMediaRepository {
+  const _FakeOfflineMediaRepository(this.items);
+
+  final List<OfflineMediaItem> items;
+
+  @override
+  Future<List<OfflineMediaItem>> getAll() async => items;
+
+  @override
+  Future<OfflineMediaItem?> getByDownloadTaskId(String downloadTaskId) async {
+    for (final item in items) {
+      if (item.downloadTaskId == downloadTaskId) return item;
+    }
+    return null;
+  }
+
+  @override
+  Future<void> upsert(OfflineMediaItem item) async {}
+
+  @override
+  Stream<List<OfflineMediaItem>> watchAll() => Stream.value(items);
 }
 
 class _FakeDownloadService implements DownloadService {

@@ -120,6 +120,7 @@ class AppLocalizations {
   String get download => _t('download');
   String get play => _t('play');
   String get downloads => _t('downloads');
+  String get offlineMedia => _t('offlineMedia');
   String get loadingDetail => _t('loadingDetail');
   String get noPlaySource => _t('noPlaySource');
   String get noDownloadSource => _t('noDownloadSource');
@@ -930,6 +931,7 @@ const _localizedValues = {
     'download': '下载',
     'play': '播放',
     'downloads': '下载',
+    'offlineMedia': '离线媒体',
     'loadingDetail': '正在加载详情',
     'noPlaySource': '未找到可播放线路。请先切换到其他数据源再重试。',
     'noDownloadSource': '未找到可下载线路。请先返回该集并切换到其他数据源再重试。',
@@ -1295,6 +1297,7 @@ const _localizedValues = {
     'download': 'Download',
     'play': 'Play',
     'downloads': 'Downloads',
+    'offlineMedia': 'Offline media',
     'loadingDetail': 'Loading detail',
     'noPlaySource':
         'No playable source found. Switch to another source before retrying.',
@@ -1709,6 +1712,7 @@ const _localizedValues = {
     'download': 'ダウンロード',
     'play': '再生',
     'downloads': 'ダウンロード',
+    'offlineMedia': 'オフラインメディア',
     'loadingDetail': '詳細を読み込み中',
     'noPlaySource': '再生可能なソースが見つかりません。先に別のソースへ切り替えてから再試行してください。',
     'noDownloadSource': 'ダウンロード可能なソースが見つかりません。先にこの話に戻って別のソースを切り替え、再試行してください。',

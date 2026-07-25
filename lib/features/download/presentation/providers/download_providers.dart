@@ -10,6 +10,7 @@ import '../../data/services/http_download_service.dart';
 import '../../data/services/unsupported_bt_download_service.dart';
 import '../../domain/entities/download_progress.dart';
 import '../../domain/entities/download_task.dart';
+import '../../domain/entities/offline_media_item.dart';
 import '../../domain/services/hls_manifest_loader.dart';
 import '../../domain/repositories/download_repository.dart';
 import '../../domain/repositories/offline_media_repository.dart';
@@ -49,6 +50,11 @@ final btDownloadServiceProvider = Provider<DownloadService>((ref) {
 final downloadTasksProvider =
     StreamProvider.autoDispose<List<DownloadTask>>((ref) {
   return ref.watch(downloadRepositoryProvider).watchTasks();
+});
+
+final offlineMediaItemsProvider =
+    StreamProvider.autoDispose<List<OfflineMediaItem>>((ref) {
+  return ref.watch(offlineMediaRepositoryProvider).watchAll();
 });
 
 final downloadProgressProvider =

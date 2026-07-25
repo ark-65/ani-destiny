@@ -7,6 +7,7 @@
 ## [Unreleased]
 
 ### ✨ Added
+- Downloads now restores and displays completed HLS episodes from the independent offline-media repository. Even after the related download task is removed, the asset remains discoverable after app restart and opens the player from its local m3u8 without network request headers.
 - Completed HLS downloads now publish and persist an independent offline media asset with episode identity, local manifest path, and media size. Offline assets no longer exist only as download-task state, providing a stable domain boundary for the offline library after app restart.
 - HLS / m3u8 episodes can now be created as supported download tasks from anime details or the player and opened directly in Downloads to start; BT and unknown types remain explicitly unsupported.
 - The playback progress slider now announces its current seek time and total duration to screen readers, replacing an abstract percentage with meaningful time feedback.
