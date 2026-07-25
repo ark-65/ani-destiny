@@ -7,6 +7,7 @@
 ## [Unreleased]
 
 ### ✨ Added
+- Added an offline HLS app-restart regression using a real on-disk database, local m3u8, and segment: after closing and rebuilding the database and offline-media service, the test restores `OfflineMediaItem`, verifies it again, and produces local playback arguments without network headers.
 - Offline-media integrity results are now persisted on the independent asset record. After an app restart, the library still marks episodes confirmed as damaged, while a successful recheck can restore playable status without changing the download-task lifecycle.
 - Opening an offline episode now verifies its local m3u8 and every segment before navigation. Damaged assets remain in the library with delete-and-download-again guidance instead of failing after the player opens, while playable assets still enter playback with only a local path.
 - Offline media is now grouped by anime and can delete every downloaded episode and local HLS file for one anime after confirmation. Batch cleanup preserves the per-episode files-first, asset-record-second boundary, leaves failed items listed for retry, and does not alter download tasks.
