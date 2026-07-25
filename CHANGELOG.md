@@ -20,6 +20,7 @@
 - 在设置的“关于”区域检查 GitHub 最新正式 Release；有更高版本时显示更新提示，并直接打开对应发布页下载安装。
 
 ### 🐛 修复
+- 修复 HLS 分片遇到瞬时网络故障时整项任务立即失败的问题：连接、发送/接收超时以及可恢复 HTTP 状态现在会在执行器内有限重试，暂停仍可取消重试，超过上限或不可重试错误仍进入既有失败/手动续传路径。
 - 修复离线清单引用绝对 Windows 路径混有双重编码目录分隔符时的误判：绝对盘符分支现在补齐多轮解码候选，支持如 `C:/ani-destiny-offline/windows/segments%5Cepisode-000001%252Fnested%252Fspace%2520name.ts?download_cache=true#retry` 这类分片路径在去 query/fragment 后仍能命中真实文件。
 - 修复 offline 关闭测试用例在 Windows 的阻塞：`test/offline_media_integrity_test.dart` 第一条编码分段用例改用文件系统可创建的编码文件名 fixture，保留 `segment%3Fname%23part.ts?download_cache=true` 解析验证，避免 `PathNotFoundException` 再次触发 Windows Build 失败。
 - 修复本地清单分片解析对文件名内编码 `?` / `#` 的兼容：`offline_media_integrity.dart` 现在先按 URI 结构分离 query/fragment，再对路径组件解码，避免 `segment%3Fname%23part.ts?download=true` 这类真实下载名称被误判为缺失分片。

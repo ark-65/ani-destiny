@@ -168,6 +168,66 @@ void main() {
     );
   });
 
+  test('starting HLS task retries a transient segment connection failure',
+      () async {
+    final database = AppDatabase(NativeDatabase.memory());
+    addTearDown(database.close);
+
+    final tempDir = await Directory.systemTemp
+        .createTemp('ani-destiny-download-hls-segment-retry');
+    addTearDown(() async {
+      if (tempDir.existsSync()) {
+        await tempDir.delete(recursive: true);
+      }
+    });
+    _mockApplicationDocumentsDirectory(tempDir.path);
+
+    const segmentBytes = <int>[1, 2, 3, 4, 5];
+    const segmentUri = 'https://cdn.example.test/segment-1.ts';
+    final dio = _FlakyHlsSegmentDownloadDio(
+      {segmentUri: segmentBytes},
+      failOnFirst: {segmentUri},
+    );
+    final repository = DownloadRepositoryImpl(database);
+    final service = HttpDownloadService(
+      dio: dio,
+      repository: repository,
+      hlsManifestLoader: _FakeHlsManifestLoader(
+        (manifestUri, headers) async => HlsManifest(
+          uri: manifestUri,
+          segments: [
+            HlsSegment(uri: Uri.parse(segmentUri)),
+          ],
+          variants: const [],
+          isLive: false,
+          targetDuration: null,
+        ),
+      ),
+      hlsSegmentRetryDelay: Duration.zero,
+    );
+
+    final taskId = await service.createTask(
+      animeId: 'anime-1',
+      episodeId: 'episode-1',
+      sourceId: 'sakura',
+      source: const DownloadSource(
+        url: 'https://cdn.example.test/index.m3u8',
+        kind: DownloadKind.hls,
+      ),
+      title: 'HLS Test',
+      episodeTitle: 'Episode 1',
+    );
+
+    await service.start(taskId);
+
+    final task = await repository.getTask(taskId);
+    expect(task, isNotNull);
+    expect(task!.status, DownloadStatus.completed);
+    expect(task.downloadedBytes, segmentBytes.length);
+    expect(dio.downloadedUris, [segmentUri, segmentUri]);
+    expect(File(task.localPath!).existsSync(), isTrue);
+  });
+
   test('starting HLS task resumes from existing segment files', () async {
     final database = AppDatabase(NativeDatabase.memory());
     addTearDown(database.close);
@@ -212,6 +272,7 @@ void main() {
       dio: firstAttemptDio,
       repository: repository,
       hlsManifestLoader: manifestLoader,
+      hlsSegmentMaxAttempts: 1,
     );
 
     final taskId = await firstAttemptService.createTask(
@@ -327,6 +388,7 @@ void main() {
       dio: firstAttemptDio,
       repository: firstRepository,
       hlsManifestLoader: manifestLoader,
+      hlsSegmentMaxAttempts: 1,
     );
 
     final taskId = await firstService.createTask(

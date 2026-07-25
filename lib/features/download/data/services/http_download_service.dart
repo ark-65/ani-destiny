@@ -27,15 +27,21 @@ class HttpDownloadService implements DownloadService {
     required DownloadRepository repository,
     HlsManifestLoader? hlsManifestLoader,
     OfflineMediaRepository? offlineMediaRepository,
+    int hlsSegmentMaxAttempts = 3,
+    Duration hlsSegmentRetryDelay = const Duration(milliseconds: 300),
   })  : _dio = dio,
         _repository = repository,
         _hlsManifestLoader = hlsManifestLoader,
-        _offlineMediaRepository = offlineMediaRepository;
+        _offlineMediaRepository = offlineMediaRepository,
+        _hlsSegmentMaxAttempts = hlsSegmentMaxAttempts,
+        _hlsSegmentRetryDelay = hlsSegmentRetryDelay;
 
   final Dio _dio;
   final DownloadRepository _repository;
   final HlsManifestLoader? _hlsManifestLoader;
   final OfflineMediaRepository? _offlineMediaRepository;
+  final int _hlsSegmentMaxAttempts;
+  final Duration _hlsSegmentRetryDelay;
   final Map<String, CancelToken> _tokens = {};
   final Map<String, StreamController<DownloadProgress>> _controllers = {};
   final Map<String, Completer<void>> _settleCompleters = {};
@@ -515,19 +521,48 @@ class HttpDownloadService implements DownloadService {
     required Map<String, String> headers,
     required CancelToken cancelToken,
   }) async {
-    var downloadedBytes = 0;
+    final maxAttempts = _hlsSegmentMaxAttempts < 1 ? 1 : _hlsSegmentMaxAttempts;
+    for (var attempt = 1; attempt <= maxAttempts; attempt++) {
+      var downloadedBytes = 0;
+      try {
+        await _dio.download(
+          segmentUri.toString(),
+          localPath,
+          cancelToken: cancelToken,
+          options: Options(headers: headers.isEmpty ? null : headers),
+          onReceiveProgress: (received, total) {
+            downloadedBytes = received;
+          },
+        );
+        return downloadedBytes;
+      } on DioException catch (error) {
+        if (CancelToken.isCancel(error) ||
+            attempt == maxAttempts ||
+            !_isRetryableHlsSegmentFailure(error)) {
+          rethrow;
+        }
+        if (_hlsSegmentRetryDelay > Duration.zero) {
+          await Future<void>.delayed(_hlsSegmentRetryDelay);
+        }
+        if (cancelToken.isCancelled) {
+          throw cancelToken.cancelError!;
+        }
+      }
+    }
+    throw StateError('HLS segment retry loop exited unexpectedly.');
+  }
 
-    await _dio.download(
-      segmentUri.toString(),
-      localPath,
-      cancelToken: cancelToken,
-      options: Options(headers: headers.isEmpty ? null : headers),
-      onReceiveProgress: (received, total) {
-        downloadedBytes = received;
-      },
-    );
-
-    return downloadedBytes;
+  bool _isRetryableHlsSegmentFailure(DioException error) {
+    if (error.type == DioExceptionType.connectionTimeout ||
+        error.type == DioExceptionType.sendTimeout ||
+        error.type == DioExceptionType.receiveTimeout ||
+        error.type == DioExceptionType.connectionError) {
+      return true;
+    }
+    final statusCode = error.response?.statusCode;
+    return statusCode == 408 ||
+        statusCode == 429 ||
+        (statusCode != null && statusCode >= 500);
   }
 
   Future<void> _writeHlsManifest(
