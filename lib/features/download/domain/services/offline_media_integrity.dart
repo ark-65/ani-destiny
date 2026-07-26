@@ -42,6 +42,7 @@ bool isPlayableOfflineMediaPath(String manifestPath) {
   }
 
   var hasPlayableSegment = false;
+  var nextSegmentIsGap = false;
   for (final line in lines.skip(1)) {
     if (line.startsWith('#EXT-X-KEY:')) {
       final keyUri = _uriAttributeFromTag(line);
@@ -63,7 +64,15 @@ bool isPlayableOfflineMediaPath(String manifestPath) {
       }
       continue;
     }
+    if (line == '#EXT-X-GAP') {
+      nextSegmentIsGap = true;
+      continue;
+    }
     if (line.startsWith('#')) continue;
+    if (nextSegmentIsGap) {
+      nextSegmentIsGap = false;
+      continue;
+    }
     if (!_hasPlayableManifestAsset(line, manifestDirectory)) {
       return false;
     }

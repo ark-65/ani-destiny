@@ -39,6 +39,7 @@ class HlsSegment {
     this.initializationSegment,
     this.byteRange,
     this.hasDiscontinuity = false,
+    this.isGap = false,
   });
 
   final Uri uri;
@@ -48,6 +49,7 @@ class HlsSegment {
   final HlsInitializationSegment? initializationSegment;
   final HlsByteRange? byteRange;
   final bool hasDiscontinuity;
+  final bool isGap;
 }
 
 class HlsByteRange {

@@ -192,6 +192,28 @@ segment-003.ts
     );
   });
 
+  test('associates gap markers with only the following media segment', () {
+    final manifest = parser.parse(
+      '''
+#EXTM3U
+#EXTINF:6,
+segment-001.ts
+#EXTINF:6,
+#EXT-X-GAP
+missing-002.ts
+#EXTINF:6,
+segment-003.ts
+#EXT-X-ENDLIST
+''',
+      uri: Uri.parse('https://cdn.example.test/anime/index.m3u8'),
+    );
+
+    expect(
+      manifest.segments.map((segment) => segment.isGap),
+      [false, true, false],
+    );
+  });
+
   test('applies an AES-128 key to following media segments', () {
     final manifest = parser.parse(
       '''

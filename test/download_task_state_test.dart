@@ -99,12 +99,16 @@ void main() {
                 uri: Uri.parse('https://cdn.example.test/segment-1.ts'),
               ),
               HlsSegment(
+                uri: Uri.parse('https://cdn.example.test/missing-gap.ts'),
+                duration: const Duration(seconds: 6),
+                isGap: true,
+              ),
+              HlsSegment(
                 uri: Uri.parse('https://cdn.example.test/segment-2.ts'),
               ),
             ],
             variants: [],
             isLive: false,
-            protocolVersion: 7,
             targetDuration: null,
           );
         },
@@ -141,9 +145,17 @@ void main() {
     final manifestContent = await File(manifestPath).readAsString();
     expect(manifestContent, contains('#EXTM3U'));
     expect(manifestContent, contains('segments/segment-000000.ts'));
-    expect(manifestContent, contains('segments/segment-000001.ts'));
+    expect(
+      manifestContent,
+      contains(
+        '#EXTINF:6.000,\n'
+        '#EXT-X-GAP\n'
+        'segments/segment-000001.ts',
+      ),
+    );
+    expect(manifestContent, contains('segments/segment-000002.ts'));
     expect(manifestContent, contains('#EXT-X-ENDLIST'));
-    expect(manifestContent, contains('#EXT-X-VERSION:7'));
+    expect(manifestContent, contains('#EXT-X-VERSION:6'));
     expect(
       File(p.join(p.dirname(manifestPath), 'segments', 'segment-000000.ts'))
           .existsSync(),
@@ -151,6 +163,11 @@ void main() {
     );
     expect(
       File(p.join(p.dirname(manifestPath), 'segments', 'segment-000001.ts'))
+          .existsSync(),
+      isFalse,
+    );
+    expect(
+      File(p.join(p.dirname(manifestPath), 'segments', 'segment-000002.ts'))
           .existsSync(),
       isTrue,
     );

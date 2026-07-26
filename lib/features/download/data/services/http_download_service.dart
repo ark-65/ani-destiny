@@ -501,6 +501,16 @@ class HttpDownloadService implements DownloadService {
 
     for (var index = 0; index < mediaManifest.segments.length; index++) {
       final segment = mediaManifest.segments[index];
+      if (segment.isGap) {
+        final progress = (index + 1) / mediaManifest.segments.length;
+        _emit(
+          task.id,
+          progress,
+          DownloadStatus.downloading,
+          downloadedBytes: downloadedBytes,
+        );
+        continue;
+      }
       final safeSegmentName = _hlsSegmentFileName(segment.uri, index);
       final segmentPath = p.join(segmentDirectory.path, safeSegmentName);
       final existingSegmentFile = File(segmentPath);
@@ -598,6 +608,7 @@ class HttpDownloadService implements DownloadService {
 
     for (var index = 0; index < mediaManifest.segments.length; index++) {
       final segment = mediaManifest.segments[index];
+      if (segment.isGap) continue;
       final segmentName = _hlsSegmentFileName(segment.uri, index);
       final segmentPath = p.join(segmentDirectory.path, segmentName);
       final segmentFile = File(segmentPath);
@@ -722,7 +733,11 @@ class HttpDownloadService implements DownloadService {
         );
     final localProtocolVersion = math.max(
       manifest.protocolVersion,
-      hasInitializationSegment ? 5 : 3,
+      manifest.segments.any((segment) => segment.isGap)
+          ? 6
+          : hasInitializationSegment
+              ? 5
+              : 3,
     );
     final manifestLines = <String>[
       '#EXTM3U',
@@ -741,6 +756,17 @@ class HttpDownloadService implements DownloadService {
       final segment = manifest.segments[index];
       if (segment.hasDiscontinuity) {
         manifestLines.add('#EXT-X-DISCONTINUITY');
+      }
+      if (segment.isGap) {
+        final duration = segment.duration ?? const Duration(seconds: 1);
+        final durationText =
+            (duration.inMilliseconds / 1000).toStringAsFixed(3);
+        manifestLines.add('#EXTINF:$durationText,${segment.title ?? ''}');
+        manifestLines.add('#EXT-X-GAP');
+        manifestLines.add(
+          'segments/${_hlsSegmentFileName(segment.uri, index)}',
+        );
+        continue;
       }
       final initializationSegment =
           segment.initializationSegment ?? manifest.initializationSegment;
@@ -812,6 +838,7 @@ class HttpDownloadService implements DownloadService {
   ) {
     final initializationSegments = <HlsInitializationSegment, int>{};
     for (final segment in manifest.segments) {
+      if (segment.isGap) continue;
       final initializationSegment =
           segment.initializationSegment ?? manifest.initializationSegment;
       if (initializationSegment == null) continue;
@@ -841,6 +868,7 @@ class HttpDownloadService implements DownloadService {
   Map<HlsEncryptionKey, int> _hlsEncryptionKeys(HlsManifest manifest) {
     final keys = <HlsEncryptionKey, int>{};
     for (final segment in manifest.segments) {
+      if (segment.isGap) continue;
       final key = segment.encryptionKey;
       if (key == null) continue;
       final existingKey = keys.keys.where(

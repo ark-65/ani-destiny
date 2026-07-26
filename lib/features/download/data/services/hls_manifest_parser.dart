@@ -30,6 +30,7 @@ class HlsManifestParser {
     Uri? previousMapByteRangeUri;
     int? previousMapByteRangeEnd;
     var pendingDiscontinuity = false;
+    var pendingGap = false;
     var hasEndList = false;
 
     for (var index = 1; index < lines.length; index++) {
@@ -141,6 +142,10 @@ class HlsManifestParser {
         pendingDiscontinuity = true;
         continue;
       }
+      if (line == '#EXT-X-GAP') {
+        pendingGap = true;
+        continue;
+      }
       if (line.startsWith('#EXT-X-BYTERANGE:')) {
         pendingByteRange = _parseByteRange(
           line.substring('#EXT-X-BYTERANGE:'.length),
@@ -181,6 +186,7 @@ class HlsManifestParser {
             initializationSegment: initializationSegment,
             byteRange: byteRange,
             hasDiscontinuity: pendingDiscontinuity,
+            isGap: pendingGap,
           ),
         );
         if (byteRange != null) {
@@ -191,6 +197,7 @@ class HlsManifestParser {
         pendingSegmentDuration = null;
         pendingSegmentTitle = null;
         pendingDiscontinuity = false;
+        pendingGap = false;
       }
     }
 

@@ -7,6 +7,7 @@
 ## [Unreleased]
 
 ### ✨ Added
+- HLS offline downloads now support `EXT-X-GAP`: explicitly missing segments are no longer requested as ordinary resources or allowed to fail the whole episode, while local playlists preserve the gap marker with a compatible protocol version and offline integrity checks accept the expected absence.
 - HLS offline downloads now support `EXT-X-BYTERANGE` media and initialization segments: explicit and same-resource implicit offsets are parsed, HTTP `Range` saves only the requested bytes, and each range becomes an independent local file; mismatched response lengths prevent offline-asset publication.
 - AES-128 encrypted HLS now saves encryption keys alongside media segments and rewrites local playlists to local key references; offline integrity rejects missing or empty key files, while other encryption methods remain explicitly unsupported.
 - HLS offline downloads now save fMP4 `EXT-X-MAP` initialization segments and rewrite local manifests to reference local files only.
