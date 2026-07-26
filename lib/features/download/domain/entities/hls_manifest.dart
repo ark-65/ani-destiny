@@ -4,6 +4,7 @@ class HlsManifest {
     required this.segments,
     required this.variants,
     required this.isLive,
+    this.mediaSequence = 0,
     this.targetDuration,
     this.initializationSegment,
   });
@@ -12,6 +13,7 @@ class HlsManifest {
   final List<HlsSegment> segments;
   final List<HlsVariant> variants;
   final bool isLive;
+  final int mediaSequence;
   final Duration? targetDuration;
   final HlsInitializationSegment? initializationSegment;
 

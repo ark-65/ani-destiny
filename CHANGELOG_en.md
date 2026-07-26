@@ -23,6 +23,7 @@
 - Check the latest stable GitHub Release in Settings > About and show an update prompt that opens the matching release page when a newer version is available.
 
 ### 🐛 Fixed
+- Fixed local HLS playlists resetting `EXT-X-MEDIA-SEQUENCE` to `0`: downloads now preserve the source media sequence so AES-128 segments without an explicit IV still derive the correct IV during offline playback, preventing complete key and segment files from producing an undecryptable false-complete asset.
 - Added a real loopback HTTP `206 Content-Range` integration regression proving HLS byte-range requests pass through Dio's actual network stack, persist independent initialization/media files, and produce a fully local playlist. The download service keeps the production documents-directory default while allowing test injection to avoid Widget-test network interception.
 - HLS byte-range downloads now require a `206 Content-Range` matching the requested bounds; sources that ignore `Range` or return the wrong range can no longer publish corrupt offline media merely because the payload length happens to match.
 - Fixed local HLS manifest rewriting dropping `EXT-X-DISCONTINUITY`: timestamp, encoding-parameter, and initialization-segment transitions are now preserved in the fully local m3u8 so complete files remain decodable across boundaries.

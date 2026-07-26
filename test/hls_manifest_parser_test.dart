@@ -21,6 +21,7 @@ segment-002.ts
     expect(manifest.isMediaPlaylist, isTrue);
     expect(manifest.isMasterPlaylist, isFalse);
     expect(manifest.isLive, isFalse);
+    expect(manifest.mediaSequence, 0);
     expect(manifest.targetDuration, const Duration(seconds: 10));
     expect(manifest.segments, hasLength(2));
     expect(
@@ -32,6 +33,39 @@ segment-002.ts
       const Duration(seconds: 8),
     );
     expect(manifest.segments.last.title, 'Opening');
+  });
+
+  test('preserves a non-zero media sequence', () {
+    final manifest = parser.parse(
+      '''
+#EXTM3U
+#EXT-X-MEDIA-SEQUENCE:451
+#EXT-X-KEY:METHOD=AES-128,URI="keys/episode.key"
+#EXTINF:6,
+segment-451.ts
+#EXT-X-ENDLIST
+''',
+      uri: Uri.parse('https://cdn.example.test/anime/index.m3u8'),
+    );
+
+    expect(manifest.mediaSequence, 451);
+    expect(manifest.segments.single.encryptionKey?.iv, isNull);
+  });
+
+  test('rejects an invalid media sequence', () {
+    expect(
+      () => parser.parse(
+        '''
+#EXTM3U
+#EXT-X-MEDIA-SEQUENCE:-1
+#EXTINF:6,
+segment.ts
+#EXT-X-ENDLIST
+''',
+        uri: Uri.parse('https://cdn.example.test/anime/index.m3u8'),
+      ),
+      throwsFormatException,
+    );
   });
 
   test('recognizes master playlist variants', () {

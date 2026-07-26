@@ -17,6 +17,7 @@ class HlsManifestParser {
     final segments = <HlsSegment>[];
     final variants = <HlsVariant>[];
     Duration? targetDuration;
+    var mediaSequence = 0;
     Duration? pendingSegmentDuration;
     String? pendingSegmentTitle;
     Map<String, String>? pendingVariantAttributes;
@@ -40,6 +41,16 @@ class HlsManifestParser {
         targetDuration = Duration(
           seconds: _parseIntAfterColon(line, fallback: 0),
         );
+        continue;
+      }
+      if (line.startsWith('#EXT-X-MEDIA-SEQUENCE:')) {
+        final value = int.tryParse(
+          line.substring('#EXT-X-MEDIA-SEQUENCE:'.length).trim(),
+        );
+        if (value == null || value < 0) {
+          throw const FormatException('Invalid HLS media sequence.');
+        }
+        mediaSequence = value;
         continue;
       }
       if (line.startsWith('#EXTINF:')) {
@@ -181,6 +192,7 @@ class HlsManifestParser {
       segments: List.unmodifiable(segments),
       variants: List.unmodifiable(variants),
       isLive: !hasEndList,
+      mediaSequence: mediaSequence,
       targetDuration: targetDuration,
       initializationSegment: initializationSegment,
     );

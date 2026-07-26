@@ -380,7 +380,6 @@ segment-2.m4s
     final key = HlsEncryptionKey(
       method: 'AES-128',
       uri: Uri.parse('https://cdn.example.test/episode.key'),
-      iv: '0x0123456789ABCDEF',
     );
     final dio = _FakeHlsSegmentDownloadDio({
       'https://cdn.example.test/episode.key': keyBytes,
@@ -402,6 +401,7 @@ segment-2.m4s
           ],
           variants: const [],
           isLive: false,
+          mediaSequence: 451,
         ),
       ),
     );
@@ -430,10 +430,11 @@ segment-2.m4s
     expect(
       manifestContent,
       contains(
-        '#EXT-X-KEY:METHOD=AES-128,URI="segments/key-000000.key",'
-        'IV=0x0123456789ABCDEF',
+        '#EXT-X-KEY:METHOD=AES-128,URI="segments/key-000000.key"',
       ),
     );
+    expect(manifestContent, contains('#EXT-X-MEDIA-SEQUENCE:451'));
+    expect(manifestContent, isNot(contains(',IV=')));
     expect(manifestContent, isNot(contains('https://cdn.example.test')));
     expect(await keyFile.readAsBytes(), keyBytes);
     expect(isPlayableOfflineMediaPath(task.localPath!), isTrue);
