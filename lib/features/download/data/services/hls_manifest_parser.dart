@@ -237,13 +237,36 @@ class HlsManifestParser {
 
   Map<String, String> _parseAttributes(String value) {
     final attributes = <String, String>{};
-    final parts = value.split(',');
+    final parts = <String>[];
+    final current = StringBuffer();
+    var insideQuotes = false;
+    for (final codeUnit in value.codeUnits) {
+      final character = String.fromCharCode(codeUnit);
+      if (character == '"') {
+        insideQuotes = !insideQuotes;
+      }
+      if (character == ',' && !insideQuotes) {
+        parts.add(current.toString());
+        current.clear();
+      } else {
+        current.write(character);
+      }
+    }
+    if (insideQuotes) {
+      throw const FormatException('Invalid HLS attribute list.');
+    }
+    parts.add(current.toString());
+
     for (final part in parts) {
       final equalsIndex = part.indexOf('=');
       if (equalsIndex == -1) continue;
       final key = part.substring(0, equalsIndex).trim();
       final rawValue = part.substring(equalsIndex + 1).trim();
-      attributes[key] = rawValue.replaceAll('"', '');
+      attributes[key] = rawValue.length >= 2 &&
+              rawValue.startsWith('"') &&
+              rawValue.endsWith('"')
+          ? rawValue.substring(1, rawValue.length - 1)
+          : rawValue;
     }
     return attributes;
   }

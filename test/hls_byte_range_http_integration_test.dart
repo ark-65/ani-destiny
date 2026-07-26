@@ -120,6 +120,91 @@ $mediaUri
       [9, 10, 11],
     );
   });
+
+  test('quoted comma asset URIs survive parsing and real HTTP download',
+      () async {
+    final tempDirectory =
+        await Directory.systemTemp.createTemp('ani-destiny-hls-http-comma');
+    addTearDown(() async {
+      if (tempDirectory.existsSync()) {
+        await tempDirectory.delete(recursive: true);
+      }
+    });
+
+    final server = await HttpServer.bind(InternetAddress.loopbackIPv4, 0);
+    addTearDown(server.close);
+    final requestedUris = <String>[];
+    const assets = <String, List<int>>{
+      '/key.bin?token=alpha,beta': [1, 2, 3, 4],
+      '/init.mp4?token=gamma,delta': [5, 6, 7, 8],
+      '/segment.m4s': [9, 10, 11, 12],
+    };
+    server.listen((request) {
+      final requestUri = request.uri.toString();
+      requestedUris.add(requestUri);
+      final bytes = assets[requestUri];
+      if (bytes == null) {
+        request.response.statusCode = HttpStatus.notFound;
+      } else {
+        request.response.add(bytes);
+      }
+      request.response.close();
+    });
+
+    final database = AppDatabase(NativeDatabase.memory());
+    addTearDown(database.close);
+    final repository = DownloadRepositoryImpl(database);
+    final origin = 'http://${server.address.host}:${server.port}';
+    final service = HttpDownloadService(
+      dio: Dio(),
+      repository: repository,
+      applicationDocumentsDirectory: () async => tempDirectory,
+      hlsManifestLoader: _StaticManifestLoader(
+        const HlsManifestParser().parse(
+          '''
+#EXTM3U
+#EXT-X-MAP:URI="$origin/init.mp4?token=gamma,delta"
+#EXT-X-KEY:METHOD=AES-128,URI="$origin/key.bin?token=alpha,beta"
+#EXTINF:6,
+$origin/segment.m4s
+#EXT-X-ENDLIST
+''',
+          uri: Uri.parse('$origin/index.m3u8'),
+        ),
+      ),
+    );
+
+    final taskId = await service.createTask(
+      animeId: 'anime-1',
+      episodeId: 'episode-1',
+      sourceId: 'loopback',
+      source: DownloadSource(
+        url: '$origin/index.m3u8',
+        kind: DownloadKind.hls,
+      ),
+      title: 'HLS Quoted Attribute Test',
+      episodeTitle: 'Episode 1',
+    );
+
+    await service.start(taskId);
+
+    final task = (await repository.getTask(taskId))!;
+    expect(task.status, DownloadStatus.completed);
+    expect(task.downloadedBytes, 12);
+    expect(
+      requestedUris,
+      [
+        '/key.bin?token=alpha,beta',
+        '/init.mp4?token=gamma,delta',
+        '/segment.m4s',
+      ],
+    );
+    final localManifest = await File(task.localPath!).readAsString();
+    expect(localManifest, isNot(contains(origin)));
+    expect(localManifest, contains('segments/key-000000.key'));
+    expect(localManifest, contains('segments/initialization.mp4'));
+    expect(localManifest, contains('segments/segment-000000.m4s'));
+  });
 }
 
 class _StaticManifestLoader implements HlsManifestLoader {

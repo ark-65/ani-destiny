@@ -23,6 +23,7 @@
 - Check the latest stable GitHub Release in Settings > About and show an update prompt that opens the matching release page when a newer version is available.
 
 ### 🐛 Fixed
+- Fixed HLS attribute lists treating commas inside quoted URIs as field separators: `EXT-X-KEY` and `EXT-X-MAP` resources with comma-bearing signature parameters now preserve their complete addresses and download through real HTTP into local files instead of failing after a truncated request.
 - Fixed local HLS playlists resetting `EXT-X-MEDIA-SEQUENCE` to `0`: downloads now preserve the source media sequence so AES-128 segments without an explicit IV still derive the correct IV during offline playback, preventing complete key and segment files from producing an undecryptable false-complete asset.
 - Added a real loopback HTTP `206 Content-Range` integration regression proving HLS byte-range requests pass through Dio's actual network stack, persist independent initialization/media files, and produce a fully local playlist. The download service keeps the production documents-directory default while allowing test injection to avoid Widget-test network interception.
 - HLS byte-range downloads now require a `206 Content-Range` matching the requested bounds; sources that ignore `Range` or return the wrong range can no longer publish corrupt offline media merely because the payload length happens to match.

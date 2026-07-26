@@ -185,6 +185,45 @@ segment-002.ts
     expect(manifest.segments.last.encryptionKey, isNull);
   });
 
+  test('preserves commas inside quoted attribute URIs', () {
+    final manifest = parser.parse(
+      '''
+#EXTM3U
+#EXT-X-MAP:URI="init.mp4?token=alpha,beta"
+#EXT-X-KEY:METHOD=AES-128,URI="keys/episode.key?token=gamma,delta"
+#EXTINF:6,
+segment-001.m4s
+#EXT-X-ENDLIST
+''',
+      uri: Uri.parse('https://cdn.example.test/anime/index.m3u8'),
+    );
+
+    expect(
+      manifest.segments.single.initializationSegment?.uri.toString(),
+      'https://cdn.example.test/anime/init.mp4?token=alpha,beta',
+    );
+    expect(
+      manifest.segments.single.encryptionKey?.uri.toString(),
+      'https://cdn.example.test/anime/keys/episode.key?token=gamma,delta',
+    );
+  });
+
+  test('rejects an unterminated quoted attribute', () {
+    expect(
+      () => parser.parse(
+        '''
+#EXTM3U
+#EXT-X-MAP:URI="init.mp4?token=alpha,beta
+#EXTINF:6,
+segment-001.m4s
+#EXT-X-ENDLIST
+''',
+        uri: Uri.parse('https://cdn.example.test/anime/index.m3u8'),
+      ),
+      throwsFormatException,
+    );
+  });
+
   test('rejects unsupported encryption methods', () {
     expect(
       () => parser.parse(
