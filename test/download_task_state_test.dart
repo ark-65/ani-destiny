@@ -5,6 +5,7 @@ import 'package:ani_destiny/core/error/app_exception.dart';
 import 'package:ani_destiny/core/storage/app_database.dart';
 import 'package:ani_destiny/features/download/data/repositories/download_repository_impl.dart';
 import 'package:ani_destiny/features/download/data/repositories/offline_media_repository_impl.dart';
+import 'package:ani_destiny/features/download/data/services/hls_manifest_parser.dart';
 import 'package:ani_destiny/features/download/data/services/http_download_service.dart';
 import 'package:ani_destiny/features/download/domain/entities/download_failure_reason.dart';
 import 'package:ani_destiny/features/download/domain/entities/hls_manifest.dart';
@@ -1351,6 +1352,60 @@ void main() {
     expect(task, isNotNull);
     expect(task!.status, DownloadStatus.failed);
     expect(task.failureReason, DownloadFailureReason.invalidManifest);
+  });
+
+  test('starting byte-range HLS fails before downloading media', () async {
+    final database = AppDatabase(NativeDatabase.memory());
+    addTearDown(database.close);
+
+    final tempDir = await Directory.systemTemp
+        .createTemp('ani-destiny-download-hls-byte-range');
+    addTearDown(() async {
+      if (tempDir.existsSync()) {
+        await tempDir.delete(recursive: true);
+      }
+    });
+    _mockApplicationDocumentsDirectory(tempDir.path);
+
+    final dio = _FakeHlsSegmentDownloadDio(const {});
+    final repository = DownloadRepositoryImpl(database);
+    final service = HttpDownloadService(
+      dio: dio,
+      repository: repository,
+      hlsManifestLoader: _FakeHlsManifestLoader(
+        (manifestUri, _) async => const HlsManifestParser().parse(
+          '''
+#EXTM3U
+#EXTINF:6,
+#EXT-X-BYTERANGE:1024@0
+media.ts
+#EXT-X-ENDLIST
+''',
+          uri: manifestUri,
+        ),
+      ),
+    );
+
+    final taskId = await service.createTask(
+      animeId: 'anime-1',
+      episodeId: 'episode-1',
+      sourceId: 'sakura',
+      source: const DownloadSource(
+        url: 'https://cdn.example.test/index.m3u8',
+        kind: DownloadKind.hls,
+      ),
+      title: 'HLS Test',
+      episodeTitle: 'Episode 1',
+    );
+
+    await service.start(taskId);
+
+    final task = await repository.getTask(taskId);
+    expect(task, isNotNull);
+    expect(task!.status, DownloadStatus.failed);
+    expect(task.failureReason, DownloadFailureReason.invalidManifest);
+    expect(task.failureMessage, contains('byte-range media segments'));
+    expect(dio.downloadedUris, isEmpty);
   });
 
   test('unsupported tasks drop implementation placeholder messages on read',

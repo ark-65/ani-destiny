@@ -59,6 +59,11 @@ class HlsManifestParser {
         final attributes = _parseAttributes(
           line.substring('#EXT-X-MAP:'.length),
         );
+        if (attributes.containsKey('BYTERANGE')) {
+          throw const FormatException(
+            'HLS byte-range initialization segments are not supported.',
+          );
+        }
         final mapUri = attributes['URI'];
         if (mapUri == null || mapUri.isEmpty) {
           throw const FormatException(
@@ -94,6 +99,11 @@ class HlsManifestParser {
           iv: attributes['IV'],
         );
         continue;
+      }
+      if (line.startsWith('#EXT-X-BYTERANGE:')) {
+        throw const FormatException(
+          'HLS byte-range media segments are not supported.',
+        );
       }
       if (line.startsWith('#')) {
         continue;

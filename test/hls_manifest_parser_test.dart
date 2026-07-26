@@ -116,6 +116,39 @@ segment-001.ts
     );
   });
 
+  test('rejects byte-range media and initialization segments', () {
+    for (final manifestBody in [
+      '''
+#EXTM3U
+#EXTINF:6,
+#EXT-X-BYTERANGE:1024@0
+media.ts
+#EXT-X-ENDLIST
+''',
+      '''
+#EXTM3U
+#EXT-X-MAP:URI="media.mp4",BYTERANGE="1024@0"
+#EXTINF:6,
+segment-001.m4s
+#EXT-X-ENDLIST
+''',
+    ]) {
+      expect(
+        () => parser.parse(
+          manifestBody,
+          uri: Uri.parse('https://cdn.example.test/anime/index.m3u8'),
+        ),
+        throwsA(
+          isA<FormatException>().having(
+            (error) => error.message,
+            'message',
+            contains('byte-range'),
+          ),
+        ),
+      );
+    }
+  });
+
   test('throws for invalid manifests', () {
     expect(
       () => parser.parse(

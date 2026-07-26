@@ -22,6 +22,7 @@
 - Check the latest stable GitHub Release in Settings > About and show an update prompt that opens the matching release page when a newer version is available.
 
 ### 🐛 Fixed
+- Fixed HLS playlists with `EXT-X-BYTERANGE` being saved as whole segments and producing false-complete offline assets: media-segment and initialization-segment ranges now fail as invalid manifests before any media request; users can return to the episode, switch download lines, and retry.
 - Fixed HLS tasks remaining permanently “downloading” when the app is terminated during a segment transfer: Downloads initialization now recovers HLS tasks left preparing/downloading by the previous process into a retryable paused state while preserving completed segments, so restarting downloads only missing segments. Direct-file task state is unchanged by this slice.
 - Tightened the HLS segment HTTP auto-retry boundary: only 408, 429, and 500–599 responses receive bounded retries, while ordinary 4xx and non-standard 6xx responses immediately enter the existing failed/manual-recovery path. Real task regressions prove retryable responses can complete on disk and non-retryable responses issue only one request.
 - Fixed delayed pause handling while an HLS segment waits to retry: pausing now interrupts the retry timer immediately, prevents another segment request, and preserves completed segments for the next resume.
