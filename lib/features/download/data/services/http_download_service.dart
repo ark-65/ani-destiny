@@ -668,6 +668,9 @@ class HttpDownloadService implements DownloadService {
     final initializationSegments = _hlsInitializationSegments(manifest);
     for (var index = 0; index < manifest.segments.length; index++) {
       final segment = manifest.segments[index];
+      if (segment.hasDiscontinuity) {
+        manifestLines.add('#EXT-X-DISCONTINUITY');
+      }
       final initializationSegment =
           segment.initializationSegment ?? manifest.initializationSegment;
       if (!_sameHlsInitializationSegment(

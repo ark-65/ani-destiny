@@ -104,6 +104,28 @@ segment-002.m4s
     );
   });
 
+  test('associates discontinuity boundaries with following media', () {
+    final manifest = parser.parse(
+      '''
+#EXTM3U
+#EXTINF:6,
+segment-001.ts
+#EXT-X-DISCONTINUITY
+#EXTINF:6,
+segment-002.ts
+#EXTINF:6,
+segment-003.ts
+#EXT-X-ENDLIST
+''',
+      uri: Uri.parse('https://cdn.example.test/anime/index.m3u8'),
+    );
+
+    expect(
+      manifest.segments.map((segment) => segment.hasDiscontinuity),
+      [false, true, false],
+    );
+  });
+
   test('applies an AES-128 key to following media segments', () {
     final manifest = parser.parse(
       '''

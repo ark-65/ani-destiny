@@ -32,6 +32,7 @@ class HlsSegment {
     this.title,
     this.encryptionKey,
     this.initializationSegment,
+    this.hasDiscontinuity = false,
   });
 
   final Uri uri;
@@ -39,6 +40,7 @@ class HlsSegment {
   final String? title;
   final HlsEncryptionKey? encryptionKey;
   final HlsInitializationSegment? initializationSegment;
+  final bool hasDiscontinuity;
 }
 
 class HlsEncryptionKey {

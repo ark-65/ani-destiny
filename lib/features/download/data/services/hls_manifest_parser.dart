@@ -22,6 +22,7 @@ class HlsManifestParser {
     Map<String, String>? pendingVariantAttributes;
     HlsInitializationSegment? initializationSegment;
     HlsEncryptionKey? activeEncryptionKey;
+    var pendingDiscontinuity = false;
     var hasEndList = false;
 
     for (var index = 1; index < lines.length; index++) {
@@ -100,6 +101,10 @@ class HlsManifestParser {
         );
         continue;
       }
+      if (line == '#EXT-X-DISCONTINUITY') {
+        pendingDiscontinuity = true;
+        continue;
+      }
       if (line.startsWith('#EXT-X-BYTERANGE:')) {
         throw const FormatException(
           'HLS byte-range media segments are not supported.',
@@ -129,10 +134,12 @@ class HlsManifestParser {
             title: pendingSegmentTitle,
             encryptionKey: activeEncryptionKey,
             initializationSegment: initializationSegment,
+            hasDiscontinuity: pendingDiscontinuity,
           ),
         );
         pendingSegmentDuration = null;
         pendingSegmentTitle = null;
+        pendingDiscontinuity = false;
       }
     }
 

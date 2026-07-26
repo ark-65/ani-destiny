@@ -22,6 +22,7 @@
 - Check the latest stable GitHub Release in Settings > About and show an update prompt that opens the matching release page when a newer version is available.
 
 ### 🐛 Fixed
+- Fixed local HLS manifest rewriting dropping `EXT-X-DISCONTINUITY`: timestamp, encoding-parameter, and initialization-segment transitions are now preserved in the fully local m3u8 so complete files remain decodable across boundaries.
 - Fixed HLS playlists with multiple `EXT-X-MAP` tags saving only the final initialization segment: downloads now preserve, fetch, and switch the matching local initialization reference per media segment, preventing false-complete assets that cannot decode offline.
 - Fixed HLS playlists with `EXT-X-BYTERANGE` being saved as whole segments and producing false-complete offline assets: media-segment and initialization-segment ranges now fail as invalid manifests before any media request; users can return to the episode, switch download lines, and retry.
 - Fixed HLS tasks remaining permanently “downloading” when the app is terminated during a segment transfer: Downloads initialization now recovers HLS tasks left preparing/downloading by the previous process into a retryable paused state while preserving completed segments, so restarting downloads only missing segments. Direct-file task state is unchanged by this slice.

@@ -297,6 +297,7 @@ void main() {
 #EXT-X-MAP:URI="init-1.mp4"
 #EXTINF:6,
 segment-1.m4s
+#EXT-X-DISCONTINUITY
 #EXT-X-MAP:URI="init-2.mp4"
 #EXTINF:6,
 segment-2.m4s
@@ -333,6 +334,7 @@ segment-2.m4s
     expect(
       manifestContent,
       contains(
+        '#EXT-X-DISCONTINUITY\n'
         '#EXT-X-MAP:URI="segments/initialization-000001.mp4"',
       ),
     );
