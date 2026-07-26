@@ -23,6 +23,7 @@
 - Check the latest stable GitHub Release in Settings > About and show an update prompt that opens the matching release page when a newer version is available.
 
 ### 🐛 Fixed
+- HLS byte-range downloads now require a `206 Content-Range` matching the requested bounds; sources that ignore `Range` or return the wrong range can no longer publish corrupt offline media merely because the payload length happens to match.
 - Fixed local HLS manifest rewriting dropping `EXT-X-DISCONTINUITY`: timestamp, encoding-parameter, and initialization-segment transitions are now preserved in the fully local m3u8 so complete files remain decodable across boundaries.
 - Fixed HLS playlists with multiple `EXT-X-MAP` tags saving only the final initialization segment: downloads now preserve, fetch, and switch the matching local initialization reference per media segment, preventing false-complete assets that cannot decode offline.
 - Fixed HLS tasks remaining permanently “downloading” when the app is terminated during a segment transfer: Downloads initialization now recovers HLS tasks left preparing/downloading by the previous process into a retryable paused state while preserving completed segments, so restarting downloads only missing segments. Direct-file task state is unchanged by this slice.

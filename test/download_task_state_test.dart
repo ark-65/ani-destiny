@@ -1535,6 +1535,62 @@ media.mp4
     );
   });
 
+  test('byte-range HLS rejects a same-length response that ignores Range',
+      () async {
+    final database = AppDatabase(NativeDatabase.memory());
+    addTearDown(database.close);
+
+    final tempDir = await Directory.systemTemp
+        .createTemp('ani-destiny-download-hls-range-response');
+    addTearDown(() async {
+      if (tempDir.existsSync()) {
+        await tempDir.delete(recursive: true);
+      }
+    });
+    _mockApplicationDocumentsDirectory(tempDir.path);
+
+    final repository = DownloadRepositoryImpl(database);
+    final dio = _IgnoringRangeHlsSegmentDownloadDio();
+    final service = HttpDownloadService(
+      dio: dio,
+      repository: repository,
+      hlsSegmentMaxAttempts: 1,
+      hlsManifestLoader: _FakeHlsManifestLoader(
+        (manifestUri, _) async => const HlsManifestParser().parse(
+          '''
+#EXTM3U
+#EXTINF:6,
+#EXT-X-BYTERANGE:4@0
+media.mp4
+#EXT-X-ENDLIST
+''',
+          uri: manifestUri,
+        ),
+      ),
+    );
+
+    final taskId = await service.createTask(
+      animeId: 'anime-1',
+      episodeId: 'episode-1',
+      sourceId: 'local-http',
+      source: const DownloadSource(
+        url: 'https://cdn.example.test/index.m3u8',
+        kind: DownloadKind.hls,
+      ),
+      title: 'HLS Test',
+      episodeTitle: 'Episode 1',
+    );
+
+    await service.start(taskId);
+
+    final task = await repository.getTask(taskId);
+    expect(task, isNotNull);
+    expect(task!.status, DownloadStatus.failed);
+    expect(task.failureReason, DownloadFailureReason.invalidManifest);
+    expect(dio.rangeHeaders, ['bytes=0-3']);
+    expect(File(task.localPath!).existsSync(), isFalse);
+  });
+
   test('unsupported tasks drop implementation placeholder messages on read',
       () async {
     final database = AppDatabase(NativeDatabase.memory());
@@ -2800,6 +2856,44 @@ class _RangeHlsSegmentDownloadDio extends DioForNative {
     return Response(
       requestOptions: RequestOptions(path: urlPath),
       statusCode: 206,
+      headers: Headers.fromMap({
+        HttpHeaders.contentRangeHeader: [
+          'bytes $start-$end/${bytesByUri[urlPath]!.length}',
+        ],
+      }),
+      data: content,
+    );
+  }
+}
+
+class _IgnoringRangeHlsSegmentDownloadDio extends DioForNative {
+  final List<String?> rangeHeaders = <String?>[];
+
+  @override
+  Future<Response> download(
+    String urlPath,
+    dynamic savePath, {
+    ProgressCallback? onReceiveProgress,
+    Map<String, dynamic>? queryParameters,
+    CancelToken? cancelToken,
+    bool deleteOnError = true,
+    FileAccessMode fileAccessMode = FileAccessMode.write,
+    String lengthHeader = Headers.contentLengthHeader,
+    Object? data,
+    Options? options,
+  }) async {
+    rangeHeaders.add(options?.headers?['Range']?.toString());
+    const content = <int>[8, 9, 10, 11];
+    final file = File(savePath as String);
+    await file.parent.create(recursive: true);
+    await file.writeAsBytes(content);
+    onReceiveProgress?.call(content.length, content.length);
+    return Response(
+      requestOptions: RequestOptions(path: urlPath),
+      statusCode: HttpStatus.ok,
+      headers: Headers.fromMap({
+        HttpHeaders.contentLengthHeader: ['4'],
+      }),
       data: content,
     );
   }

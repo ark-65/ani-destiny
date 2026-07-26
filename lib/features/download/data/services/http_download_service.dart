@@ -628,7 +628,7 @@ class HttpDownloadService implements DownloadService {
     for (var attempt = 1; attempt <= maxAttempts; attempt++) {
       var downloadedBytes = 0;
       try {
-        await _dio.download(
+        final response = await _dio.download(
           segmentUri.toString(),
           localPath,
           cancelToken: cancelToken,
@@ -643,6 +643,7 @@ class HttpDownloadService implements DownloadService {
           },
         );
         if (byteRange != null) {
+          _validateHlsByteRangeResponse(response, byteRange);
           final actualLength = await File(localPath).length();
           if (actualLength != byteRange.length) {
             throw FormatException(
@@ -670,6 +671,26 @@ class HttpDownloadService implements DownloadService {
       }
     }
     throw StateError('HLS segment retry loop exited unexpectedly.');
+  }
+
+  void _validateHlsByteRangeResponse(
+    Response<dynamic> response,
+    HlsByteRange byteRange,
+  ) {
+    final contentRange = response.headers.value('content-range');
+    final match = RegExp(
+      r'^bytes (\d+)-(\d+)/(\d+|\*)$',
+      caseSensitive: false,
+    ).firstMatch(contentRange?.trim() ?? '');
+    final expectedEnd = byteRange.offset + byteRange.length - 1;
+    if (response.statusCode != HttpStatus.partialContent ||
+        match == null ||
+        int.tryParse(match.group(1)!) != byteRange.offset ||
+        int.tryParse(match.group(2)!) != expectedEnd) {
+      throw const FormatException(
+        'HLS byte-range response did not match the requested range.',
+      );
+    }
   }
 
   bool _isRetryableHlsSegmentFailure(DioException error) {
