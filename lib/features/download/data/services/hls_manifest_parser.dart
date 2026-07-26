@@ -21,6 +21,7 @@ class HlsManifestParser {
     String? pendingSegmentTitle;
     Map<String, String>? pendingVariantAttributes;
     HlsInitializationSegment? initializationSegment;
+    HlsEncryptionKey? activeEncryptionKey;
     var hasEndList = false;
 
     for (var index = 1; index < lines.length; index++) {
@@ -69,6 +70,31 @@ class HlsManifestParser {
         );
         continue;
       }
+      if (line.startsWith('#EXT-X-KEY:')) {
+        final attributes = _parseAttributes(
+          line.substring('#EXT-X-KEY:'.length),
+        );
+        final method = attributes['METHOD']?.toUpperCase();
+        if (method == 'NONE') {
+          activeEncryptionKey = null;
+          continue;
+        }
+        if (method != 'AES-128') {
+          throw FormatException(
+            'Unsupported HLS encryption method: ${method ?? 'missing'}.',
+          );
+        }
+        final keyUri = attributes['URI'];
+        if (keyUri == null || keyUri.isEmpty) {
+          throw const FormatException('HLS encryption key URI missing.');
+        }
+        activeEncryptionKey = HlsEncryptionKey(
+          method: method!,
+          uri: uri.resolve(keyUri),
+          iv: attributes['IV'],
+        );
+        continue;
+      }
       if (line.startsWith('#')) {
         continue;
       }
@@ -91,6 +117,7 @@ class HlsManifestParser {
             uri: resolvedUri,
             duration: pendingSegmentDuration,
             title: pendingSegmentTitle,
+            encryptionKey: activeEncryptionKey,
           ),
         );
         pendingSegmentDuration = null;

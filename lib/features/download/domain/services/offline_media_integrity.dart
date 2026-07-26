@@ -43,8 +43,17 @@ bool isPlayableOfflineMediaPath(String manifestPath) {
 
   var hasPlayableSegment = false;
   for (final line in lines.skip(1)) {
+    if (line.startsWith('#EXT-X-KEY:')) {
+      final keyUri = _uriAttributeFromTag(line);
+      if (line.contains('METHOD=NONE')) continue;
+      if (keyUri == null ||
+          !_hasPlayableManifestAsset(keyUri, manifestDirectory)) {
+        return false;
+      }
+      continue;
+    }
     if (line.startsWith('#EXT-X-MAP:')) {
-      final initializationUri = _initializationUriFromMapTag(line);
+      final initializationUri = _uriAttributeFromTag(line);
       if (initializationUri == null ||
           !_hasPlayableManifestAsset(
             initializationUri,
@@ -75,7 +84,7 @@ bool _hasPlayableManifestAsset(String value, String manifestDirectory) {
   });
 }
 
-String? _initializationUriFromMapTag(String line) {
+String? _uriAttributeFromTag(String line) {
   final quotedMatch = RegExp(r'URI="([^"]+)"').firstMatch(line);
   if (quotedMatch != null) {
     return quotedMatch.group(1);

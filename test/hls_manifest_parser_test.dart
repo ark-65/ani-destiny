@@ -75,6 +75,47 @@ segment-001.m4s
     );
   });
 
+  test('applies an AES-128 key to following media segments', () {
+    final manifest = parser.parse(
+      '''
+#EXTM3U
+#EXT-X-KEY:METHOD=AES-128,URI="keys/episode.key",IV=0x0123456789ABCDEF
+#EXTINF:6,
+segment-001.ts
+#EXT-X-KEY:METHOD=NONE
+#EXTINF:6,
+segment-002.ts
+#EXT-X-ENDLIST
+''',
+      uri: Uri.parse('https://cdn.example.test/anime/index.m3u8'),
+    );
+
+    final key = manifest.segments.first.encryptionKey;
+    expect(key?.method, 'AES-128');
+    expect(
+      key?.uri.toString(),
+      'https://cdn.example.test/anime/keys/episode.key',
+    );
+    expect(key?.iv, '0x0123456789ABCDEF');
+    expect(manifest.segments.last.encryptionKey, isNull);
+  });
+
+  test('rejects unsupported encryption methods', () {
+    expect(
+      () => parser.parse(
+        '''
+#EXTM3U
+#EXT-X-KEY:METHOD=SAMPLE-AES,URI="keys/episode.key"
+#EXTINF:6,
+segment-001.ts
+#EXT-X-ENDLIST
+''',
+        uri: Uri.parse('https://cdn.example.test/anime/index.m3u8'),
+      ),
+      throwsFormatException,
+    );
+  });
+
   test('throws for invalid manifests', () {
     expect(
       () => parser.parse(

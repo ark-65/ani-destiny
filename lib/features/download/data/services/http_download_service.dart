@@ -445,6 +445,25 @@ class HttpDownloadService implements DownloadService {
 
     var downloadedBytes = 0;
 
+    for (final keyEntry in _hlsEncryptionKeys(mediaManifest).entries) {
+      final keyFile = File(
+        p.join(
+          segmentDirectory.path,
+          _hlsEncryptionKeyFileName(keyEntry.value),
+        ),
+      );
+      if (await keyFile.exists() && await keyFile.length() > 0) {
+        downloadedBytes += await keyFile.length();
+      } else {
+        downloadedBytes += await _downloadHlsSegment(
+          segmentUri: keyEntry.key.uri,
+          localPath: keyFile.path,
+          headers: headers,
+          cancelToken: cancelToken,
+        );
+      }
+    }
+
     final initializationSegment = mediaManifest.initializationSegment;
     if (initializationSegment != null) {
       final initializationPath = p.join(
@@ -531,6 +550,21 @@ class HttpDownloadService implements DownloadService {
       if (await initializationFile.length() == 0) {
         throw FormatException(
           'HLS manifest integrity check failed: empty initialization file $initializationName',
+        );
+      }
+    }
+
+    for (final keyEntry in _hlsEncryptionKeys(mediaManifest).entries) {
+      final keyName = _hlsEncryptionKeyFileName(keyEntry.value);
+      final keyFile = File(p.join(segmentDirectory.path, keyName));
+      if (!await keyFile.exists()) {
+        throw FormatException(
+          'HLS manifest integrity check failed: missing encryption key file $keyName',
+        );
+      }
+      if (await keyFile.length() == 0) {
+        throw FormatException(
+          'HLS manifest integrity check failed: empty encryption key file $keyName',
         );
       }
     }
@@ -624,8 +658,27 @@ class HttpDownloadService implements DownloadService {
         '#EXT-X-MAP:URI="segments/${_hlsInitializationSegmentFileName(manifest.initializationSegment!.uri)}"',
     ];
 
+    HlsEncryptionKey? activeEncryptionKey;
+    final encryptionKeys = _hlsEncryptionKeys(manifest);
     for (var index = 0; index < manifest.segments.length; index++) {
       final segment = manifest.segments[index];
+      if (!_sameHlsEncryptionKey(activeEncryptionKey, segment.encryptionKey)) {
+        final encryptionKey = segment.encryptionKey;
+        if (encryptionKey == null) {
+          manifestLines.add('#EXT-X-KEY:METHOD=NONE');
+        } else {
+          final keyIndex = encryptionKeys.keys.toList().indexWhere(
+                (key) => _sameHlsEncryptionKey(key, encryptionKey),
+              );
+          final attributes = <String>[
+            'METHOD=${encryptionKey.method}',
+            'URI="segments/${_hlsEncryptionKeyFileName(keyIndex)}"',
+            if (encryptionKey.iv != null) 'IV=${encryptionKey.iv}',
+          ];
+          manifestLines.add('#EXT-X-KEY:${attributes.join(',')}');
+        }
+        activeEncryptionKey = encryptionKey;
+      }
       final segmentName = _hlsSegmentFileName(segment.uri, index);
       final duration = segment.duration ?? const Duration(seconds: 1);
       final durationText = (duration.inMilliseconds / 1000).toStringAsFixed(3);
@@ -651,6 +704,34 @@ class HttpDownloadService implements DownloadService {
   String _hlsInitializationSegmentFileName(Uri segmentUri) {
     final extension = p.extension(segmentUri.path);
     return 'initialization${extension.isEmpty ? '.mp4' : extension}';
+  }
+
+  Map<HlsEncryptionKey, int> _hlsEncryptionKeys(HlsManifest manifest) {
+    final keys = <HlsEncryptionKey, int>{};
+    for (final segment in manifest.segments) {
+      final key = segment.encryptionKey;
+      if (key == null) continue;
+      final existingKey = keys.keys.where(
+        (candidate) => _sameHlsEncryptionKey(candidate, key),
+      );
+      if (existingKey.isEmpty) {
+        keys[key] = keys.length;
+      }
+    }
+    return keys;
+  }
+
+  bool _sameHlsEncryptionKey(
+    HlsEncryptionKey? first,
+    HlsEncryptionKey? second,
+  ) {
+    return first?.method == second?.method &&
+        first?.uri == second?.uri &&
+        first?.iv == second?.iv;
+  }
+
+  String _hlsEncryptionKeyFileName(int index) {
+    return 'key-${index.toString().padLeft(6, '0')}.key';
   }
 
   Future<HlsManifest> _loadHlsMediaManifest({

@@ -30,11 +30,25 @@ class HlsSegment {
     required this.uri,
     this.duration,
     this.title,
+    this.encryptionKey,
   });
 
   final Uri uri;
   final Duration? duration;
   final String? title;
+  final HlsEncryptionKey? encryptionKey;
+}
+
+class HlsEncryptionKey {
+  const HlsEncryptionKey({
+    required this.method,
+    required this.uri,
+    this.iv,
+  });
+
+  final String method;
+  final Uri uri;
+  final String? iv;
 }
 
 class HlsVariant {

@@ -7,6 +7,7 @@
 ## [Unreleased]
 
 ### ✨ Added
+- AES-128 encrypted HLS now saves encryption keys alongside media segments and rewrites local playlists to local key references; offline integrity rejects missing or empty key files, while other encryption methods remain explicitly unsupported.
 - HLS offline downloads now save fMP4 `EXT-X-MAP` initialization segments and rewrite local manifests to reference local files only.
 - Added an offline HLS app-restart regression using a real on-disk database, local m3u8, and segment: after closing and rebuilding the database and offline-media service, the test restores `OfflineMediaItem`, verifies it again, and produces local playback arguments without network headers.
 - Offline-media integrity results are now persisted on the independent asset record. After an app restart, the library still marks episodes confirmed as damaged, while a successful recheck can restore playable status without changing the download-task lifecycle.

@@ -264,6 +264,89 @@ void main() {
     ]);
   });
 
+  test('starting AES-128 HLS task persists a local encryption key', () async {
+    final database = AppDatabase(NativeDatabase.memory());
+    addTearDown(database.close);
+
+    final tempDir = await Directory.systemTemp
+        .createTemp('ani-destiny-download-hls-encryption-key');
+    addTearDown(() async {
+      if (tempDir.existsSync()) {
+        await tempDir.delete(recursive: true);
+      }
+    });
+    _mockApplicationDocumentsDirectory(tempDir.path);
+
+    const keyBytes = <int>[1, 3, 3, 7];
+    const mediaBytes = <int>[5, 6, 7, 8, 9];
+    final key = HlsEncryptionKey(
+      method: 'AES-128',
+      uri: Uri.parse('https://cdn.example.test/episode.key'),
+      iv: '0x0123456789ABCDEF',
+    );
+    final dio = _FakeHlsSegmentDownloadDio({
+      'https://cdn.example.test/episode.key': keyBytes,
+      'https://cdn.example.test/segment-1.ts': mediaBytes,
+    });
+    final repository = DownloadRepositoryImpl(database);
+    final service = HttpDownloadService(
+      dio: dio,
+      repository: repository,
+      offlineMediaRepository: OfflineMediaRepositoryImpl(database),
+      hlsManifestLoader: _FakeHlsManifestLoader(
+        (manifestUri, headers) async => HlsManifest(
+          uri: manifestUri,
+          segments: [
+            HlsSegment(
+              uri: Uri.parse('https://cdn.example.test/segment-1.ts'),
+              encryptionKey: key,
+            ),
+          ],
+          variants: const [],
+          isLive: false,
+        ),
+      ),
+    );
+
+    final taskId = await service.createTask(
+      animeId: 'anime-1',
+      episodeId: 'episode-1',
+      sourceId: 'sakura',
+      source: const DownloadSource(
+        url: 'https://cdn.example.test/index.m3u8',
+        kind: DownloadKind.hls,
+      ),
+      title: 'Encrypted HLS Test',
+      episodeTitle: 'Episode 1',
+    );
+
+    await service.start(taskId);
+
+    final task = (await repository.getTask(taskId))!;
+    final manifestContent = await File(task.localPath!).readAsString();
+    final keyFile = File(
+      p.join(p.dirname(task.localPath!), 'segments', 'key-000000.key'),
+    );
+    expect(task.status, DownloadStatus.completed);
+    expect(task.downloadedBytes, keyBytes.length + mediaBytes.length);
+    expect(
+      manifestContent,
+      contains(
+        '#EXT-X-KEY:METHOD=AES-128,URI="segments/key-000000.key",'
+        'IV=0x0123456789ABCDEF',
+      ),
+    );
+    expect(manifestContent, isNot(contains('https://cdn.example.test')));
+    expect(await keyFile.readAsBytes(), keyBytes);
+    expect(isPlayableOfflineMediaPath(task.localPath!), isTrue);
+    await keyFile.delete();
+    expect(isPlayableOfflineMediaPath(task.localPath!), isFalse);
+    expect(dio.downloadedUris, [
+      'https://cdn.example.test/episode.key',
+      'https://cdn.example.test/segment-1.ts',
+    ]);
+  });
+
   test('starting HLS task retries a transient segment connection failure',
       () async {
     final database = AppDatabase(NativeDatabase.memory());
