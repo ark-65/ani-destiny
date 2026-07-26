@@ -13,6 +13,7 @@ import 'package:ani_destiny/features/download/domain/entities/download_progress.
 import 'package:ani_destiny/features/download/domain/entities/download_source.dart';
 import 'package:ani_destiny/features/download/domain/entities/download_task.dart';
 import 'package:ani_destiny/features/download/domain/services/hls_manifest_loader.dart';
+import 'package:ani_destiny/features/download/domain/services/offline_media_integrity.dart';
 import 'package:dio/dio.dart';
 import 'package:dio/io.dart';
 import 'package:drift/native.dart';
@@ -166,6 +167,101 @@ void main() {
       offlineMedia.downloadedBytes,
       segmentOne.length + segmentTwo.length,
     );
+  });
+
+  test(
+      'starting fMP4 HLS task downloads initialization segment into local manifest',
+      () async {
+    final database = AppDatabase(NativeDatabase.memory());
+    addTearDown(database.close);
+
+    final tempDir = await Directory.systemTemp
+        .createTemp('ani-destiny-download-hls-initialization');
+    addTearDown(() async {
+      if (tempDir.existsSync()) {
+        await tempDir.delete(recursive: true);
+      }
+    });
+    _mockApplicationDocumentsDirectory(tempDir.path);
+
+    const initializationBytes = <int>[1, 2, 3, 4];
+    const mediaBytes = <int>[5, 6, 7, 8, 9];
+    final dio = _FakeHlsSegmentDownloadDio({
+      'https://cdn.example.test/init.mp4': initializationBytes,
+      'https://cdn.example.test/segment-1.m4s': mediaBytes,
+    });
+    final repository = DownloadRepositoryImpl(database);
+    final offlineMediaRepository = OfflineMediaRepositoryImpl(database);
+    final service = HttpDownloadService(
+      dio: dio,
+      repository: repository,
+      offlineMediaRepository: offlineMediaRepository,
+      hlsManifestLoader: _FakeHlsManifestLoader(
+        (manifestUri, headers) async => HlsManifest(
+          uri: manifestUri,
+          segments: [
+            HlsSegment(
+              uri: Uri.parse('https://cdn.example.test/segment-1.m4s'),
+            ),
+          ],
+          variants: const [],
+          isLive: false,
+          initializationSegment: HlsInitializationSegment(
+            uri: Uri.parse('https://cdn.example.test/init.mp4'),
+          ),
+        ),
+      ),
+    );
+
+    final taskId = await service.createTask(
+      animeId: 'anime-1',
+      episodeId: 'episode-1',
+      sourceId: 'sakura',
+      source: const DownloadSource(
+        url: 'https://cdn.example.test/index.m3u8',
+        kind: DownloadKind.hls,
+      ),
+      title: 'HLS Test',
+      episodeTitle: 'Episode 1',
+    );
+
+    await service.start(taskId);
+
+    final task = (await repository.getTask(taskId))!;
+    final manifestContent = await File(task.localPath!).readAsString();
+    expect(task.status, DownloadStatus.completed);
+    expect(
+      task.downloadedBytes,
+      initializationBytes.length + mediaBytes.length,
+    );
+    expect(
+      manifestContent,
+      contains('#EXT-X-MAP:URI="segments/initialization.mp4"'),
+    );
+    expect(manifestContent, isNot(contains('https://cdn.example.test')));
+    expect(
+      await File(
+        p.join(
+          p.dirname(task.localPath!),
+          'segments',
+          'initialization.mp4',
+        ),
+      ).readAsBytes(),
+      initializationBytes,
+    );
+    expect(isPlayableOfflineMediaPath(task.localPath!), isTrue);
+    await File(
+      p.join(
+        p.dirname(task.localPath!),
+        'segments',
+        'initialization.mp4',
+      ),
+    ).delete();
+    expect(isPlayableOfflineMediaPath(task.localPath!), isFalse);
+    expect(dio.downloadedUris, [
+      'https://cdn.example.test/init.mp4',
+      'https://cdn.example.test/segment-1.m4s',
+    ]);
   });
 
   test('starting HLS task retries a transient segment connection failure',
@@ -901,7 +997,7 @@ void main() {
   });
 
   test(
-    'starting HLS task with master playlist resolves highest-bandwidth variant first',
+      'starting HLS task with master playlist resolves highest-bandwidth variant first',
       () async {
     final database = AppDatabase(NativeDatabase.memory());
     addTearDown(database.close);

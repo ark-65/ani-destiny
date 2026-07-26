@@ -56,6 +56,25 @@ segment-002.ts
     );
   });
 
+  test('parses a relative initialization segment', () {
+    final manifest = parser.parse(
+      '''
+#EXTM3U
+#EXT-X-TARGETDURATION:6
+#EXT-X-MAP:URI="init/init.mp4"
+#EXTINF:6,
+segment-001.m4s
+#EXT-X-ENDLIST
+''',
+      uri: Uri.parse('https://cdn.example.test/anime/index.m3u8'),
+    );
+
+    expect(
+      manifest.initializationSegment?.uri.toString(),
+      'https://cdn.example.test/anime/init/init.mp4',
+    );
+  });
+
   test('throws for invalid manifests', () {
     expect(
       () => parser.parse(

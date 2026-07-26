@@ -43,26 +43,44 @@ bool isPlayableOfflineMediaPath(String manifestPath) {
 
   var hasPlayableSegment = false;
   for (final line in lines.skip(1)) {
-    if (line.startsWith('#')) continue;
-    final segmentPaths = _segmentPathCandidatesFromManifestLine(
-      line,
-      manifestDirectory,
-    );
-    if (segmentPaths.isEmpty) {
-      return false;
+    if (line.startsWith('#EXT-X-MAP:')) {
+      final initializationUri = _initializationUriFromMapTag(line);
+      if (initializationUri == null ||
+          !_hasPlayableManifestAsset(
+            initializationUri,
+            manifestDirectory,
+          )) {
+        return false;
+      }
+      continue;
     }
-
-    final hasPlayableSegmentFile = segmentPaths.any((segmentPath) {
-      final segmentFile = File(segmentPath);
-      return segmentFile.existsSync() && segmentFile.lengthSync() > 0;
-    });
-    if (!hasPlayableSegmentFile) {
+    if (line.startsWith('#')) continue;
+    if (!_hasPlayableManifestAsset(line, manifestDirectory)) {
       return false;
     }
     hasPlayableSegment = true;
   }
 
   return hasPlayableSegment;
+}
+
+bool _hasPlayableManifestAsset(String value, String manifestDirectory) {
+  final segmentPaths = _segmentPathCandidatesFromManifestLine(
+    value,
+    manifestDirectory,
+  );
+  return segmentPaths.any((segmentPath) {
+    final segmentFile = File(segmentPath);
+    return segmentFile.existsSync() && segmentFile.lengthSync() > 0;
+  });
+}
+
+String? _initializationUriFromMapTag(String line) {
+  final quotedMatch = RegExp(r'URI="([^"]+)"').firstMatch(line);
+  if (quotedMatch != null) {
+    return quotedMatch.group(1);
+  }
+  return RegExp(r'URI=([^,]+)').firstMatch(line)?.group(1)?.trim();
 }
 
 Iterable<String> _segmentPathCandidatesFromManifestLine(

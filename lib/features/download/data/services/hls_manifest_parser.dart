@@ -20,6 +20,7 @@ class HlsManifestParser {
     Duration? pendingSegmentDuration;
     String? pendingSegmentTitle;
     Map<String, String>? pendingVariantAttributes;
+    HlsInitializationSegment? initializationSegment;
     var hasEndList = false;
 
     for (var index = 1; index < lines.length; index++) {
@@ -50,6 +51,21 @@ class HlsManifestParser {
       if (line.startsWith('#EXT-X-STREAM-INF:')) {
         pendingVariantAttributes = _parseAttributes(
           line.substring('#EXT-X-STREAM-INF:'.length),
+        );
+        continue;
+      }
+      if (line.startsWith('#EXT-X-MAP:')) {
+        final attributes = _parseAttributes(
+          line.substring('#EXT-X-MAP:'.length),
+        );
+        final mapUri = attributes['URI'];
+        if (mapUri == null || mapUri.isEmpty) {
+          throw const FormatException(
+            'HLS initialization segment URI missing.',
+          );
+        }
+        initializationSegment = HlsInitializationSegment(
+          uri: uri.resolve(mapUri),
         );
         continue;
       }
@@ -92,6 +108,7 @@ class HlsManifestParser {
       variants: List.unmodifiable(variants),
       isLive: !hasEndList,
       targetDuration: targetDuration,
+      initializationSegment: initializationSegment,
     );
   }
 

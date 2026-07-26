@@ -5,6 +5,7 @@ class HlsManifest {
     required this.variants,
     required this.isLive,
     this.targetDuration,
+    this.initializationSegment,
   });
 
   final Uri uri;
@@ -12,9 +13,16 @@ class HlsManifest {
   final List<HlsVariant> variants;
   final bool isLive;
   final Duration? targetDuration;
+  final HlsInitializationSegment? initializationSegment;
 
   bool get isMasterPlaylist => variants.isNotEmpty;
   bool get isMediaPlaylist => segments.isNotEmpty;
+}
+
+class HlsInitializationSegment {
+  const HlsInitializationSegment({required this.uri});
+
+  final Uri uri;
 }
 
 class HlsSegment {

@@ -445,6 +445,26 @@ class HttpDownloadService implements DownloadService {
 
     var downloadedBytes = 0;
 
+    final initializationSegment = mediaManifest.initializationSegment;
+    if (initializationSegment != null) {
+      final initializationPath = p.join(
+        segmentDirectory.path,
+        _hlsInitializationSegmentFileName(initializationSegment.uri),
+      );
+      final initializationFile = File(initializationPath);
+      if (await initializationFile.exists() &&
+          await initializationFile.length() > 0) {
+        downloadedBytes += await initializationFile.length();
+      } else {
+        downloadedBytes += await _downloadHlsSegment(
+          segmentUri: initializationSegment.uri,
+          localPath: initializationPath,
+          headers: headers,
+          cancelToken: cancelToken,
+        );
+      }
+    }
+
     for (var index = 0; index < mediaManifest.segments.length; index++) {
       final segment = mediaManifest.segments[index];
       final safeSegmentName = _hlsSegmentFileName(segment.uri, index);
@@ -494,6 +514,26 @@ class HttpDownloadService implements DownloadService {
         'segments',
       ),
     );
+
+    final initializationSegment = mediaManifest.initializationSegment;
+    if (initializationSegment != null) {
+      final initializationName = _hlsInitializationSegmentFileName(
+        initializationSegment.uri,
+      );
+      final initializationFile = File(
+        p.join(segmentDirectory.path, initializationName),
+      );
+      if (!await initializationFile.exists()) {
+        throw FormatException(
+          'HLS manifest integrity check failed: missing initialization file $initializationName',
+        );
+      }
+      if (await initializationFile.length() == 0) {
+        throw FormatException(
+          'HLS manifest integrity check failed: empty initialization file $initializationName',
+        );
+      }
+    }
 
     for (var index = 0; index < mediaManifest.segments.length; index++) {
       final segment = mediaManifest.segments[index];
@@ -580,6 +620,8 @@ class HttpDownloadService implements DownloadService {
       '#EXT-X-VERSION:3',
       '#EXT-X-MEDIA-SEQUENCE:0',
       '#EXT-X-PLAYLIST-TYPE:VOD',
+      if (manifest.initializationSegment != null)
+        '#EXT-X-MAP:URI="segments/${_hlsInitializationSegmentFileName(manifest.initializationSegment!.uri)}"',
     ];
 
     for (var index = 0; index < manifest.segments.length; index++) {
@@ -604,6 +646,11 @@ class HttpDownloadService implements DownloadService {
     return 'segment-${index.toString().padLeft(6, '0')} '
             '${extension.isEmpty ? '.ts' : extension}'
         .replaceAll(' ', '');
+  }
+
+  String _hlsInitializationSegmentFileName(Uri segmentUri) {
+    final extension = p.extension(segmentUri.path);
+    return 'initialization${extension.isEmpty ? '.mp4' : extension}';
   }
 
   Future<HlsManifest> _loadHlsMediaManifest({
