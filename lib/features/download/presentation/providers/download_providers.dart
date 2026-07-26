@@ -55,9 +55,16 @@ final btDownloadServiceProvider = Provider<DownloadService>((ref) {
   return const UnsupportedBtDownloadService();
 });
 
+final interruptedHlsRecoveryProvider = FutureProvider<void>((ref) {
+  ref.keepAlive();
+  return ref.watch(downloadRepositoryProvider).recoverInterruptedHlsTasks();
+});
+
 final downloadTasksProvider =
-    StreamProvider.autoDispose<List<DownloadTask>>((ref) {
-  return ref.watch(downloadRepositoryProvider).watchTasks();
+    StreamProvider.autoDispose<List<DownloadTask>>((ref) async* {
+  final repository = ref.watch(downloadRepositoryProvider);
+  await ref.watch(interruptedHlsRecoveryProvider.future);
+  yield* repository.watchTasks();
 });
 
 final offlineMediaItemsProvider =

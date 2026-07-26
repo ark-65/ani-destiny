@@ -20,6 +20,7 @@
 - Check the latest stable GitHub Release in Settings > About and show an update prompt that opens the matching release page when a newer version is available.
 
 ### 🐛 Fixed
+- Fixed HLS tasks remaining permanently “downloading” when the app is terminated during a segment transfer: Downloads initialization now recovers HLS tasks left preparing/downloading by the previous process into a retryable paused state while preserving completed segments, so restarting downloads only missing segments. Direct-file task state is unchanged by this slice.
 - Tightened the HLS segment HTTP auto-retry boundary: only 408, 429, and 500–599 responses receive bounded retries, while ordinary 4xx and non-standard 6xx responses immediately enter the existing failed/manual-recovery path. Real task regressions prove retryable responses can complete on disk and non-retryable responses issue only one request.
 - Fixed delayed pause handling while an HLS segment waits to retry: pausing now interrupts the retry timer immediately, prevents another segment request, and preserves completed segments for the next resume.
 - Added a regression for resuming after HLS segment retries are exhausted: when all three default transient-failure attempts fail, the task preserves earlier completed segments; starting it again downloads only the missing segment and writes the local m3u8, keeping automatic retry aligned with the existing manual-resume boundary.

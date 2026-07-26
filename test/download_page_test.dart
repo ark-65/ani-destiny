@@ -2989,6 +2989,22 @@ class _FakeDownloadRepository implements DownloadRepository {
       StreamController<List<DownloadTask>>.broadcast();
 
   @override
+  Future<void> recoverInterruptedHlsTasks() async {
+    for (var index = 0; index < _tasks.length; index++) {
+      final task = _tasks[index];
+      if (task.kind == DownloadKind.hls &&
+          (task.status == DownloadStatus.preparing ||
+              task.status == DownloadStatus.downloading)) {
+        _tasks[index] = task.copyWith(
+          status: DownloadStatus.paused,
+          failureReason: DownloadFailureReason.none,
+          failureMessage: null,
+        );
+      }
+    }
+  }
+
+  @override
   Future<void> deleteTask(String taskId) async {
     deleteAttempts.add(taskId);
     if (deleteBlocker != null) {

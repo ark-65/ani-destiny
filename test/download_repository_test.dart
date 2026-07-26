@@ -9,6 +9,84 @@ import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
+  test('DownloadRepository recovers only interrupted HLS tasks as paused',
+      () async {
+    final database = AppDatabase(NativeDatabase.memory());
+    addTearDown(database.close);
+
+    final repository = DownloadRepositoryImpl(database);
+    final now = DateTime(2026, 7, 26, 8);
+    for (final task in [
+      DownloadTask(
+        id: 'hls-preparing',
+        animeId: 'anime-1',
+        episodeId: 'episode-1',
+        sourceId: 'sakura',
+        title: 'HLS Test',
+        episodeTitle: 'Episode 1',
+        url: 'https://cdn.example.test/index.m3u8',
+        kind: DownloadKind.hls,
+        status: DownloadStatus.preparing,
+        failureReason: DownloadFailureReason.none,
+        progress: 0,
+        createdAt: now,
+        updatedAt: now,
+      ),
+      DownloadTask(
+        id: 'hls-downloading',
+        animeId: 'anime-1',
+        episodeId: 'episode-2',
+        sourceId: 'sakura',
+        title: 'HLS Test',
+        episodeTitle: 'Episode 2',
+        url: 'https://cdn.example.test/index.m3u8',
+        kind: DownloadKind.hls,
+        status: DownloadStatus.downloading,
+        failureReason: DownloadFailureReason.none,
+        progress: 0.5,
+        downloadedBytes: 512,
+        createdAt: now,
+        updatedAt: now,
+      ),
+      DownloadTask(
+        id: 'direct-downloading',
+        animeId: 'anime-1',
+        episodeId: 'episode-3',
+        sourceId: 'sakura',
+        title: 'Direct Test',
+        episodeTitle: 'Episode 3',
+        url: 'https://cdn.example.test/video.mp4',
+        kind: DownloadKind.directFile,
+        status: DownloadStatus.downloading,
+        failureReason: DownloadFailureReason.none,
+        progress: 0.5,
+        createdAt: now,
+        updatedAt: now,
+      ),
+    ]) {
+      await repository.upsertTask(task);
+    }
+
+    await repository.recoverInterruptedHlsTasks();
+
+    expect(
+      (await repository.getTask('hls-preparing'))!.status,
+      DownloadStatus.paused,
+    );
+    expect(
+      (await repository.getTask('hls-downloading'))!.status,
+      DownloadStatus.paused,
+    );
+    expect(
+      (await repository.getTask('hls-downloading'))!.downloadedBytes,
+      512,
+    );
+    expect(
+      (await repository.getTask('direct-downloading'))!.status,
+      DownloadStatus.downloading,
+    );
+  });
+
   test('DownloadRepository stores headers and upgraded task fields', () async {
     final database = AppDatabase(NativeDatabase.memory());
     addTearDown(database.close);

@@ -675,7 +675,7 @@ void main() {
     expect(retryDio.downloadedUris, ['https://cdn.example.test/segment-2.ts']);
   });
 
-  test('starting HLS task resumes after service restart with existing segments',
+  test('interrupted HLS task resumes after app restart with existing segments',
       () async {
     final tempDir = await Directory.systemTemp
         .createTemp('ani-destiny-download-hls-restart');
@@ -761,6 +761,13 @@ void main() {
       File(p.join(restartSegmentsDir.path, 'segment-000001.ts')).existsSync(),
       isFalse,
     );
+    await firstRepository.upsertTask(
+      failedTask.copyWith(
+        status: DownloadStatus.downloading,
+        failureReason: DownloadFailureReason.none,
+        failureMessage: null,
+      ),
+    );
     await firstDatabase.close();
     firstRestartCheck.clear();
 
@@ -771,6 +778,11 @@ void main() {
     final secondDatabase = AppDatabase(NativeDatabase(databasePath));
     firstRestartCheck.add(secondDatabase);
     final secondRepository = DownloadRepositoryImpl(secondDatabase);
+    await secondRepository.recoverInterruptedHlsTasks();
+    final recoveredTask = await secondRepository.getTask(taskId);
+    expect(recoveredTask, isNotNull);
+    expect(recoveredTask!.status, DownloadStatus.paused);
+    expect(recoveredTask.localPath, failedTask.localPath);
     final secondService = HttpDownloadService(
       dio: restartDio,
       repository: secondRepository,

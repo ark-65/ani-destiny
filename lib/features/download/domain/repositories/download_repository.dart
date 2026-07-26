@@ -1,6 +1,8 @@
 import '../entities/download_task.dart';
 
 abstract class DownloadRepository {
+  Future<void> recoverInterruptedHlsTasks();
+
   Stream<List<DownloadTask>> watchTasks();
 
   Future<DownloadTask?> getTask(String taskId);
