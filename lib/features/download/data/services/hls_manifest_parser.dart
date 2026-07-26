@@ -22,6 +22,11 @@ class HlsManifestParser {
     Map<String, String>? pendingVariantAttributes;
     HlsInitializationSegment? initializationSegment;
     HlsEncryptionKey? activeEncryptionKey;
+    _PendingByteRange? pendingByteRange;
+    Uri? previousByteRangeUri;
+    int? previousByteRangeEnd;
+    Uri? previousMapByteRangeUri;
+    int? previousMapByteRangeEnd;
     var pendingDiscontinuity = false;
     var hasEndList = false;
 
@@ -60,20 +65,29 @@ class HlsManifestParser {
         final attributes = _parseAttributes(
           line.substring('#EXT-X-MAP:'.length),
         );
-        if (attributes.containsKey('BYTERANGE')) {
-          throw const FormatException(
-            'HLS byte-range initialization segments are not supported.',
-          );
-        }
         final mapUri = attributes['URI'];
         if (mapUri == null || mapUri.isEmpty) {
           throw const FormatException(
             'HLS initialization segment URI missing.',
           );
         }
+        final resolvedMapUri = uri.resolve(mapUri);
+        final mapByteRange = attributes['BYTERANGE'] == null
+            ? null
+            : _resolveByteRange(
+                _parseByteRange(attributes['BYTERANGE']!),
+                resourceUri: resolvedMapUri,
+                previousUri: previousMapByteRangeUri,
+                previousEnd: previousMapByteRangeEnd,
+              );
         initializationSegment = HlsInitializationSegment(
-          uri: uri.resolve(mapUri),
+          uri: resolvedMapUri,
+          byteRange: mapByteRange,
         );
+        if (mapByteRange != null) {
+          previousMapByteRangeUri = resolvedMapUri;
+          previousMapByteRangeEnd = mapByteRange.endInclusive;
+        }
         continue;
       }
       if (line.startsWith('#EXT-X-KEY:')) {
@@ -106,9 +120,10 @@ class HlsManifestParser {
         continue;
       }
       if (line.startsWith('#EXT-X-BYTERANGE:')) {
-        throw const FormatException(
-          'HLS byte-range media segments are not supported.',
+        pendingByteRange = _parseByteRange(
+          line.substring('#EXT-X-BYTERANGE:'.length),
         );
+        continue;
       }
       if (line.startsWith('#')) {
         continue;
@@ -127,6 +142,14 @@ class HlsManifestParser {
         );
         pendingVariantAttributes = null;
       } else {
+        final byteRange = pendingByteRange == null
+            ? null
+            : _resolveByteRange(
+                pendingByteRange,
+                resourceUri: resolvedUri,
+                previousUri: previousByteRangeUri,
+                previousEnd: previousByteRangeEnd,
+              );
         segments.add(
           HlsSegment(
             uri: resolvedUri,
@@ -134,9 +157,15 @@ class HlsManifestParser {
             title: pendingSegmentTitle,
             encryptionKey: activeEncryptionKey,
             initializationSegment: initializationSegment,
+            byteRange: byteRange,
             hasDiscontinuity: pendingDiscontinuity,
           ),
         );
+        if (byteRange != null) {
+          previousByteRangeUri = resolvedUri;
+          previousByteRangeEnd = byteRange.endInclusive;
+        }
+        pendingByteRange = null;
         pendingSegmentDuration = null;
         pendingSegmentTitle = null;
         pendingDiscontinuity = false;
@@ -157,6 +186,37 @@ class HlsManifestParser {
     );
   }
 
+  _PendingByteRange _parseByteRange(String value) {
+    final parts = value.trim().split('@');
+    if (parts.length > 2) {
+      throw const FormatException('Invalid HLS byte range.');
+    }
+    final length = int.tryParse(parts.first);
+    final offset = parts.length == 2 ? int.tryParse(parts.last) : null;
+    if (length == null || length <= 0 || (offset != null && offset < 0)) {
+      throw const FormatException('Invalid HLS byte range.');
+    }
+    return _PendingByteRange(length: length, offset: offset);
+  }
+
+  HlsByteRange _resolveByteRange(
+    _PendingByteRange pending, {
+    required Uri resourceUri,
+    required Uri? previousUri,
+    required int? previousEnd,
+  }) {
+    final offset = pending.offset;
+    if (offset != null) {
+      return HlsByteRange(length: pending.length, offset: offset);
+    }
+    if (previousUri != resourceUri || previousEnd == null) {
+      throw const FormatException(
+        'HLS byte range without offset must follow the same resource.',
+      );
+    }
+    return HlsByteRange(length: pending.length, offset: previousEnd + 1);
+  }
+
   int _parseIntAfterColon(String line, {required int fallback}) {
     final colonIndex = line.indexOf(':');
     if (colonIndex == -1) return fallback;
@@ -175,4 +235,11 @@ class HlsManifestParser {
     }
     return attributes;
   }
+}
+
+class _PendingByteRange {
+  const _PendingByteRange({required this.length, this.offset});
+
+  final int length;
+  final int? offset;
 }

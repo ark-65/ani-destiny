@@ -1451,7 +1451,8 @@ segment-2.m4s
     expect(task.failureReason, DownloadFailureReason.invalidManifest);
   });
 
-  test('starting byte-range HLS fails before downloading media', () async {
+  test('starting byte-range HLS saves extracted ranges as local files',
+      () async {
     final database = AppDatabase(NativeDatabase.memory());
     addTearDown(database.close);
 
@@ -1464,7 +1465,10 @@ segment-2.m4s
     });
     _mockApplicationDocumentsDirectory(tempDir.path);
 
-    final dio = _FakeHlsSegmentDownloadDio(const {});
+    const mediaUri = 'https://cdn.example.test/media.mp4';
+    final dio = _RangeHlsSegmentDownloadDio({
+      mediaUri: List<int>.generate(12, (index) => index),
+    });
     final repository = DownloadRepositoryImpl(database);
     final service = HttpDownloadService(
       dio: dio,
@@ -1473,9 +1477,13 @@ segment-2.m4s
         (manifestUri, _) async => const HlsManifestParser().parse(
           '''
 #EXTM3U
+#EXT-X-MAP:URI="media.mp4",BYTERANGE="4@0"
 #EXTINF:6,
-#EXT-X-BYTERANGE:1024@0
-media.ts
+#EXT-X-BYTERANGE:5@4
+media.mp4
+#EXTINF:6,
+#EXT-X-BYTERANGE:3
+media.mp4
 #EXT-X-ENDLIST
 ''',
           uri: manifestUri,
@@ -1499,10 +1507,32 @@ media.ts
 
     final task = await repository.getTask(taskId);
     expect(task, isNotNull);
-    expect(task!.status, DownloadStatus.failed);
-    expect(task.failureReason, DownloadFailureReason.invalidManifest);
-    expect(task.failureMessage, contains('byte-range media segments'));
-    expect(dio.downloadedUris, isEmpty);
+    expect(task!.status, DownloadStatus.completed);
+    expect(task.downloadedBytes, 12);
+    expect(dio.rangeHeaders, ['bytes=0-3', 'bytes=4-8', 'bytes=9-11']);
+
+    final manifestFile = File(task.localPath!);
+    final localManifest = await manifestFile.readAsString();
+    expect(localManifest, isNot(contains('BYTERANGE')));
+    expect(localManifest, isNot(contains('https://')));
+    expect(
+      await File(
+        p.join(manifestFile.parent.path, 'segments', 'initialization.mp4'),
+      ).readAsBytes(),
+      [0, 1, 2, 3],
+    );
+    expect(
+      await File(
+        p.join(manifestFile.parent.path, 'segments', 'segment-000000.mp4'),
+      ).readAsBytes(),
+      [4, 5, 6, 7, 8],
+    );
+    expect(
+      await File(
+        p.join(manifestFile.parent.path, 'segments', 'segment-000001.mp4'),
+      ).readAsBytes(),
+      [9, 10, 11],
+    );
   });
 
   test('unsupported tasks drop implementation placeholder messages on read',
@@ -2728,6 +2758,48 @@ class _FakeHlsSegmentDownloadDio extends DioForNative {
     return Response(
       requestOptions: RequestOptions(path: urlPath),
       statusCode: 200,
+      data: content,
+    );
+  }
+}
+
+class _RangeHlsSegmentDownloadDio extends DioForNative {
+  _RangeHlsSegmentDownloadDio(this.bytesByUri);
+
+  final Map<String, List<int>> bytesByUri;
+  final List<String?> rangeHeaders = <String?>[];
+
+  @override
+  Future<Response> download(
+    String urlPath,
+    dynamic savePath, {
+    ProgressCallback? onReceiveProgress,
+    Map<String, dynamic>? queryParameters,
+    CancelToken? cancelToken,
+    bool deleteOnError = true,
+    FileAccessMode fileAccessMode = FileAccessMode.write,
+    String lengthHeader = Headers.contentLengthHeader,
+    Object? data,
+    Options? options,
+  }) async {
+    final rangeHeader = options?.headers?['Range']?.toString();
+    rangeHeaders.add(rangeHeader);
+    final match = RegExp(r'^bytes=(\d+)-(\d+)$').firstMatch(rangeHeader ?? '');
+    if (match == null) {
+      throw StateError('Expected a byte-range request.');
+    }
+    final start = int.parse(match.group(1)!);
+    final end = int.parse(match.group(2)!);
+    final content = Uint8List.fromList(
+      bytesByUri[urlPath]!.sublist(start, end + 1),
+    );
+    final file = File(savePath as String);
+    await file.parent.create(recursive: true);
+    await file.writeAsBytes(content);
+    onReceiveProgress?.call(content.length, content.length);
+    return Response(
+      requestOptions: RequestOptions(path: urlPath),
+      statusCode: 206,
       data: content,
     );
   }

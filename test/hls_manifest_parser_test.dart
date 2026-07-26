@@ -167,37 +167,54 @@ segment-001.ts
     );
   });
 
-  test('rejects byte-range media and initialization segments', () {
-    for (final manifestBody in [
+  test('parses explicit and implicit media and initialization byte ranges', () {
+    final manifest = parser.parse(
       '''
 #EXTM3U
+#EXT-X-MAP:URI="media.mp4",BYTERANGE="4@0"
 #EXTINF:6,
-#EXT-X-BYTERANGE:1024@0
-media.ts
+#EXT-X-BYTERANGE:5@4
+media.mp4
+#EXTINF:6,
+#EXT-X-BYTERANGE:3
+media.mp4
 #EXT-X-ENDLIST
 ''',
-      '''
+      uri: Uri.parse('https://cdn.example.test/anime/index.m3u8'),
+    );
+
+    expect(manifest.segments, hasLength(2));
+    expect(manifest.segments.first.byteRange?.offset, 4);
+    expect(manifest.segments.first.byteRange?.length, 5);
+    expect(manifest.segments.last.byteRange?.offset, 9);
+    expect(manifest.segments.last.byteRange?.length, 3);
+    expect(manifest.segments.first.initializationSegment?.byteRange?.offset, 0);
+    expect(manifest.segments.first.initializationSegment?.byteRange?.length, 4);
+  });
+
+  test('rejects implicit byte range after a different resource', () {
+    expect(
+      () => parser.parse(
+        '''
 #EXTM3U
-#EXT-X-MAP:URI="media.mp4",BYTERANGE="1024@0"
 #EXTINF:6,
-segment-001.m4s
+#EXT-X-BYTERANGE:4@0
+first.ts
+#EXTINF:6,
+#EXT-X-BYTERANGE:4
+second.ts
 #EXT-X-ENDLIST
 ''',
-    ]) {
-      expect(
-        () => parser.parse(
-          manifestBody,
-          uri: Uri.parse('https://cdn.example.test/anime/index.m3u8'),
+        uri: Uri.parse('https://cdn.example.test/anime/index.m3u8'),
+      ),
+      throwsA(
+        isA<FormatException>().having(
+          (error) => error.message,
+          'message',
+          contains('same resource'),
         ),
-        throwsA(
-          isA<FormatException>().having(
-            (error) => error.message,
-            'message',
-            contains('byte-range'),
-          ),
-        ),
-      );
-    }
+      ),
+    );
   });
 
   test('throws for invalid manifests', () {

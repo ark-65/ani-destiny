@@ -20,9 +20,10 @@ class HlsManifest {
 }
 
 class HlsInitializationSegment {
-  const HlsInitializationSegment({required this.uri});
+  const HlsInitializationSegment({required this.uri, this.byteRange});
 
   final Uri uri;
+  final HlsByteRange? byteRange;
 }
 
 class HlsSegment {
@@ -32,6 +33,7 @@ class HlsSegment {
     this.title,
     this.encryptionKey,
     this.initializationSegment,
+    this.byteRange,
     this.hasDiscontinuity = false,
   });
 
@@ -40,7 +42,19 @@ class HlsSegment {
   final String? title;
   final HlsEncryptionKey? encryptionKey;
   final HlsInitializationSegment? initializationSegment;
+  final HlsByteRange? byteRange;
   final bool hasDiscontinuity;
+}
+
+class HlsByteRange {
+  const HlsByteRange({required this.length, required this.offset});
+
+  final int length;
+  final int offset;
+
+  int get endInclusive => offset + length - 1;
+
+  String get requestHeader => 'bytes=$offset-$endInclusive';
 }
 
 class HlsEncryptionKey {

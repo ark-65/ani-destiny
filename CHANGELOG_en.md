@@ -7,6 +7,7 @@
 ## [Unreleased]
 
 ### ✨ Added
+- HLS offline downloads now support `EXT-X-BYTERANGE` media and initialization segments: explicit and same-resource implicit offsets are parsed, HTTP `Range` saves only the requested bytes, and each range becomes an independent local file; mismatched response lengths prevent offline-asset publication.
 - AES-128 encrypted HLS now saves encryption keys alongside media segments and rewrites local playlists to local key references; offline integrity rejects missing or empty key files, while other encryption methods remain explicitly unsupported.
 - HLS offline downloads now save fMP4 `EXT-X-MAP` initialization segments and rewrite local manifests to reference local files only.
 - Added an offline HLS app-restart regression using a real on-disk database, local m3u8, and segment: after closing and rebuilding the database and offline-media service, the test restores `OfflineMediaItem`, verifies it again, and produces local playback arguments without network headers.
@@ -24,7 +25,6 @@
 ### 🐛 Fixed
 - Fixed local HLS manifest rewriting dropping `EXT-X-DISCONTINUITY`: timestamp, encoding-parameter, and initialization-segment transitions are now preserved in the fully local m3u8 so complete files remain decodable across boundaries.
 - Fixed HLS playlists with multiple `EXT-X-MAP` tags saving only the final initialization segment: downloads now preserve, fetch, and switch the matching local initialization reference per media segment, preventing false-complete assets that cannot decode offline.
-- Fixed HLS playlists with `EXT-X-BYTERANGE` being saved as whole segments and producing false-complete offline assets: media-segment and initialization-segment ranges now fail as invalid manifests before any media request; users can return to the episode, switch download lines, and retry.
 - Fixed HLS tasks remaining permanently “downloading” when the app is terminated during a segment transfer: Downloads initialization now recovers HLS tasks left preparing/downloading by the previous process into a retryable paused state while preserving completed segments, so restarting downloads only missing segments. Direct-file task state is unchanged by this slice.
 - Tightened the HLS segment HTTP auto-retry boundary: only 408, 429, and 500–599 responses receive bounded retries, while ordinary 4xx and non-standard 6xx responses immediately enter the existing failed/manual-recovery path. Real task regressions prove retryable responses can complete on disk and non-retryable responses issue only one request.
 - Fixed delayed pause handling while an HLS segment waits to retry: pausing now interrupts the retry timer immediately, prevents another segment request, and preserves completed segments for the next resume.

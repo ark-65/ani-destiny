@@ -475,14 +475,20 @@ class HttpDownloadService implements DownloadService {
         ),
       );
       final initializationFile = File(initializationPath);
-      if (await initializationFile.exists() &&
-          await initializationFile.length() > 0) {
+      final initializationLength = await initializationFile.exists()
+          ? await initializationFile.length()
+          : 0;
+      if (initializationLength > 0 &&
+          (initializationSegment.byteRange == null ||
+              initializationLength ==
+                  initializationSegment.byteRange!.length)) {
         downloadedBytes += await initializationFile.length();
       } else {
         downloadedBytes += await _downloadHlsSegment(
           segmentUri: initializationSegment.uri,
           localPath: initializationPath,
           headers: headers,
+          byteRange: initializationSegment.byteRange,
           cancelToken: cancelToken,
         );
       }
@@ -495,7 +501,9 @@ class HttpDownloadService implements DownloadService {
       final existingSegmentFile = File(segmentPath);
       if (await existingSegmentFile.exists()) {
         final existingBytes = await existingSegmentFile.length();
-        if (existingBytes > 0) {
+        if (existingBytes > 0 &&
+            (segment.byteRange == null ||
+                existingBytes == segment.byteRange!.length)) {
           downloadedBytes += existingBytes;
           final progress = (index + 1) / mediaManifest.segments.length;
           _emit(
@@ -511,6 +519,7 @@ class HttpDownloadService implements DownloadService {
         segmentUri: segment.uri,
         localPath: segmentPath,
         headers: headers,
+        byteRange: segment.byteRange,
         cancelToken: cancelToken,
       );
 
@@ -558,6 +567,13 @@ class HttpDownloadService implements DownloadService {
           'HLS manifest integrity check failed: empty initialization file $initializationName',
         );
       }
+      if (initializationSegment.byteRange != null &&
+          await initializationFile.length() !=
+              initializationSegment.byteRange!.length) {
+        throw FormatException(
+          'HLS manifest integrity check failed: invalid initialization file $initializationName',
+        );
+      }
     }
 
     for (final keyEntry in _hlsEncryptionKeys(mediaManifest).entries) {
@@ -592,6 +608,12 @@ class HttpDownloadService implements DownloadService {
           'HLS manifest integrity check failed: empty segment file $segmentName',
         );
       }
+      if (segment.byteRange != null &&
+          await segmentFile.length() != segment.byteRange!.length) {
+        throw FormatException(
+          'HLS manifest integrity check failed: invalid segment file $segmentName',
+        );
+      }
     }
   }
 
@@ -599,6 +621,7 @@ class HttpDownloadService implements DownloadService {
     required Uri segmentUri,
     required String localPath,
     required Map<String, String> headers,
+    HlsByteRange? byteRange,
     required CancelToken cancelToken,
   }) async {
     final maxAttempts = _hlsSegmentMaxAttempts < 1 ? 1 : _hlsSegmentMaxAttempts;
@@ -609,11 +632,25 @@ class HttpDownloadService implements DownloadService {
           segmentUri.toString(),
           localPath,
           cancelToken: cancelToken,
-          options: Options(headers: headers.isEmpty ? null : headers),
+          options: Options(
+            headers: {
+              ...headers,
+              if (byteRange != null) 'Range': byteRange.requestHeader,
+            },
+          ),
           onReceiveProgress: (received, total) {
             downloadedBytes = received;
           },
         );
+        if (byteRange != null) {
+          final actualLength = await File(localPath).length();
+          if (actualLength != byteRange.length) {
+            throw FormatException(
+              'HLS byte-range response length mismatch: expected '
+              '${byteRange.length} bytes.',
+            );
+          }
+        }
         return downloadedBytes;
       } on DioException catch (error) {
         if (CancelToken.isCancel(error) ||
@@ -762,7 +799,9 @@ class HttpDownloadService implements DownloadService {
     HlsInitializationSegment? first,
     HlsInitializationSegment? second,
   ) {
-    return first?.uri == second?.uri;
+    return first?.uri == second?.uri &&
+        first?.byteRange?.length == second?.byteRange?.length &&
+        first?.byteRange?.offset == second?.byteRange?.offset;
   }
 
   Map<HlsEncryptionKey, int> _hlsEncryptionKeys(HlsManifest manifest) {
