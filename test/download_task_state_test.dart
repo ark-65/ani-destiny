@@ -104,6 +104,7 @@ void main() {
             ],
             variants: [],
             isLive: false,
+            protocolVersion: 7,
             targetDuration: null,
           );
         },
@@ -142,6 +143,7 @@ void main() {
     expect(manifestContent, contains('segments/segment-000000.ts'));
     expect(manifestContent, contains('segments/segment-000001.ts'));
     expect(manifestContent, contains('#EXT-X-ENDLIST'));
+    expect(manifestContent, contains('#EXT-X-VERSION:7'));
     expect(
       File(p.join(p.dirname(manifestPath), 'segments', 'segment-000000.ts'))
           .existsSync(),
@@ -239,6 +241,7 @@ void main() {
       manifestContent,
       contains('#EXT-X-MAP:URI="segments/initialization.mp4"'),
     );
+    expect(manifestContent, contains('#EXT-X-VERSION:5'));
     expect(manifestContent, isNot(contains('https://cdn.example.test')));
     expect(
       await File(

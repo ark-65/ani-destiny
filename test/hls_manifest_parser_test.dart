@@ -35,6 +35,38 @@ segment-002.ts
     expect(manifest.segments.last.title, 'Opening');
   });
 
+  test('preserves the declared HLS protocol version', () {
+    final manifest = parser.parse(
+      '''
+#EXTM3U
+#EXT-X-VERSION:7
+#EXT-X-TARGETDURATION:6
+#EXTINF:6,
+segment-1.ts
+#EXT-X-ENDLIST
+''',
+      uri: Uri.parse('https://cdn.example.test/anime/index.m3u8'),
+    );
+
+    expect(manifest.protocolVersion, 7);
+  });
+
+  test('rejects an invalid HLS protocol version', () {
+    expect(
+      () => parser.parse(
+        '''
+#EXTM3U
+#EXT-X-VERSION:0
+#EXTINF:6,
+segment-1.ts
+#EXT-X-ENDLIST
+''',
+        uri: Uri.parse('https://cdn.example.test/anime/index.m3u8'),
+      ),
+      throwsFormatException,
+    );
+  });
+
   test('preserves a non-zero media sequence', () {
     final manifest = parser.parse(
       '''

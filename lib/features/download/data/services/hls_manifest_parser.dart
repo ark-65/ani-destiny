@@ -17,6 +17,7 @@ class HlsManifestParser {
     final segments = <HlsSegment>[];
     final variants = <HlsVariant>[];
     Duration? targetDuration;
+    var protocolVersion = 1;
     var mediaSequence = 0;
     Duration? pendingSegmentDuration;
     String? pendingSegmentTitle;
@@ -41,6 +42,16 @@ class HlsManifestParser {
         targetDuration = Duration(
           seconds: _parseIntAfterColon(line, fallback: 0),
         );
+        continue;
+      }
+      if (line.startsWith('#EXT-X-VERSION:')) {
+        final value = int.tryParse(
+          line.substring('#EXT-X-VERSION:'.length).trim(),
+        );
+        if (value == null || value < 1) {
+          throw const FormatException('Invalid HLS protocol version.');
+        }
+        protocolVersion = value;
         continue;
       }
       if (line.startsWith('#EXT-X-MEDIA-SEQUENCE:')) {
@@ -192,6 +203,7 @@ class HlsManifestParser {
       segments: List.unmodifiable(segments),
       variants: List.unmodifiable(variants),
       isLive: !hasEndList,
+      protocolVersion: protocolVersion,
       mediaSequence: mediaSequence,
       targetDuration: targetDuration,
       initializationSegment: initializationSegment,

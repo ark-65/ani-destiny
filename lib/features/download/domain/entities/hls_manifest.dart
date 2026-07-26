@@ -4,6 +4,7 @@ class HlsManifest {
     required this.segments,
     required this.variants,
     required this.isLive,
+    this.protocolVersion = 1,
     this.mediaSequence = 0,
     this.targetDuration,
     this.initializationSegment,
@@ -13,6 +14,7 @@ class HlsManifest {
   final List<HlsSegment> segments;
   final List<HlsVariant> variants;
   final bool isLive;
+  final int protocolVersion;
   final int mediaSequence;
   final Duration? targetDuration;
   final HlsInitializationSegment? initializationSegment;

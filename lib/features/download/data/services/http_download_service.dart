@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:io';
+import 'dart:math' as math;
 
 import 'package:dio/dio.dart';
 import 'package:path/path.dart' as p;
@@ -715,11 +716,19 @@ class HttpDownloadService implements DownloadService {
     int downloadedBytes,
     String manifestPath,
   ) async {
+    final hasInitializationSegment = manifest.initializationSegment != null ||
+        manifest.segments.any(
+          (segment) => segment.initializationSegment != null,
+        );
+    final localProtocolVersion = math.max(
+      manifest.protocolVersion,
+      hasInitializationSegment ? 5 : 3,
+    );
     final manifestLines = <String>[
       '#EXTM3U',
       if (manifest.targetDuration != null)
         '#EXT-X-TARGETDURATION:${manifest.targetDuration!.inSeconds}',
-      '#EXT-X-VERSION:3',
+      '#EXT-X-VERSION:$localProtocolVersion',
       '#EXT-X-MEDIA-SEQUENCE:${manifest.mediaSequence}',
       '#EXT-X-PLAYLIST-TYPE:VOD',
     ];
