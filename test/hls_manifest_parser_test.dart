@@ -73,6 +73,35 @@ segment-001.m4s
       manifest.initializationSegment?.uri.toString(),
       'https://cdn.example.test/anime/init/init.mp4',
     );
+    expect(
+      manifest.segments.single.initializationSegment?.uri.toString(),
+      'https://cdn.example.test/anime/init/init.mp4',
+    );
+  });
+
+  test('associates changing initialization segments with following media', () {
+    final manifest = parser.parse(
+      '''
+#EXTM3U
+#EXT-X-MAP:URI="init-1.mp4"
+#EXTINF:6,
+segment-001.m4s
+#EXT-X-MAP:URI="init-2.mp4"
+#EXTINF:6,
+segment-002.m4s
+#EXT-X-ENDLIST
+''',
+      uri: Uri.parse('https://cdn.example.test/anime/index.m3u8'),
+    );
+
+    expect(
+      manifest.segments
+          .map((segment) => segment.initializationSegment?.uri.toString()),
+      [
+        'https://cdn.example.test/anime/init-1.mp4',
+        'https://cdn.example.test/anime/init-2.mp4',
+      ],
+    );
   });
 
   test('applies an AES-128 key to following media segments', () {

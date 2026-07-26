@@ -128,6 +128,7 @@ class HlsManifestParser {
             duration: pendingSegmentDuration,
             title: pendingSegmentTitle,
             encryptionKey: activeEncryptionKey,
+            initializationSegment: initializationSegment,
           ),
         );
         pendingSegmentDuration = null;

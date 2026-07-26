@@ -31,12 +31,14 @@ class HlsSegment {
     this.duration,
     this.title,
     this.encryptionKey,
+    this.initializationSegment,
   });
 
   final Uri uri;
   final Duration? duration;
   final String? title;
   final HlsEncryptionKey? encryptionKey;
+  final HlsInitializationSegment? initializationSegment;
 }
 
 class HlsEncryptionKey {

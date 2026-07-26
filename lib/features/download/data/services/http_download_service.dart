@@ -464,11 +464,15 @@ class HttpDownloadService implements DownloadService {
       }
     }
 
-    final initializationSegment = mediaManifest.initializationSegment;
-    if (initializationSegment != null) {
+    for (final initializationEntry
+        in _hlsInitializationSegments(mediaManifest).entries) {
+      final initializationSegment = initializationEntry.key;
       final initializationPath = p.join(
         segmentDirectory.path,
-        _hlsInitializationSegmentFileName(initializationSegment.uri),
+        _hlsInitializationSegmentFileName(
+          initializationSegment.uri,
+          initializationEntry.value,
+        ),
       );
       final initializationFile = File(initializationPath);
       if (await initializationFile.exists() &&
@@ -534,10 +538,12 @@ class HttpDownloadService implements DownloadService {
       ),
     );
 
-    final initializationSegment = mediaManifest.initializationSegment;
-    if (initializationSegment != null) {
+    for (final initializationEntry
+        in _hlsInitializationSegments(mediaManifest).entries) {
+      final initializationSegment = initializationEntry.key;
       final initializationName = _hlsInitializationSegmentFileName(
         initializationSegment.uri,
+        initializationEntry.value,
       );
       final initializationFile = File(
         p.join(segmentDirectory.path, initializationName),
@@ -654,14 +660,34 @@ class HttpDownloadService implements DownloadService {
       '#EXT-X-VERSION:3',
       '#EXT-X-MEDIA-SEQUENCE:0',
       '#EXT-X-PLAYLIST-TYPE:VOD',
-      if (manifest.initializationSegment != null)
-        '#EXT-X-MAP:URI="segments/${_hlsInitializationSegmentFileName(manifest.initializationSegment!.uri)}"',
     ];
 
     HlsEncryptionKey? activeEncryptionKey;
+    HlsInitializationSegment? activeInitializationSegment;
     final encryptionKeys = _hlsEncryptionKeys(manifest);
+    final initializationSegments = _hlsInitializationSegments(manifest);
     for (var index = 0; index < manifest.segments.length; index++) {
       final segment = manifest.segments[index];
+      final initializationSegment =
+          segment.initializationSegment ?? manifest.initializationSegment;
+      if (!_sameHlsInitializationSegment(
+        activeInitializationSegment,
+        initializationSegment,
+      )) {
+        if (initializationSegment != null) {
+          final initializationIndex =
+              initializationSegments.keys.toList().indexWhere(
+                    (candidate) => _sameHlsInitializationSegment(
+                      candidate,
+                      initializationSegment,
+                    ),
+                  );
+          manifestLines.add(
+            '#EXT-X-MAP:URI="segments/${_hlsInitializationSegmentFileName(initializationSegment.uri, initializationIndex)}"',
+          );
+        }
+        activeInitializationSegment = initializationSegment;
+      }
       if (!_sameHlsEncryptionKey(activeEncryptionKey, segment.encryptionKey)) {
         final encryptionKey = segment.encryptionKey;
         if (encryptionKey == null) {
@@ -701,9 +727,39 @@ class HttpDownloadService implements DownloadService {
         .replaceAll(' ', '');
   }
 
-  String _hlsInitializationSegmentFileName(Uri segmentUri) {
+  String _hlsInitializationSegmentFileName(Uri segmentUri, int index) {
     final extension = p.extension(segmentUri.path);
-    return 'initialization${extension.isEmpty ? '.mp4' : extension}';
+    final suffix = index == 0 ? '' : '-${index.toString().padLeft(6, '0')}';
+    return 'initialization$suffix${extension.isEmpty ? '.mp4' : extension}';
+  }
+
+  Map<HlsInitializationSegment, int> _hlsInitializationSegments(
+    HlsManifest manifest,
+  ) {
+    final initializationSegments = <HlsInitializationSegment, int>{};
+    for (final segment in manifest.segments) {
+      final initializationSegment =
+          segment.initializationSegment ?? manifest.initializationSegment;
+      if (initializationSegment == null) continue;
+      final existing = initializationSegments.keys.where(
+        (candidate) => _sameHlsInitializationSegment(
+          candidate,
+          initializationSegment,
+        ),
+      );
+      if (existing.isEmpty) {
+        initializationSegments[initializationSegment] =
+            initializationSegments.length;
+      }
+    }
+    return initializationSegments;
+  }
+
+  bool _sameHlsInitializationSegment(
+    HlsInitializationSegment? first,
+    HlsInitializationSegment? second,
+  ) {
+    return first?.uri == second?.uri;
   }
 
   Map<HlsEncryptionKey, int> _hlsEncryptionKeys(HlsManifest manifest) {

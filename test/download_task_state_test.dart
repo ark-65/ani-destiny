@@ -265,6 +265,101 @@ void main() {
     ]);
   });
 
+  test('starting HLS task localizes changing initialization segments',
+      () async {
+    final database = AppDatabase(NativeDatabase.memory());
+    addTearDown(database.close);
+
+    final tempDir = await Directory.systemTemp
+        .createTemp('ani-destiny-download-hls-multiple-maps');
+    addTearDown(() async {
+      if (tempDir.existsSync()) {
+        await tempDir.delete(recursive: true);
+      }
+    });
+    _mockApplicationDocumentsDirectory(tempDir.path);
+
+    final dio = _FakeHlsSegmentDownloadDio({
+      'https://cdn.example.test/init-1.mp4': const [1, 1],
+      'https://cdn.example.test/init-2.mp4': const [2, 2, 2],
+      'https://cdn.example.test/segment-1.m4s': const [3, 3, 3, 3],
+      'https://cdn.example.test/segment-2.m4s': const [4, 4, 4, 4, 4],
+    });
+    final repository = DownloadRepositoryImpl(database);
+    final service = HttpDownloadService(
+      dio: dio,
+      repository: repository,
+      offlineMediaRepository: OfflineMediaRepositoryImpl(database),
+      hlsManifestLoader: _FakeHlsManifestLoader(
+        (manifestUri, _) async => const HlsManifestParser().parse(
+          '''
+#EXTM3U
+#EXT-X-MAP:URI="init-1.mp4"
+#EXTINF:6,
+segment-1.m4s
+#EXT-X-MAP:URI="init-2.mp4"
+#EXTINF:6,
+segment-2.m4s
+#EXT-X-ENDLIST
+''',
+          uri: manifestUri,
+        ),
+      ),
+    );
+
+    final taskId = await service.createTask(
+      animeId: 'anime-1',
+      episodeId: 'episode-1',
+      sourceId: 'sakura',
+      source: const DownloadSource(
+        url: 'https://cdn.example.test/index.m3u8',
+        kind: DownloadKind.hls,
+      ),
+      title: 'Multiple Maps HLS Test',
+      episodeTitle: 'Episode 1',
+    );
+
+    await service.start(taskId);
+
+    final task = (await repository.getTask(taskId))!;
+    final manifestContent = await File(task.localPath!).readAsString();
+    final segmentDirectory = p.join(p.dirname(task.localPath!), 'segments');
+    expect(task.status, DownloadStatus.completed);
+    expect(task.downloadedBytes, 14);
+    expect(
+      manifestContent,
+      contains('#EXT-X-MAP:URI="segments/initialization.mp4"'),
+    );
+    expect(
+      manifestContent,
+      contains(
+        '#EXT-X-MAP:URI="segments/initialization-000001.mp4"',
+      ),
+    );
+    expect(manifestContent, isNot(contains('https://cdn.example.test')));
+    expect(
+      await File(p.join(segmentDirectory, 'initialization.mp4')).readAsBytes(),
+      const [1, 1],
+    );
+    expect(
+      await File(
+        p.join(segmentDirectory, 'initialization-000001.mp4'),
+      ).readAsBytes(),
+      const [2, 2, 2],
+    );
+    expect(isPlayableOfflineMediaPath(task.localPath!), isTrue);
+    await File(
+      p.join(segmentDirectory, 'initialization-000001.mp4'),
+    ).delete();
+    expect(isPlayableOfflineMediaPath(task.localPath!), isFalse);
+    expect(dio.downloadedUris, [
+      'https://cdn.example.test/init-1.mp4',
+      'https://cdn.example.test/init-2.mp4',
+      'https://cdn.example.test/segment-1.m4s',
+      'https://cdn.example.test/segment-2.m4s',
+    ]);
+  });
+
   test('starting AES-128 HLS task persists a local encryption key', () async {
     final database = AppDatabase(NativeDatabase.memory());
     addTearDown(database.close);
