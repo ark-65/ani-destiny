@@ -1,0 +1,136 @@
+@TestOn('vm')
+library;
+
+import 'dart:io';
+
+import 'package:ani_destiny/core/storage/app_database.dart';
+import 'package:ani_destiny/features/download/data/repositories/download_repository_impl.dart';
+import 'package:ani_destiny/features/download/data/services/hls_manifest_parser.dart';
+import 'package:ani_destiny/features/download/data/services/http_download_service.dart';
+import 'package:ani_destiny/features/download/domain/entities/download_kind.dart';
+import 'package:ani_destiny/features/download/domain/entities/download_source.dart';
+import 'package:ani_destiny/features/download/domain/entities/download_task.dart';
+import 'package:ani_destiny/features/download/domain/entities/hls_manifest.dart';
+import 'package:ani_destiny/features/download/domain/services/hls_manifest_loader.dart';
+import 'package:dio/dio.dart';
+import 'package:drift/native.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:path/path.dart' as p;
+
+void main() {
+  test('real HTTP 206 ranges become independent local HLS files', () async {
+    final tempDirectory =
+        await Directory.systemTemp.createTemp('ani-destiny-hls-http-range');
+    addTearDown(() async {
+      if (tempDirectory.existsSync()) {
+        await tempDirectory.delete(recursive: true);
+      }
+    });
+
+    final server = await HttpServer.bind(InternetAddress.loopbackIPv4, 0);
+    addTearDown(server.close);
+    const sourceBytes = <int>[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11];
+    final receivedRanges = <String?>[];
+    server.listen((request) {
+      final range = request.headers.value(HttpHeaders.rangeHeader);
+      receivedRanges.add(range);
+      final match = RegExp(r'^bytes=(\d+)-(\d+)$').firstMatch(range ?? '');
+      if (request.uri.path != '/media.mp4' || match == null) {
+        request.response.statusCode = HttpStatus.badRequest;
+        request.response.close();
+        return;
+      }
+      final start = int.parse(match.group(1)!);
+      final end = int.parse(match.group(2)!);
+      request.response
+        ..statusCode = HttpStatus.partialContent
+        ..headers.set(
+          HttpHeaders.contentRangeHeader,
+          'bytes $start-$end/${sourceBytes.length}',
+        )
+        ..add(sourceBytes.sublist(start, end + 1))
+        ..close();
+    });
+
+    final database = AppDatabase(NativeDatabase.memory());
+    addTearDown(database.close);
+    final repository = DownloadRepositoryImpl(database);
+    final mediaUri =
+        Uri.parse('http://${server.address.host}:${server.port}/media.mp4');
+    final service = HttpDownloadService(
+      dio: Dio(),
+      repository: repository,
+      applicationDocumentsDirectory: () async => tempDirectory,
+      hlsManifestLoader: _StaticManifestLoader(
+        const HlsManifestParser().parse(
+          '''
+#EXTM3U
+#EXT-X-MAP:URI="$mediaUri",BYTERANGE="4@0"
+#EXTINF:6,
+#EXT-X-BYTERANGE:5@4
+$mediaUri
+#EXTINF:6,
+#EXT-X-BYTERANGE:3
+$mediaUri
+#EXT-X-ENDLIST
+''',
+          uri: Uri.parse(
+            'http://${server.address.host}:${server.port}/index.m3u8',
+          ),
+        ),
+      ),
+    );
+
+    final taskId = await service.createTask(
+      animeId: 'anime-1',
+      episodeId: 'episode-1',
+      sourceId: 'loopback',
+      source: DownloadSource(
+        url: 'http://${server.address.host}:${server.port}/index.m3u8',
+        kind: DownloadKind.hls,
+      ),
+      title: 'HLS HTTP Range Test',
+      episodeTitle: 'Episode 1',
+    );
+
+    await service.start(taskId);
+
+    final task = (await repository.getTask(taskId))!;
+    expect(task.status, DownloadStatus.completed);
+    expect(task.downloadedBytes, sourceBytes.length);
+    expect(receivedRanges, ['bytes=0-3', 'bytes=4-8', 'bytes=9-11']);
+    final manifest = File(task.localPath!);
+    expect(await manifest.readAsString(), isNot(contains('http://')));
+    expect(
+      await File(
+        p.join(manifest.parent.path, 'segments', 'initialization.mp4'),
+      ).readAsBytes(),
+      [0, 1, 2, 3],
+    );
+    expect(
+      await File(
+        p.join(manifest.parent.path, 'segments', 'segment-000000.mp4'),
+      ).readAsBytes(),
+      [4, 5, 6, 7, 8],
+    );
+    expect(
+      await File(
+        p.join(manifest.parent.path, 'segments', 'segment-000001.mp4'),
+      ).readAsBytes(),
+      [9, 10, 11],
+    );
+  });
+}
+
+class _StaticManifestLoader implements HlsManifestLoader {
+  const _StaticManifestLoader(this.manifest);
+
+  final HlsManifest manifest;
+
+  @override
+  Future<HlsManifest> load(
+    Uri manifestUri, {
+    Map<String, String> headers = const {},
+  }) async =>
+      manifest;
+}

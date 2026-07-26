@@ -27,12 +27,15 @@ class HttpDownloadService implements DownloadService {
     required DownloadRepository repository,
     HlsManifestLoader? hlsManifestLoader,
     OfflineMediaRepository? offlineMediaRepository,
+    Future<Directory> Function()? applicationDocumentsDirectory,
     int hlsSegmentMaxAttempts = 3,
     Duration hlsSegmentRetryDelay = const Duration(milliseconds: 300),
   })  : _dio = dio,
         _repository = repository,
         _hlsManifestLoader = hlsManifestLoader,
         _offlineMediaRepository = offlineMediaRepository,
+        _applicationDocumentsDirectory =
+            applicationDocumentsDirectory ?? getApplicationDocumentsDirectory,
         _hlsSegmentMaxAttempts = hlsSegmentMaxAttempts,
         _hlsSegmentRetryDelay = hlsSegmentRetryDelay;
 
@@ -40,6 +43,7 @@ class HttpDownloadService implements DownloadService {
   final DownloadRepository _repository;
   final HlsManifestLoader? _hlsManifestLoader;
   final OfflineMediaRepository? _offlineMediaRepository;
+  final Future<Directory> Function() _applicationDocumentsDirectory;
   final int _hlsSegmentMaxAttempts;
   final Duration _hlsSegmentRetryDelay;
   final Map<String, CancelToken> _tokens = {};
@@ -124,7 +128,7 @@ class HttpDownloadService implements DownloadService {
     final settleCompleter = Completer<void>();
     _settleCompleters[taskId] = settleCompleter;
     try {
-      final directory = await getApplicationDocumentsDirectory();
+      final directory = await _applicationDocumentsDirectory();
       final fileName = _safeFileName(_fileNameFor(existingTask));
       final localPath = p.join(directory.path, 'downloads', fileName);
       activeLocalPath = localPath;
@@ -291,7 +295,7 @@ class HttpDownloadService implements DownloadService {
     }
 
     final prepareLocalManifestPath = p.join(
-      (await getApplicationDocumentsDirectory()).path,
+      (await _applicationDocumentsDirectory()).path,
       'downloads',
       existingTask.id,
       'index.m3u8',
