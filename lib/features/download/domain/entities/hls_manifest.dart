@@ -4,6 +4,7 @@ class HlsManifest {
     required this.segments,
     required this.variants,
     required this.isLive,
+    this.variables = const {},
     this.protocolVersion = 1,
     this.mediaSequence = 0,
     this.targetDuration,
@@ -14,6 +15,7 @@ class HlsManifest {
   final List<HlsSegment> segments;
   final List<HlsVariant> variants;
   final bool isLive;
+  final Map<String, String> variables;
   final int protocolVersion;
   final int mediaSequence;
   final Duration? targetDuration;

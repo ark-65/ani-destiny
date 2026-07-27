@@ -3158,6 +3158,7 @@ class _FakeHlsManifestLoader implements HlsManifestLoader {
   Future<HlsManifest> load(
     Uri manifestUri, {
     Map<String, String> headers = const {},
+    Map<String, String> importedVariables = const {},
   }) {
     return loadManifest(manifestUri, headers);
   }

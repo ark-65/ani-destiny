@@ -259,14 +259,21 @@ $origin/segment.m4s
       final requestUri = request.uri.toString();
       requestedUris.add(requestUri);
       switch (request.uri.path) {
-        case '/index.m3u8':
+        case '/master.m3u8':
           request.response.write(r'''
 #EXTM3U
 #EXT-X-DEFINE:NAME="asset",VALUE="episode-1"
-#EXT-X-MAP:URI="media/{$asset}/init.mp4"
-#EXT-X-KEY:METHOD=AES-128,URI="keys/{$asset}.key"
+#EXT-X-STREAM-INF:BANDWIDTH=1200000
+media/index.m3u8
+''');
+        case '/media/index.m3u8':
+          request.response.write(r'''
+#EXTM3U
+#EXT-X-DEFINE:IMPORT="asset"
+#EXT-X-MAP:URI="{$asset}/init.mp4"
+#EXT-X-KEY:METHOD=AES-128,URI="../keys/{$asset}.key"
 #EXTINF:6,
-media/{$asset}/segment.m4s
+{$asset}/segment.m4s
 #EXT-X-ENDLIST
 ''');
         case '/keys/episode-1.key':
@@ -298,7 +305,7 @@ media/{$asset}/segment.m4s
       episodeId: 'episode-1',
       sourceId: 'loopback',
       source: DownloadSource(
-        url: '$origin/index.m3u8',
+        url: '$origin/master.m3u8',
         kind: DownloadKind.hls,
       ),
       title: 'HLS Variable Test',
@@ -313,7 +320,8 @@ media/{$asset}/segment.m4s
     expect(
       requestedUris,
       [
-        '/index.m3u8',
+        '/master.m3u8',
+        '/media/index.m3u8',
         '/keys/episode-1.key',
         '/media/episode-1/init.mp4',
         '/media/episode-1/segment.m4s',
@@ -337,6 +345,7 @@ class _StaticManifestLoader implements HlsManifestLoader {
   Future<HlsManifest> load(
     Uri manifestUri, {
     Map<String, String> headers = const {},
+    Map<String, String> importedVariables = const {},
   }) async =>
       manifest;
 }

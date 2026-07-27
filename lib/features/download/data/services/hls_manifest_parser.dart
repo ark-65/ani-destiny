@@ -3,7 +3,11 @@ import '../../domain/entities/hls_manifest.dart';
 class HlsManifestParser {
   const HlsManifestParser();
 
-  HlsManifest parse(String content, {required Uri uri}) {
+  HlsManifest parse(
+    String content, {
+    required Uri uri,
+    Map<String, String> importedVariables = const {},
+  }) {
     final lines = content
         .split(RegExp(r'\r?\n'))
         .map((line) => line.trim())
@@ -83,10 +87,16 @@ class HlsManifestParser {
         final attributes = _parseAttributes(
           line.substring('#EXT-X-DEFINE:'.length),
         );
-        if (attributes.containsKey('IMPORT')) {
-          throw const FormatException(
-            'Imported HLS variables are unsupported.',
-          );
+        final importedName = attributes['IMPORT'];
+        if (importedName != null) {
+          final importedValue = importedVariables[importedName];
+          if (attributes.length != 1 ||
+              importedValue == null ||
+              variables.containsKey(importedName)) {
+            throw const FormatException('Invalid HLS variable import.');
+          }
+          variables[importedName] = importedValue;
+          continue;
         }
         final name = attributes['NAME'];
         final value = attributes['VALUE'];
@@ -244,6 +254,7 @@ class HlsManifestParser {
       segments: List.unmodifiable(segments),
       variants: List.unmodifiable(variants),
       isLive: !hasEndList,
+      variables: Map.unmodifiable(variables),
       protocolVersion: protocolVersion,
       mediaSequence: mediaSequence,
       targetDuration: targetDuration,

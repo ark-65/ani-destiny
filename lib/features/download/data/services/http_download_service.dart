@@ -940,6 +940,7 @@ class HttpDownloadService implements DownloadService {
     manifest = await manifestLoader.load(
       selectedVariantUri,
       headers: headers,
+      importedVariables: manifest.variables,
     );
     if (manifest.isMasterPlaylist) {
       throw const FormatException(

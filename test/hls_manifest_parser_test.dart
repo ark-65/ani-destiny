@@ -152,25 +152,52 @@ segment.ts
     );
   });
 
-  test('rejects unavailable or imported HLS variables', () {
-    for (final definition in [
-      '',
-      '#EXT-X-DEFINE:IMPORT="token"',
-    ]) {
-      expect(
-        () => parser.parse(
-          '''
+  test('imports an explicitly requested variable from a parent manifest', () {
+    final manifest = parser.parse(
+      r'''
 #EXTM3U
-$definition
+#EXT-X-DEFINE:IMPORT="token"
 #EXTINF:6,
-media/{\$token}/segment.ts
+media/{$token}/segment.ts
 #EXT-X-ENDLIST
 ''',
-          uri: Uri.parse('https://cdn.example.test/anime/index.m3u8'),
-        ),
-        throwsFormatException,
-      );
-    }
+      uri: Uri.parse('https://cdn.example.test/anime/index.m3u8'),
+      importedVariables: const {'token': 'signed-value'},
+    );
+
+    expect(
+      manifest.segments.single.uri.toString(),
+      'https://cdn.example.test/anime/media/signed-value/segment.ts',
+    );
+    expect(manifest.variables, {'token': 'signed-value'});
+  });
+
+  test('rejects unavailable HLS variables and imports', () {
+    expect(
+      () => parser.parse(
+        r'''
+#EXTM3U
+#EXTINF:6,
+media/{$token}/segment.ts
+#EXT-X-ENDLIST
+''',
+        uri: Uri.parse('https://cdn.example.test/anime/index.m3u8'),
+      ),
+      throwsFormatException,
+    );
+    expect(
+      () => parser.parse(
+        '''
+#EXTM3U
+#EXT-X-DEFINE:IMPORT="token"
+#EXTINF:6,
+media/segment.ts
+#EXT-X-ENDLIST
+''',
+        uri: Uri.parse('https://cdn.example.test/anime/index.m3u8'),
+      ),
+      throwsFormatException,
+    );
   });
 
   test('parses a relative initialization segment', () {
