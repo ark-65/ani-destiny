@@ -235,6 +235,15 @@ video/index.m3u8
     );
 
     expect(manifest.variants.single.audioGroupId, 'audio-main');
+    expect(manifest.renditions, hasLength(1));
+    expect(manifest.renditions.single.type, 'AUDIO');
+    expect(manifest.renditions.single.groupId, 'audio-main');
+    expect(manifest.renditions.single.name, 'Japanese');
+    expect(manifest.renditions.single.isDefault, isTrue);
+    expect(
+      manifest.renditions.single.uri.toString(),
+      'https://cdn.example.test/audio/index.m3u8',
+    );
   });
 
   test('substitutes locally defined variables in HLS asset URIs', () {

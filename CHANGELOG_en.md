@@ -7,6 +7,7 @@
 ## [Unreleased]
 
 ### ✨ Added
+- HLS offline downloads now support the external audio rendition linked to the selected video variant: the default, autoselect, or first track is chosen, video and audio playlists and segments are downloaded separately, and a fully local master playlist is generated. Offline integrity recursively verifies both child playlists, so any missing audio segment prevents the asset from being considered playable.
 - HLS offline downloads now support `EXT-X-GAP`: explicitly missing segments are no longer requested as ordinary resources or allowed to fail the whole episode, while local playlists preserve the gap marker with a compatible protocol version and offline integrity checks accept the expected absence.
 - HLS offline downloads now support `EXT-X-BYTERANGE` media and initialization segments: explicit and same-resource implicit offsets are parsed, HTTP `Range` saves only the requested bytes, and each range becomes an independent local file; mismatched response lengths prevent offline-asset publication.
 - AES-128 encrypted HLS now saves encryption keys alongside media segments and rewrites local playlists to local key references; offline integrity rejects missing or empty key files, while other encryption methods remain explicitly unsupported.

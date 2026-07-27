@@ -22,6 +22,14 @@ bool isPlayableOfflineMediaUrl(String value) {
 }
 
 bool isPlayableOfflineMediaPath(String manifestPath) {
+  return _isPlayableOfflineMediaPath(manifestPath, <String>{});
+}
+
+bool _isPlayableOfflineMediaPath(String manifestPath, Set<String> visited) {
+  final normalizedManifestPath = p.normalize(p.absolute(manifestPath));
+  if (!visited.add(normalizedManifestPath)) {
+    return false;
+  }
   final manifestFile = File(manifestPath);
   if (!manifestFile.existsSync() || manifestFile.lengthSync() == 0) {
     return false;
@@ -44,6 +52,18 @@ bool isPlayableOfflineMediaPath(String manifestPath) {
   var hasPlayableSegment = false;
   var nextSegmentIsGap = false;
   for (final line in lines.skip(1)) {
+    if (line.startsWith('#EXT-X-MEDIA:')) {
+      final renditionUri = _uriAttributeFromTag(line);
+      if (renditionUri == null ||
+          !_hasPlayableNestedManifest(
+            renditionUri,
+            manifestDirectory,
+            visited,
+          )) {
+        return false;
+      }
+      continue;
+    }
     if (line.startsWith('#EXT-X-KEY:')) {
       final keyUri = _uriAttributeFromTag(line);
       if (line.contains('METHOD=NONE')) continue;
@@ -77,6 +97,16 @@ bool isPlayableOfflineMediaPath(String manifestPath) {
       nextSegmentIsGap = false;
       continue;
     }
+    final nestedManifestPaths = _nestedManifestPaths(line, manifestDirectory);
+    if (nestedManifestPaths.isNotEmpty) {
+      if (!nestedManifestPaths.any(
+        (candidate) => _isPlayableOfflineMediaPath(candidate, visited),
+      )) {
+        return false;
+      }
+      hasPlayableSegment = true;
+      continue;
+    }
     if (!_hasPlayableManifestAsset(line, manifestDirectory)) {
       return false;
     }
@@ -84,6 +114,28 @@ bool isPlayableOfflineMediaPath(String manifestPath) {
   }
 
   return hasPlayableSegment;
+}
+
+bool _hasPlayableNestedManifest(
+  String value,
+  String manifestDirectory,
+  Set<String> visited,
+) {
+  final candidates = _nestedManifestPaths(value, manifestDirectory);
+  return candidates.isNotEmpty &&
+      candidates.any(
+        (candidate) => _isPlayableOfflineMediaPath(candidate, visited),
+      );
+}
+
+Iterable<String> _nestedManifestPaths(
+  String value,
+  String manifestDirectory,
+) {
+  return _segmentPathCandidatesFromManifestLine(
+    value,
+    manifestDirectory,
+  ).where((candidate) => p.extension(candidate).toLowerCase() == '.m3u8');
 }
 
 bool _hasPlayableManifestAsset(

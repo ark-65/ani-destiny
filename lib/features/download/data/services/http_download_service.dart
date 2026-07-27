@@ -321,12 +321,12 @@ class HttpDownloadService implements DownloadService {
     _emitTask(preparingTask);
 
     try {
-      final mediaManifest = await _loadHlsMediaManifest(
+      final mediaBundle = await _loadHlsMediaBundle(
         manifestLoader: manifestLoader,
         sourceUri: sourceUri,
         headers: existingTask.headers,
       );
-      if (mediaManifest.isLive) {
+      if (mediaBundle.manifests.any((manifest) => manifest.isLive)) {
         final unsupported = preparingTask.copyWith(
           localPath: null,
           status: DownloadStatus.unsupported,
@@ -339,21 +339,74 @@ class HttpDownloadService implements DownloadService {
         return;
       }
 
-      final segmentDownloadedBytes = await _downloadHlsSegments(
+      var segmentDownloadedBytes = await _downloadHlsSegments(
         task: preparingTask,
-        mediaManifest: mediaManifest,
+        mediaManifest: mediaBundle.video,
         headers: existingTask.headers,
         cancelToken: token,
+        manifestPath: mediaBundle.audio == null
+            ? prepareLocalManifestPath
+            : p.join(
+                p.dirname(prepareLocalManifestPath),
+                'video',
+                'index.m3u8',
+              ),
       );
+      if (mediaBundle.audio case final audioManifest?) {
+        segmentDownloadedBytes += await _downloadHlsSegments(
+          task: preparingTask,
+          mediaManifest: audioManifest,
+          headers: existingTask.headers,
+          cancelToken: token,
+          manifestPath: p.join(
+            p.dirname(prepareLocalManifestPath),
+            'audio',
+            'index.m3u8',
+          ),
+        );
+      }
       await _validateHlsManifestAssets(
-        mediaManifest: mediaManifest,
-        manifestPath: prepareLocalManifestPath,
+        mediaManifest: mediaBundle.video,
+        manifestPath: mediaBundle.audio == null
+            ? prepareLocalManifestPath
+            : p.join(
+                p.dirname(prepareLocalManifestPath),
+                'video',
+                'index.m3u8',
+              ),
       );
+      if (mediaBundle.audio case final audioManifest?) {
+        await _validateHlsManifestAssets(
+          mediaManifest: audioManifest,
+          manifestPath: p.join(
+            p.dirname(prepareLocalManifestPath),
+            'audio',
+            'index.m3u8',
+          ),
+        );
+      }
       await _writeHlsManifest(
-        mediaManifest,
+        mediaBundle.video,
         segmentDownloadedBytes,
-        prepareLocalManifestPath,
+        mediaBundle.audio == null
+            ? prepareLocalManifestPath
+            : p.join(
+                p.dirname(prepareLocalManifestPath),
+                'video',
+                'index.m3u8',
+              ),
       );
+      if (mediaBundle.audio case final audioManifest?) {
+        await _writeHlsManifest(
+          audioManifest,
+          segmentDownloadedBytes,
+          p.join(p.dirname(prepareLocalManifestPath), 'audio', 'index.m3u8'),
+        );
+        await _writeHlsMasterManifest(
+          mediaBundle,
+          prepareLocalManifestPath,
+        );
+      }
       final completed = preparingTask.copyWith(
         status: DownloadStatus.completed,
         failureReason: DownloadFailureReason.none,
@@ -436,6 +489,7 @@ class HttpDownloadService implements DownloadService {
     required HlsManifest mediaManifest,
     required Map<String, String> headers,
     required CancelToken cancelToken,
+    required String manifestPath,
   }) async {
     if (mediaManifest.segments.isEmpty) {
       throw const FormatException('HLS manifest contains no media entries.');
@@ -443,7 +497,7 @@ class HttpDownloadService implements DownloadService {
 
     final segmentDirectory = Directory(
       p.join(
-        p.dirname(task.localPath ?? ''),
+        p.dirname(manifestPath),
         'segments',
       ),
     );
@@ -923,7 +977,7 @@ class HttpDownloadService implements DownloadService {
     return 'key-${index.toString().padLeft(6, '0')}.key';
   }
 
-  Future<HlsManifest> _loadHlsMediaManifest({
+  Future<_HlsMediaBundle> _loadHlsMediaBundle({
     required HlsManifestLoader manifestLoader,
     required Uri sourceUri,
     required Map<String, String> headers,
@@ -933,26 +987,95 @@ class HttpDownloadService implements DownloadService {
       headers: headers,
     );
     if (!manifest.isMasterPlaylist) {
-      return manifest;
+      return _HlsMediaBundle(video: manifest);
     }
 
     final selectedVariant = _selectMediaVariant(manifest.variants);
-    if (selectedVariant.audioGroupId != null) {
-      throw const FormatException(
-        'HLS alternate audio renditions are not supported offline.',
-      );
-    }
-    manifest = await manifestLoader.load(
+    final videoManifest = await manifestLoader.load(
       selectedVariant.uri,
       headers: headers,
       importedVariables: manifest.variables,
     );
-    if (manifest.isMasterPlaylist) {
+    if (videoManifest.isMasterPlaylist) {
       throw const FormatException(
         'HLS manifest contains nested master playlist.',
       );
     }
-    return manifest;
+    final audioGroupId = selectedVariant.audioGroupId;
+    if (audioGroupId == null) {
+      return _HlsMediaBundle(video: videoManifest);
+    }
+    final groupRenditions = manifest.renditions
+        .where(
+          (rendition) =>
+              rendition.type == 'AUDIO' && rendition.groupId == audioGroupId,
+        )
+        .toList(growable: false);
+    if (groupRenditions.isEmpty) {
+      throw const FormatException('HLS alternate audio group is missing.');
+    }
+    final audioRenditions = groupRenditions
+        .where((rendition) => rendition.uri != null)
+        .toList(growable: false);
+    if (audioRenditions.isEmpty) {
+      return _HlsMediaBundle(video: videoManifest);
+    }
+    final selectedAudio = audioRenditions.firstWhere(
+      (rendition) => rendition.isDefault,
+      orElse: () => audioRenditions.firstWhere(
+        (rendition) => rendition.autoselect,
+        orElse: () => audioRenditions.first,
+      ),
+    );
+    final audioManifest = await manifestLoader.load(
+      selectedAudio.uri!,
+      headers: headers,
+      importedVariables: manifest.variables,
+    );
+    if (audioManifest.isMasterPlaylist) {
+      throw const FormatException(
+        'HLS audio rendition contains nested master playlist.',
+      );
+    }
+    return _HlsMediaBundle(
+      video: videoManifest,
+      audio: audioManifest,
+      variant: selectedVariant,
+      audioRendition: selectedAudio,
+    );
+  }
+
+  Future<void> _writeHlsMasterManifest(
+    _HlsMediaBundle bundle,
+    String manifestPath,
+  ) async {
+    final rendition = bundle.audioRendition!;
+    final variant = bundle.variant!;
+    final escapedName = rendition.name.replaceAll('"', '');
+    final escapedLanguage = rendition.language?.replaceAll('"', '');
+    final mediaAttributes = <String>[
+      'TYPE=AUDIO',
+      'GROUP-ID="offline-audio"',
+      'NAME="$escapedName"',
+      'DEFAULT=YES',
+      'AUTOSELECT=YES',
+      if (escapedLanguage != null) 'LANGUAGE="$escapedLanguage"',
+      'URI="audio/index.m3u8"',
+    ];
+    final streamAttributes = <String>[
+      'BANDWIDTH=${variant.bandwidth ?? 1}',
+      if (variant.resolution != null) 'RESOLUTION=${variant.resolution}',
+      'AUDIO="offline-audio"',
+    ];
+    final content = [
+      '#EXTM3U',
+      '#EXT-X-VERSION:${math.max(bundle.video.protocolVersion, bundle.audio!.protocolVersion)}',
+      '#EXT-X-MEDIA:${mediaAttributes.join(',')}',
+      '#EXT-X-STREAM-INF:${streamAttributes.join(',')}',
+      'video/index.m3u8',
+      '',
+    ].join('\n');
+    await File(manifestPath).writeAsString(content);
   }
 
   HlsVariant _selectMediaVariant(List<HlsVariant> variants) {
@@ -1297,6 +1420,27 @@ class HttpDownloadService implements DownloadService {
       return null;
     } on FileSystemException {
       return localPath;
+    }
+  }
+}
+
+class _HlsMediaBundle {
+  const _HlsMediaBundle({
+    required this.video,
+    this.audio,
+    this.variant,
+    this.audioRendition,
+  });
+
+  final HlsManifest video;
+  final HlsManifest? audio;
+  final HlsVariant? variant;
+  final HlsRendition? audioRendition;
+
+  Iterable<HlsManifest> get manifests sync* {
+    yield video;
+    if (audio case final audioManifest?) {
+      yield audioManifest;
     }
   }
 }

@@ -4,6 +4,7 @@ class HlsManifest {
     required this.segments,
     required this.variants,
     required this.isLive,
+    this.renditions = const [],
     this.variables = const {},
     this.protocolVersion = 1,
     this.mediaSequence = 0,
@@ -14,6 +15,7 @@ class HlsManifest {
   final Uri uri;
   final List<HlsSegment> segments;
   final List<HlsVariant> variants;
+  final List<HlsRendition> renditions;
   final bool isLive;
   final Map<String, String> variables;
   final int protocolVersion;
@@ -23,6 +25,26 @@ class HlsManifest {
 
   bool get isMasterPlaylist => variants.isNotEmpty;
   bool get isMediaPlaylist => segments.isNotEmpty;
+}
+
+class HlsRendition {
+  const HlsRendition({
+    required this.type,
+    required this.groupId,
+    required this.name,
+    required this.uri,
+    this.isDefault = false,
+    this.autoselect = false,
+    this.language,
+  });
+
+  final String type;
+  final String groupId;
+  final String name;
+  final Uri? uri;
+  final bool isDefault;
+  final bool autoselect;
+  final String? language;
 }
 
 class HlsInitializationSegment {

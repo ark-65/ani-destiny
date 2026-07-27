@@ -20,6 +20,7 @@ class HlsManifestParser {
 
     final segments = <HlsSegment>[];
     final variants = <HlsVariant>[];
+    final renditions = <HlsRendition>[];
     final variables = <String, String>{};
     Duration? targetDuration;
     var protocolVersion = 1;
@@ -119,6 +120,37 @@ class HlsManifestParser {
       if (line.startsWith('#EXT-X-STREAM-INF:')) {
         pendingVariantAttributes = _parseAttributes(
           line.substring('#EXT-X-STREAM-INF:'.length),
+        );
+        continue;
+      }
+      if (line.startsWith('#EXT-X-MEDIA:')) {
+        final attributes = _parseAttributes(
+          line.substring('#EXT-X-MEDIA:'.length),
+        );
+        final type = attributes['TYPE'];
+        if (type != 'AUDIO') {
+          continue;
+        }
+        final groupId = attributes['GROUP-ID'];
+        final name = attributes['NAME'];
+        final renditionUri = attributes['URI'];
+        if (groupId == null ||
+            name == null ||
+            (renditionUri != null && renditionUri.isEmpty)) {
+          throw const FormatException('Invalid HLS media rendition.');
+        }
+        renditions.add(
+          HlsRendition(
+            type: type!,
+            groupId: groupId,
+            name: name,
+            uri: renditionUri == null
+                ? null
+                : uri.resolve(_substituteVariables(renditionUri, variables)),
+            isDefault: attributes['DEFAULT'] == 'YES',
+            autoselect: attributes['AUTOSELECT'] == 'YES',
+            language: attributes['LANGUAGE'],
+          ),
         );
         continue;
       }
@@ -280,6 +312,7 @@ class HlsManifestParser {
       uri: uri,
       segments: List.unmodifiable(segments),
       variants: List.unmodifiable(variants),
+      renditions: List.unmodifiable(renditions),
       isLive: !hasEndList,
       variables: Map.unmodifiable(variables),
       protocolVersion: protocolVersion,

@@ -14,6 +14,7 @@ import 'package:ani_destiny/features/download/domain/entities/download_source.da
 import 'package:ani_destiny/features/download/domain/entities/download_task.dart';
 import 'package:ani_destiny/features/download/domain/entities/hls_manifest.dart';
 import 'package:ani_destiny/features/download/domain/services/hls_manifest_loader.dart';
+import 'package:ani_destiny/features/download/domain/services/offline_media_integrity.dart';
 import 'package:dio/dio.dart';
 import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -473,7 +474,7 @@ segment.ts
     expect(File(task.localPath!).existsSync(), isFalse);
   });
 
-  test('alternate audio master fails before requesting video-only media',
+  test('alternate audio master downloads local video and default audio',
       () async {
     final tempDirectory =
         await Directory.systemTemp.createTemp('ani-destiny-hls-http-audio');
@@ -506,6 +507,16 @@ segment.ts
 ''');
         case '/video/segment.ts':
           request.response.add([1, 2, 3, 4]);
+        case '/audio/index.m3u8':
+          request.response.write('''
+#EXTM3U
+#EXT-X-TARGETDURATION:6
+#EXTINF:6,
+segment.aac
+#EXT-X-ENDLIST
+''');
+        case '/audio/segment.aac':
+          request.response.add([5, 6, 7]);
         default:
           request.response.statusCode = HttpStatus.notFound;
       }
@@ -539,14 +550,53 @@ segment.ts
     await service.start(taskId);
 
     final task = (await repository.getTask(taskId))!;
-    expect(task.status, DownloadStatus.failed);
-    expect(task.failureReason, DownloadFailureReason.invalidManifest);
+    expect(task.status, DownloadStatus.completed);
+    expect(task.downloadedBytes, 7);
+    expect(requestedPaths, [
+      '/master.m3u8',
+      '/video/index.m3u8',
+      '/audio/index.m3u8',
+      '/video/segment.ts',
+      '/audio/segment.aac',
+    ]);
+    final masterContent = await File(task.localPath!).readAsString();
+    expect(masterContent, contains('TYPE=AUDIO'));
+    expect(masterContent, contains('URI="audio/index.m3u8"'));
+    expect(masterContent, contains('AUDIO="offline-audio"'));
+    expect(masterContent, contains('video/index.m3u8'));
+    expect(masterContent, isNot(contains(origin)));
     expect(
-      task.failureMessage,
-      'HLS alternate audio renditions are not supported offline.',
+      File(
+        p.join(
+          p.dirname(task.localPath!),
+          'video',
+          'segments',
+          'segment-000000.ts',
+        ),
+      ).readAsBytesSync(),
+      [1, 2, 3, 4],
     );
-    expect(requestedPaths, ['/master.m3u8']);
-    expect(File(task.localPath!).existsSync(), isFalse);
+    expect(
+      File(
+        p.join(
+          p.dirname(task.localPath!),
+          'audio',
+          'segments',
+          'segment-000000.aac',
+        ),
+      ).readAsBytesSync(),
+      [5, 6, 7],
+    );
+    expect(isPlayableOfflineMediaPath(task.localPath!), isTrue);
+    await File(
+      p.join(
+        p.dirname(task.localPath!),
+        'audio',
+        'segments',
+        'segment-000000.aac',
+      ),
+    ).delete();
+    expect(isPlayableOfflineMediaPath(task.localPath!), isFalse);
   });
 }
 
