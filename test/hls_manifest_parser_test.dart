@@ -245,7 +245,7 @@ segment-003.ts
     final manifest = parser.parse(
       '''
 #EXTM3U
-#EXT-X-KEY:METHOD=AES-128,URI="keys/episode.key",IV=0x0123456789ABCDEF0123456789ABCDEF
+#EXT-X-KEY:METHOD=AES-128,URI="keys/episode.key",IV=0x0123456789ABCDEF0123456789ABCDEF,KEYFORMAT="identity"
 #EXTINF:6,
 segment-001.ts
 #EXT-X-KEY:METHOD=NONE
@@ -264,6 +264,22 @@ segment-002.ts
     );
     expect(key?.iv, '0x0123456789ABCDEF0123456789ABCDEF');
     expect(manifest.segments.last.encryptionKey, isNull);
+  });
+
+  test('rejects non-identity AES-128 key formats', () {
+    expect(
+      () => parser.parse(
+        '''
+#EXTM3U
+#EXT-X-KEY:METHOD=AES-128,URI="skd://license",KEYFORMAT="com.apple.streamingkeydelivery"
+#EXTINF:6,
+segment-001.ts
+#EXT-X-ENDLIST
+''',
+        uri: Uri.parse('https://cdn.example.test/anime/index.m3u8'),
+      ),
+      throwsFormatException,
+    );
   });
 
   test('rejects malformed explicit AES-128 IVs', () {

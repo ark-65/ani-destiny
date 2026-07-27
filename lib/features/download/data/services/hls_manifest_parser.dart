@@ -128,6 +128,12 @@ class HlsManifestParser {
             'Unsupported HLS encryption method: ${method ?? 'missing'}.',
           );
         }
+        final keyFormat = attributes['KEYFORMAT'] ?? 'identity';
+        if (keyFormat != 'identity') {
+          throw FormatException(
+            'Unsupported HLS encryption key format: $keyFormat.',
+          );
+        }
         final keyUri = attributes['URI'];
         if (keyUri == null || keyUri.isEmpty) {
           throw const FormatException('HLS encryption key URI missing.');

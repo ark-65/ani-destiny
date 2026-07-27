@@ -1587,7 +1587,7 @@ segment-2.m4s
           return const HlsManifestParser().parse(
             '''
 #EXTM3U
-#EXT-X-KEY:METHOD=AES-128,URI="episode.key",IV=0x0123456789ABCDEF
+#EXT-X-KEY:METHOD=AES-128,URI="skd://license",KEYFORMAT="com.apple.streamingkeydelivery"
 #EXTINF:6,
 segment-001.ts
 #EXT-X-ENDLIST
