@@ -936,9 +936,14 @@ class HttpDownloadService implements DownloadService {
       return manifest;
     }
 
-    final selectedVariantUri = _selectMediaVariantUri(manifest.variants);
+    final selectedVariant = _selectMediaVariant(manifest.variants);
+    if (selectedVariant.audioGroupId != null) {
+      throw const FormatException(
+        'HLS alternate audio renditions are not supported offline.',
+      );
+    }
     manifest = await manifestLoader.load(
-      selectedVariantUri,
+      selectedVariant.uri,
       headers: headers,
       importedVariables: manifest.variables,
     );
@@ -950,7 +955,7 @@ class HttpDownloadService implements DownloadService {
     return manifest;
   }
 
-  Uri _selectMediaVariantUri(List<HlsVariant> variants) {
+  HlsVariant _selectMediaVariant(List<HlsVariant> variants) {
     if (variants.isEmpty) {
       throw const FormatException('HLS manifest contains no media entries.');
     }
@@ -963,7 +968,7 @@ class HttpDownloadService implements DownloadService {
     if (mediaVariants.isEmpty) {
       throw const FormatException('HLS manifest contains no media entries.');
     }
-    return mediaVariants.first.uri;
+    return mediaVariants.first;
   }
 
   @override

@@ -223,6 +223,20 @@ segment.ts
     );
   });
 
+  test('preserves alternate audio group on master playlist variants', () {
+    final manifest = parser.parse(
+      '''
+#EXTM3U
+#EXT-X-MEDIA:TYPE=AUDIO,GROUP-ID="audio-main",NAME="Japanese",DEFAULT=YES,URI="audio/index.m3u8"
+#EXT-X-STREAM-INF:BANDWIDTH=2400000,RESOLUTION=1920x1080,AUDIO="audio-main"
+video/index.m3u8
+''',
+      uri: Uri.parse('https://cdn.example.test/master.m3u8'),
+    );
+
+    expect(manifest.variants.single.audioGroupId, 'audio-main');
+  });
+
   test('substitutes locally defined variables in HLS asset URIs', () {
     final manifest = parser.parse(
       r'''

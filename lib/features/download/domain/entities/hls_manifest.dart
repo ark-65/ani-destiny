@@ -87,9 +87,11 @@ class HlsVariant {
     required this.uri,
     this.bandwidth,
     this.resolution,
+    this.audioGroupId,
   });
 
   final Uri uri;
   final int? bandwidth;
   final String? resolution;
+  final String? audioGroupId;
 }
