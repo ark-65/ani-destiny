@@ -1014,19 +1014,16 @@ class HttpDownloadService implements DownloadService {
     if (groupRenditions.isEmpty) {
       throw const FormatException('HLS alternate audio group is missing.');
     }
-    final audioRenditions = groupRenditions
-        .where((rendition) => rendition.uri != null)
-        .toList(growable: false);
-    if (audioRenditions.isEmpty) {
-      return _HlsMediaBundle(video: videoManifest);
-    }
-    final selectedAudio = audioRenditions.firstWhere(
+    final selectedAudio = groupRenditions.firstWhere(
       (rendition) => rendition.isDefault,
-      orElse: () => audioRenditions.firstWhere(
+      orElse: () => groupRenditions.firstWhere(
         (rendition) => rendition.autoselect,
-        orElse: () => audioRenditions.first,
+        orElse: () => groupRenditions.first,
       ),
     );
+    if (selectedAudio.uri == null) {
+      return _HlsMediaBundle(video: videoManifest);
+    }
     final audioManifest = await manifestLoader.load(
       selectedAudio.uri!,
       headers: headers,

@@ -598,6 +598,97 @@ segment.aac
     ).delete();
     expect(isPlayableOfflineMediaPath(task.localPath!), isFalse);
   });
+
+  test('embedded default audio does not download an external alternative',
+      () async {
+    final tempDirectory =
+        await Directory.systemTemp.createTemp('ani-destiny-hls-http-muxed');
+    addTearDown(() async {
+      if (tempDirectory.existsSync()) {
+        await tempDirectory.delete(recursive: true);
+      }
+    });
+
+    final server = await HttpServer.bind(InternetAddress.loopbackIPv4, 0);
+    addTearDown(server.close);
+    final requestedPaths = <String>[];
+    server.listen((request) {
+      requestedPaths.add(request.uri.path);
+      switch (request.uri.path) {
+        case '/master.m3u8':
+          request.response.write('''
+#EXTM3U
+#EXT-X-MEDIA:TYPE=AUDIO,GROUP-ID="audio-main",NAME="Japanese",DEFAULT=YES
+#EXT-X-MEDIA:TYPE=AUDIO,GROUP-ID="audio-main",NAME="English",AUTOSELECT=YES,URI="audio/index.m3u8"
+#EXT-X-STREAM-INF:BANDWIDTH=2400000,AUDIO="audio-main"
+video/index.m3u8
+''');
+        case '/video/index.m3u8':
+          request.response.write('''
+#EXTM3U
+#EXT-X-TARGETDURATION:6
+#EXTINF:6,
+segment.ts
+#EXT-X-ENDLIST
+''');
+        case '/video/segment.ts':
+          request.response.add([1, 2, 3, 4]);
+        case '/audio/index.m3u8':
+          request.response.write('''
+#EXTM3U
+#EXT-X-TARGETDURATION:6
+#EXTINF:6,
+segment.aac
+#EXT-X-ENDLIST
+''');
+        case '/audio/segment.aac':
+          request.response.add([5, 6, 7]);
+        default:
+          request.response.statusCode = HttpStatus.notFound;
+      }
+      request.response.close();
+    });
+
+    final database = AppDatabase(NativeDatabase.memory());
+    addTearDown(database.close);
+    final repository = DownloadRepositoryImpl(database);
+    final origin = 'http://${server.address.host}:${server.port}';
+    final dio = Dio();
+    final service = HttpDownloadService(
+      dio: dio,
+      repository: repository,
+      applicationDocumentsDirectory: () async => tempDirectory,
+      hlsManifestLoader: DioHlsManifestLoader(dio: dio),
+    );
+
+    final taskId = await service.createTask(
+      animeId: 'anime-1',
+      episodeId: 'episode-1',
+      sourceId: 'loopback',
+      source: DownloadSource(
+        url: '$origin/master.m3u8',
+        kind: DownloadKind.hls,
+      ),
+      title: 'HLS Embedded Audio Test',
+      episodeTitle: 'Episode 1',
+    );
+
+    await service.start(taskId);
+
+    final task = (await repository.getTask(taskId))!;
+    expect(task.status, DownloadStatus.completed);
+    expect(task.downloadedBytes, 4);
+    expect(requestedPaths, [
+      '/master.m3u8',
+      '/video/index.m3u8',
+      '/video/segment.ts',
+    ]);
+    final manifestContent = await File(task.localPath!).readAsString();
+    expect(manifestContent, contains('#EXT-X-PLAYLIST-TYPE:VOD'));
+    expect(manifestContent, isNot(contains('#EXT-X-MEDIA:')));
+    expect(manifestContent, isNot(contains(origin)));
+    expect(isPlayableOfflineMediaPath(task.localPath!), isTrue);
+  });
 }
 
 class _StaticManifestLoader implements HlsManifestLoader {
