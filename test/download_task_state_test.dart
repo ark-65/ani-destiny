@@ -333,7 +333,7 @@ void main() {
         (manifestUri, _) async => const HlsManifestParser().parse(
           '''
 #EXTM3U
-#EXT-X-KEY:METHOD=AES-128,URI="init.key",IV=0x0123456789ABCDEF
+#EXT-X-KEY:METHOD=AES-128,URI="init.key",IV=0x0123456789ABCDEF0123456789ABCDEF
 #EXT-X-MAP:URI="init.mp4"
 #EXT-X-KEY:METHOD=NONE
 #EXTINF:6,
@@ -362,7 +362,7 @@ segment-1.m4s
     final task = (await repository.getTask(taskId))!;
     final manifestContent = await File(task.localPath!).readAsString();
     const localKey = '#EXT-X-KEY:METHOD=AES-128,URI="segments/key-000000.key",'
-        'IV=0x0123456789ABCDEF';
+        'IV=0x0123456789ABCDEF0123456789ABCDEF';
     const localMap = '#EXT-X-MAP:URI="segments/initialization.mp4"';
     expect(task.status, DownloadStatus.completed);
     expect(
@@ -1577,11 +1577,24 @@ segment-2.m4s
     _mockApplicationDocumentsDirectory(tempDir.path);
 
     final repository = DownloadRepositoryImpl(database);
+    var manifestLoadCount = 0;
     final service = HttpDownloadService(
       dio: Dio(),
       repository: repository,
       hlsManifestLoader: _FakeHlsManifestLoader(
-        (_, __) async => throw const FormatException('Invalid HLS manifest.'),
+        (manifestUri, _) async {
+          manifestLoadCount++;
+          return const HlsManifestParser().parse(
+            '''
+#EXTM3U
+#EXT-X-KEY:METHOD=AES-128,URI="episode.key",IV=0x0123456789ABCDEF
+#EXTINF:6,
+segment-001.ts
+#EXT-X-ENDLIST
+''',
+            uri: manifestUri,
+          );
+        },
       ),
     );
 
@@ -1604,6 +1617,9 @@ segment-2.m4s
     expect(task, isNotNull);
     expect(task!.status, DownloadStatus.failed);
     expect(task.failureReason, DownloadFailureReason.invalidManifest);
+    expect(task.localPath, isNotNull);
+    expect(File(task.localPath!).existsSync(), isFalse);
+    expect(manifestLoadCount, 1);
   });
 
   test('starting byte-range HLS saves extracted ranges as local files',

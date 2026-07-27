@@ -132,10 +132,14 @@ class HlsManifestParser {
         if (keyUri == null || keyUri.isEmpty) {
           throw const FormatException('HLS encryption key URI missing.');
         }
+        final iv = attributes['IV'];
+        if (iv != null && !RegExp(r'^0[xX][0-9a-fA-F]{32}$').hasMatch(iv)) {
+          throw const FormatException('Invalid HLS AES-128 IV.');
+        }
         activeEncryptionKey = HlsEncryptionKey(
           method: method!,
           uri: uri.resolve(keyUri),
-          iv: attributes['IV'],
+          iv: iv,
         );
         continue;
       }

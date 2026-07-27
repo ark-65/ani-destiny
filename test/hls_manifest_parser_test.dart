@@ -174,7 +174,7 @@ segment-002.m4s
     final manifest = parser.parse(
       '''
 #EXTM3U
-#EXT-X-KEY:METHOD=AES-128,URI="keys/init.key",IV=0x0123456789ABCDEF
+#EXT-X-KEY:METHOD=AES-128,URI="keys/init.key",IV=0x0123456789ABCDEF0123456789ABCDEF
 #EXT-X-MAP:URI="init.mp4"
 #EXT-X-KEY:METHOD=NONE
 #EXTINF:6,
@@ -190,7 +190,10 @@ segment-001.m4s
       initializationKey?.uri.toString(),
       'https://cdn.example.test/anime/keys/init.key',
     );
-    expect(initializationKey?.iv, '0x0123456789ABCDEF');
+    expect(
+      initializationKey?.iv,
+      '0x0123456789ABCDEF0123456789ABCDEF',
+    );
     expect(manifest.segments.single.encryptionKey, isNull);
   });
 
@@ -242,7 +245,7 @@ segment-003.ts
     final manifest = parser.parse(
       '''
 #EXTM3U
-#EXT-X-KEY:METHOD=AES-128,URI="keys/episode.key",IV=0x0123456789ABCDEF
+#EXT-X-KEY:METHOD=AES-128,URI="keys/episode.key",IV=0x0123456789ABCDEF0123456789ABCDEF
 #EXTINF:6,
 segment-001.ts
 #EXT-X-KEY:METHOD=NONE
@@ -259,8 +262,31 @@ segment-002.ts
       key?.uri.toString(),
       'https://cdn.example.test/anime/keys/episode.key',
     );
-    expect(key?.iv, '0x0123456789ABCDEF');
+    expect(key?.iv, '0x0123456789ABCDEF0123456789ABCDEF');
     expect(manifest.segments.last.encryptionKey, isNull);
+  });
+
+  test('rejects malformed explicit AES-128 IVs', () {
+    for (final iv in [
+      '0123456789ABCDEF0123456789ABCDEF',
+      '0x0123456789ABCDEF',
+      '0x0123456789ABCDEG0123456789ABCDEF',
+    ]) {
+      expect(
+        () => parser.parse(
+          '''
+#EXTM3U
+#EXT-X-KEY:METHOD=AES-128,URI="keys/episode.key",IV=$iv
+#EXTINF:6,
+segment-001.ts
+#EXT-X-ENDLIST
+''',
+          uri: Uri.parse('https://cdn.example.test/anime/index.m3u8'),
+        ),
+        throwsFormatException,
+        reason: 'IV $iv must not produce an offline asset.',
+      );
+    }
   });
 
   test('preserves commas inside quoted attribute URIs', () {

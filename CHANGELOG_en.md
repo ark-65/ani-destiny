@@ -24,6 +24,7 @@
 - Check the latest stable GitHub Release in Settings > About and show an update prompt that opens the matching release page when a newer version is available.
 
 ### 🐛 Fixed
+- Fixed AES-128 HLS accepting malformed explicit `IV` values and publishing false-complete assets: the parser now accepts only 128-bit hexadecimal IVs with a `0x` prefix and rejects invalid format, length, or characters before segment downloads; media-sequence derivation remains unchanged when IV is omitted.
 - Fixed AES-128 HLS integrity accepting any non-empty key file: downloads and offline verification now require exactly 16 local key bytes, reject truncated or incorrect responses before asset publication, and re-download persisted keys with an invalid length when resuming.
 - Fixed local AES-128 encrypted fMP4 playlists writing `EXT-X-MAP` before its active key: the parser now binds the key state at MAP creation to the initialization segment, downloads keys used only by initialization data, and emits the correct local `EXT-X-KEY` before MAP so complete files cannot become a false-success asset with an undecryptable initialization segment.
 - Fixed local HLS playlists unconditionally downgrading to `EXT-X-VERSION:3`: the parser now preserves the source protocol version, local output never lowers it, and fMP4 assets containing `EXT-X-MAP` use at least version 5 so complete files are not rendered undecodable offline by an incompatible playlist version.
