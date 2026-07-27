@@ -122,6 +122,57 @@ segment.ts
     );
   });
 
+  test('substitutes locally defined variables in HLS asset URIs', () {
+    final manifest = parser.parse(
+      r'''
+#EXTM3U
+#EXT-X-DEFINE:NAME="token",VALUE="signed-value"
+#EXT-X-DEFINE:NAME="path",VALUE="media/{$token}"
+#EXT-X-MAP:URI="{$path}/init.mp4"
+#EXT-X-KEY:METHOD=AES-128,URI="keys/{$token}.key"
+#EXTINF:6,
+{$path}/segment-001.m4s
+#EXT-X-ENDLIST
+''',
+      uri: Uri.parse('https://cdn.example.test/anime/index.m3u8'),
+    );
+
+    final segment = manifest.segments.single;
+    expect(
+      segment.uri.toString(),
+      'https://cdn.example.test/anime/media/signed-value/segment-001.m4s',
+    );
+    expect(
+      segment.initializationSegment?.uri.toString(),
+      'https://cdn.example.test/anime/media/signed-value/init.mp4',
+    );
+    expect(
+      segment.encryptionKey?.uri.toString(),
+      'https://cdn.example.test/anime/keys/signed-value.key',
+    );
+  });
+
+  test('rejects unavailable or imported HLS variables', () {
+    for (final definition in [
+      '',
+      '#EXT-X-DEFINE:IMPORT="token"',
+    ]) {
+      expect(
+        () => parser.parse(
+          '''
+#EXTM3U
+$definition
+#EXTINF:6,
+media/{\$token}/segment.ts
+#EXT-X-ENDLIST
+''',
+          uri: Uri.parse('https://cdn.example.test/anime/index.m3u8'),
+        ),
+        throwsFormatException,
+      );
+    }
+  });
+
   test('parses a relative initialization segment', () {
     final manifest = parser.parse(
       '''

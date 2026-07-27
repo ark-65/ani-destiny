@@ -16,6 +16,7 @@ class HlsManifestParser {
 
     final segments = <HlsSegment>[];
     final variants = <HlsVariant>[];
+    final variables = <String, String>{};
     Duration? targetDuration;
     var protocolVersion = 1;
     var mediaSequence = 0;
@@ -78,6 +79,26 @@ class HlsManifestParser {
         pendingSegmentTitle = title?.trim().isEmpty ?? true ? null : title;
         continue;
       }
+      if (line.startsWith('#EXT-X-DEFINE:')) {
+        final attributes = _parseAttributes(
+          line.substring('#EXT-X-DEFINE:'.length),
+        );
+        if (attributes.containsKey('IMPORT')) {
+          throw const FormatException(
+            'Imported HLS variables are unsupported.',
+          );
+        }
+        final name = attributes['NAME'];
+        final value = attributes['VALUE'];
+        if (name == null ||
+            value == null ||
+            !RegExp(r'^[A-Za-z0-9_-]+$').hasMatch(name) ||
+            variables.containsKey(name)) {
+          throw const FormatException('Invalid HLS variable definition.');
+        }
+        variables[name] = _substituteVariables(value, variables);
+        continue;
+      }
       if (line.startsWith('#EXT-X-STREAM-INF:')) {
         pendingVariantAttributes = _parseAttributes(
           line.substring('#EXT-X-STREAM-INF:'.length),
@@ -94,7 +115,9 @@ class HlsManifestParser {
             'HLS initialization segment URI missing.',
           );
         }
-        final resolvedMapUri = uri.resolve(mapUri);
+        final resolvedMapUri = uri.resolve(
+          _substituteVariables(mapUri, variables),
+        );
         final mapByteRange = attributes['BYTERANGE'] == null
             ? null
             : _resolveByteRange(
@@ -144,7 +167,7 @@ class HlsManifestParser {
         }
         activeEncryptionKey = HlsEncryptionKey(
           method: method!,
-          uri: uri.resolve(keyUri),
+          uri: uri.resolve(_substituteVariables(keyUri, variables)),
           iv: iv,
         );
         continue;
@@ -167,7 +190,7 @@ class HlsManifestParser {
         continue;
       }
 
-      final resolvedUri = uri.resolve(line);
+      final resolvedUri = uri.resolve(_substituteVariables(line, variables));
       if (pendingVariantAttributes != null) {
         variants.add(
           HlsVariant(
@@ -263,6 +286,25 @@ class HlsManifestParser {
     final colonIndex = line.indexOf(':');
     if (colonIndex == -1) return fallback;
     return int.tryParse(line.substring(colonIndex + 1).trim()) ?? fallback;
+  }
+
+  String _substituteVariables(
+    String value,
+    Map<String, String> variables,
+  ) {
+    final variablePattern = RegExp(r'\{\$([A-Za-z0-9_-]+)\}');
+    final substituted = value.replaceAllMapped(variablePattern, (match) {
+      final name = match.group(1)!;
+      final replacement = variables[name];
+      if (replacement == null) {
+        throw FormatException('Undefined HLS variable: $name.');
+      }
+      return replacement;
+    });
+    if (substituted.contains(r'{$')) {
+      throw const FormatException('Invalid HLS variable reference.');
+    }
+    return substituted;
   }
 
   Map<String, String> _parseAttributes(String value) {
