@@ -35,6 +35,52 @@ segment-002.ts
     expect(manifest.segments.last.title, 'Opening');
   });
 
+  test('rejects media segments without EXTINF duration', () {
+    expect(
+      () => parser.parse(
+        '''
+#EXTM3U
+#EXT-X-TARGETDURATION:10
+segment-1.ts
+#EXT-X-ENDLIST
+''',
+        uri: Uri.parse('https://example.com/media/index.m3u8'),
+      ),
+      throwsA(
+        isA<FormatException>().having(
+          (error) => error.message,
+          'message',
+          'HLS segment duration missing.',
+        ),
+      ),
+    );
+  });
+
+  test('rejects non-positive and non-finite EXTINF durations', () {
+    for (final duration in ['0', '-1', 'NaN', 'Infinity', 'invalid']) {
+      expect(
+        () => parser.parse(
+          '''
+#EXTM3U
+#EXT-X-TARGETDURATION:10
+#EXTINF:$duration,
+segment-1.ts
+#EXT-X-ENDLIST
+''',
+          uri: Uri.parse('https://example.com/media/index.m3u8'),
+        ),
+        throwsA(
+          isA<FormatException>().having(
+            (error) => error.message,
+            'message',
+            'Invalid HLS segment duration.',
+          ),
+        ),
+        reason: 'duration=$duration',
+      );
+    }
+  });
+
   test('preserves the declared HLS protocol version', () {
     final manifest = parser.parse(
       '''

@@ -8,6 +8,7 @@ import 'package:ani_destiny/features/download/data/repositories/download_reposit
 import 'package:ani_destiny/features/download/data/services/hls_manifest_loader.dart';
 import 'package:ani_destiny/features/download/data/services/hls_manifest_parser.dart';
 import 'package:ani_destiny/features/download/data/services/http_download_service.dart';
+import 'package:ani_destiny/features/download/domain/entities/download_failure_reason.dart';
 import 'package:ani_destiny/features/download/domain/entities/download_kind.dart';
 import 'package:ani_destiny/features/download/domain/entities/download_source.dart';
 import 'package:ani_destiny/features/download/domain/entities/download_task.dart';
@@ -333,6 +334,71 @@ media/index.m3u8
     expect(localManifest, contains('segments/key-000000.key'));
     expect(localManifest, contains('segments/initialization.mp4'));
     expect(localManifest, contains('segments/segment-000000.m4s'));
+  });
+
+  test('missing EXTINF fails before requesting media or publishing assets',
+      () async {
+    final tempDirectory =
+        await Directory.systemTemp.createTemp('ani-destiny-hls-http-extinf');
+    addTearDown(() async {
+      if (tempDirectory.existsSync()) {
+        await tempDirectory.delete(recursive: true);
+      }
+    });
+
+    final server = await HttpServer.bind(InternetAddress.loopbackIPv4, 0);
+    addTearDown(server.close);
+    final requestedPaths = <String>[];
+    server.listen((request) {
+      requestedPaths.add(request.uri.path);
+      switch (request.uri.path) {
+        case '/index.m3u8':
+          request.response.write('''
+#EXTM3U
+#EXT-X-TARGETDURATION:6
+segment.ts
+#EXT-X-ENDLIST
+''');
+        case '/segment.ts':
+          request.response.add([1, 2, 3, 4]);
+        default:
+          request.response.statusCode = HttpStatus.notFound;
+      }
+      request.response.close();
+    });
+
+    final database = AppDatabase(NativeDatabase.memory());
+    addTearDown(database.close);
+    final repository = DownloadRepositoryImpl(database);
+    final origin = 'http://${server.address.host}:${server.port}';
+    final dio = Dio();
+    final service = HttpDownloadService(
+      dio: dio,
+      repository: repository,
+      applicationDocumentsDirectory: () async => tempDirectory,
+      hlsManifestLoader: DioHlsManifestLoader(dio: dio),
+    );
+
+    final taskId = await service.createTask(
+      animeId: 'anime-1',
+      episodeId: 'episode-1',
+      sourceId: 'loopback',
+      source: DownloadSource(
+        url: '$origin/index.m3u8',
+        kind: DownloadKind.hls,
+      ),
+      title: 'HLS EXTINF Test',
+      episodeTitle: 'Episode 1',
+    );
+
+    await service.start(taskId);
+
+    final task = (await repository.getTask(taskId))!;
+    expect(task.status, DownloadStatus.failed);
+    expect(task.failureReason, DownloadFailureReason.invalidManifest);
+    expect(task.failureMessage, 'HLS segment duration missing.');
+    expect(requestedPaths, ['/index.m3u8']);
+    expect(File(task.localPath!).existsSync(), isFalse);
   });
 }
 

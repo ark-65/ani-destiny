@@ -77,9 +77,12 @@ class HlsManifestParser {
             commaIndex == -1 ? info : info.substring(0, commaIndex);
         final title = commaIndex == -1 ? null : info.substring(commaIndex + 1);
         final seconds = double.tryParse(durationText.trim());
-        pendingSegmentDuration = seconds == null
-            ? null
-            : Duration(milliseconds: (seconds * 1000).round());
+        if (seconds == null || !seconds.isFinite || seconds <= 0) {
+          throw const FormatException('Invalid HLS segment duration.');
+        }
+        pendingSegmentDuration = Duration(
+          milliseconds: (seconds * 1000).round(),
+        );
         pendingSegmentTitle = title?.trim().isEmpty ?? true ? null : title;
         continue;
       }
@@ -213,6 +216,9 @@ class HlsManifestParser {
         );
         pendingVariantAttributes = null;
       } else {
+        if (pendingSegmentDuration == null) {
+          throw const FormatException('HLS segment duration missing.');
+        }
         final byteRange = pendingByteRange == null
             ? null
             : _resolveByteRange(
