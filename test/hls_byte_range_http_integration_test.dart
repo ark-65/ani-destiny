@@ -67,6 +67,7 @@ void main() {
         const HlsManifestParser().parse(
           '''
 #EXTM3U
+#EXT-X-TARGETDURATION:6
 #EXT-X-MAP:URI="$mediaUri",BYTERANGE="4@0"
 #EXTINF:6,
 #EXT-X-BYTERANGE:5@4
@@ -182,6 +183,7 @@ $mediaUri
         const HlsManifestParser().parse(
           '''
 #EXTM3U
+#EXT-X-TARGETDURATION:6
 #EXT-X-MAP:URI="$origin/init.mp4?token=gamma,delta"
 #EXT-X-KEY:METHOD=AES-128,URI="$origin/key.bin?token=alpha,beta"
 #EXTINF:6,
@@ -270,6 +272,7 @@ media/index.m3u8
         case '/media/index.m3u8':
           request.response.write(r'''
 #EXTM3U
+#EXT-X-TARGETDURATION:6
 #EXT-X-DEFINE:IMPORT="asset"
 #EXT-X-MAP:URI="{$asset}/init.mp4"
 #EXT-X-KEY:METHOD=AES-128,URI="../keys/{$asset}.key"
@@ -397,6 +400,75 @@ segment.ts
     expect(task.status, DownloadStatus.failed);
     expect(task.failureReason, DownloadFailureReason.invalidManifest);
     expect(task.failureMessage, 'HLS segment duration missing.');
+    expect(requestedPaths, ['/index.m3u8']);
+    expect(File(task.localPath!).existsSync(), isFalse);
+  });
+
+  test('short target duration fails before media or asset publication',
+      () async {
+    final tempDirectory =
+        await Directory.systemTemp.createTemp('ani-destiny-hls-http-target');
+    addTearDown(() async {
+      if (tempDirectory.existsSync()) {
+        await tempDirectory.delete(recursive: true);
+      }
+    });
+
+    final server = await HttpServer.bind(InternetAddress.loopbackIPv4, 0);
+    addTearDown(server.close);
+    final requestedPaths = <String>[];
+    server.listen((request) {
+      requestedPaths.add(request.uri.path);
+      switch (request.uri.path) {
+        case '/index.m3u8':
+          request.response.write('''
+#EXTM3U
+#EXT-X-TARGETDURATION:6
+#EXTINF:6.6,
+segment.ts
+#EXT-X-ENDLIST
+''');
+        case '/segment.ts':
+          request.response.add([1, 2, 3, 4]);
+        default:
+          request.response.statusCode = HttpStatus.notFound;
+      }
+      request.response.close();
+    });
+
+    final database = AppDatabase(NativeDatabase.memory());
+    addTearDown(database.close);
+    final repository = DownloadRepositoryImpl(database);
+    final origin = 'http://${server.address.host}:${server.port}';
+    final dio = Dio();
+    final service = HttpDownloadService(
+      dio: dio,
+      repository: repository,
+      applicationDocumentsDirectory: () async => tempDirectory,
+      hlsManifestLoader: DioHlsManifestLoader(dio: dio),
+    );
+
+    final taskId = await service.createTask(
+      animeId: 'anime-1',
+      episodeId: 'episode-1',
+      sourceId: 'loopback',
+      source: DownloadSource(
+        url: '$origin/index.m3u8',
+        kind: DownloadKind.hls,
+      ),
+      title: 'HLS Target Duration Test',
+      episodeTitle: 'Episode 1',
+    );
+
+    await service.start(taskId);
+
+    final task = (await repository.getTask(taskId))!;
+    expect(task.status, DownloadStatus.failed);
+    expect(task.failureReason, DownloadFailureReason.invalidManifest);
+    expect(
+      task.failureMessage,
+      'HLS target duration is shorter than a media segment.',
+    );
     expect(requestedPaths, ['/index.m3u8']);
     expect(File(task.localPath!).existsSync(), isFalse);
   });

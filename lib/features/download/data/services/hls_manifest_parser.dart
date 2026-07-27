@@ -45,9 +45,13 @@ class HlsManifestParser {
         continue;
       }
       if (line.startsWith('#EXT-X-TARGETDURATION:')) {
-        targetDuration = Duration(
-          seconds: _parseIntAfterColon(line, fallback: 0),
+        final value = int.tryParse(
+          line.substring('#EXT-X-TARGETDURATION:'.length).trim(),
         );
+        if (value == null || value <= 0) {
+          throw const FormatException('Invalid HLS target duration.');
+        }
+        targetDuration = Duration(seconds: value);
         continue;
       }
       if (line.startsWith('#EXT-X-VERSION:')) {
@@ -254,6 +258,22 @@ class HlsManifestParser {
     if (segments.isEmpty && variants.isEmpty) {
       throw const FormatException('HLS manifest contains no media entries.');
     }
+    if (segments.isNotEmpty) {
+      final declaredTargetDuration = targetDuration;
+      if (declaredTargetDuration == null) {
+        throw const FormatException('HLS target duration missing.');
+      }
+      final longestRoundedSegmentSeconds = segments
+          .map(
+            (segment) => (segment.duration!.inMilliseconds / 1000).round(),
+          )
+          .reduce((longest, current) => longest > current ? longest : current);
+      if (longestRoundedSegmentSeconds > declaredTargetDuration.inSeconds) {
+        throw const FormatException(
+          'HLS target duration is shorter than a media segment.',
+        );
+      }
+    }
 
     return HlsManifest(
       uri: uri,
@@ -297,12 +317,6 @@ class HlsManifestParser {
       );
     }
     return HlsByteRange(length: pending.length, offset: previousEnd + 1);
-  }
-
-  int _parseIntAfterColon(String line, {required int fallback}) {
-    final colonIndex = line.indexOf(':');
-    if (colonIndex == -1) return fallback;
-    return int.tryParse(line.substring(colonIndex + 1).trim()) ?? fallback;
   }
 
   String _substituteVariables(

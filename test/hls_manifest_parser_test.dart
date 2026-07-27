@@ -81,6 +81,60 @@ segment-1.ts
     }
   });
 
+  test('rejects missing and invalid media target durations', () {
+    for (final targetDurationLine in [
+      '',
+      '#EXT-X-TARGETDURATION:0',
+      '#EXT-X-TARGETDURATION:-1',
+      '#EXT-X-TARGETDURATION:invalid',
+    ]) {
+      expect(
+        () => parser.parse(
+          '''
+#EXTM3U
+$targetDurationLine
+#EXTINF:6,
+segment-1.ts
+#EXT-X-ENDLIST
+''',
+          uri: Uri.parse('https://example.com/media/index.m3u8'),
+        ),
+        throwsA(
+          isA<FormatException>().having(
+            (error) => error.message,
+            'message',
+            targetDurationLine.isEmpty
+                ? 'HLS target duration missing.'
+                : 'Invalid HLS target duration.',
+          ),
+        ),
+        reason: 'targetDurationLine=$targetDurationLine',
+      );
+    }
+  });
+
+  test('rejects target duration shorter than rounded segment duration', () {
+    expect(
+      () => parser.parse(
+        '''
+#EXTM3U
+#EXT-X-TARGETDURATION:6
+#EXTINF:6.6,
+segment-1.ts
+#EXT-X-ENDLIST
+''',
+        uri: Uri.parse('https://example.com/media/index.m3u8'),
+      ),
+      throwsA(
+        isA<FormatException>().having(
+          (error) => error.message,
+          'message',
+          'HLS target duration is shorter than a media segment.',
+        ),
+      ),
+    );
+  });
+
   test('preserves the declared HLS protocol version', () {
     final manifest = parser.parse(
       '''
@@ -117,6 +171,7 @@ segment-1.ts
     final manifest = parser.parse(
       '''
 #EXTM3U
+#EXT-X-TARGETDURATION:6
 #EXT-X-MEDIA-SEQUENCE:451
 #EXT-X-KEY:METHOD=AES-128,URI="keys/episode.key"
 #EXTINF:6,
@@ -172,6 +227,7 @@ segment.ts
     final manifest = parser.parse(
       r'''
 #EXTM3U
+#EXT-X-TARGETDURATION:6
 #EXT-X-DEFINE:NAME="token",VALUE="signed-value"
 #EXT-X-DEFINE:NAME="path",VALUE="media/{$token}"
 #EXT-X-MAP:URI="{$path}/init.mp4"
@@ -202,6 +258,7 @@ segment.ts
     final manifest = parser.parse(
       r'''
 #EXTM3U
+#EXT-X-TARGETDURATION:6
 #EXT-X-DEFINE:IMPORT="token"
 #EXTINF:6,
 media/{$token}/segment.ts
@@ -273,6 +330,7 @@ segment-001.m4s
     final manifest = parser.parse(
       '''
 #EXTM3U
+#EXT-X-TARGETDURATION:6
 #EXT-X-MAP:URI="init-1.mp4"
 #EXTINF:6,
 segment-001.m4s
@@ -298,6 +356,7 @@ segment-002.m4s
     final manifest = parser.parse(
       '''
 #EXTM3U
+#EXT-X-TARGETDURATION:6
 #EXT-X-KEY:METHOD=AES-128,URI="keys/init.key",IV=0x0123456789ABCDEF0123456789ABCDEF
 #EXT-X-MAP:URI="init.mp4"
 #EXT-X-KEY:METHOD=NONE
@@ -325,6 +384,7 @@ segment-001.m4s
     final manifest = parser.parse(
       '''
 #EXTM3U
+#EXT-X-TARGETDURATION:6
 #EXTINF:6,
 segment-001.ts
 #EXT-X-DISCONTINUITY
@@ -347,6 +407,7 @@ segment-003.ts
     final manifest = parser.parse(
       '''
 #EXTM3U
+#EXT-X-TARGETDURATION:6
 #EXTINF:6,
 segment-001.ts
 #EXTINF:6,
@@ -369,6 +430,7 @@ segment-003.ts
     final manifest = parser.parse(
       '''
 #EXTM3U
+#EXT-X-TARGETDURATION:6
 #EXT-X-KEY:METHOD=AES-128,URI="keys/episode.key",IV=0x0123456789ABCDEF0123456789ABCDEF,KEYFORMAT="identity"
 #EXTINF:6,
 segment-001.ts
@@ -433,6 +495,7 @@ segment-001.ts
     final manifest = parser.parse(
       '''
 #EXTM3U
+#EXT-X-TARGETDURATION:6
 #EXT-X-MAP:URI="init.mp4?token=alpha,beta"
 #EXT-X-KEY:METHOD=AES-128,URI="keys/episode.key?token=gamma,delta"
 #EXTINF:6,
@@ -488,6 +551,7 @@ segment-001.ts
     final manifest = parser.parse(
       '''
 #EXTM3U
+#EXT-X-TARGETDURATION:6
 #EXT-X-MAP:URI="media.mp4",BYTERANGE="4@0"
 #EXTINF:6,
 #EXT-X-BYTERANGE:5@4

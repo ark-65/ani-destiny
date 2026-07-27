@@ -333,6 +333,7 @@ void main() {
         (manifestUri, _) async => const HlsManifestParser().parse(
           '''
 #EXTM3U
+#EXT-X-TARGETDURATION:6
 #EXT-X-KEY:METHOD=AES-128,URI="init.key",IV=0x0123456789ABCDEF0123456789ABCDEF
 #EXT-X-MAP:URI="init.mp4"
 #EXT-X-KEY:METHOD=NONE
@@ -416,6 +417,7 @@ segment-1.m4s
         (manifestUri, _) async => const HlsManifestParser().parse(
           '''
 #EXTM3U
+#EXT-X-TARGETDURATION:6
 #EXT-X-MAP:URI="init-1.mp4"
 #EXTINF:6,
 segment-1.m4s
@@ -1648,6 +1650,7 @@ segment-001.ts
         (manifestUri, _) async => const HlsManifestParser().parse(
           '''
 #EXTM3U
+#EXT-X-TARGETDURATION:6
 #EXT-X-MAP:URI="media.mp4",BYTERANGE="4@0"
 #EXTINF:6,
 #EXT-X-BYTERANGE:5@4
@@ -1730,6 +1733,7 @@ media.mp4
         (manifestUri, _) async => const HlsManifestParser().parse(
           '''
 #EXTM3U
+#EXT-X-TARGETDURATION:6
 #EXTINF:6,
 #EXT-X-BYTERANGE:4@0
 media.mp4
