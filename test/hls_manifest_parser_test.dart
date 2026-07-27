@@ -170,6 +170,30 @@ segment-002.m4s
     );
   });
 
+  test('associates the active AES-128 key with an initialization segment', () {
+    final manifest = parser.parse(
+      '''
+#EXTM3U
+#EXT-X-KEY:METHOD=AES-128,URI="keys/init.key",IV=0x0123456789ABCDEF
+#EXT-X-MAP:URI="init.mp4"
+#EXT-X-KEY:METHOD=NONE
+#EXTINF:6,
+segment-001.m4s
+#EXT-X-ENDLIST
+''',
+      uri: Uri.parse('https://cdn.example.test/anime/index.m3u8'),
+    );
+
+    final initializationKey =
+        manifest.segments.single.initializationSegment?.encryptionKey;
+    expect(
+      initializationKey?.uri.toString(),
+      'https://cdn.example.test/anime/keys/init.key',
+    );
+    expect(initializationKey?.iv, '0x0123456789ABCDEF');
+    expect(manifest.segments.single.encryptionKey, isNull);
+  });
+
   test('associates discontinuity boundaries with following media', () {
     final manifest = parser.parse(
       '''

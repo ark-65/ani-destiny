@@ -106,6 +106,7 @@ class HlsManifestParser {
         initializationSegment = HlsInitializationSegment(
           uri: resolvedMapUri,
           byteRange: mapByteRange,
+          encryptionKey: activeEncryptionKey,
         );
         if (mapByteRange != null) {
           previousMapByteRangeUri = resolvedMapUri;

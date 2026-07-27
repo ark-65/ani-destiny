@@ -775,6 +775,12 @@ class HttpDownloadService implements DownloadService {
         initializationSegment,
       )) {
         if (initializationSegment != null) {
+          activeEncryptionKey = _appendHlsEncryptionKeyIfChanged(
+            manifestLines,
+            activeEncryptionKey: activeEncryptionKey,
+            encryptionKey: initializationSegment.encryptionKey,
+            encryptionKeys: encryptionKeys,
+          );
           final initializationIndex =
               initializationSegments.keys.toList().indexWhere(
                     (candidate) => _sameHlsInitializationSegment(
@@ -788,23 +794,12 @@ class HttpDownloadService implements DownloadService {
         }
         activeInitializationSegment = initializationSegment;
       }
-      if (!_sameHlsEncryptionKey(activeEncryptionKey, segment.encryptionKey)) {
-        final encryptionKey = segment.encryptionKey;
-        if (encryptionKey == null) {
-          manifestLines.add('#EXT-X-KEY:METHOD=NONE');
-        } else {
-          final keyIndex = encryptionKeys.keys.toList().indexWhere(
-                (key) => _sameHlsEncryptionKey(key, encryptionKey),
-              );
-          final attributes = <String>[
-            'METHOD=${encryptionKey.method}',
-            'URI="segments/${_hlsEncryptionKeyFileName(keyIndex)}"',
-            if (encryptionKey.iv != null) 'IV=${encryptionKey.iv}',
-          ];
-          manifestLines.add('#EXT-X-KEY:${attributes.join(',')}');
-        }
-        activeEncryptionKey = encryptionKey;
-      }
+      activeEncryptionKey = _appendHlsEncryptionKeyIfChanged(
+        manifestLines,
+        activeEncryptionKey: activeEncryptionKey,
+        encryptionKey: segment.encryptionKey,
+        encryptionKeys: encryptionKeys,
+      );
       final segmentName = _hlsSegmentFileName(segment.uri, index);
       final duration = segment.duration ?? const Duration(seconds: 1);
       final durationText = (duration.inMilliseconds / 1000).toStringAsFixed(3);
@@ -862,23 +857,55 @@ class HttpDownloadService implements DownloadService {
   ) {
     return first?.uri == second?.uri &&
         first?.byteRange?.length == second?.byteRange?.length &&
-        first?.byteRange?.offset == second?.byteRange?.offset;
+        first?.byteRange?.offset == second?.byteRange?.offset &&
+        _sameHlsEncryptionKey(first?.encryptionKey, second?.encryptionKey);
   }
 
   Map<HlsEncryptionKey, int> _hlsEncryptionKeys(HlsManifest manifest) {
     final keys = <HlsEncryptionKey, int>{};
     for (final segment in manifest.segments) {
       if (segment.isGap) continue;
-      final key = segment.encryptionKey;
-      if (key == null) continue;
-      final existingKey = keys.keys.where(
-        (candidate) => _sameHlsEncryptionKey(candidate, key),
-      );
-      if (existingKey.isEmpty) {
-        keys[key] = keys.length;
+      final initializationSegment =
+          segment.initializationSegment ?? manifest.initializationSegment;
+      for (final key in [
+        initializationSegment?.encryptionKey,
+        segment.encryptionKey,
+      ]) {
+        if (key == null) continue;
+        final existingKey = keys.keys.where(
+          (candidate) => _sameHlsEncryptionKey(candidate, key),
+        );
+        if (existingKey.isEmpty) {
+          keys[key] = keys.length;
+        }
       }
     }
     return keys;
+  }
+
+  HlsEncryptionKey? _appendHlsEncryptionKeyIfChanged(
+    List<String> manifestLines, {
+    required HlsEncryptionKey? activeEncryptionKey,
+    required HlsEncryptionKey? encryptionKey,
+    required Map<HlsEncryptionKey, int> encryptionKeys,
+  }) {
+    if (_sameHlsEncryptionKey(activeEncryptionKey, encryptionKey)) {
+      return activeEncryptionKey;
+    }
+    if (encryptionKey == null) {
+      manifestLines.add('#EXT-X-KEY:METHOD=NONE');
+    } else {
+      final keyIndex = encryptionKeys.keys.toList().indexWhere(
+            (key) => _sameHlsEncryptionKey(key, encryptionKey),
+          );
+      final attributes = <String>[
+        'METHOD=${encryptionKey.method}',
+        'URI="segments/${_hlsEncryptionKeyFileName(keyIndex)}"',
+        if (encryptionKey.iv != null) 'IV=${encryptionKey.iv}',
+      ];
+      manifestLines.add('#EXT-X-KEY:${attributes.join(',')}');
+    }
+    return encryptionKey;
   }
 
   bool _sameHlsEncryptionKey(

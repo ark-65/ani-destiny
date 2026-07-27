@@ -24,10 +24,15 @@ class HlsManifest {
 }
 
 class HlsInitializationSegment {
-  const HlsInitializationSegment({required this.uri, this.byteRange});
+  const HlsInitializationSegment({
+    required this.uri,
+    this.byteRange,
+    this.encryptionKey,
+  });
 
   final Uri uri;
   final HlsByteRange? byteRange;
+  final HlsEncryptionKey? encryptionKey;
 }
 
 class HlsSegment {

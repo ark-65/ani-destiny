@@ -285,6 +285,91 @@ void main() {
     ]);
   });
 
+  test('starting encrypted fMP4 HLS writes its key before the local map',
+      () async {
+    final database = AppDatabase(NativeDatabase.memory());
+    addTearDown(database.close);
+
+    final tempDir = await Directory.systemTemp
+        .createTemp('ani-destiny-download-hls-encrypted-map');
+    addTearDown(() async {
+      if (tempDir.existsSync()) {
+        await tempDir.delete(recursive: true);
+      }
+    });
+    _mockApplicationDocumentsDirectory(tempDir.path);
+
+    const keyBytes = <int>[1, 3, 3, 7];
+    const initializationBytes = <int>[1, 2, 3, 4];
+    const mediaBytes = <int>[5, 6, 7, 8, 9];
+    final dio = _FakeHlsSegmentDownloadDio({
+      'https://cdn.example.test/init.key': keyBytes,
+      'https://cdn.example.test/init.mp4': initializationBytes,
+      'https://cdn.example.test/segment-1.m4s': mediaBytes,
+    });
+    final repository = DownloadRepositoryImpl(database);
+    final service = HttpDownloadService(
+      dio: dio,
+      repository: repository,
+      offlineMediaRepository: OfflineMediaRepositoryImpl(database),
+      hlsManifestLoader: _FakeHlsManifestLoader(
+        (manifestUri, _) async => const HlsManifestParser().parse(
+          '''
+#EXTM3U
+#EXT-X-KEY:METHOD=AES-128,URI="init.key",IV=0x0123456789ABCDEF
+#EXT-X-MAP:URI="init.mp4"
+#EXT-X-KEY:METHOD=NONE
+#EXTINF:6,
+segment-1.m4s
+#EXT-X-ENDLIST
+''',
+          uri: manifestUri,
+        ),
+      ),
+    );
+
+    final taskId = await service.createTask(
+      animeId: 'anime-1',
+      episodeId: 'episode-1',
+      sourceId: 'sakura',
+      source: const DownloadSource(
+        url: 'https://cdn.example.test/index.m3u8',
+        kind: DownloadKind.hls,
+      ),
+      title: 'Encrypted fMP4 HLS Test',
+      episodeTitle: 'Episode 1',
+    );
+
+    await service.start(taskId);
+
+    final task = (await repository.getTask(taskId))!;
+    final manifestContent = await File(task.localPath!).readAsString();
+    const localKey = '#EXT-X-KEY:METHOD=AES-128,URI="segments/key-000000.key",'
+        'IV=0x0123456789ABCDEF';
+    const localMap = '#EXT-X-MAP:URI="segments/initialization.mp4"';
+    expect(task.status, DownloadStatus.completed);
+    expect(
+      task.downloadedBytes,
+      keyBytes.length + initializationBytes.length + mediaBytes.length,
+    );
+    expect(manifestContent.indexOf(localKey), greaterThanOrEqualTo(0));
+    expect(
+      manifestContent.indexOf(localMap),
+      greaterThan(manifestContent.indexOf(localKey)),
+    );
+    expect(
+      manifestContent,
+      contains('$localMap\n#EXT-X-KEY:METHOD=NONE'),
+    );
+    expect(manifestContent, isNot(contains('https://cdn.example.test')));
+    expect(isPlayableOfflineMediaPath(task.localPath!), isTrue);
+    expect(dio.downloadedUris, [
+      'https://cdn.example.test/init.key',
+      'https://cdn.example.test/init.mp4',
+      'https://cdn.example.test/segment-1.m4s',
+    ]);
+  });
+
   test('starting HLS task localizes changing initialization segments',
       () async {
     final database = AppDatabase(NativeDatabase.memory());
