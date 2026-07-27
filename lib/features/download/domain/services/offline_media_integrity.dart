@@ -48,7 +48,11 @@ bool isPlayableOfflineMediaPath(String manifestPath) {
       final keyUri = _uriAttributeFromTag(line);
       if (line.contains('METHOD=NONE')) continue;
       if (keyUri == null ||
-          !_hasPlayableManifestAsset(keyUri, manifestDirectory)) {
+          !_hasPlayableManifestAsset(
+            keyUri,
+            manifestDirectory,
+            expectedLength: 16,
+          )) {
         return false;
       }
       continue;
@@ -82,14 +86,21 @@ bool isPlayableOfflineMediaPath(String manifestPath) {
   return hasPlayableSegment;
 }
 
-bool _hasPlayableManifestAsset(String value, String manifestDirectory) {
+bool _hasPlayableManifestAsset(
+  String value,
+  String manifestDirectory, {
+  int? expectedLength,
+}) {
   final segmentPaths = _segmentPathCandidatesFromManifestLine(
     value,
     manifestDirectory,
   );
   return segmentPaths.any((segmentPath) {
     final segmentFile = File(segmentPath);
-    return segmentFile.existsSync() && segmentFile.lengthSync() > 0;
+    return segmentFile.existsSync() &&
+        (expectedLength == null
+            ? segmentFile.lengthSync() > 0
+            : segmentFile.lengthSync() == expectedLength);
   });
 }
 

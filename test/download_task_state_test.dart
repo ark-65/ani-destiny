@@ -299,7 +299,24 @@ void main() {
     });
     _mockApplicationDocumentsDirectory(tempDir.path);
 
-    const keyBytes = <int>[1, 3, 3, 7];
+    const keyBytes = <int>[
+      1,
+      3,
+      3,
+      7,
+      1,
+      3,
+      3,
+      7,
+      1,
+      3,
+      3,
+      7,
+      1,
+      3,
+      3,
+      7,
+    ];
     const initializationBytes = <int>[1, 2, 3, 4];
     const mediaBytes = <int>[5, 6, 7, 8, 9];
     final dio = _FakeHlsSegmentDownloadDio({
@@ -480,14 +497,31 @@ segment-2.m4s
     });
     _mockApplicationDocumentsDirectory(tempDir.path);
 
-    const keyBytes = <int>[1, 3, 3, 7];
+    const keyBytes = <int>[
+      1,
+      3,
+      3,
+      7,
+      1,
+      3,
+      3,
+      7,
+      1,
+      3,
+      3,
+      7,
+      1,
+      3,
+      3,
+      7,
+    ];
     const mediaBytes = <int>[5, 6, 7, 8, 9];
     final key = HlsEncryptionKey(
       method: 'AES-128',
       uri: Uri.parse('https://cdn.example.test/episode.key'),
     );
     final dio = _FakeHlsSegmentDownloadDio({
-      'https://cdn.example.test/episode.key': keyBytes,
+      'https://cdn.example.test/episode.key': const [1, 3, 3, 7],
       'https://cdn.example.test/segment-1.ts': mediaBytes,
     });
     final repository = DownloadRepositoryImpl(database);
@@ -525,6 +559,17 @@ segment-2.m4s
 
     await service.start(taskId);
 
+    final failedTask = (await repository.getTask(taskId))!;
+    expect(failedTask.status, DownloadStatus.failed);
+    expect(failedTask.failureReason, DownloadFailureReason.invalidManifest);
+    expect(
+      await OfflineMediaRepositoryImpl(database).getByDownloadTaskId(taskId),
+      isNull,
+    );
+
+    dio.segmentBytesByUri['https://cdn.example.test/episode.key'] = keyBytes;
+    await service.start(taskId);
+
     final task = (await repository.getTask(taskId))!;
     final manifestContent = await File(task.localPath!).readAsString();
     final keyFile = File(
@@ -543,11 +588,15 @@ segment-2.m4s
     expect(manifestContent, isNot(contains('https://cdn.example.test')));
     expect(await keyFile.readAsBytes(), keyBytes);
     expect(isPlayableOfflineMediaPath(task.localPath!), isTrue);
+    await keyFile.writeAsBytes(const [1, 3, 3, 7]);
+    expect(isPlayableOfflineMediaPath(task.localPath!), isFalse);
+    await keyFile.writeAsBytes(keyBytes);
     await keyFile.delete();
     expect(isPlayableOfflineMediaPath(task.localPath!), isFalse);
     expect(dio.downloadedUris, [
       'https://cdn.example.test/episode.key',
       'https://cdn.example.test/segment-1.ts',
+      'https://cdn.example.test/episode.key',
     ]);
   });
 

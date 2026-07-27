@@ -23,6 +23,7 @@ const _downloadNetworkFailureMessage =
     'AniDestiny could not finish this download because the source could not be reached. Retry when the connection is stable.';
 
 class HttpDownloadService implements DownloadService {
+  static const _aes128KeyLength = 16;
   HttpDownloadService({
     required Dio dio,
     required DownloadRepository repository,
@@ -457,7 +458,8 @@ class HttpDownloadService implements DownloadService {
           _hlsEncryptionKeyFileName(keyEntry.value),
         ),
       );
-      if (await keyFile.exists() && await keyFile.length() > 0) {
+      if (await keyFile.exists() &&
+          await keyFile.length() == _aes128KeyLength) {
         downloadedBytes += await keyFile.length();
       } else {
         downloadedBytes += await _downloadHlsSegment(
@@ -599,9 +601,9 @@ class HttpDownloadService implements DownloadService {
           'HLS manifest integrity check failed: missing encryption key file $keyName',
         );
       }
-      if (await keyFile.length() == 0) {
+      if (await keyFile.length() != _aes128KeyLength) {
         throw FormatException(
-          'HLS manifest integrity check failed: empty encryption key file $keyName',
+          'HLS manifest integrity check failed: invalid AES-128 key file $keyName',
         );
       }
     }

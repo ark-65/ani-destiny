@@ -135,7 +135,24 @@ $mediaUri
     addTearDown(server.close);
     final requestedUris = <String>[];
     const assets = <String, List<int>>{
-      '/key.bin?token=alpha,beta': [1, 2, 3, 4],
+      '/key.bin?token=alpha,beta': [
+        1,
+        2,
+        3,
+        4,
+        1,
+        2,
+        3,
+        4,
+        1,
+        2,
+        3,
+        4,
+        1,
+        2,
+        3,
+        4,
+      ],
       '/init.mp4?token=gamma,delta': [5, 6, 7, 8],
       '/segment.m4s': [9, 10, 11, 12],
     };
@@ -190,7 +207,7 @@ $origin/segment.m4s
 
     final task = (await repository.getTask(taskId))!;
     expect(task.status, DownloadStatus.completed);
-    expect(task.downloadedBytes, 12);
+    expect(task.downloadedBytes, 24);
     expect(
       requestedUris,
       [
