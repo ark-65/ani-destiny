@@ -110,10 +110,12 @@ class HlsVariant {
     this.bandwidth,
     this.resolution,
     this.audioGroupId,
+    this.codecs,
   });
 
   final Uri uri;
   final int? bandwidth;
   final String? resolution;
   final String? audioGroupId;
+  final String? codecs;
 }

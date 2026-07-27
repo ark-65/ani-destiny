@@ -249,6 +249,7 @@ class HlsManifestParser {
             ),
             resolution: pendingVariantAttributes['RESOLUTION'],
             audioGroupId: pendingVariantAttributes['AUDIO'],
+            codecs: pendingVariantAttributes['CODECS'],
           ),
         );
         pendingVariantAttributes = null;

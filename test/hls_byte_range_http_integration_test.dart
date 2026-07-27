@@ -494,7 +494,7 @@ segment.ts
           request.response.write('''
 #EXTM3U
 #EXT-X-MEDIA:TYPE=AUDIO,GROUP-ID="audio-main",NAME="Japanese",DEFAULT=YES,URI="audio/index.m3u8"
-#EXT-X-STREAM-INF:BANDWIDTH=2400000,AUDIO="audio-main"
+#EXT-X-STREAM-INF:BANDWIDTH=2400000,CODECS="avc1.640028,mp4a.40.2",AUDIO="audio-main"
 video/index.m3u8
 ''');
         case '/video/index.m3u8':
@@ -563,6 +563,7 @@ segment.aac
     expect(masterContent, contains('TYPE=AUDIO'));
     expect(masterContent, contains('URI="audio/index.m3u8"'));
     expect(masterContent, contains('AUDIO="offline-audio"'));
+    expect(masterContent, contains('CODECS="avc1.640028,mp4a.40.2"'));
     expect(masterContent, contains('video/index.m3u8'));
     expect(masterContent, isNot(contains(origin)));
     expect(

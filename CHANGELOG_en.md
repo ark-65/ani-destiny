@@ -6,6 +6,9 @@
 
 ## [Unreleased]
 
+### Fixed
+- Fixed offline HLS master playlists with alternate audio dropping the selected variant's `CODECS` hint; local playlists now retain the audio/video codec identifiers so players can select decoders reliably after the files pass integrity checks.
+
 ### ✨ Added
 - Added a real-file and persisted-database restart regression for HLS offline assets with alternate audio, proving the local master plus video/audio child playlists remain valid after app reconstruction and enter playback with local-only arguments and no network headers.
 - HLS offline downloads now support the external audio rendition linked to the selected video variant: the default, autoselect, or first track is chosen, video and audio playlists and segments are downloaded separately, and a fully local master playlist is generated. Offline integrity recursively verifies both child playlists, so any missing audio segment prevents the asset from being considered playable.

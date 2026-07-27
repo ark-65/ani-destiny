@@ -228,13 +228,14 @@ segment.ts
       '''
 #EXTM3U
 #EXT-X-MEDIA:TYPE=AUDIO,GROUP-ID="audio-main",NAME="Japanese",DEFAULT=YES,URI="audio/index.m3u8"
-#EXT-X-STREAM-INF:BANDWIDTH=2400000,RESOLUTION=1920x1080,AUDIO="audio-main"
+#EXT-X-STREAM-INF:BANDWIDTH=2400000,RESOLUTION=1920x1080,CODECS="avc1.640028,mp4a.40.2",AUDIO="audio-main"
 video/index.m3u8
 ''',
       uri: Uri.parse('https://cdn.example.test/master.m3u8'),
     );
 
     expect(manifest.variants.single.audioGroupId, 'audio-main');
+    expect(manifest.variants.single.codecs, 'avc1.640028,mp4a.40.2');
     expect(manifest.renditions, hasLength(1));
     expect(manifest.renditions.single.type, 'AUDIO');
     expect(manifest.renditions.single.groupId, 'audio-main');

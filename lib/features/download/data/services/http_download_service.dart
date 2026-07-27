@@ -1050,6 +1050,7 @@ class HttpDownloadService implements DownloadService {
     final variant = bundle.variant!;
     final escapedName = rendition.name.replaceAll('"', '');
     final escapedLanguage = rendition.language?.replaceAll('"', '');
+    final escapedCodecs = variant.codecs?.replaceAll('"', '');
     final mediaAttributes = <String>[
       'TYPE=AUDIO',
       'GROUP-ID="offline-audio"',
@@ -1062,6 +1063,7 @@ class HttpDownloadService implements DownloadService {
     final streamAttributes = <String>[
       'BANDWIDTH=${variant.bandwidth ?? 1}',
       if (variant.resolution != null) 'RESOLUTION=${variant.resolution}',
+      if (escapedCodecs != null) 'CODECS="$escapedCodecs"',
       'AUDIO="offline-audio"',
     ];
     final content = [
