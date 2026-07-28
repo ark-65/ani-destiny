@@ -223,6 +223,30 @@ segment.ts
     );
   });
 
+  for (final bandwidth in ['', 'invalid', '0', '-1']) {
+    test('rejects invalid master variant bandwidth "$bandwidth"', () {
+      final bandwidthAttribute =
+          bandwidth.isEmpty ? '' : 'BANDWIDTH=$bandwidth';
+      expect(
+        () => parser.parse(
+          '''
+#EXTM3U
+#EXT-X-STREAM-INF:$bandwidthAttribute
+video/index.m3u8
+''',
+          uri: Uri.parse('https://cdn.example.test/master.m3u8'),
+        ),
+        throwsA(
+          isA<FormatException>().having(
+            (error) => error.message,
+            'message',
+            'Invalid HLS variant bandwidth.',
+          ),
+        ),
+      );
+    });
+  }
+
   test('preserves alternate audio group on master playlist variants', () {
     final manifest = parser.parse(
       '''

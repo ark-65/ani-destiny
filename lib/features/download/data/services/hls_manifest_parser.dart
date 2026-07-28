@@ -241,12 +241,16 @@ class HlsManifestParser {
 
       final resolvedUri = uri.resolve(_substituteVariables(line, variables));
       if (pendingVariantAttributes != null) {
+        final bandwidth = int.tryParse(
+          pendingVariantAttributes['BANDWIDTH'] ?? '',
+        );
+        if (bandwidth == null || bandwidth <= 0) {
+          throw const FormatException('Invalid HLS variant bandwidth.');
+        }
         variants.add(
           HlsVariant(
             uri: resolvedUri,
-            bandwidth: int.tryParse(
-              pendingVariantAttributes['BANDWIDTH'] ?? '',
-            ),
+            bandwidth: bandwidth,
             resolution: pendingVariantAttributes['RESOLUTION'],
             audioGroupId: pendingVariantAttributes['AUDIO'],
             codecs: pendingVariantAttributes['CODECS'],
