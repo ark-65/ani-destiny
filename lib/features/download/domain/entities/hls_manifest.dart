@@ -10,6 +10,7 @@ class HlsManifest {
     this.mediaSequence = 0,
     this.discontinuitySequence = 0,
     this.targetDuration,
+    this.startPosition,
     this.initializationSegment,
   });
 
@@ -23,10 +24,21 @@ class HlsManifest {
   final int mediaSequence;
   final int discontinuitySequence;
   final Duration? targetDuration;
+  final HlsStartPosition? startPosition;
   final HlsInitializationSegment? initializationSegment;
 
   bool get isMasterPlaylist => variants.isNotEmpty;
   bool get isMediaPlaylist => segments.isNotEmpty;
+}
+
+class HlsStartPosition {
+  const HlsStartPosition({
+    required this.timeOffsetSeconds,
+    this.precise = false,
+  });
+
+  final double timeOffsetSeconds;
+  final bool precise;
 }
 
 class HlsRendition {

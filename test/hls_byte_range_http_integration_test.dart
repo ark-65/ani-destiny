@@ -498,6 +498,7 @@ segment.ts
           case '/master.m3u8':
             request.response.write('''
 #EXTM3U
+#EXT-X-START:TIME-OFFSET=12.5,PRECISE=YES
 #EXT-X-MEDIA:TYPE=AUDIO,GROUP-ID="audio-main",NAME="Japanese",DEFAULT=YES,URI="audio/index.m3u8"
 #EXT-X-STREAM-INF:BANDWIDTH=2400000,CODECS="avc1.640028,mp4a.40.2",AUDIO="audio-main"
 video/index.m3u8
@@ -507,6 +508,7 @@ video/index.m3u8
 #EXTM3U
 #EXT-X-TARGETDURATION:6
 #EXT-X-DISCONTINUITY-SEQUENCE:11
+#EXT-X-START:TIME-OFFSET=-6
 #EXT-X-PROGRAM-DATE-TIME:2026-07-29T01:02:03.456Z
 #EXTINF:6,
 segment.ts
@@ -582,12 +584,22 @@ segment.aac
       expect(masterContent, contains('AUDIO="offline-audio"'));
       expect(masterContent, contains('CODECS="avc1.640028,mp4a.40.2"'));
       expect(masterContent, contains('video/index.m3u8'));
+      expect(
+        masterContent,
+        contains('#EXT-X-START:TIME-OFFSET=12.5,PRECISE=YES'),
+      );
       expect(masterContent, isNot(contains(origin)));
       expect(
         await File(
           p.join(p.dirname(task.localPath!), 'video', 'index.m3u8'),
         ).readAsString(),
         contains('#EXT-X-DISCONTINUITY-SEQUENCE:11'),
+      );
+      expect(
+        await File(
+          p.join(p.dirname(task.localPath!), 'video', 'index.m3u8'),
+        ).readAsString(),
+        contains('#EXT-X-START:TIME-OFFSET=-6.0'),
       );
       expect(
         await File(
@@ -1292,6 +1304,7 @@ video/index.m3u8
         case '/master.m3u8':
           request.response.write('''
 #EXTM3U
+#EXT-X-START:TIME-OFFSET=8,PRECISE=YES
 #EXT-X-MEDIA:TYPE=AUDIO,GROUP-ID="audio-main",NAME="Japanese",DEFAULT=YES
 #EXT-X-MEDIA:TYPE=AUDIO,GROUP-ID="audio-main",NAME="English",AUTOSELECT=YES,URI="audio/index.m3u8"
 #EXT-X-STREAM-INF:BANDWIDTH=2400000,AUDIO="audio-main"
@@ -1359,6 +1372,10 @@ segment.aac
     ]);
     final manifestContent = await File(task.localPath!).readAsString();
     expect(manifestContent, contains('#EXT-X-PLAYLIST-TYPE:VOD'));
+    expect(
+      manifestContent,
+      contains('#EXT-X-START:TIME-OFFSET=8.0,PRECISE=YES'),
+    );
     expect(manifestContent, isNot(contains('#EXT-X-MEDIA:')));
     expect(manifestContent, isNot(contains(origin)));
     expect(isPlayableOfflineMediaPath(task.localPath!), isTrue);

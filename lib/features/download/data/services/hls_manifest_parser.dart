@@ -23,6 +23,7 @@ class HlsManifestParser {
     final renditions = <HlsRendition>[];
     final variables = <String, String>{};
     Duration? targetDuration;
+    HlsStartPosition? startPosition;
     var protocolVersion = 1;
     var mediaSequence = 0;
     var discontinuitySequence = 0;
@@ -55,6 +56,26 @@ class HlsManifestParser {
           throw const FormatException('Invalid HLS target duration.');
         }
         targetDuration = Duration(seconds: value);
+        continue;
+      }
+      if (line.startsWith('#EXT-X-START:')) {
+        if (startPosition != null) {
+          throw const FormatException('Duplicate HLS start position.');
+        }
+        final attributes = _parseAttributes(
+          line.substring('#EXT-X-START:'.length),
+        );
+        final timeOffset = double.tryParse(attributes['TIME-OFFSET'] ?? '');
+        final precise = attributes['PRECISE'];
+        if (timeOffset == null ||
+            !timeOffset.isFinite ||
+            (precise != null && precise != 'YES' && precise != 'NO')) {
+          throw const FormatException('Invalid HLS start position.');
+        }
+        startPosition = HlsStartPosition(
+          timeOffsetSeconds: timeOffset,
+          precise: precise == 'YES',
+        );
         continue;
       }
       if (line.startsWith('#EXT-X-VERSION:')) {
@@ -387,6 +408,7 @@ class HlsManifestParser {
       mediaSequence: mediaSequence,
       discontinuitySequence: discontinuitySequence,
       targetDuration: targetDuration,
+      startPosition: startPosition,
       initializationSegment: initializationSegment,
     );
   }

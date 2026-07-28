@@ -395,6 +395,9 @@ class HttpDownloadService implements DownloadService {
                 'video',
                 'index.m3u8',
               ),
+        inheritedStartPosition: mediaBundle.audio == null
+            ? mediaBundle.master?.startPosition
+            : null,
       );
       if (mediaBundle.audio case final audioManifest?) {
         await _writeHlsManifest(
@@ -781,8 +784,9 @@ class HttpDownloadService implements DownloadService {
   Future<void> _writeHlsManifest(
     HlsManifest manifest,
     int downloadedBytes,
-    String manifestPath,
-  ) async {
+    String manifestPath, {
+    HlsStartPosition? inheritedStartPosition,
+  }) async {
     final hasInitializationSegment = manifest.initializationSegment != null ||
         manifest.segments.any(
           (segment) => segment.initializationSegment != null,
@@ -803,6 +807,9 @@ class HttpDownloadService implements DownloadService {
       '#EXT-X-MEDIA-SEQUENCE:${manifest.mediaSequence}',
       if (manifest.discontinuitySequence > 0)
         '#EXT-X-DISCONTINUITY-SEQUENCE:${manifest.discontinuitySequence}',
+      if (manifest.startPosition ?? inheritedStartPosition
+          case final startPosition?)
+        _hlsStartTag(startPosition),
       '#EXT-X-PLAYLIST-TYPE:VOD',
     ];
 
@@ -1024,10 +1031,10 @@ class HttpDownloadService implements DownloadService {
       );
     }
     if (selectedAudio == null) {
-      return _HlsMediaBundle(video: videoManifest);
+      return _HlsMediaBundle(video: videoManifest, master: manifest);
     }
     if (selectedAudio.uri == null) {
-      return _HlsMediaBundle(video: videoManifest);
+      return _HlsMediaBundle(video: videoManifest, master: manifest);
     }
     final audioManifest = await manifestLoader.load(
       selectedAudio.uri!,
@@ -1042,6 +1049,7 @@ class HttpDownloadService implements DownloadService {
     return _HlsMediaBundle(
       video: videoManifest,
       audio: audioManifest,
+      master: manifest,
       variant: selectedVariant,
       audioRendition: selectedAudio,
     );
@@ -1108,12 +1116,22 @@ class HttpDownloadService implements DownloadService {
     final content = [
       '#EXTM3U',
       '#EXT-X-VERSION:${math.max(bundle.video.protocolVersion, bundle.audio!.protocolVersion)}',
+      if (bundle.master?.startPosition case final startPosition?)
+        _hlsStartTag(startPosition),
       '#EXT-X-MEDIA:${mediaAttributes.join(',')}',
       '#EXT-X-STREAM-INF:${streamAttributes.join(',')}',
       'video/index.m3u8',
       '',
     ].join('\n');
     await File(manifestPath).writeAsString(content);
+  }
+
+  String _hlsStartTag(HlsStartPosition startPosition) {
+    final attributes = <String>[
+      'TIME-OFFSET=${startPosition.timeOffsetSeconds}',
+      if (startPosition.precise) 'PRECISE=YES',
+    ];
+    return '#EXT-X-START:${attributes.join(',')}';
   }
 
   HlsVariant _selectMediaVariant(
@@ -1489,12 +1507,14 @@ class _HlsMediaBundle {
   const _HlsMediaBundle({
     required this.video,
     this.audio,
+    this.master,
     this.variant,
     this.audioRendition,
   });
 
   final HlsManifest video;
   final HlsManifest? audio;
+  final HlsManifest? master;
   final HlsVariant? variant;
   final HlsRendition? audioRendition;
 

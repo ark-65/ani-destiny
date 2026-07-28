@@ -273,6 +273,50 @@ segment.ts
     );
   });
 
+  test('preserves the suggested HLS start position', () {
+    final manifest = parser.parse(
+      '''
+#EXTM3U
+#EXT-X-START:TIME-OFFSET=-12.5,PRECISE=YES
+#EXT-X-TARGETDURATION:6
+#EXTINF:6,
+segment.ts
+#EXT-X-ENDLIST
+''',
+      uri: Uri.parse('https://cdn.example.test/anime/index.m3u8'),
+    );
+
+    expect(manifest.startPosition?.timeOffsetSeconds, -12.5);
+    expect(manifest.startPosition?.precise, isTrue);
+  });
+
+  test('rejects invalid or duplicate HLS start positions', () {
+    for (final startTags in [
+      ['#EXT-X-START:PRECISE=YES'],
+      ['#EXT-X-START:TIME-OFFSET=NaN'],
+      ['#EXT-X-START:TIME-OFFSET=1,PRECISE=MAYBE'],
+      [
+        '#EXT-X-START:TIME-OFFSET=1',
+        '#EXT-X-START:TIME-OFFSET=2',
+      ],
+    ]) {
+      expect(
+        () => parser.parse(
+          [
+            '#EXTM3U',
+            ...startTags,
+            '#EXT-X-TARGETDURATION:6',
+            '#EXTINF:6,',
+            'segment.ts',
+            '#EXT-X-ENDLIST',
+          ].join('\n'),
+          uri: Uri.parse('https://cdn.example.test/anime/index.m3u8'),
+        ),
+        throwsFormatException,
+      );
+    }
+  });
+
   test('recognizes master playlist variants', () {
     final manifest = parser.parse(
       '''
