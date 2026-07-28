@@ -5,16 +5,20 @@ import 'dart:io';
 
 import 'package:ani_destiny/core/storage/app_database.dart';
 import 'package:ani_destiny/features/download/data/repositories/download_repository_impl.dart';
+import 'package:ani_destiny/features/download/data/repositories/offline_media_repository_impl.dart';
 import 'package:ani_destiny/features/download/data/services/hls_manifest_loader.dart';
 import 'package:ani_destiny/features/download/data/services/hls_manifest_parser.dart';
 import 'package:ani_destiny/features/download/data/services/http_download_service.dart';
+import 'package:ani_destiny/features/download/data/services/local_offline_media_service.dart';
 import 'package:ani_destiny/features/download/domain/entities/download_failure_reason.dart';
 import 'package:ani_destiny/features/download/domain/entities/download_kind.dart';
 import 'package:ani_destiny/features/download/domain/entities/download_source.dart';
 import 'package:ani_destiny/features/download/domain/entities/download_task.dart';
 import 'package:ani_destiny/features/download/domain/entities/hls_manifest.dart';
+import 'package:ani_destiny/features/download/domain/entities/offline_media_item.dart';
 import 'package:ani_destiny/features/download/domain/services/hls_manifest_loader.dart';
 import 'package:ani_destiny/features/download/domain/services/offline_media_integrity.dart';
+import 'package:ani_destiny/features/download/presentation/pages/download_page.dart';
 import 'package:dio/dio.dart';
 import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -474,131 +478,177 @@ segment.ts
     expect(File(task.localPath!).existsSync(), isFalse);
   });
 
-  test('alternate audio master downloads local video and default audio',
-      () async {
-    final tempDirectory =
-        await Directory.systemTemp.createTemp('ani-destiny-hls-http-audio');
-    addTearDown(() async {
-      if (tempDirectory.existsSync()) {
-        await tempDirectory.delete(recursive: true);
-      }
-    });
+  test(
+    'alternate audio download survives database restart as local playback',
+    () async {
+      final tempDirectory =
+          await Directory.systemTemp.createTemp('ani-destiny-hls-http-audio');
+      addTearDown(() async {
+        if (tempDirectory.existsSync()) {
+          await tempDirectory.delete(recursive: true);
+        }
+      });
 
-    final server = await HttpServer.bind(InternetAddress.loopbackIPv4, 0);
-    addTearDown(server.close);
-    final requestedPaths = <String>[];
-    server.listen((request) {
-      requestedPaths.add(request.uri.path);
-      switch (request.uri.path) {
-        case '/master.m3u8':
-          request.response.write('''
+      final server = await HttpServer.bind(InternetAddress.loopbackIPv4, 0);
+      addTearDown(server.close);
+      final requestedPaths = <String>[];
+      server.listen((request) {
+        requestedPaths.add(request.uri.path);
+        switch (request.uri.path) {
+          case '/master.m3u8':
+            request.response.write('''
 #EXTM3U
 #EXT-X-MEDIA:TYPE=AUDIO,GROUP-ID="audio-main",NAME="Japanese",DEFAULT=YES,URI="audio/index.m3u8"
 #EXT-X-STREAM-INF:BANDWIDTH=2400000,CODECS="avc1.640028,mp4a.40.2",AUDIO="audio-main"
 video/index.m3u8
 ''');
-        case '/video/index.m3u8':
-          request.response.write('''
+          case '/video/index.m3u8':
+            request.response.write('''
 #EXTM3U
 #EXT-X-TARGETDURATION:6
 #EXTINF:6,
 segment.ts
 #EXT-X-ENDLIST
 ''');
-        case '/video/segment.ts':
-          request.response.add([1, 2, 3, 4]);
-        case '/audio/index.m3u8':
-          request.response.write('''
+          case '/video/segment.ts':
+            request.response.add([1, 2, 3, 4]);
+          case '/audio/index.m3u8':
+            request.response.write('''
 #EXTM3U
 #EXT-X-TARGETDURATION:6
 #EXTINF:6,
 segment.aac
 #EXT-X-ENDLIST
 ''');
-        case '/audio/segment.aac':
-          request.response.add([5, 6, 7]);
-        default:
-          request.response.statusCode = HttpStatus.notFound;
-      }
-      request.response.close();
-    });
+          case '/audio/segment.aac':
+            request.response.add([5, 6, 7]);
+          default:
+            request.response.statusCode = HttpStatus.notFound;
+        }
+        request.response.close();
+      });
 
-    final database = AppDatabase(NativeDatabase.memory());
-    addTearDown(database.close);
-    final repository = DownloadRepositoryImpl(database);
-    final origin = 'http://${server.address.host}:${server.port}';
-    final dio = Dio();
-    final service = HttpDownloadService(
-      dio: dio,
-      repository: repository,
-      applicationDocumentsDirectory: () async => tempDirectory,
-      hlsManifestLoader: DioHlsManifestLoader(dio: dio),
-    );
+      final databasePath = p.join(tempDirectory.path, 'app.sqlite');
+      final database = AppDatabase(NativeDatabase(File(databasePath)));
+      var databaseClosed = false;
+      addTearDown(() async {
+        if (!databaseClosed) {
+          await database.close();
+        }
+      });
+      final repository = DownloadRepositoryImpl(database);
+      final offlineRepository = OfflineMediaRepositoryImpl(database);
+      final origin = 'http://${server.address.host}:${server.port}';
+      final dio = Dio();
+      final service = HttpDownloadService(
+        dio: dio,
+        repository: repository,
+        offlineMediaRepository: offlineRepository,
+        applicationDocumentsDirectory: () async => tempDirectory,
+        hlsManifestLoader: DioHlsManifestLoader(dio: dio),
+      );
 
-    final taskId = await service.createTask(
-      animeId: 'anime-1',
-      episodeId: 'episode-1',
-      sourceId: 'loopback',
-      source: DownloadSource(
-        url: '$origin/master.m3u8',
-        kind: DownloadKind.hls,
-      ),
-      title: 'HLS Alternate Audio Test',
-      episodeTitle: 'Episode 1',
-    );
-
-    await service.start(taskId);
-
-    final task = (await repository.getTask(taskId))!;
-    expect(task.status, DownloadStatus.completed);
-    expect(task.downloadedBytes, 7);
-    expect(requestedPaths, [
-      '/master.m3u8',
-      '/video/index.m3u8',
-      '/audio/index.m3u8',
-      '/video/segment.ts',
-      '/audio/segment.aac',
-    ]);
-    final masterContent = await File(task.localPath!).readAsString();
-    expect(masterContent, contains('TYPE=AUDIO'));
-    expect(masterContent, contains('URI="audio/index.m3u8"'));
-    expect(masterContent, contains('AUDIO="offline-audio"'));
-    expect(masterContent, contains('CODECS="avc1.640028,mp4a.40.2"'));
-    expect(masterContent, contains('video/index.m3u8'));
-    expect(masterContent, isNot(contains(origin)));
-    expect(
-      File(
-        p.join(
-          p.dirname(task.localPath!),
-          'video',
-          'segments',
-          'segment-000000.ts',
+      final taskId = await service.createTask(
+        animeId: 'anime-1',
+        episodeId: 'episode-1',
+        sourceId: 'loopback',
+        source: DownloadSource(
+          url: '$origin/master.m3u8',
+          kind: DownloadKind.hls,
         ),
-      ).readAsBytesSync(),
-      [1, 2, 3, 4],
-    );
-    expect(
-      File(
+        title: 'HLS Alternate Audio Test',
+        episodeTitle: 'Episode 1',
+      );
+
+      await service.start(taskId);
+
+      final task = (await repository.getTask(taskId))!;
+      expect(task.status, DownloadStatus.completed);
+      expect(task.downloadedBytes, 7);
+      expect(requestedPaths, [
+        '/master.m3u8',
+        '/video/index.m3u8',
+        '/audio/index.m3u8',
+        '/video/segment.ts',
+        '/audio/segment.aac',
+      ]);
+      final masterContent = await File(task.localPath!).readAsString();
+      expect(masterContent, contains('TYPE=AUDIO'));
+      expect(masterContent, contains('URI="audio/index.m3u8"'));
+      expect(masterContent, contains('AUDIO="offline-audio"'));
+      expect(masterContent, contains('CODECS="avc1.640028,mp4a.40.2"'));
+      expect(masterContent, contains('video/index.m3u8'));
+      expect(masterContent, isNot(contains(origin)));
+      expect(
+        File(
+          p.join(
+            p.dirname(task.localPath!),
+            'video',
+            'segments',
+            'segment-000000.ts',
+          ),
+        ).readAsBytesSync(),
+        [1, 2, 3, 4],
+      );
+      expect(
+        File(
+          p.join(
+            p.dirname(task.localPath!),
+            'audio',
+            'segments',
+            'segment-000000.aac',
+          ),
+        ).readAsBytesSync(),
+        [5, 6, 7],
+      );
+      expect(isPlayableOfflineMediaPath(task.localPath!), isTrue);
+
+      final published = (await offlineRepository.getAll()).single;
+      expect(published.downloadTaskId, taskId);
+      expect(published.manifestPath, task.localPath);
+      expect(published.downloadedBytes, 7);
+      expect(
+        await LocalOfflineMediaService(
+          repository: offlineRepository,
+        ).verify(published),
+        OfflineMediaIntegrityStatus.playable,
+      );
+
+      await server.close(force: true);
+      final requestCountBeforeRestart = requestedPaths.length;
+      await database.close();
+      databaseClosed = true;
+
+      final restartedDatabase = AppDatabase(NativeDatabase(File(databasePath)));
+      addTearDown(restartedDatabase.close);
+      final restartedRepository = OfflineMediaRepositoryImpl(restartedDatabase);
+      final restored = (await restartedRepository.getAll()).single;
+
+      expect(restored.integrityStatus, OfflineMediaIntegrityStatus.playable);
+      expect(
+        await LocalOfflineMediaService(
+          repository: restartedRepository,
+        ).verify(restored),
+        OfflineMediaIntegrityStatus.playable,
+      );
+      final routeArgs = offlineMediaPlayerRouteArgs(restored);
+      expect(routeArgs.playUrl, Uri.file(task.localPath!).toString());
+      expect(routeArgs.sourceId, 'offline');
+      expect(routeArgs.playHeaders, isEmpty);
+      expect(isPlayableOfflineMediaUrl(routeArgs.playUrl), isTrue);
+      expect(requestedPaths.length, requestCountBeforeRestart);
+
+      await File(
         p.join(
           p.dirname(task.localPath!),
           'audio',
           'segments',
           'segment-000000.aac',
         ),
-      ).readAsBytesSync(),
-      [5, 6, 7],
-    );
-    expect(isPlayableOfflineMediaPath(task.localPath!), isTrue);
-    await File(
-      p.join(
-        p.dirname(task.localPath!),
-        'audio',
-        'segments',
-        'segment-000000.aac',
-      ),
-    ).delete();
-    expect(isPlayableOfflineMediaPath(task.localPath!), isFalse);
-  });
+      ).delete();
+      expect(isPlayableOfflineMediaPath(task.localPath!), isFalse);
+    },
+  );
 
   test(
       'master selects highest-bandwidth variant with a localizable audio group',
