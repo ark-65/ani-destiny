@@ -990,7 +990,10 @@ class HttpDownloadService implements DownloadService {
       return _HlsMediaBundle(video: manifest);
     }
 
-    final selectedVariant = _selectMediaVariant(manifest.variants);
+    final selectedVariant = _selectMediaVariant(
+      manifest.variants,
+      renditions: manifest.renditions,
+    );
     final videoManifest = await manifestLoader.load(
       selectedVariant.uri,
       headers: headers,
@@ -1077,18 +1080,31 @@ class HttpDownloadService implements DownloadService {
     await File(manifestPath).writeAsString(content);
   }
 
-  HlsVariant _selectMediaVariant(List<HlsVariant> variants) {
+  HlsVariant _selectMediaVariant(
+    List<HlsVariant> variants, {
+    required List<HlsRendition> renditions,
+  }) {
     if (variants.isEmpty) {
       throw const FormatException('HLS manifest contains no media entries.');
     }
-    final mediaVariants = variants.whereType<HlsVariant>().toList()
+    final mediaVariants = variants
+        .where(
+          (variant) =>
+              variant.audioGroupId == null ||
+              renditions.any(
+                (rendition) =>
+                    rendition.type == 'AUDIO' &&
+                    rendition.groupId == variant.audioGroupId,
+              ),
+        )
+        .toList()
       ..sort((a, b) {
         final bandwidthA = a.bandwidth ?? 0;
         final bandwidthB = b.bandwidth ?? 0;
         return bandwidthB.compareTo(bandwidthA);
       });
     if (mediaVariants.isEmpty) {
-      throw const FormatException('HLS manifest contains no media entries.');
+      throw const FormatException('HLS alternate audio group is missing.');
     }
     return mediaVariants.first;
   }
