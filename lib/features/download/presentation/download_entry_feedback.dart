@@ -7,7 +7,7 @@ String downloadEntryFeedbackMessage(
   AppLocalizations l10n,
   DownloadKind kind,
 ) {
-  if (kind == DownloadKind.directFile) {
+  if (isSupportedDownloadKind(kind)) {
     return l10n.downloadTaskAdded;
   }
   final unsupportedMessage = switch (kind) {
@@ -23,9 +23,13 @@ String downloadEntryFeedbackActionLabel(
   AppLocalizations l10n,
   DownloadKind kind,
 ) {
-  return kind == DownloadKind.directFile
+  return isSupportedDownloadKind(kind)
       ? l10n.openDownloads
       : l10n.checkDownloadLines;
+}
+
+bool isSupportedDownloadKind(DownloadKind kind) {
+  return kind == DownloadKind.directFile || kind == DownloadKind.hls;
 }
 
 String downloadEntryFeedbackErrorMessage(

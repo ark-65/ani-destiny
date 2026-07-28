@@ -12,7 +12,8 @@ class CreatedDownloadTask {
   final String taskId;
   final DownloadKind kind;
 
-  bool get isSupported => kind == DownloadKind.directFile;
+  bool get isSupported =>
+      kind == DownloadKind.directFile || kind == DownloadKind.hls;
 }
 
 class DownloadTaskCreator {

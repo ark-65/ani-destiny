@@ -14,6 +14,28 @@ class DownloadRepositoryImpl implements DownloadRepository {
   final AppDatabase _database;
 
   @override
+  Future<void> recoverInterruptedHlsTasks() {
+    final now = DateTime.now();
+    return (_database.update(_database.downloadTaskTable)
+          ..where(
+            (table) =>
+                table.kind.equals(DownloadKind.hls.name) &
+                table.status.isIn([
+                  DownloadStatus.preparing.name,
+                  DownloadStatus.downloading.name,
+                ]),
+          ))
+        .write(
+      DownloadTaskTableCompanion(
+        status: Value(DownloadStatus.paused.name),
+        failureReason: Value(DownloadFailureReason.none.name),
+        failureMessage: const Value(null),
+        updatedAt: Value(now),
+      ),
+    );
+  }
+
+  @override
   Stream<List<DownloadTask>> watchTasks() {
     final query = _database.select(_database.downloadTaskTable)
       ..orderBy([

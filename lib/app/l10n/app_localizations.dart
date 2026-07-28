@@ -120,6 +120,20 @@ class AppLocalizations {
   String get download => _t('download');
   String get play => _t('play');
   String get downloads => _t('downloads');
+  String get offlineMedia => _t('offlineMedia');
+  String get removeOfflineMedia => _t('removeOfflineMedia');
+  String get removeOfflineMediaConfirmation =>
+      _t('removeOfflineMediaConfirmation');
+  String get offlineMediaRemoved => _t('offlineMediaRemoved');
+  String get offlineMediaRemoveFailed => _t('offlineMediaRemoveFailed');
+  String get verifyOfflineMedia => _t('verifyOfflineMedia');
+  String get offlineMediaVerified => _t('offlineMediaVerified');
+  String get offlineMediaDamaged => _t('offlineMediaDamaged');
+  String get removeOfflineAnime => _t('removeOfflineAnime');
+  String get removeOfflineAnimeConfirmation =>
+      _t('removeOfflineAnimeConfirmation');
+  String get offlineAnimeRemoved => _t('offlineAnimeRemoved');
+  String get offlineAnimeRemoveFailed => _t('offlineAnimeRemoveFailed');
   String get loadingDetail => _t('loadingDetail');
   String get noPlaySource => _t('noPlaySource');
   String get noDownloadSource => _t('noDownloadSource');
@@ -930,6 +944,18 @@ const _localizedValues = {
     'download': '下载',
     'play': '播放',
     'downloads': '下载',
+    'offlineMedia': '离线媒体',
+    'removeOfflineMedia': '删除离线剧集',
+    'removeOfflineMediaConfirmation': '这会删除该集的本地播放清单和全部分片。下载任务记录不会受影响。',
+    'offlineMediaRemoved': '离线剧集及本地文件已删除。',
+    'offlineMediaRemoveFailed': '无法删除全部本地文件。离线剧集仍保留在列表中，请重试。',
+    'verifyOfflineMedia': '校验离线剧集',
+    'offlineMediaVerified': '离线剧集完整，可以播放。',
+    'offlineMediaDamaged': '离线剧集文件不完整。请删除后重新下载。',
+    'removeOfflineAnime': '删除整部离线媒体',
+    'removeOfflineAnimeConfirmation': '这会删除该番剧的全部离线单集及其本地文件。下载任务记录不会受影响。',
+    'offlineAnimeRemoved': '该番剧的全部离线媒体已删除。',
+    'offlineAnimeRemoveFailed': '部分本地文件无法删除。未清理的离线单集仍保留在列表中，请重试。',
     'loadingDetail': '正在加载详情',
     'noPlaySource': '未找到可播放线路。请先切换到其他数据源再重试。',
     'noDownloadSource': '未找到可下载线路。请先返回该集并切换到其他数据源再重试。',
@@ -1295,6 +1321,23 @@ const _localizedValues = {
     'download': 'Download',
     'play': 'Play',
     'downloads': 'Downloads',
+    'offlineMedia': 'Offline media',
+    'removeOfflineMedia': 'Delete offline episode',
+    'removeOfflineMediaConfirmation':
+        'This deletes the local playlist and every segment for this episode. The download task record is not changed.',
+    'offlineMediaRemoved': 'Offline episode and local files deleted.',
+    'offlineMediaRemoveFailed':
+        'Not all local files could be deleted. The offline episode is still listed so you can retry.',
+    'verifyOfflineMedia': 'Verify offline episode',
+    'offlineMediaVerified': 'Offline episode is complete and playable.',
+    'offlineMediaDamaged':
+        'Offline episode files are incomplete. Delete and download it again.',
+    'removeOfflineAnime': 'Delete offline anime',
+    'removeOfflineAnimeConfirmation':
+        'This deletes every offline episode and local file for this anime. Download task records are not changed.',
+    'offlineAnimeRemoved': 'All offline media for this anime was deleted.',
+    'offlineAnimeRemoveFailed':
+        'Some local files could not be deleted. Uncleared episodes remain listed so you can retry.',
     'loadingDetail': 'Loading detail',
     'noPlaySource':
         'No playable source found. Switch to another source before retrying.',
@@ -1709,6 +1752,22 @@ const _localizedValues = {
     'download': 'ダウンロード',
     'play': '再生',
     'downloads': 'ダウンロード',
+    'offlineMedia': 'オフラインメディア',
+    'removeOfflineMedia': 'オフラインの話を削除',
+    'removeOfflineMediaConfirmation':
+        'この話のローカルプレイリストと全セグメントを削除します。ダウンロードタスクの記録は変更されません。',
+    'offlineMediaRemoved': 'オフラインの話とローカルファイルを削除しました。',
+    'offlineMediaRemoveFailed':
+        '一部のローカルファイルを削除できませんでした。再試行できるよう、この話は一覧に残しています。',
+    'verifyOfflineMedia': 'オフラインの話を検証',
+    'offlineMediaVerified': 'オフラインの話は完全で、再生できます。',
+    'offlineMediaDamaged': 'オフラインの話のファイルが不完全です。削除して再ダウンロードしてください。',
+    'removeOfflineAnime': '作品のオフラインメディアを削除',
+    'removeOfflineAnimeConfirmation':
+        'この作品の全オフライン話とローカルファイルを削除します。ダウンロードタスクの記録は変更されません。',
+    'offlineAnimeRemoved': 'この作品のオフラインメディアをすべて削除しました。',
+    'offlineAnimeRemoveFailed':
+        '一部のローカルファイルを削除できませんでした。未削除の話は再試行できるよう一覧に残しています。',
     'loadingDetail': '詳細を読み込み中',
     'noPlaySource': '再生可能なソースが見つかりません。先に別のソースへ切り替えてから再試行してください。',
     'noDownloadSource': 'ダウンロード可能なソースが見つかりません。先にこの話に戻って別のソースを切り替え、再試行してください。',

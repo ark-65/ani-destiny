@@ -21,6 +21,7 @@ segment-002.ts
     expect(manifest.isMediaPlaylist, isTrue);
     expect(manifest.isMasterPlaylist, isFalse);
     expect(manifest.isLive, isFalse);
+    expect(manifest.mediaSequence, 0);
     expect(manifest.targetDuration, const Duration(seconds: 10));
     expect(manifest.segments, hasLength(2));
     expect(
@@ -32,6 +33,172 @@ segment-002.ts
       const Duration(seconds: 8),
     );
     expect(manifest.segments.last.title, 'Opening');
+  });
+
+  test('rejects media segments without EXTINF duration', () {
+    expect(
+      () => parser.parse(
+        '''
+#EXTM3U
+#EXT-X-TARGETDURATION:10
+segment-1.ts
+#EXT-X-ENDLIST
+''',
+        uri: Uri.parse('https://example.com/media/index.m3u8'),
+      ),
+      throwsA(
+        isA<FormatException>().having(
+          (error) => error.message,
+          'message',
+          'HLS segment duration missing.',
+        ),
+      ),
+    );
+  });
+
+  test('rejects non-positive and non-finite EXTINF durations', () {
+    for (final duration in ['0', '-1', 'NaN', 'Infinity', 'invalid']) {
+      expect(
+        () => parser.parse(
+          '''
+#EXTM3U
+#EXT-X-TARGETDURATION:10
+#EXTINF:$duration,
+segment-1.ts
+#EXT-X-ENDLIST
+''',
+          uri: Uri.parse('https://example.com/media/index.m3u8'),
+        ),
+        throwsA(
+          isA<FormatException>().having(
+            (error) => error.message,
+            'message',
+            'Invalid HLS segment duration.',
+          ),
+        ),
+        reason: 'duration=$duration',
+      );
+    }
+  });
+
+  test('rejects missing and invalid media target durations', () {
+    for (final targetDurationLine in [
+      '',
+      '#EXT-X-TARGETDURATION:0',
+      '#EXT-X-TARGETDURATION:-1',
+      '#EXT-X-TARGETDURATION:invalid',
+    ]) {
+      expect(
+        () => parser.parse(
+          '''
+#EXTM3U
+$targetDurationLine
+#EXTINF:6,
+segment-1.ts
+#EXT-X-ENDLIST
+''',
+          uri: Uri.parse('https://example.com/media/index.m3u8'),
+        ),
+        throwsA(
+          isA<FormatException>().having(
+            (error) => error.message,
+            'message',
+            targetDurationLine.isEmpty
+                ? 'HLS target duration missing.'
+                : 'Invalid HLS target duration.',
+          ),
+        ),
+        reason: 'targetDurationLine=$targetDurationLine',
+      );
+    }
+  });
+
+  test('rejects target duration shorter than rounded segment duration', () {
+    expect(
+      () => parser.parse(
+        '''
+#EXTM3U
+#EXT-X-TARGETDURATION:6
+#EXTINF:6.6,
+segment-1.ts
+#EXT-X-ENDLIST
+''',
+        uri: Uri.parse('https://example.com/media/index.m3u8'),
+      ),
+      throwsA(
+        isA<FormatException>().having(
+          (error) => error.message,
+          'message',
+          'HLS target duration is shorter than a media segment.',
+        ),
+      ),
+    );
+  });
+
+  test('preserves the declared HLS protocol version', () {
+    final manifest = parser.parse(
+      '''
+#EXTM3U
+#EXT-X-VERSION:7
+#EXT-X-TARGETDURATION:6
+#EXTINF:6,
+segment-1.ts
+#EXT-X-ENDLIST
+''',
+      uri: Uri.parse('https://cdn.example.test/anime/index.m3u8'),
+    );
+
+    expect(manifest.protocolVersion, 7);
+  });
+
+  test('rejects an invalid HLS protocol version', () {
+    expect(
+      () => parser.parse(
+        '''
+#EXTM3U
+#EXT-X-VERSION:0
+#EXTINF:6,
+segment-1.ts
+#EXT-X-ENDLIST
+''',
+        uri: Uri.parse('https://cdn.example.test/anime/index.m3u8'),
+      ),
+      throwsFormatException,
+    );
+  });
+
+  test('preserves a non-zero media sequence', () {
+    final manifest = parser.parse(
+      '''
+#EXTM3U
+#EXT-X-TARGETDURATION:6
+#EXT-X-MEDIA-SEQUENCE:451
+#EXT-X-KEY:METHOD=AES-128,URI="keys/episode.key"
+#EXTINF:6,
+segment-451.ts
+#EXT-X-ENDLIST
+''',
+      uri: Uri.parse('https://cdn.example.test/anime/index.m3u8'),
+    );
+
+    expect(manifest.mediaSequence, 451);
+    expect(manifest.segments.single.encryptionKey?.iv, isNull);
+  });
+
+  test('rejects an invalid media sequence', () {
+    expect(
+      () => parser.parse(
+        '''
+#EXTM3U
+#EXT-X-MEDIA-SEQUENCE:-1
+#EXTINF:6,
+segment.ts
+#EXT-X-ENDLIST
+''',
+        uri: Uri.parse('https://cdn.example.test/anime/index.m3u8'),
+      ),
+      throwsFormatException,
+    );
   });
 
   test('recognizes master playlist variants', () {
@@ -53,6 +220,405 @@ segment-002.ts
     expect(
       manifest.variants.last.uri.toString(),
       'https://cdn.example.test/1080p/index.m3u8',
+    );
+  });
+
+  test('preserves alternate audio group on master playlist variants', () {
+    final manifest = parser.parse(
+      '''
+#EXTM3U
+#EXT-X-MEDIA:TYPE=AUDIO,GROUP-ID="audio-main",NAME="Japanese",DEFAULT=YES,URI="audio/index.m3u8"
+#EXT-X-STREAM-INF:BANDWIDTH=2400000,RESOLUTION=1920x1080,CODECS="avc1.640028,mp4a.40.2",AUDIO="audio-main"
+video/index.m3u8
+''',
+      uri: Uri.parse('https://cdn.example.test/master.m3u8'),
+    );
+
+    expect(manifest.variants.single.audioGroupId, 'audio-main');
+    expect(manifest.variants.single.codecs, 'avc1.640028,mp4a.40.2');
+    expect(manifest.renditions, hasLength(1));
+    expect(manifest.renditions.single.type, 'AUDIO');
+    expect(manifest.renditions.single.groupId, 'audio-main');
+    expect(manifest.renditions.single.name, 'Japanese');
+    expect(manifest.renditions.single.isDefault, isTrue);
+    expect(
+      manifest.renditions.single.uri.toString(),
+      'https://cdn.example.test/audio/index.m3u8',
+    );
+  });
+
+  test('substitutes locally defined variables in HLS asset URIs', () {
+    final manifest = parser.parse(
+      r'''
+#EXTM3U
+#EXT-X-TARGETDURATION:6
+#EXT-X-DEFINE:NAME="token",VALUE="signed-value"
+#EXT-X-DEFINE:NAME="path",VALUE="media/{$token}"
+#EXT-X-MAP:URI="{$path}/init.mp4"
+#EXT-X-KEY:METHOD=AES-128,URI="keys/{$token}.key"
+#EXTINF:6,
+{$path}/segment-001.m4s
+#EXT-X-ENDLIST
+''',
+      uri: Uri.parse('https://cdn.example.test/anime/index.m3u8'),
+    );
+
+    final segment = manifest.segments.single;
+    expect(
+      segment.uri.toString(),
+      'https://cdn.example.test/anime/media/signed-value/segment-001.m4s',
+    );
+    expect(
+      segment.initializationSegment?.uri.toString(),
+      'https://cdn.example.test/anime/media/signed-value/init.mp4',
+    );
+    expect(
+      segment.encryptionKey?.uri.toString(),
+      'https://cdn.example.test/anime/keys/signed-value.key',
+    );
+  });
+
+  test('imports an explicitly requested variable from a parent manifest', () {
+    final manifest = parser.parse(
+      r'''
+#EXTM3U
+#EXT-X-TARGETDURATION:6
+#EXT-X-DEFINE:IMPORT="token"
+#EXTINF:6,
+media/{$token}/segment.ts
+#EXT-X-ENDLIST
+''',
+      uri: Uri.parse('https://cdn.example.test/anime/index.m3u8'),
+      importedVariables: const {'token': 'signed-value'},
+    );
+
+    expect(
+      manifest.segments.single.uri.toString(),
+      'https://cdn.example.test/anime/media/signed-value/segment.ts',
+    );
+    expect(manifest.variables, {'token': 'signed-value'});
+  });
+
+  test('rejects unavailable HLS variables and imports', () {
+    expect(
+      () => parser.parse(
+        r'''
+#EXTM3U
+#EXTINF:6,
+media/{$token}/segment.ts
+#EXT-X-ENDLIST
+''',
+        uri: Uri.parse('https://cdn.example.test/anime/index.m3u8'),
+      ),
+      throwsFormatException,
+    );
+    expect(
+      () => parser.parse(
+        '''
+#EXTM3U
+#EXT-X-DEFINE:IMPORT="token"
+#EXTINF:6,
+media/segment.ts
+#EXT-X-ENDLIST
+''',
+        uri: Uri.parse('https://cdn.example.test/anime/index.m3u8'),
+      ),
+      throwsFormatException,
+    );
+  });
+
+  test('parses a relative initialization segment', () {
+    final manifest = parser.parse(
+      '''
+#EXTM3U
+#EXT-X-TARGETDURATION:6
+#EXT-X-MAP:URI="init/init.mp4"
+#EXTINF:6,
+segment-001.m4s
+#EXT-X-ENDLIST
+''',
+      uri: Uri.parse('https://cdn.example.test/anime/index.m3u8'),
+    );
+
+    expect(
+      manifest.initializationSegment?.uri.toString(),
+      'https://cdn.example.test/anime/init/init.mp4',
+    );
+    expect(
+      manifest.segments.single.initializationSegment?.uri.toString(),
+      'https://cdn.example.test/anime/init/init.mp4',
+    );
+  });
+
+  test('associates changing initialization segments with following media', () {
+    final manifest = parser.parse(
+      '''
+#EXTM3U
+#EXT-X-TARGETDURATION:6
+#EXT-X-MAP:URI="init-1.mp4"
+#EXTINF:6,
+segment-001.m4s
+#EXT-X-MAP:URI="init-2.mp4"
+#EXTINF:6,
+segment-002.m4s
+#EXT-X-ENDLIST
+''',
+      uri: Uri.parse('https://cdn.example.test/anime/index.m3u8'),
+    );
+
+    expect(
+      manifest.segments
+          .map((segment) => segment.initializationSegment?.uri.toString()),
+      [
+        'https://cdn.example.test/anime/init-1.mp4',
+        'https://cdn.example.test/anime/init-2.mp4',
+      ],
+    );
+  });
+
+  test('associates the active AES-128 key with an initialization segment', () {
+    final manifest = parser.parse(
+      '''
+#EXTM3U
+#EXT-X-TARGETDURATION:6
+#EXT-X-KEY:METHOD=AES-128,URI="keys/init.key",IV=0x0123456789ABCDEF0123456789ABCDEF
+#EXT-X-MAP:URI="init.mp4"
+#EXT-X-KEY:METHOD=NONE
+#EXTINF:6,
+segment-001.m4s
+#EXT-X-ENDLIST
+''',
+      uri: Uri.parse('https://cdn.example.test/anime/index.m3u8'),
+    );
+
+    final initializationKey =
+        manifest.segments.single.initializationSegment?.encryptionKey;
+    expect(
+      initializationKey?.uri.toString(),
+      'https://cdn.example.test/anime/keys/init.key',
+    );
+    expect(
+      initializationKey?.iv,
+      '0x0123456789ABCDEF0123456789ABCDEF',
+    );
+    expect(manifest.segments.single.encryptionKey, isNull);
+  });
+
+  test('associates discontinuity boundaries with following media', () {
+    final manifest = parser.parse(
+      '''
+#EXTM3U
+#EXT-X-TARGETDURATION:6
+#EXTINF:6,
+segment-001.ts
+#EXT-X-DISCONTINUITY
+#EXTINF:6,
+segment-002.ts
+#EXTINF:6,
+segment-003.ts
+#EXT-X-ENDLIST
+''',
+      uri: Uri.parse('https://cdn.example.test/anime/index.m3u8'),
+    );
+
+    expect(
+      manifest.segments.map((segment) => segment.hasDiscontinuity),
+      [false, true, false],
+    );
+  });
+
+  test('associates gap markers with only the following media segment', () {
+    final manifest = parser.parse(
+      '''
+#EXTM3U
+#EXT-X-TARGETDURATION:6
+#EXTINF:6,
+segment-001.ts
+#EXTINF:6,
+#EXT-X-GAP
+missing-002.ts
+#EXTINF:6,
+segment-003.ts
+#EXT-X-ENDLIST
+''',
+      uri: Uri.parse('https://cdn.example.test/anime/index.m3u8'),
+    );
+
+    expect(
+      manifest.segments.map((segment) => segment.isGap),
+      [false, true, false],
+    );
+  });
+
+  test('applies an AES-128 key to following media segments', () {
+    final manifest = parser.parse(
+      '''
+#EXTM3U
+#EXT-X-TARGETDURATION:6
+#EXT-X-KEY:METHOD=AES-128,URI="keys/episode.key",IV=0x0123456789ABCDEF0123456789ABCDEF,KEYFORMAT="identity"
+#EXTINF:6,
+segment-001.ts
+#EXT-X-KEY:METHOD=NONE
+#EXTINF:6,
+segment-002.ts
+#EXT-X-ENDLIST
+''',
+      uri: Uri.parse('https://cdn.example.test/anime/index.m3u8'),
+    );
+
+    final key = manifest.segments.first.encryptionKey;
+    expect(key?.method, 'AES-128');
+    expect(
+      key?.uri.toString(),
+      'https://cdn.example.test/anime/keys/episode.key',
+    );
+    expect(key?.iv, '0x0123456789ABCDEF0123456789ABCDEF');
+    expect(manifest.segments.last.encryptionKey, isNull);
+  });
+
+  test('rejects non-identity AES-128 key formats', () {
+    expect(
+      () => parser.parse(
+        '''
+#EXTM3U
+#EXT-X-KEY:METHOD=AES-128,URI="skd://license",KEYFORMAT="com.apple.streamingkeydelivery"
+#EXTINF:6,
+segment-001.ts
+#EXT-X-ENDLIST
+''',
+        uri: Uri.parse('https://cdn.example.test/anime/index.m3u8'),
+      ),
+      throwsFormatException,
+    );
+  });
+
+  test('rejects malformed explicit AES-128 IVs', () {
+    for (final iv in [
+      '0123456789ABCDEF0123456789ABCDEF',
+      '0x0123456789ABCDEF',
+      '0x0123456789ABCDEG0123456789ABCDEF',
+    ]) {
+      expect(
+        () => parser.parse(
+          '''
+#EXTM3U
+#EXT-X-KEY:METHOD=AES-128,URI="keys/episode.key",IV=$iv
+#EXTINF:6,
+segment-001.ts
+#EXT-X-ENDLIST
+''',
+          uri: Uri.parse('https://cdn.example.test/anime/index.m3u8'),
+        ),
+        throwsFormatException,
+        reason: 'IV $iv must not produce an offline asset.',
+      );
+    }
+  });
+
+  test('preserves commas inside quoted attribute URIs', () {
+    final manifest = parser.parse(
+      '''
+#EXTM3U
+#EXT-X-TARGETDURATION:6
+#EXT-X-MAP:URI="init.mp4?token=alpha,beta"
+#EXT-X-KEY:METHOD=AES-128,URI="keys/episode.key?token=gamma,delta"
+#EXTINF:6,
+segment-001.m4s
+#EXT-X-ENDLIST
+''',
+      uri: Uri.parse('https://cdn.example.test/anime/index.m3u8'),
+    );
+
+    expect(
+      manifest.segments.single.initializationSegment?.uri.toString(),
+      'https://cdn.example.test/anime/init.mp4?token=alpha,beta',
+    );
+    expect(
+      manifest.segments.single.encryptionKey?.uri.toString(),
+      'https://cdn.example.test/anime/keys/episode.key?token=gamma,delta',
+    );
+  });
+
+  test('rejects an unterminated quoted attribute', () {
+    expect(
+      () => parser.parse(
+        '''
+#EXTM3U
+#EXT-X-MAP:URI="init.mp4?token=alpha,beta
+#EXTINF:6,
+segment-001.m4s
+#EXT-X-ENDLIST
+''',
+        uri: Uri.parse('https://cdn.example.test/anime/index.m3u8'),
+      ),
+      throwsFormatException,
+    );
+  });
+
+  test('rejects unsupported encryption methods', () {
+    expect(
+      () => parser.parse(
+        '''
+#EXTM3U
+#EXT-X-KEY:METHOD=SAMPLE-AES,URI="keys/episode.key"
+#EXTINF:6,
+segment-001.ts
+#EXT-X-ENDLIST
+''',
+        uri: Uri.parse('https://cdn.example.test/anime/index.m3u8'),
+      ),
+      throwsFormatException,
+    );
+  });
+
+  test('parses explicit and implicit media and initialization byte ranges', () {
+    final manifest = parser.parse(
+      '''
+#EXTM3U
+#EXT-X-TARGETDURATION:6
+#EXT-X-MAP:URI="media.mp4",BYTERANGE="4@0"
+#EXTINF:6,
+#EXT-X-BYTERANGE:5@4
+media.mp4
+#EXTINF:6,
+#EXT-X-BYTERANGE:3
+media.mp4
+#EXT-X-ENDLIST
+''',
+      uri: Uri.parse('https://cdn.example.test/anime/index.m3u8'),
+    );
+
+    expect(manifest.segments, hasLength(2));
+    expect(manifest.segments.first.byteRange?.offset, 4);
+    expect(manifest.segments.first.byteRange?.length, 5);
+    expect(manifest.segments.last.byteRange?.offset, 9);
+    expect(manifest.segments.last.byteRange?.length, 3);
+    expect(manifest.segments.first.initializationSegment?.byteRange?.offset, 0);
+    expect(manifest.segments.first.initializationSegment?.byteRange?.length, 4);
+  });
+
+  test('rejects implicit byte range after a different resource', () {
+    expect(
+      () => parser.parse(
+        '''
+#EXTM3U
+#EXTINF:6,
+#EXT-X-BYTERANGE:4@0
+first.ts
+#EXTINF:6,
+#EXT-X-BYTERANGE:4
+second.ts
+#EXT-X-ENDLIST
+''',
+        uri: Uri.parse('https://cdn.example.test/anime/index.m3u8'),
+      ),
+      throwsA(
+        isA<FormatException>().having(
+          (error) => error.message,
+          'message',
+          contains('same resource'),
+        ),
+      ),
     );
   });
 

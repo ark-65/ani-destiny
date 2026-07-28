@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:io';
+import 'dart:math' as math;
 
 import 'package:dio/dio.dart';
 import 'package:path/path.dart' as p;
@@ -12,7 +13,9 @@ import '../../domain/entities/download_progress.dart';
 import '../../domain/entities/hls_manifest.dart';
 import '../../domain/entities/download_source.dart';
 import '../../domain/entities/download_task.dart';
+import '../../domain/entities/offline_media_item.dart';
 import '../../domain/repositories/download_repository.dart';
+import '../../domain/repositories/offline_media_repository.dart';
 import '../../domain/services/hls_manifest_loader.dart';
 import '../../domain/services/download_service.dart';
 
@@ -20,17 +23,31 @@ const _downloadNetworkFailureMessage =
     'AniDestiny could not finish this download because the source could not be reached. Retry when the connection is stable.';
 
 class HttpDownloadService implements DownloadService {
+  static const _aes128KeyLength = 16;
   HttpDownloadService({
     required Dio dio,
     required DownloadRepository repository,
     HlsManifestLoader? hlsManifestLoader,
+    OfflineMediaRepository? offlineMediaRepository,
+    Future<Directory> Function()? applicationDocumentsDirectory,
+    int hlsSegmentMaxAttempts = 3,
+    Duration hlsSegmentRetryDelay = const Duration(milliseconds: 300),
   })  : _dio = dio,
         _repository = repository,
-        _hlsManifestLoader = hlsManifestLoader;
+        _hlsManifestLoader = hlsManifestLoader,
+        _offlineMediaRepository = offlineMediaRepository,
+        _applicationDocumentsDirectory =
+            applicationDocumentsDirectory ?? getApplicationDocumentsDirectory,
+        _hlsSegmentMaxAttempts = hlsSegmentMaxAttempts,
+        _hlsSegmentRetryDelay = hlsSegmentRetryDelay;
 
   final Dio _dio;
   final DownloadRepository _repository;
   final HlsManifestLoader? _hlsManifestLoader;
+  final OfflineMediaRepository? _offlineMediaRepository;
+  final Future<Directory> Function() _applicationDocumentsDirectory;
+  final int _hlsSegmentMaxAttempts;
+  final Duration _hlsSegmentRetryDelay;
   final Map<String, CancelToken> _tokens = {};
   final Map<String, StreamController<DownloadProgress>> _controllers = {};
   final Map<String, Completer<void>> _settleCompleters = {};
@@ -113,7 +130,7 @@ class HttpDownloadService implements DownloadService {
     final settleCompleter = Completer<void>();
     _settleCompleters[taskId] = settleCompleter;
     try {
-      final directory = await getApplicationDocumentsDirectory();
+      final directory = await _applicationDocumentsDirectory();
       final fileName = _safeFileName(_fileNameFor(existingTask));
       final localPath = p.join(directory.path, 'downloads', fileName);
       activeLocalPath = localPath;
@@ -280,7 +297,7 @@ class HttpDownloadService implements DownloadService {
     }
 
     final prepareLocalManifestPath = p.join(
-      (await getApplicationDocumentsDirectory()).path,
+      (await _applicationDocumentsDirectory()).path,
       'downloads',
       existingTask.id,
       'index.m3u8',
@@ -304,12 +321,12 @@ class HttpDownloadService implements DownloadService {
     _emitTask(preparingTask);
 
     try {
-      final mediaManifest = await _loadHlsMediaManifest(
+      final mediaBundle = await _loadHlsMediaBundle(
         manifestLoader: manifestLoader,
         sourceUri: sourceUri,
         headers: existingTask.headers,
       );
-      if (mediaManifest.isLive) {
+      if (mediaBundle.manifests.any((manifest) => manifest.isLive)) {
         final unsupported = preparingTask.copyWith(
           localPath: null,
           status: DownloadStatus.unsupported,
@@ -322,17 +339,74 @@ class HttpDownloadService implements DownloadService {
         return;
       }
 
-      final segmentDownloadedBytes = await _downloadHlsSegments(
+      var segmentDownloadedBytes = await _downloadHlsSegments(
         task: preparingTask,
-        mediaManifest: mediaManifest,
+        mediaManifest: mediaBundle.video,
         headers: existingTask.headers,
         cancelToken: token,
+        manifestPath: mediaBundle.audio == null
+            ? prepareLocalManifestPath
+            : p.join(
+                p.dirname(prepareLocalManifestPath),
+                'video',
+                'index.m3u8',
+              ),
       );
+      if (mediaBundle.audio case final audioManifest?) {
+        segmentDownloadedBytes += await _downloadHlsSegments(
+          task: preparingTask,
+          mediaManifest: audioManifest,
+          headers: existingTask.headers,
+          cancelToken: token,
+          manifestPath: p.join(
+            p.dirname(prepareLocalManifestPath),
+            'audio',
+            'index.m3u8',
+          ),
+        );
+      }
       await _validateHlsManifestAssets(
-        mediaManifest: mediaManifest,
-        manifestPath: prepareLocalManifestPath,
+        mediaManifest: mediaBundle.video,
+        manifestPath: mediaBundle.audio == null
+            ? prepareLocalManifestPath
+            : p.join(
+                p.dirname(prepareLocalManifestPath),
+                'video',
+                'index.m3u8',
+              ),
       );
-      await _writeHlsManifest(mediaManifest, segmentDownloadedBytes, prepareLocalManifestPath);
+      if (mediaBundle.audio case final audioManifest?) {
+        await _validateHlsManifestAssets(
+          mediaManifest: audioManifest,
+          manifestPath: p.join(
+            p.dirname(prepareLocalManifestPath),
+            'audio',
+            'index.m3u8',
+          ),
+        );
+      }
+      await _writeHlsManifest(
+        mediaBundle.video,
+        segmentDownloadedBytes,
+        mediaBundle.audio == null
+            ? prepareLocalManifestPath
+            : p.join(
+                p.dirname(prepareLocalManifestPath),
+                'video',
+                'index.m3u8',
+              ),
+      );
+      if (mediaBundle.audio case final audioManifest?) {
+        await _writeHlsManifest(
+          audioManifest,
+          segmentDownloadedBytes,
+          p.join(p.dirname(prepareLocalManifestPath), 'audio', 'index.m3u8'),
+        );
+        await _writeHlsMasterManifest(
+          mediaBundle,
+          prepareLocalManifestPath,
+        );
+      }
       final completed = preparingTask.copyWith(
         status: DownloadStatus.completed,
         failureReason: DownloadFailureReason.none,
@@ -341,6 +415,19 @@ class HttpDownloadService implements DownloadService {
         downloadedBytes: segmentDownloadedBytes,
         totalBytes: segmentDownloadedBytes,
         updatedAt: DateTime.now(),
+      );
+      await _offlineMediaRepository?.upsert(
+        OfflineMediaItem(
+          id: 'offline-${existingTask.id}',
+          downloadTaskId: existingTask.id,
+          animeId: existingTask.animeId,
+          episodeId: existingTask.episodeId,
+          title: existingTask.title,
+          episodeTitle: existingTask.episodeTitle,
+          manifestPath: prepareLocalManifestPath,
+          downloadedBytes: segmentDownloadedBytes,
+          createdAt: completed.updatedAt,
+        ),
       );
       await _repository.upsertTask(completed);
       _emitTask(completed);
@@ -402,6 +489,7 @@ class HttpDownloadService implements DownloadService {
     required HlsManifest mediaManifest,
     required Map<String, String> headers,
     required CancelToken cancelToken,
+    required String manifestPath,
   }) async {
     if (mediaManifest.segments.isEmpty) {
       throw const FormatException('HLS manifest contains no media entries.');
@@ -409,7 +497,7 @@ class HttpDownloadService implements DownloadService {
 
     final segmentDirectory = Directory(
       p.join(
-        p.dirname(task.localPath ?? ''),
+        p.dirname(manifestPath),
         'segments',
       ),
     );
@@ -417,14 +505,76 @@ class HttpDownloadService implements DownloadService {
 
     var downloadedBytes = 0;
 
+    for (final keyEntry in _hlsEncryptionKeys(mediaManifest).entries) {
+      final keyFile = File(
+        p.join(
+          segmentDirectory.path,
+          _hlsEncryptionKeyFileName(keyEntry.value),
+        ),
+      );
+      if (await keyFile.exists() &&
+          await keyFile.length() == _aes128KeyLength) {
+        downloadedBytes += await keyFile.length();
+      } else {
+        downloadedBytes += await _downloadHlsSegment(
+          segmentUri: keyEntry.key.uri,
+          localPath: keyFile.path,
+          headers: headers,
+          cancelToken: cancelToken,
+        );
+      }
+    }
+
+    for (final initializationEntry
+        in _hlsInitializationSegments(mediaManifest).entries) {
+      final initializationSegment = initializationEntry.key;
+      final initializationPath = p.join(
+        segmentDirectory.path,
+        _hlsInitializationSegmentFileName(
+          initializationSegment.uri,
+          initializationEntry.value,
+        ),
+      );
+      final initializationFile = File(initializationPath);
+      final initializationLength = await initializationFile.exists()
+          ? await initializationFile.length()
+          : 0;
+      if (initializationLength > 0 &&
+          (initializationSegment.byteRange == null ||
+              initializationLength ==
+                  initializationSegment.byteRange!.length)) {
+        downloadedBytes += await initializationFile.length();
+      } else {
+        downloadedBytes += await _downloadHlsSegment(
+          segmentUri: initializationSegment.uri,
+          localPath: initializationPath,
+          headers: headers,
+          byteRange: initializationSegment.byteRange,
+          cancelToken: cancelToken,
+        );
+      }
+    }
+
     for (var index = 0; index < mediaManifest.segments.length; index++) {
       final segment = mediaManifest.segments[index];
+      if (segment.isGap) {
+        final progress = (index + 1) / mediaManifest.segments.length;
+        _emit(
+          task.id,
+          progress,
+          DownloadStatus.downloading,
+          downloadedBytes: downloadedBytes,
+        );
+        continue;
+      }
       final safeSegmentName = _hlsSegmentFileName(segment.uri, index);
       final segmentPath = p.join(segmentDirectory.path, safeSegmentName);
       final existingSegmentFile = File(segmentPath);
       if (await existingSegmentFile.exists()) {
         final existingBytes = await existingSegmentFile.length();
-        if (existingBytes > 0) {
+        if (existingBytes > 0 &&
+            (segment.byteRange == null ||
+                existingBytes == segment.byteRange!.length)) {
           downloadedBytes += existingBytes;
           final progress = (index + 1) / mediaManifest.segments.length;
           _emit(
@@ -440,6 +590,7 @@ class HttpDownloadService implements DownloadService {
         segmentUri: segment.uri,
         localPath: segmentPath,
         headers: headers,
+        byteRange: segment.byteRange,
         cancelToken: cancelToken,
       );
 
@@ -467,8 +618,53 @@ class HttpDownloadService implements DownloadService {
       ),
     );
 
+    for (final initializationEntry
+        in _hlsInitializationSegments(mediaManifest).entries) {
+      final initializationSegment = initializationEntry.key;
+      final initializationName = _hlsInitializationSegmentFileName(
+        initializationSegment.uri,
+        initializationEntry.value,
+      );
+      final initializationFile = File(
+        p.join(segmentDirectory.path, initializationName),
+      );
+      if (!await initializationFile.exists()) {
+        throw FormatException(
+          'HLS manifest integrity check failed: missing initialization file $initializationName',
+        );
+      }
+      if (await initializationFile.length() == 0) {
+        throw FormatException(
+          'HLS manifest integrity check failed: empty initialization file $initializationName',
+        );
+      }
+      if (initializationSegment.byteRange != null &&
+          await initializationFile.length() !=
+              initializationSegment.byteRange!.length) {
+        throw FormatException(
+          'HLS manifest integrity check failed: invalid initialization file $initializationName',
+        );
+      }
+    }
+
+    for (final keyEntry in _hlsEncryptionKeys(mediaManifest).entries) {
+      final keyName = _hlsEncryptionKeyFileName(keyEntry.value);
+      final keyFile = File(p.join(segmentDirectory.path, keyName));
+      if (!await keyFile.exists()) {
+        throw FormatException(
+          'HLS manifest integrity check failed: missing encryption key file $keyName',
+        );
+      }
+      if (await keyFile.length() != _aes128KeyLength) {
+        throw FormatException(
+          'HLS manifest integrity check failed: invalid AES-128 key file $keyName',
+        );
+      }
+    }
+
     for (var index = 0; index < mediaManifest.segments.length; index++) {
       final segment = mediaManifest.segments[index];
+      if (segment.isGap) continue;
       final segmentName = _hlsSegmentFileName(segment.uri, index);
       final segmentPath = p.join(segmentDirectory.path, segmentName);
       final segmentFile = File(segmentPath);
@@ -484,6 +680,12 @@ class HttpDownloadService implements DownloadService {
           'HLS manifest integrity check failed: empty segment file $segmentName',
         );
       }
+      if (segment.byteRange != null &&
+          await segmentFile.length() != segment.byteRange!.length) {
+        throw FormatException(
+          'HLS manifest integrity check failed: invalid segment file $segmentName',
+        );
+      }
     }
   }
 
@@ -491,21 +693,89 @@ class HttpDownloadService implements DownloadService {
     required Uri segmentUri,
     required String localPath,
     required Map<String, String> headers,
+    HlsByteRange? byteRange,
     required CancelToken cancelToken,
   }) async {
-    var downloadedBytes = 0;
+    final maxAttempts = _hlsSegmentMaxAttempts < 1 ? 1 : _hlsSegmentMaxAttempts;
+    for (var attempt = 1; attempt <= maxAttempts; attempt++) {
+      var downloadedBytes = 0;
+      try {
+        final response = await _dio.download(
+          segmentUri.toString(),
+          localPath,
+          cancelToken: cancelToken,
+          options: Options(
+            headers: {
+              ...headers,
+              if (byteRange != null) 'Range': byteRange.requestHeader,
+            },
+          ),
+          onReceiveProgress: (received, total) {
+            downloadedBytes = received;
+          },
+        );
+        if (byteRange != null) {
+          _validateHlsByteRangeResponse(response, byteRange);
+          final actualLength = await File(localPath).length();
+          if (actualLength != byteRange.length) {
+            throw FormatException(
+              'HLS byte-range response length mismatch: expected '
+              '${byteRange.length} bytes.',
+            );
+          }
+        }
+        return downloadedBytes;
+      } on DioException catch (error) {
+        if (CancelToken.isCancel(error) ||
+            attempt == maxAttempts ||
+            !_isRetryableHlsSegmentFailure(error)) {
+          rethrow;
+        }
+        if (_hlsSegmentRetryDelay > Duration.zero) {
+          await Future.any<void>([
+            Future<void>.delayed(_hlsSegmentRetryDelay),
+            cancelToken.whenCancel.then<void>((error) => throw error),
+          ]);
+        }
+        if (cancelToken.isCancelled) {
+          throw cancelToken.cancelError!;
+        }
+      }
+    }
+    throw StateError('HLS segment retry loop exited unexpectedly.');
+  }
 
-    await _dio.download(
-      segmentUri.toString(),
-      localPath,
-      cancelToken: cancelToken,
-      options: Options(headers: headers.isEmpty ? null : headers),
-      onReceiveProgress: (received, total) {
-        downloadedBytes = received;
-      },
-    );
+  void _validateHlsByteRangeResponse(
+    Response<dynamic> response,
+    HlsByteRange byteRange,
+  ) {
+    final contentRange = response.headers.value('content-range');
+    final match = RegExp(
+      r'^bytes (\d+)-(\d+)/(\d+|\*)$',
+      caseSensitive: false,
+    ).firstMatch(contentRange?.trim() ?? '');
+    final expectedEnd = byteRange.offset + byteRange.length - 1;
+    if (response.statusCode != HttpStatus.partialContent ||
+        match == null ||
+        int.tryParse(match.group(1)!) != byteRange.offset ||
+        int.tryParse(match.group(2)!) != expectedEnd) {
+      throw const FormatException(
+        'HLS byte-range response did not match the requested range.',
+      );
+    }
+  }
 
-    return downloadedBytes;
+  bool _isRetryableHlsSegmentFailure(DioException error) {
+    if (error.type == DioExceptionType.connectionTimeout ||
+        error.type == DioExceptionType.sendTimeout ||
+        error.type == DioExceptionType.receiveTimeout ||
+        error.type == DioExceptionType.connectionError) {
+      return true;
+    }
+    final statusCode = error.response?.statusCode;
+    return statusCode == 408 ||
+        statusCode == 429 ||
+        (statusCode != null && statusCode >= 500 && statusCode <= 599);
   }
 
   Future<void> _writeHlsManifest(
@@ -513,19 +783,80 @@ class HttpDownloadService implements DownloadService {
     int downloadedBytes,
     String manifestPath,
   ) async {
+    final hasInitializationSegment = manifest.initializationSegment != null ||
+        manifest.segments.any(
+          (segment) => segment.initializationSegment != null,
+        );
+    final localProtocolVersion = math.max(
+      manifest.protocolVersion,
+      manifest.segments.any((segment) => segment.isGap)
+          ? 6
+          : hasInitializationSegment
+              ? 5
+              : 3,
+    );
     final manifestLines = <String>[
       '#EXTM3U',
       if (manifest.targetDuration != null)
         '#EXT-X-TARGETDURATION:${manifest.targetDuration!.inSeconds}',
-      '#EXT-X-VERSION:3',
-      '#EXT-X-MEDIA-SEQUENCE:0',
+      '#EXT-X-VERSION:$localProtocolVersion',
+      '#EXT-X-MEDIA-SEQUENCE:${manifest.mediaSequence}',
       '#EXT-X-PLAYLIST-TYPE:VOD',
     ];
 
+    HlsEncryptionKey? activeEncryptionKey;
+    HlsInitializationSegment? activeInitializationSegment;
+    final encryptionKeys = _hlsEncryptionKeys(manifest);
+    final initializationSegments = _hlsInitializationSegments(manifest);
     for (var index = 0; index < manifest.segments.length; index++) {
       final segment = manifest.segments[index];
-      final segmentName =
-          _hlsSegmentFileName(segment.uri, index);
+      if (segment.hasDiscontinuity) {
+        manifestLines.add('#EXT-X-DISCONTINUITY');
+      }
+      if (segment.isGap) {
+        final duration = segment.duration ?? const Duration(seconds: 1);
+        final durationText =
+            (duration.inMilliseconds / 1000).toStringAsFixed(3);
+        manifestLines.add('#EXTINF:$durationText,${segment.title ?? ''}');
+        manifestLines.add('#EXT-X-GAP');
+        manifestLines.add(
+          'segments/${_hlsSegmentFileName(segment.uri, index)}',
+        );
+        continue;
+      }
+      final initializationSegment =
+          segment.initializationSegment ?? manifest.initializationSegment;
+      if (!_sameHlsInitializationSegment(
+        activeInitializationSegment,
+        initializationSegment,
+      )) {
+        if (initializationSegment != null) {
+          activeEncryptionKey = _appendHlsEncryptionKeyIfChanged(
+            manifestLines,
+            activeEncryptionKey: activeEncryptionKey,
+            encryptionKey: initializationSegment.encryptionKey,
+            encryptionKeys: encryptionKeys,
+          );
+          final initializationIndex =
+              initializationSegments.keys.toList().indexWhere(
+                    (candidate) => _sameHlsInitializationSegment(
+                      candidate,
+                      initializationSegment,
+                    ),
+                  );
+          manifestLines.add(
+            '#EXT-X-MAP:URI="segments/${_hlsInitializationSegmentFileName(initializationSegment.uri, initializationIndex)}"',
+          );
+        }
+        activeInitializationSegment = initializationSegment;
+      }
+      activeEncryptionKey = _appendHlsEncryptionKeyIfChanged(
+        manifestLines,
+        activeEncryptionKey: activeEncryptionKey,
+        encryptionKey: segment.encryptionKey,
+        encryptionKeys: encryptionKeys,
+      );
+      final segmentName = _hlsSegmentFileName(segment.uri, index);
       final duration = segment.duration ?? const Duration(seconds: 1);
       final durationText = (duration.inMilliseconds / 1000).toStringAsFixed(3);
       manifestLines.add('#EXTINF:$durationText,${segment.title ?? ''}');
@@ -543,10 +874,110 @@ class HttpDownloadService implements DownloadService {
   String _hlsSegmentFileName(Uri segmentUri, int index) {
     final extension = p.extension(segmentUri.path);
     return 'segment-${index.toString().padLeft(6, '0')} '
-        '${extension.isEmpty ? '.ts' : extension}'.replaceAll(' ', '');
+            '${extension.isEmpty ? '.ts' : extension}'
+        .replaceAll(' ', '');
   }
 
-  Future<HlsManifest> _loadHlsMediaManifest({
+  String _hlsInitializationSegmentFileName(Uri segmentUri, int index) {
+    final extension = p.extension(segmentUri.path);
+    final suffix = index == 0 ? '' : '-${index.toString().padLeft(6, '0')}';
+    return 'initialization$suffix${extension.isEmpty ? '.mp4' : extension}';
+  }
+
+  Map<HlsInitializationSegment, int> _hlsInitializationSegments(
+    HlsManifest manifest,
+  ) {
+    final initializationSegments = <HlsInitializationSegment, int>{};
+    for (final segment in manifest.segments) {
+      if (segment.isGap) continue;
+      final initializationSegment =
+          segment.initializationSegment ?? manifest.initializationSegment;
+      if (initializationSegment == null) continue;
+      final existing = initializationSegments.keys.where(
+        (candidate) => _sameHlsInitializationSegment(
+          candidate,
+          initializationSegment,
+        ),
+      );
+      if (existing.isEmpty) {
+        initializationSegments[initializationSegment] =
+            initializationSegments.length;
+      }
+    }
+    return initializationSegments;
+  }
+
+  bool _sameHlsInitializationSegment(
+    HlsInitializationSegment? first,
+    HlsInitializationSegment? second,
+  ) {
+    return first?.uri == second?.uri &&
+        first?.byteRange?.length == second?.byteRange?.length &&
+        first?.byteRange?.offset == second?.byteRange?.offset &&
+        _sameHlsEncryptionKey(first?.encryptionKey, second?.encryptionKey);
+  }
+
+  Map<HlsEncryptionKey, int> _hlsEncryptionKeys(HlsManifest manifest) {
+    final keys = <HlsEncryptionKey, int>{};
+    for (final segment in manifest.segments) {
+      if (segment.isGap) continue;
+      final initializationSegment =
+          segment.initializationSegment ?? manifest.initializationSegment;
+      for (final key in [
+        initializationSegment?.encryptionKey,
+        segment.encryptionKey,
+      ]) {
+        if (key == null) continue;
+        final existingKey = keys.keys.where(
+          (candidate) => _sameHlsEncryptionKey(candidate, key),
+        );
+        if (existingKey.isEmpty) {
+          keys[key] = keys.length;
+        }
+      }
+    }
+    return keys;
+  }
+
+  HlsEncryptionKey? _appendHlsEncryptionKeyIfChanged(
+    List<String> manifestLines, {
+    required HlsEncryptionKey? activeEncryptionKey,
+    required HlsEncryptionKey? encryptionKey,
+    required Map<HlsEncryptionKey, int> encryptionKeys,
+  }) {
+    if (_sameHlsEncryptionKey(activeEncryptionKey, encryptionKey)) {
+      return activeEncryptionKey;
+    }
+    if (encryptionKey == null) {
+      manifestLines.add('#EXT-X-KEY:METHOD=NONE');
+    } else {
+      final keyIndex = encryptionKeys.keys.toList().indexWhere(
+            (key) => _sameHlsEncryptionKey(key, encryptionKey),
+          );
+      final attributes = <String>[
+        'METHOD=${encryptionKey.method}',
+        'URI="segments/${_hlsEncryptionKeyFileName(keyIndex)}"',
+        if (encryptionKey.iv != null) 'IV=${encryptionKey.iv}',
+      ];
+      manifestLines.add('#EXT-X-KEY:${attributes.join(',')}');
+    }
+    return encryptionKey;
+  }
+
+  bool _sameHlsEncryptionKey(
+    HlsEncryptionKey? first,
+    HlsEncryptionKey? second,
+  ) {
+    return first?.method == second?.method &&
+        first?.uri == second?.uri &&
+        first?.iv == second?.iv;
+  }
+
+  String _hlsEncryptionKeyFileName(int index) {
+    return 'key-${index.toString().padLeft(6, '0')}.key';
+  }
+
+  Future<_HlsMediaBundle> _loadHlsMediaBundle({
     required HlsManifestLoader manifestLoader,
     required Uri sourceUri,
     required Map<String, String> headers,
@@ -556,36 +987,110 @@ class HttpDownloadService implements DownloadService {
       headers: headers,
     );
     if (!manifest.isMasterPlaylist) {
-      return manifest;
+      return _HlsMediaBundle(video: manifest);
     }
 
-    final selectedVariantUri = _selectMediaVariantUri(manifest.variants);
-    manifest = await manifestLoader.load(
-      selectedVariantUri,
+    final selectedVariant = _selectMediaVariant(manifest.variants);
+    final videoManifest = await manifestLoader.load(
+      selectedVariant.uri,
       headers: headers,
+      importedVariables: manifest.variables,
     );
-    if (manifest.isMasterPlaylist) {
-      throw const FormatException('HLS manifest contains nested master playlist.');
+    if (videoManifest.isMasterPlaylist) {
+      throw const FormatException(
+        'HLS manifest contains nested master playlist.',
+      );
     }
-    return manifest;
+    final audioGroupId = selectedVariant.audioGroupId;
+    if (audioGroupId == null) {
+      return _HlsMediaBundle(video: videoManifest);
+    }
+    final groupRenditions = manifest.renditions
+        .where(
+          (rendition) =>
+              rendition.type == 'AUDIO' && rendition.groupId == audioGroupId,
+        )
+        .toList(growable: false);
+    if (groupRenditions.isEmpty) {
+      throw const FormatException('HLS alternate audio group is missing.');
+    }
+    final selectedAudio = groupRenditions.firstWhere(
+      (rendition) => rendition.isDefault,
+      orElse: () => groupRenditions.firstWhere(
+        (rendition) => rendition.autoselect,
+        orElse: () => groupRenditions.first,
+      ),
+    );
+    if (selectedAudio.uri == null) {
+      return _HlsMediaBundle(video: videoManifest);
+    }
+    final audioManifest = await manifestLoader.load(
+      selectedAudio.uri!,
+      headers: headers,
+      importedVariables: manifest.variables,
+    );
+    if (audioManifest.isMasterPlaylist) {
+      throw const FormatException(
+        'HLS audio rendition contains nested master playlist.',
+      );
+    }
+    return _HlsMediaBundle(
+      video: videoManifest,
+      audio: audioManifest,
+      variant: selectedVariant,
+      audioRendition: selectedAudio,
+    );
   }
 
-  Uri _selectMediaVariantUri(List<HlsVariant> variants) {
+  Future<void> _writeHlsMasterManifest(
+    _HlsMediaBundle bundle,
+    String manifestPath,
+  ) async {
+    final rendition = bundle.audioRendition!;
+    final variant = bundle.variant!;
+    final escapedName = rendition.name.replaceAll('"', '');
+    final escapedLanguage = rendition.language?.replaceAll('"', '');
+    final escapedCodecs = variant.codecs?.replaceAll('"', '');
+    final mediaAttributes = <String>[
+      'TYPE=AUDIO',
+      'GROUP-ID="offline-audio"',
+      'NAME="$escapedName"',
+      'DEFAULT=YES',
+      'AUTOSELECT=YES',
+      if (escapedLanguage != null) 'LANGUAGE="$escapedLanguage"',
+      'URI="audio/index.m3u8"',
+    ];
+    final streamAttributes = <String>[
+      'BANDWIDTH=${variant.bandwidth ?? 1}',
+      if (variant.resolution != null) 'RESOLUTION=${variant.resolution}',
+      if (escapedCodecs != null) 'CODECS="$escapedCodecs"',
+      'AUDIO="offline-audio"',
+    ];
+    final content = [
+      '#EXTM3U',
+      '#EXT-X-VERSION:${math.max(bundle.video.protocolVersion, bundle.audio!.protocolVersion)}',
+      '#EXT-X-MEDIA:${mediaAttributes.join(',')}',
+      '#EXT-X-STREAM-INF:${streamAttributes.join(',')}',
+      'video/index.m3u8',
+      '',
+    ].join('\n');
+    await File(manifestPath).writeAsString(content);
+  }
+
+  HlsVariant _selectMediaVariant(List<HlsVariant> variants) {
     if (variants.isEmpty) {
       throw const FormatException('HLS manifest contains no media entries.');
     }
-    final mediaVariants = variants
-        .whereType<HlsVariant>()
-        .toList()
+    final mediaVariants = variants.whereType<HlsVariant>().toList()
       ..sort((a, b) {
-          final bandwidthA = a.bandwidth ?? 0;
-          final bandwidthB = b.bandwidth ?? 0;
-          return bandwidthB.compareTo(bandwidthA);
-        });
+        final bandwidthA = a.bandwidth ?? 0;
+        final bandwidthB = b.bandwidth ?? 0;
+        return bandwidthB.compareTo(bandwidthA);
+      });
     if (mediaVariants.isEmpty) {
       throw const FormatException('HLS manifest contains no media entries.');
     }
-    return mediaVariants.first.uri;
+    return mediaVariants.first;
   }
 
   @override
@@ -867,7 +1372,10 @@ class HttpDownloadService implements DownloadService {
     }
     final shouldClearLocalDownload = switch (taskKind) {
       DownloadKind.hls => latest.status == DownloadStatus.canceled,
-      DownloadKind.directFile || DownloadKind.bt || DownloadKind.unknown => true,
+      DownloadKind.directFile ||
+      DownloadKind.bt ||
+      DownloadKind.unknown =>
+        true,
     };
     if (!shouldClearLocalDownload) {
       return;
@@ -911,6 +1419,27 @@ class HttpDownloadService implements DownloadService {
       return null;
     } on FileSystemException {
       return localPath;
+    }
+  }
+}
+
+class _HlsMediaBundle {
+  const _HlsMediaBundle({
+    required this.video,
+    this.audio,
+    this.variant,
+    this.audioRendition,
+  });
+
+  final HlsManifest video;
+  final HlsManifest? audio;
+  final HlsVariant? variant;
+  final HlsRendition? audioRendition;
+
+  Iterable<HlsManifest> get manifests sync* {
+    yield video;
+    if (audio case final audioManifest?) {
+      yield audioManifest;
     }
   }
 }

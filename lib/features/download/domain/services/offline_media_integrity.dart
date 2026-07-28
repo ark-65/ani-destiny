@@ -22,6 +22,14 @@ bool isPlayableOfflineMediaUrl(String value) {
 }
 
 bool isPlayableOfflineMediaPath(String manifestPath) {
+  return _isPlayableOfflineMediaPath(manifestPath, <String>{});
+}
+
+bool _isPlayableOfflineMediaPath(String manifestPath, Set<String> visited) {
+  final normalizedManifestPath = p.normalize(p.absolute(manifestPath));
+  if (!visited.add(normalizedManifestPath)) {
+    return false;
+  }
   final manifestFile = File(manifestPath);
   if (!manifestFile.existsSync() || manifestFile.lengthSync() == 0) {
     return false;
@@ -42,27 +50,118 @@ bool isPlayableOfflineMediaPath(String manifestPath) {
   }
 
   var hasPlayableSegment = false;
+  var nextSegmentIsGap = false;
   for (final line in lines.skip(1)) {
-    if (line.startsWith('#')) continue;
-    final segmentPaths = _segmentPathCandidatesFromManifestLine(
-      line,
-      manifestDirectory,
-    );
-    if (segmentPaths.isEmpty) {
-      return false;
+    if (line.startsWith('#EXT-X-MEDIA:')) {
+      final renditionUri = _uriAttributeFromTag(line);
+      if (renditionUri == null ||
+          !_hasPlayableNestedManifest(
+            renditionUri,
+            manifestDirectory,
+            visited,
+          )) {
+        return false;
+      }
+      continue;
     }
-
-    final hasPlayableSegmentFile = segmentPaths.any((segmentPath) {
-      final segmentFile = File(segmentPath);
-      return segmentFile.existsSync() && segmentFile.lengthSync() > 0;
-    });
-    if (!hasPlayableSegmentFile) {
+    if (line.startsWith('#EXT-X-KEY:')) {
+      final keyUri = _uriAttributeFromTag(line);
+      if (line.contains('METHOD=NONE')) continue;
+      if (keyUri == null ||
+          !_hasPlayableManifestAsset(
+            keyUri,
+            manifestDirectory,
+            expectedLength: 16,
+          )) {
+        return false;
+      }
+      continue;
+    }
+    if (line.startsWith('#EXT-X-MAP:')) {
+      final initializationUri = _uriAttributeFromTag(line);
+      if (initializationUri == null ||
+          !_hasPlayableManifestAsset(
+            initializationUri,
+            manifestDirectory,
+          )) {
+        return false;
+      }
+      continue;
+    }
+    if (line == '#EXT-X-GAP') {
+      nextSegmentIsGap = true;
+      continue;
+    }
+    if (line.startsWith('#')) continue;
+    if (nextSegmentIsGap) {
+      nextSegmentIsGap = false;
+      continue;
+    }
+    final nestedManifestPaths = _nestedManifestPaths(line, manifestDirectory);
+    if (nestedManifestPaths.isNotEmpty) {
+      if (!nestedManifestPaths.any(
+        (candidate) => _isPlayableOfflineMediaPath(candidate, visited),
+      )) {
+        return false;
+      }
+      hasPlayableSegment = true;
+      continue;
+    }
+    if (!_hasPlayableManifestAsset(line, manifestDirectory)) {
       return false;
     }
     hasPlayableSegment = true;
   }
 
   return hasPlayableSegment;
+}
+
+bool _hasPlayableNestedManifest(
+  String value,
+  String manifestDirectory,
+  Set<String> visited,
+) {
+  final candidates = _nestedManifestPaths(value, manifestDirectory);
+  return candidates.isNotEmpty &&
+      candidates.any(
+        (candidate) => _isPlayableOfflineMediaPath(candidate, visited),
+      );
+}
+
+Iterable<String> _nestedManifestPaths(
+  String value,
+  String manifestDirectory,
+) {
+  return _segmentPathCandidatesFromManifestLine(
+    value,
+    manifestDirectory,
+  ).where((candidate) => p.extension(candidate).toLowerCase() == '.m3u8');
+}
+
+bool _hasPlayableManifestAsset(
+  String value,
+  String manifestDirectory, {
+  int? expectedLength,
+}) {
+  final segmentPaths = _segmentPathCandidatesFromManifestLine(
+    value,
+    manifestDirectory,
+  );
+  return segmentPaths.any((segmentPath) {
+    final segmentFile = File(segmentPath);
+    return segmentFile.existsSync() &&
+        (expectedLength == null
+            ? segmentFile.lengthSync() > 0
+            : segmentFile.lengthSync() == expectedLength);
+  });
+}
+
+String? _uriAttributeFromTag(String line) {
+  final quotedMatch = RegExp(r'URI="([^"]+)"').firstMatch(line);
+  if (quotedMatch != null) {
+    return quotedMatch.group(1);
+  }
+  return RegExp(r'URI=([^,]+)').firstMatch(line)?.group(1)?.trim();
 }
 
 Iterable<String> _segmentPathCandidatesFromManifestLine(

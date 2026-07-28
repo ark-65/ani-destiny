@@ -15,11 +15,23 @@ class DioHlsManifestLoader extends HlsManifestLoader {
   final HlsManifestParser _parser;
 
   @override
-  Future<HlsManifest> load(Uri manifestUri, {Map<String, String> headers = const {}}) {
-    return _load(manifestUri, headers: headers);
+  Future<HlsManifest> load(
+    Uri manifestUri, {
+    Map<String, String> headers = const {},
+    Map<String, String> importedVariables = const {},
+  }) {
+    return _load(
+      manifestUri,
+      headers: headers,
+      importedVariables: importedVariables,
+    );
   }
 
-  Future<HlsManifest> _load(Uri manifestUri, {Map<String, String> headers = const {}}) async {
+  Future<HlsManifest> _load(
+    Uri manifestUri, {
+    Map<String, String> headers = const {},
+    Map<String, String> importedVariables = const {},
+  }) async {
     final response = await _dio.getUri<String>(
       manifestUri,
       options: Options(
@@ -28,6 +40,10 @@ class DioHlsManifestLoader extends HlsManifestLoader {
       ),
     );
     final body = response.data ?? '';
-    return _parser.parse(body, uri: manifestUri);
+    return _parser.parse(
+      body,
+      uri: manifestUri,
+      importedVariables: importedVariables,
+    );
   }
 }

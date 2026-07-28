@@ -13,6 +13,7 @@ import '../../../../core/widgets/app_loading_view.dart';
 import '../../../../features/player/domain/entities/player_route_args.dart';
 import '../../../../shared/widgets/adaptive_page.dart';
 import '../../domain/entities/download_task.dart';
+import '../../domain/entities/offline_media_item.dart';
 import '../download_entry_feedback.dart';
 import '../download_task_cleanup_state.dart';
 import '../providers/download_providers.dart';
@@ -74,9 +75,8 @@ class _DownloadPageState extends ConsumerState<DownloadPage>
     if (remainingCount == 0) {
       return null;
     }
-    final manualCleanupTasks = tasks
-        .where(downloadTaskNeedsManualCleanup)
-        .toList(growable: false);
+    final manualCleanupTasks =
+        tasks.where(downloadTaskNeedsManualCleanup).toList(growable: false);
     if (manualCleanupTasks.isEmpty) {
       return null;
     }
@@ -202,6 +202,7 @@ class _DownloadPageState extends ConsumerState<DownloadPage>
   @override
   Widget build(BuildContext context) {
     final tasks = ref.watch(downloadTasksProvider);
+    final offlineMedia = ref.watch(offlineMediaItemsProvider);
 
     return SafeArea(
       child: AdaptivePage(
@@ -237,6 +238,154 @@ class _DownloadPageState extends ConsumerState<DownloadPage>
               ],
             ),
             const SizedBox(height: 12),
+            offlineMedia.when(
+              loading: () => const SizedBox.shrink(),
+              error: (_, __) => const SizedBox.shrink(),
+              data: (items) {
+                if (items.isEmpty) {
+                  return const SizedBox.shrink();
+                }
+                final groups = _groupOfflineMediaByAnime(items);
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      context.l10n.offlineMedia,
+                      style: Theme.of(context).textTheme.titleMedium,
+                    ),
+                    const SizedBox(height: 8),
+                    SizedBox(
+                      height: (groups.length * 136.0)
+                          .clamp(136.0, 272.0)
+                          .toDouble(),
+                      child: ListView.separated(
+                        itemCount: groups.length,
+                        separatorBuilder: (_, __) => const SizedBox(height: 8),
+                        itemBuilder: (context, groupIndex) {
+                          final group = groups[groupIndex];
+                          return Column(
+                            children: [
+                              Row(
+                                children: [
+                                  Expanded(
+                                    child: Text(
+                                      '${group.first.title} (${group.length})',
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .labelLarge,
+                                    ),
+                                  ),
+                                  TextButton.icon(
+                                    key: ValueKey(
+                                      'offline-anime-remove-'
+                                      '${group.first.animeId}',
+                                    ),
+                                    onPressed: () =>
+                                        _confirmRemoveOfflineAnime(group),
+                                    icon: const Icon(
+                                      Icons.delete_sweep_outlined,
+                                    ),
+                                    label:
+                                        Text(context.l10n.removeOfflineAnime),
+                                  ),
+                                ],
+                              ),
+                              SizedBox(
+                                height: 88,
+                                child: ListView.separated(
+                                  scrollDirection: Axis.horizontal,
+                                  itemCount: group.length,
+                                  separatorBuilder: (_, __) =>
+                                      const SizedBox(width: 8),
+                                  itemBuilder: (context, index) {
+                                    final item = group[index];
+                                    return SizedBox(
+                                      width: 280,
+                                      child: Card(
+                                        clipBehavior: Clip.antiAlias,
+                                        child: ListTile(
+                                          key: ValueKey(
+                                            'offline-media-${item.id}',
+                                          ),
+                                          leading: const Icon(
+                                            Icons.offline_pin_outlined,
+                                          ),
+                                          title: Text(
+                                            item.title,
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis,
+                                          ),
+                                          subtitle: Text(
+                                            item.episodeTitle,
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis,
+                                          ),
+                                          trailing: Row(
+                                            mainAxisSize: MainAxisSize.min,
+                                            children: [
+                                              if (item.integrityStatus ==
+                                                  OfflineMediaIntegrityStatus
+                                                      .damaged)
+                                                Icon(
+                                                  Icons.warning_amber_rounded,
+                                                  key: ValueKey(
+                                                    'offline-media-damaged-'
+                                                    '${item.id}',
+                                                  ),
+                                                  color: Theme.of(context)
+                                                      .colorScheme
+                                                      .error,
+                                                ),
+                                              const Icon(Icons.play_arrow),
+                                              IconButton(
+                                                key: ValueKey(
+                                                  'offline-media-verify-'
+                                                  '${item.id}',
+                                                ),
+                                                tooltip: context
+                                                    .l10n.verifyOfflineMedia,
+                                                onPressed: () =>
+                                                    _verifyOfflineMedia(item),
+                                                icon: const Icon(
+                                                  Icons.verified_outlined,
+                                                ),
+                                              ),
+                                              IconButton(
+                                                key: ValueKey(
+                                                  'offline-media-remove-'
+                                                  '${item.id}',
+                                                ),
+                                                tooltip: context
+                                                    .l10n.removeOfflineMedia,
+                                                onPressed: () =>
+                                                    _confirmRemoveOfflineMedia(
+                                                  item,
+                                                ),
+                                                icon: const Icon(
+                                                  Icons.delete_outline,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                          onTap: () => _playOfflineMedia(item),
+                                        ),
+                                      ),
+                                    );
+                                  },
+                                ),
+                              ),
+                            ],
+                          );
+                        },
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                  ],
+                );
+              },
+            ),
             Expanded(
               child: tasks.when(
                 loading: () =>
@@ -262,16 +411,18 @@ class _DownloadPageState extends ConsumerState<DownloadPage>
                         ];
                   final removableTaskIds = _removableTaskIds(items);
                   final clearableTaskIds = _clearableTaskIds(items);
-                  final clearableTaskIdsByAnime = _clearableTaskIdsByAnime(items);
+                  final clearableTaskIdsByAnime =
+                      _clearableTaskIdsByAnime(items);
                   final manualCleanupTaskIds = _manualCleanupTaskIds(items);
                   final manualCleanupTaskCount = manualCleanupTaskIds.length;
                   final showClearEndedTasksAction = clearableTaskIds.length > 1;
                   final showSingleReadyTaskAction =
                       clearableTaskIds.length == 1 &&
-                      manualCleanupTaskCount > 0;
+                          manualCleanupTaskCount > 0;
                   final showRecheckManualCleanupAction =
                       manualCleanupTaskCount > 1 ||
-                      (manualCleanupTaskCount > 0 && clearableTaskIds.length <= 1);
+                          (manualCleanupTaskCount > 0 &&
+                              clearableTaskIds.length <= 1);
                   final manualCleanupBatchRecheckLabel =
                       showRecheckManualCleanupAction
                           ? context.l10n.recheckLeftoverFilesCount(
@@ -481,16 +632,17 @@ class _DownloadPageState extends ConsumerState<DownloadPage>
                                   context,
                                   task.id,
                                   DownloadTaskBusyAction.remove,
-                                        () => ref
-                                          .read(httpDownloadServiceProvider)
-                                          .removeEndedTask(task.id),
+                                  () => ref
+                                      .read(httpDownloadServiceProvider)
+                                      .removeEndedTask(task.id),
                                 ),
                               ),
-                              onClearSameAnimeEndedDownloads: showSameAnimeClearAction
-                                  ? () => _handleClearSameAnimeEndedTasks(
-                                      task.animeId,
-                                    )
-                                  : null,
+                              onClearSameAnimeEndedDownloads:
+                                  showSameAnimeClearAction
+                                      ? () => _handleClearSameAnimeEndedTasks(
+                                            task.animeId,
+                                          )
+                                      : null,
                               clearSameAnimeEndedDownloadsLabel:
                                   showSameAnimeClearAction
                                       ? context.l10n.clearEndedDownloadsCount(
@@ -508,7 +660,8 @@ class _DownloadPageState extends ConsumerState<DownloadPage>
                                               episodeId: task.episodeId,
                                               animeTitle: task.title,
                                               episodeTitle: task.episodeTitle,
-                                              playUrl: Uri.file(task.localPath!).toString(),
+                                              playUrl: Uri.file(task.localPath!)
+                                                  .toString(),
                                               sourceId: task.sourceId,
                                             ),
                                           )
@@ -713,7 +866,8 @@ class _DownloadPageState extends ConsumerState<DownloadPage>
         clearedCount += 1;
       } catch (error) {
         failedCount += 1;
-        if (downloadActionErrorCode(error) == 'download_manual_cleanup_required') {
+        if (downloadActionErrorCode(error) ==
+            'download_manual_cleanup_required') {
           manualCleanupTaskIds.add(taskId);
         }
         final failureMessage = error is AppException &&
@@ -967,6 +1121,119 @@ class _DownloadPageState extends ConsumerState<DownloadPage>
     }
     return context.l10n.downloadPageLoadFailedMessage;
   }
+
+  Future<void> _verifyOfflineMedia(OfflineMediaItem item) async {
+    final status = await ref.read(offlineMediaServiceProvider).verify(item);
+    if (!mounted) return;
+    _showDownloadSnackBar(
+      status == OfflineMediaIntegrityStatus.playable
+          ? context.l10n.offlineMediaVerified
+          : context.l10n.offlineMediaDamaged,
+    );
+  }
+
+  Future<void> _playOfflineMedia(OfflineMediaItem item) async {
+    final status = await ref.read(offlineMediaServiceProvider).verify(item);
+    if (!mounted) return;
+    if (status == OfflineMediaIntegrityStatus.damaged) {
+      _showDownloadSnackBar(context.l10n.offlineMediaDamaged);
+      return;
+    }
+    await context.push(
+      '/player',
+      extra: offlineMediaPlayerRouteArgs(item),
+    );
+  }
+
+  Future<void> _confirmRemoveOfflineMedia(OfflineMediaItem item) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: Text(context.l10n.removeOfflineMedia),
+        content: Text(context.l10n.removeOfflineMediaConfirmation),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(false),
+            child: Text(context.l10n.cancel),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(dialogContext).pop(true),
+            child: Text(context.l10n.remove),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !mounted) return;
+
+    try {
+      await ref.read(offlineMediaServiceProvider).remove(item);
+      if (!mounted) return;
+      _showDownloadSnackBar(context.l10n.offlineMediaRemoved);
+    } on Object {
+      if (!mounted) return;
+      _showDownloadSnackBar(context.l10n.offlineMediaRemoveFailed);
+    }
+  }
+
+  Future<void> _confirmRemoveOfflineAnime(
+    List<OfflineMediaItem> items,
+  ) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: Text(context.l10n.removeOfflineAnime),
+        content: Text(context.l10n.removeOfflineAnimeConfirmation),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(false),
+            child: Text(context.l10n.cancel),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(dialogContext).pop(true),
+            child: Text(context.l10n.remove),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !mounted) return;
+
+    try {
+      await ref.read(offlineMediaServiceProvider).removeAll(items);
+      if (!mounted) return;
+      _showDownloadSnackBar(context.l10n.offlineAnimeRemoved);
+    } on Object {
+      if (!mounted) return;
+      _showDownloadSnackBar(context.l10n.offlineAnimeRemoveFailed);
+    }
+  }
+}
+
+@visibleForTesting
+List<List<OfflineMediaItem>> groupOfflineMediaByAnime(
+  List<OfflineMediaItem> items,
+) =>
+    _groupOfflineMediaByAnime(items);
+
+List<List<OfflineMediaItem>> _groupOfflineMediaByAnime(
+  List<OfflineMediaItem> items,
+) {
+  final groups = <String, List<OfflineMediaItem>>{};
+  for (final item in items) {
+    groups.putIfAbsent(item.animeId, () => []).add(item);
+  }
+  return groups.values.toList(growable: false);
+}
+
+@visibleForTesting
+PlayerRouteArgs offlineMediaPlayerRouteArgs(OfflineMediaItem item) {
+  return PlayerRouteArgs(
+    animeId: item.animeId,
+    episodeId: item.episodeId,
+    animeTitle: item.title,
+    episodeTitle: item.episodeTitle,
+    playUrl: Uri.file(item.manifestPath).toString(),
+    sourceId: 'offline',
+  );
 }
 
 class _DownloadSnackBarAction {
