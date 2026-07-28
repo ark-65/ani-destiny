@@ -801,6 +801,8 @@ class HttpDownloadService implements DownloadService {
         '#EXT-X-TARGETDURATION:${manifest.targetDuration!.inSeconds}',
       '#EXT-X-VERSION:$localProtocolVersion',
       '#EXT-X-MEDIA-SEQUENCE:${manifest.mediaSequence}',
+      if (manifest.discontinuitySequence > 0)
+        '#EXT-X-DISCONTINUITY-SEQUENCE:${manifest.discontinuitySequence}',
       '#EXT-X-PLAYLIST-TYPE:VOD',
     ];
 

@@ -506,6 +506,7 @@ video/index.m3u8
             request.response.write('''
 #EXTM3U
 #EXT-X-TARGETDURATION:6
+#EXT-X-DISCONTINUITY-SEQUENCE:11
 #EXTINF:6,
 segment.ts
 #EXT-X-ENDLIST
@@ -516,6 +517,7 @@ segment.ts
             request.response.write('''
 #EXTM3U
 #EXT-X-TARGETDURATION:6
+#EXT-X-DISCONTINUITY-SEQUENCE:7
 #EXTINF:6,
 segment.aac
 #EXT-X-ENDLIST
@@ -579,6 +581,18 @@ segment.aac
       expect(masterContent, contains('CODECS="avc1.640028,mp4a.40.2"'));
       expect(masterContent, contains('video/index.m3u8'));
       expect(masterContent, isNot(contains(origin)));
+      expect(
+        await File(
+          p.join(p.dirname(task.localPath!), 'video', 'index.m3u8'),
+        ).readAsString(),
+        contains('#EXT-X-DISCONTINUITY-SEQUENCE:11'),
+      );
+      expect(
+        await File(
+          p.join(p.dirname(task.localPath!), 'audio', 'index.m3u8'),
+        ).readAsString(),
+        contains('#EXT-X-DISCONTINUITY-SEQUENCE:7'),
+      );
       expect(
         File(
           p.join(

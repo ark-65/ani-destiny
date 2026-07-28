@@ -7,6 +7,7 @@
 ## [Unreleased]
 
 ### Fixed
+- Fixed offline HLS rewrites dropping `EXT-X-DISCONTINUITY-SEQUENCE`; video and external-audio child playlists now retain their independent timeline sequence values so complete local files remain synchronized when discontinuities occurred before the media window.
 - Fixed HLS masters selecting a highest-bandwidth variant that declares an external video group and then silently dropping that relationship from the offline asset. The downloader now skips variants whose alternate video cannot yet be fully localized and uses the highest-bandwidth complete alternative without an external video dependency.
 - Fixed HLS masters selecting a highest-bandwidth variant that declares an external subtitles group and then silently dropping that relationship from the offline asset. The downloader now skips variants whose subtitles cannot yet be fully localized and uses the highest-bandwidth complete alternative without an external subtitles dependency.
 - Fixed whole-episode HLS downloads failing when the highest-bandwidth variant references an ambiguous audio group. The downloader now skips variants whose audio track cannot be selected uniquely and uses the highest-bandwidth complete alternative in the same master to produce fully local audio/video media.

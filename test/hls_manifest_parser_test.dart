@@ -201,6 +201,39 @@ segment.ts
     );
   });
 
+  test('preserves a non-zero discontinuity sequence', () {
+    final manifest = parser.parse(
+      '''
+#EXTM3U
+#EXT-X-TARGETDURATION:6
+#EXT-X-DISCONTINUITY-SEQUENCE:17
+#EXTINF:6,
+segment.ts
+#EXT-X-ENDLIST
+''',
+      uri: Uri.parse('https://cdn.example.test/anime/index.m3u8'),
+    );
+
+    expect(manifest.discontinuitySequence, 17);
+  });
+
+  test('rejects an invalid discontinuity sequence', () {
+    expect(
+      () => parser.parse(
+        '''
+#EXTM3U
+#EXT-X-TARGETDURATION:6
+#EXT-X-DISCONTINUITY-SEQUENCE:-1
+#EXTINF:6,
+segment.ts
+#EXT-X-ENDLIST
+''',
+        uri: Uri.parse('https://cdn.example.test/anime/index.m3u8'),
+      ),
+      throwsFormatException,
+    );
+  });
+
   test('recognizes master playlist variants', () {
     final manifest = parser.parse(
       '''

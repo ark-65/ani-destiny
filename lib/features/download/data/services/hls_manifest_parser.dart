@@ -25,6 +25,7 @@ class HlsManifestParser {
     Duration? targetDuration;
     var protocolVersion = 1;
     var mediaSequence = 0;
+    var discontinuitySequence = 0;
     Duration? pendingSegmentDuration;
     String? pendingSegmentTitle;
     Map<String, String>? pendingVariantAttributes;
@@ -73,6 +74,18 @@ class HlsManifestParser {
           throw const FormatException('Invalid HLS media sequence.');
         }
         mediaSequence = value;
+        continue;
+      }
+      if (line.startsWith('#EXT-X-DISCONTINUITY-SEQUENCE:')) {
+        final value = int.tryParse(
+          line.substring('#EXT-X-DISCONTINUITY-SEQUENCE:'.length).trim(),
+        );
+        if (value == null || value < 0) {
+          throw const FormatException(
+            'Invalid HLS discontinuity sequence.',
+          );
+        }
+        discontinuitySequence = value;
         continue;
       }
       if (line.startsWith('#EXTINF:')) {
@@ -360,6 +373,7 @@ class HlsManifestParser {
       variables: Map.unmodifiable(variables),
       protocolVersion: protocolVersion,
       mediaSequence: mediaSequence,
+      discontinuitySequence: discontinuitySequence,
       targetDuration: targetDuration,
       initializationSegment: initializationSegment,
     );

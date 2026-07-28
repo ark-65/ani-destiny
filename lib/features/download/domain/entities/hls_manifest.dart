@@ -8,6 +8,7 @@ class HlsManifest {
     this.variables = const {},
     this.protocolVersion = 1,
     this.mediaSequence = 0,
+    this.discontinuitySequence = 0,
     this.targetDuration,
     this.initializationSegment,
   });
@@ -20,6 +21,7 @@ class HlsManifest {
   final Map<String, String> variables;
   final int protocolVersion;
   final int mediaSequence;
+  final int discontinuitySequence;
   final Duration? targetDuration;
   final HlsInitializationSegment? initializationSegment;
 
