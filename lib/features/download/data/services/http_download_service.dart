@@ -1044,6 +1044,18 @@ class HttpDownloadService implements DownloadService {
     if (renditions.isEmpty) {
       throw const FormatException('HLS alternate audio group is missing.');
     }
+    final selectedRendition = _unambiguousAudioRendition(renditions);
+    if (selectedRendition != null) {
+      return selectedRendition;
+    }
+    throw const FormatException(
+      'HLS audio rendition selection is ambiguous.',
+    );
+  }
+
+  HlsRendition? _unambiguousAudioRendition(
+    List<HlsRendition> renditions,
+  ) {
     final defaultRenditions = renditions
         .where((rendition) => rendition.isDefault)
         .toList(growable: false);
@@ -1059,9 +1071,7 @@ class HttpDownloadService implements DownloadService {
     if (renditions.length == 1) {
       return renditions.single;
     }
-    throw const FormatException(
-      'HLS audio rendition selection is ambiguous.',
-    );
+    return null;
   }
 
   Future<void> _writeHlsMasterManifest(
@@ -1106,17 +1116,22 @@ class HttpDownloadService implements DownloadService {
     if (variants.isEmpty) {
       throw const FormatException('HLS manifest contains no media entries.');
     }
-    final mediaVariants = variants
-        .where(
-          (variant) =>
-              variant.audioGroupId == null ||
-              renditions.any(
-                (rendition) =>
-                    rendition.type == 'AUDIO' &&
-                    rendition.groupId == variant.audioGroupId,
-              ),
-        )
-        .toList()
+    final mediaVariants = variants.where(
+      (variant) {
+        final audioGroupId = variant.audioGroupId;
+        if (audioGroupId == null) {
+          return true;
+        }
+        final audioRenditions = renditions
+            .where(
+              (rendition) =>
+                  rendition.type == 'AUDIO' &&
+                  rendition.groupId == audioGroupId,
+            )
+            .toList(growable: false);
+        return _unambiguousAudioRendition(audioRenditions) != null;
+      },
+    ).toList()
       ..sort((a, b) {
         final bandwidthA = a.bandwidth ?? 0;
         final bandwidthB = b.bandwidth ?? 0;
