@@ -234,6 +234,45 @@ segment.ts
     );
   });
 
+  test('preserves program date time on its media segment', () {
+    final manifest = parser.parse(
+      '''
+#EXTM3U
+#EXT-X-TARGETDURATION:6
+#EXT-X-PROGRAM-DATE-TIME:2026-07-29T01:02:03.456+08:00
+#EXTINF:6,
+segment-1.ts
+#EXTINF:6,
+segment-2.ts
+#EXT-X-ENDLIST
+''',
+      uri: Uri.parse('https://cdn.example.test/anime/index.m3u8'),
+    );
+
+    expect(
+      manifest.segments.first.programDateTime,
+      DateTime.parse('2026-07-29T01:02:03.456+08:00'),
+    );
+    expect(manifest.segments.last.programDateTime, isNull);
+  });
+
+  test('rejects an invalid program date time', () {
+    expect(
+      () => parser.parse(
+        '''
+#EXTM3U
+#EXT-X-TARGETDURATION:6
+#EXT-X-PROGRAM-DATE-TIME:not-a-date
+#EXTINF:6,
+segment.ts
+#EXT-X-ENDLIST
+''',
+        uri: Uri.parse('https://cdn.example.test/anime/index.m3u8'),
+      ),
+      throwsFormatException,
+    );
+  });
+
   test('recognizes master playlist variants', () {
     final manifest = parser.parse(
       '''

@@ -38,6 +38,7 @@ class HlsManifestParser {
     int? previousMapByteRangeEnd;
     var pendingDiscontinuity = false;
     var pendingGap = false;
+    DateTime? pendingProgramDateTime;
     var hasEndList = false;
 
     for (var index = 1; index < lines.length; index++) {
@@ -257,6 +258,15 @@ class HlsManifestParser {
         pendingGap = true;
         continue;
       }
+      if (line.startsWith('#EXT-X-PROGRAM-DATE-TIME:')) {
+        final value = line.substring('#EXT-X-PROGRAM-DATE-TIME:'.length).trim();
+        final parsed = DateTime.tryParse(value);
+        if (parsed == null) {
+          throw const FormatException('Invalid HLS program date time.');
+        }
+        pendingProgramDateTime = parsed;
+        continue;
+      }
       if (line.startsWith('#EXT-X-BYTERANGE:')) {
         pendingByteRange = _parseByteRange(
           line.substring('#EXT-X-BYTERANGE:'.length),
@@ -321,6 +331,7 @@ class HlsManifestParser {
             byteRange: byteRange,
             hasDiscontinuity: pendingDiscontinuity,
             isGap: pendingGap,
+            programDateTime: pendingProgramDateTime,
           ),
         );
         if (byteRange != null) {
@@ -332,6 +343,7 @@ class HlsManifestParser {
         pendingSegmentTitle = null;
         pendingDiscontinuity = false;
         pendingGap = false;
+        pendingProgramDateTime = null;
       }
     }
 

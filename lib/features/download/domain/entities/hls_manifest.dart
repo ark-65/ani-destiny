@@ -71,6 +71,7 @@ class HlsSegment {
     this.byteRange,
     this.hasDiscontinuity = false,
     this.isGap = false,
+    this.programDateTime,
   });
 
   final Uri uri;
@@ -81,6 +82,7 @@ class HlsSegment {
   final HlsByteRange? byteRange;
   final bool hasDiscontinuity;
   final bool isGap;
+  final DateTime? programDateTime;
 }
 
 class HlsByteRange {

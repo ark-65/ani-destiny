@@ -815,6 +815,11 @@ class HttpDownloadService implements DownloadService {
       if (segment.hasDiscontinuity) {
         manifestLines.add('#EXT-X-DISCONTINUITY');
       }
+      if (segment.programDateTime != null) {
+        manifestLines.add(
+          '#EXT-X-PROGRAM-DATE-TIME:${segment.programDateTime!.toIso8601String()}',
+        );
+      }
       if (segment.isGap) {
         final duration = segment.duration ?? const Duration(seconds: 1);
         final durationText =

@@ -507,6 +507,7 @@ video/index.m3u8
 #EXTM3U
 #EXT-X-TARGETDURATION:6
 #EXT-X-DISCONTINUITY-SEQUENCE:11
+#EXT-X-PROGRAM-DATE-TIME:2026-07-29T01:02:03.456Z
 #EXTINF:6,
 segment.ts
 #EXT-X-ENDLIST
@@ -518,6 +519,7 @@ segment.ts
 #EXTM3U
 #EXT-X-TARGETDURATION:6
 #EXT-X-DISCONTINUITY-SEQUENCE:7
+#EXT-X-PROGRAM-DATE-TIME:2026-07-29T01:02:03.456Z
 #EXTINF:6,
 segment.aac
 #EXT-X-ENDLIST
@@ -589,9 +591,21 @@ segment.aac
       );
       expect(
         await File(
+          p.join(p.dirname(task.localPath!), 'video', 'index.m3u8'),
+        ).readAsString(),
+        contains('#EXT-X-PROGRAM-DATE-TIME:2026-07-29T01:02:03.456Z'),
+      );
+      expect(
+        await File(
           p.join(p.dirname(task.localPath!), 'audio', 'index.m3u8'),
         ).readAsString(),
         contains('#EXT-X-DISCONTINUITY-SEQUENCE:7'),
+      );
+      expect(
+        await File(
+          p.join(p.dirname(task.localPath!), 'audio', 'index.m3u8'),
+        ).readAsString(),
+        contains('#EXT-X-PROGRAM-DATE-TIME:2026-07-29T01:02:03.456Z'),
       );
       expect(
         File(
