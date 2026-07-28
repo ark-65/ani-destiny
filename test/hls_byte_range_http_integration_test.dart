@@ -872,6 +872,85 @@ segment.ts
     expect(isPlayableOfflineMediaPath(task.localPath!), isTrue);
   });
 
+  test('master skips a higher-bandwidth external video variant', () async {
+    final tempDirectory = await Directory.systemTemp
+        .createTemp('ani-destiny-hls-http-video-variant');
+    addTearDown(() async {
+      if (tempDirectory.existsSync()) {
+        await tempDirectory.delete(recursive: true);
+      }
+    });
+
+    final server = await HttpServer.bind(InternetAddress.loopbackIPv4, 0);
+    addTearDown(server.close);
+    final requestedPaths = <String>[];
+    server.listen((request) {
+      requestedPaths.add(request.uri.path);
+      switch (request.uri.path) {
+        case '/master.m3u8':
+          request.response.write('''
+#EXTM3U
+#EXT-X-MEDIA:TYPE=VIDEO,GROUP-ID="angles",NAME="Main",DEFAULT=YES,URI="angles/main.m3u8"
+#EXT-X-STREAM-INF:BANDWIDTH=4800000,VIDEO="angles"
+high/video.m3u8
+#EXT-X-STREAM-INF:BANDWIDTH=2400000
+medium/video.m3u8
+''');
+        case '/medium/video.m3u8':
+          request.response.write('''
+#EXTM3U
+#EXT-X-TARGETDURATION:6
+#EXTINF:6,
+segment.ts
+#EXT-X-ENDLIST
+''');
+        case '/medium/segment.ts':
+          request.response.add([1, 2, 3, 4, 5]);
+        default:
+          request.response.statusCode = HttpStatus.notFound;
+      }
+      request.response.close();
+    });
+
+    final database = AppDatabase(NativeDatabase.memory());
+    addTearDown(database.close);
+    final repository = DownloadRepositoryImpl(database);
+    final origin = 'http://${server.address.host}:${server.port}';
+    final dio = Dio();
+    final service = HttpDownloadService(
+      dio: dio,
+      repository: repository,
+      applicationDocumentsDirectory: () async => tempDirectory,
+      hlsManifestLoader: DioHlsManifestLoader(dio: dio),
+    );
+
+    final taskId = await service.createTask(
+      animeId: 'anime-1',
+      episodeId: 'episode-1',
+      sourceId: 'loopback',
+      source: DownloadSource(
+        url: '$origin/master.m3u8',
+        kind: DownloadKind.hls,
+      ),
+      title: 'HLS Video Variant Test',
+      episodeTitle: 'Episode 1',
+    );
+
+    await service.start(taskId);
+
+    final task = (await repository.getTask(taskId))!;
+    expect(task.status, DownloadStatus.completed);
+    expect(task.downloadedBytes, 5);
+    expect(requestedPaths, [
+      '/master.m3u8',
+      '/medium/video.m3u8',
+      '/medium/segment.ts',
+    ]);
+    expect(requestedPaths, isNot(contains('/high/video.m3u8')));
+    expect(requestedPaths, isNot(contains('/angles/main.m3u8')));
+    expect(isPlayableOfflineMediaPath(task.localPath!), isTrue);
+  });
+
   test('invalid master variant bandwidth stops before media requests',
       () async {
     final tempDirectory = await Directory.systemTemp

@@ -266,6 +266,10 @@ class HlsManifestParser {
         if (audioGroupId != null && audioGroupId.isEmpty) {
           throw const FormatException('Invalid HLS variant audio group.');
         }
+        final videoGroupId = pendingVariantAttributes['VIDEO'];
+        if (videoGroupId != null && videoGroupId.isEmpty) {
+          throw const FormatException('Invalid HLS variant video group.');
+        }
         final subtitlesGroupId = pendingVariantAttributes['SUBTITLES'];
         if (subtitlesGroupId != null && subtitlesGroupId.isEmpty) {
           throw const FormatException('Invalid HLS variant subtitles group.');
@@ -276,6 +280,7 @@ class HlsManifestParser {
             bandwidth: bandwidth,
             resolution: pendingVariantAttributes['RESOLUTION'],
             audioGroupId: audioGroupId,
+            videoGroupId: videoGroupId,
             subtitlesGroupId: subtitlesGroupId,
             codecs: pendingVariantAttributes['CODECS'],
           ),

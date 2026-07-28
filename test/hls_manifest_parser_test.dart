@@ -252,13 +252,14 @@ video/index.m3u8
       '''
 #EXTM3U
 #EXT-X-MEDIA:TYPE=AUDIO,GROUP-ID="audio-main",NAME="Japanese",DEFAULT=YES,URI="audio/index.m3u8"
-#EXT-X-STREAM-INF:BANDWIDTH=2400000,RESOLUTION=1920x1080,CODECS="avc1.640028,mp4a.40.2",AUDIO="audio-main",SUBTITLES="subs-main"
+#EXT-X-STREAM-INF:BANDWIDTH=2400000,RESOLUTION=1920x1080,CODECS="avc1.640028,mp4a.40.2",AUDIO="audio-main",VIDEO="video-main",SUBTITLES="subs-main"
 video/index.m3u8
 ''',
       uri: Uri.parse('https://cdn.example.test/master.m3u8'),
     );
 
     expect(manifest.variants.single.audioGroupId, 'audio-main');
+    expect(manifest.variants.single.videoGroupId, 'video-main');
     expect(manifest.variants.single.subtitlesGroupId, 'subs-main');
     expect(manifest.variants.single.codecs, 'avc1.640028,mp4a.40.2');
     expect(manifest.renditions, hasLength(1));
@@ -269,6 +270,26 @@ video/index.m3u8
     expect(
       manifest.renditions.single.uri.toString(),
       'https://cdn.example.test/audio/index.m3u8',
+    );
+  });
+
+  test('rejects an empty alternate video group on a variant', () {
+    expect(
+      () => parser.parse(
+        '''
+#EXTM3U
+#EXT-X-STREAM-INF:BANDWIDTH=2400000,VIDEO=""
+video/index.m3u8
+''',
+        uri: Uri.parse('https://cdn.example.test/master.m3u8'),
+      ),
+      throwsA(
+        isA<FormatException>().having(
+          (error) => error.message,
+          'message',
+          'Invalid HLS variant video group.',
+        ),
+      ),
     );
   });
 

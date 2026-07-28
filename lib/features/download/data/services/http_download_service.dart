@@ -1118,7 +1118,7 @@ class HttpDownloadService implements DownloadService {
     }
     final mediaVariants = variants.where(
       (variant) {
-        if (variant.subtitlesGroupId != null) {
+        if (variant.videoGroupId != null || variant.subtitlesGroupId != null) {
           return false;
         }
         final audioGroupId = variant.audioGroupId;
