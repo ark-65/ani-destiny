@@ -135,7 +135,9 @@ class HlsManifestParser {
         final name = attributes['NAME'];
         final renditionUri = attributes['URI'];
         if (groupId == null ||
+            groupId.isEmpty ||
             name == null ||
+            name.isEmpty ||
             (renditionUri != null && renditionUri.isEmpty)) {
           throw const FormatException('Invalid HLS media rendition.');
         }
@@ -247,12 +249,16 @@ class HlsManifestParser {
         if (bandwidth == null || bandwidth <= 0) {
           throw const FormatException('Invalid HLS variant bandwidth.');
         }
+        final audioGroupId = pendingVariantAttributes['AUDIO'];
+        if (audioGroupId != null && audioGroupId.isEmpty) {
+          throw const FormatException('Invalid HLS variant audio group.');
+        }
         variants.add(
           HlsVariant(
             uri: resolvedUri,
             bandwidth: bandwidth,
             resolution: pendingVariantAttributes['RESOLUTION'],
-            audioGroupId: pendingVariantAttributes['AUDIO'],
+            audioGroupId: audioGroupId,
             codecs: pendingVariantAttributes['CODECS'],
           ),
         );

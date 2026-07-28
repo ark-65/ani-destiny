@@ -7,6 +7,7 @@
 ## [Unreleased]
 
 ### Fixed
+- Fixed HLS masters with an empty variant `AUDIO`, rendition `GROUP-ID`, or rendition `NAME` entering offline variant selection. The downloader now rejects invalid audio relationships before requesting media playlists, preventing empty groups from being matched and rewritten into misleading local masters.
 - Fixed HLS master variants with missing, non-numeric, or non-positive `BANDWIDTH` values entering offline downloads; they are now rejected as invalid manifests before media-playlist requests, preventing fabricated bandwidth values in local masters and pseudo-complete assets.
 - Fixed HLS masters failing the whole episode after always choosing the highest-bandwidth variant when it references a missing audio group; downloads now select the highest-bandwidth variant whose audio relationship can be fully localized before any media-playlist request, allowing an available quality in the same master to produce complete local audio/video assets.
 - Fixed offline HLS master playlists with alternate audio dropping the selected variant's `CODECS` hint; local playlists now retain the audio/video codec identifiers so players can select decoders reliably after the files pass integrity checks.

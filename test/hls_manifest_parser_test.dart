@@ -271,6 +271,52 @@ video/index.m3u8
     );
   });
 
+  for (final attributes in [
+    'TYPE=AUDIO,GROUP-ID="",NAME="Japanese",URI="audio/index.m3u8"',
+    'TYPE=AUDIO,GROUP-ID="audio-main",NAME="",URI="audio/index.m3u8"',
+  ]) {
+    test('rejects empty required audio rendition attributes', () {
+      expect(
+        () => parser.parse(
+          '''
+#EXTM3U
+#EXT-X-MEDIA:$attributes
+#EXT-X-STREAM-INF:BANDWIDTH=2400000,AUDIO="audio-main"
+video/index.m3u8
+''',
+          uri: Uri.parse('https://cdn.example.test/master.m3u8'),
+        ),
+        throwsA(
+          isA<FormatException>().having(
+            (error) => error.message,
+            'message',
+            'Invalid HLS media rendition.',
+          ),
+        ),
+      );
+    });
+  }
+
+  test('rejects an empty audio group on a master variant', () {
+    expect(
+      () => parser.parse(
+        '''
+#EXTM3U
+#EXT-X-STREAM-INF:BANDWIDTH=2400000,AUDIO=""
+video/index.m3u8
+''',
+        uri: Uri.parse('https://cdn.example.test/master.m3u8'),
+      ),
+      throwsA(
+        isA<FormatException>().having(
+          (error) => error.message,
+          'message',
+          'Invalid HLS variant audio group.',
+        ),
+      ),
+    );
+  });
+
   test('substitutes locally defined variables in HLS asset URIs', () {
     final manifest = parser.parse(
       r'''

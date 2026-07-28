@@ -756,6 +756,66 @@ video/index.m3u8
     expect(await File(task.localPath!).exists(), isFalse);
   });
 
+  test('empty master audio group stops before media requests', () async {
+    final tempDirectory = await Directory.systemTemp
+        .createTemp('ani-destiny-hls-http-empty-audio-group');
+    addTearDown(() async {
+      if (tempDirectory.existsSync()) {
+        await tempDirectory.delete(recursive: true);
+      }
+    });
+
+    final server = await HttpServer.bind(InternetAddress.loopbackIPv4, 0);
+    addTearDown(server.close);
+    final requestedPaths = <String>[];
+    server.listen((request) {
+      requestedPaths.add(request.uri.path);
+      if (request.uri.path == '/master.m3u8') {
+        request.response.write('''
+#EXTM3U
+#EXT-X-MEDIA:TYPE=AUDIO,GROUP-ID="",NAME="Japanese",DEFAULT=YES,URI="audio/index.m3u8"
+#EXT-X-STREAM-INF:BANDWIDTH=2400000,AUDIO=""
+video/index.m3u8
+''');
+      } else {
+        request.response.statusCode = HttpStatus.notFound;
+      }
+      request.response.close();
+    });
+
+    final database = AppDatabase(NativeDatabase.memory());
+    addTearDown(database.close);
+    final repository = DownloadRepositoryImpl(database);
+    final origin = 'http://${server.address.host}:${server.port}';
+    final dio = Dio();
+    final service = HttpDownloadService(
+      dio: dio,
+      repository: repository,
+      applicationDocumentsDirectory: () async => tempDirectory,
+      hlsManifestLoader: DioHlsManifestLoader(dio: dio),
+    );
+
+    final taskId = await service.createTask(
+      animeId: 'anime-1',
+      episodeId: 'episode-1',
+      sourceId: 'loopback',
+      source: DownloadSource(
+        url: '$origin/master.m3u8',
+        kind: DownloadKind.hls,
+      ),
+      title: 'Invalid HLS Audio Group Test',
+      episodeTitle: 'Episode 1',
+    );
+
+    await service.start(taskId);
+
+    final task = (await repository.getTask(taskId))!;
+    expect(task.status, DownloadStatus.failed);
+    expect(task.failureReason, DownloadFailureReason.invalidManifest);
+    expect(requestedPaths, ['/master.m3u8']);
+    expect(await File(task.localPath!).exists(), isFalse);
+  });
+
   test('embedded default audio does not download an external alternative',
       () async {
     final tempDirectory =
