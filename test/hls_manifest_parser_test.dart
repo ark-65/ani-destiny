@@ -297,6 +297,33 @@ video/index.m3u8
     });
   }
 
+  for (final selectionAttributes in [
+    'DEFAULT=MAYBE',
+    'AUTOSELECT=1',
+    'DEFAULT=YES,AUTOSELECT=NO',
+  ]) {
+    test('rejects invalid audio selection attributes $selectionAttributes', () {
+      expect(
+        () => parser.parse(
+          '''
+#EXTM3U
+#EXT-X-MEDIA:TYPE=AUDIO,GROUP-ID="audio-main",NAME="Japanese",$selectionAttributes,URI="audio/index.m3u8"
+#EXT-X-STREAM-INF:BANDWIDTH=2400000,AUDIO="audio-main"
+video/index.m3u8
+''',
+          uri: Uri.parse('https://cdn.example.test/master.m3u8'),
+        ),
+        throwsA(
+          isA<FormatException>().having(
+            (error) => error.message,
+            'message',
+            'Invalid HLS audio selection attributes.',
+          ),
+        ),
+      );
+    });
+  }
+
   test('rejects an empty audio group on a master variant', () {
     expect(
       () => parser.parse(

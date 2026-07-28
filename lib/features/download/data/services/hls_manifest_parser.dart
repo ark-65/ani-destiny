@@ -134,12 +134,25 @@ class HlsManifestParser {
         final groupId = attributes['GROUP-ID'];
         final name = attributes['NAME'];
         final renditionUri = attributes['URI'];
+        final defaultValue = attributes['DEFAULT'];
+        final autoselectValue = attributes['AUTOSELECT'];
         if (groupId == null ||
             groupId.isEmpty ||
             name == null ||
             name.isEmpty ||
             (renditionUri != null && renditionUri.isEmpty)) {
           throw const FormatException('Invalid HLS media rendition.');
+        }
+        if ((defaultValue != null &&
+                defaultValue != 'YES' &&
+                defaultValue != 'NO') ||
+            (autoselectValue != null &&
+                autoselectValue != 'YES' &&
+                autoselectValue != 'NO') ||
+            (defaultValue == 'YES' && autoselectValue == 'NO')) {
+          throw const FormatException(
+            'Invalid HLS audio selection attributes.',
+          );
         }
         renditions.add(
           HlsRendition(
@@ -149,8 +162,8 @@ class HlsManifestParser {
             uri: renditionUri == null
                 ? null
                 : uri.resolve(_substituteVariables(renditionUri, variables)),
-            isDefault: attributes['DEFAULT'] == 'YES',
-            autoselect: attributes['AUTOSELECT'] == 'YES',
+            isDefault: defaultValue == 'YES',
+            autoselect: autoselectValue == 'YES',
             language: attributes['LANGUAGE'],
           ),
         );
