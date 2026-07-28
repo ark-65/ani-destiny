@@ -324,6 +324,28 @@ video/index.m3u8
     });
   }
 
+  test('rejects multiple default renditions in one audio group', () {
+    expect(
+      () => parser.parse(
+        '''
+#EXTM3U
+#EXT-X-MEDIA:TYPE=AUDIO,GROUP-ID="audio-main",NAME="Japanese",DEFAULT=YES,URI="audio/ja.m3u8"
+#EXT-X-MEDIA:TYPE=AUDIO,GROUP-ID="audio-main",NAME="English",DEFAULT=YES,URI="audio/en.m3u8"
+#EXT-X-STREAM-INF:BANDWIDTH=2400000,AUDIO="audio-main"
+video/index.m3u8
+''',
+        uri: Uri.parse('https://cdn.example.test/master.m3u8'),
+      ),
+      throwsA(
+        isA<FormatException>().having(
+          (error) => error.message,
+          'message',
+          'HLS audio group contains multiple default renditions.',
+        ),
+      ),
+    );
+  });
+
   test('rejects an empty audio group on a master variant', () {
     expect(
       () => parser.parse(

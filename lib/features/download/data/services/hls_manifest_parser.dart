@@ -312,6 +312,15 @@ class HlsManifestParser {
       }
     }
 
+    final defaultAudioGroups = <String>{};
+    for (final rendition in renditions.where((item) => item.isDefault)) {
+      if (!defaultAudioGroups.add(rendition.groupId)) {
+        throw const FormatException(
+          'HLS audio group contains multiple default renditions.',
+        );
+      }
+    }
+
     if (segments.isEmpty && variants.isEmpty) {
       throw const FormatException('HLS manifest contains no media entries.');
     }

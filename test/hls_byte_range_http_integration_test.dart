@@ -816,7 +816,7 @@ video/index.m3u8
     expect(await File(task.localPath!).exists(), isFalse);
   });
 
-  test('invalid audio selection metadata stops before media requests',
+  test('multiple default audio renditions stop before media requests',
       () async {
     final tempDirectory = await Directory.systemTemp
         .createTemp('ani-destiny-hls-http-invalid-audio-selection');
@@ -834,7 +834,8 @@ video/index.m3u8
       if (request.uri.path == '/master.m3u8') {
         request.response.write('''
 #EXTM3U
-#EXT-X-MEDIA:TYPE=AUDIO,GROUP-ID="audio-main",NAME="Japanese",DEFAULT=YES,AUTOSELECT=NO,URI="audio/index.m3u8"
+#EXT-X-MEDIA:TYPE=AUDIO,GROUP-ID="audio-main",NAME="Japanese",DEFAULT=YES,URI="audio/ja.m3u8"
+#EXT-X-MEDIA:TYPE=AUDIO,GROUP-ID="audio-main",NAME="English",DEFAULT=YES,URI="audio/en.m3u8"
 #EXT-X-STREAM-INF:BANDWIDTH=2400000,AUDIO="audio-main"
 video/index.m3u8
 ''');
