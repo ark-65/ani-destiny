@@ -994,6 +994,18 @@ class HttpDownloadService implements DownloadService {
       manifest.variants,
       renditions: manifest.renditions,
     );
+    final audioGroupId = selectedVariant.audioGroupId;
+    final selectedAudio = audioGroupId == null
+        ? null
+        : _selectAudioRendition(
+            manifest.renditions
+                .where(
+                  (rendition) =>
+                      rendition.type == 'AUDIO' &&
+                      rendition.groupId == audioGroupId,
+                )
+                .toList(growable: false),
+          );
     final videoManifest = await manifestLoader.load(
       selectedVariant.uri,
       headers: headers,
@@ -1004,26 +1016,9 @@ class HttpDownloadService implements DownloadService {
         'HLS manifest contains nested master playlist.',
       );
     }
-    final audioGroupId = selectedVariant.audioGroupId;
-    if (audioGroupId == null) {
+    if (selectedAudio == null) {
       return _HlsMediaBundle(video: videoManifest);
     }
-    final groupRenditions = manifest.renditions
-        .where(
-          (rendition) =>
-              rendition.type == 'AUDIO' && rendition.groupId == audioGroupId,
-        )
-        .toList(growable: false);
-    if (groupRenditions.isEmpty) {
-      throw const FormatException('HLS alternate audio group is missing.');
-    }
-    final selectedAudio = groupRenditions.firstWhere(
-      (rendition) => rendition.isDefault,
-      orElse: () => groupRenditions.firstWhere(
-        (rendition) => rendition.autoselect,
-        orElse: () => groupRenditions.first,
-      ),
-    );
     if (selectedAudio.uri == null) {
       return _HlsMediaBundle(video: videoManifest);
     }
@@ -1042,6 +1037,30 @@ class HttpDownloadService implements DownloadService {
       audio: audioManifest,
       variant: selectedVariant,
       audioRendition: selectedAudio,
+    );
+  }
+
+  HlsRendition _selectAudioRendition(List<HlsRendition> renditions) {
+    if (renditions.isEmpty) {
+      throw const FormatException('HLS alternate audio group is missing.');
+    }
+    final defaultRenditions = renditions
+        .where((rendition) => rendition.isDefault)
+        .toList(growable: false);
+    if (defaultRenditions.length == 1) {
+      return defaultRenditions.single;
+    }
+    final autoselectRenditions = renditions
+        .where((rendition) => rendition.autoselect)
+        .toList(growable: false);
+    if (autoselectRenditions.length == 1) {
+      return autoselectRenditions.single;
+    }
+    if (renditions.length == 1) {
+      return renditions.single;
+    }
+    throw const FormatException(
+      'HLS audio rendition selection is ambiguous.',
     );
   }
 
