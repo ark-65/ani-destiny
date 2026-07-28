@@ -1118,6 +1118,9 @@ class HttpDownloadService implements DownloadService {
     }
     final mediaVariants = variants.where(
       (variant) {
+        if (variant.subtitlesGroupId != null) {
+          return false;
+        }
         final audioGroupId = variant.audioGroupId;
         if (audioGroupId == null) {
           return true;
@@ -1138,7 +1141,9 @@ class HttpDownloadService implements DownloadService {
         return bandwidthB.compareTo(bandwidthA);
       });
     if (mediaVariants.isEmpty) {
-      throw const FormatException('HLS alternate audio group is missing.');
+      throw const FormatException(
+        'HLS manifest contains no fully localizable variant.',
+      );
     }
     return mediaVariants.first;
   }

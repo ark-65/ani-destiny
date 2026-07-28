@@ -110,6 +110,7 @@ class HlsVariant {
     this.bandwidth,
     this.resolution,
     this.audioGroupId,
+    this.subtitlesGroupId,
     this.codecs,
   });
 
@@ -117,5 +118,6 @@ class HlsVariant {
   final int? bandwidth;
   final String? resolution;
   final String? audioGroupId;
+  final String? subtitlesGroupId;
   final String? codecs;
 }

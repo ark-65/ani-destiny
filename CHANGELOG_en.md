@@ -7,6 +7,7 @@
 ## [Unreleased]
 
 ### Fixed
+- Fixed HLS masters selecting a highest-bandwidth variant that declares an external subtitles group and then silently dropping that relationship from the offline asset. The downloader now skips variants whose subtitles cannot yet be fully localized and uses the highest-bandwidth complete alternative without an external subtitles dependency.
 - Fixed whole-episode HLS downloads failing when the highest-bandwidth variant references an ambiguous audio group. The downloader now skips variants whose audio track cannot be selected uniquely and uses the highest-bandwidth complete alternative in the same master to produce fully local audio/video media.
 - Fixed multilingual HLS downloads silently choosing an arbitrary language by playlist order when no unique default or autoselect rendition exists. Ambiguous AUDIO groups now fail before any audio or video media request, preventing complete offline files from being published with the wrong language.
 - Fixed HLS AUDIO groups allowing multiple `DEFAULT=YES` renditions and silently choosing by playlist order. The downloader now rejects masters with an ambiguous default language before media-playlist requests, preventing complete offline files from playing the wrong language.

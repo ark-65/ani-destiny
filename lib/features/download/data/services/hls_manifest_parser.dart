@@ -266,12 +266,17 @@ class HlsManifestParser {
         if (audioGroupId != null && audioGroupId.isEmpty) {
           throw const FormatException('Invalid HLS variant audio group.');
         }
+        final subtitlesGroupId = pendingVariantAttributes['SUBTITLES'];
+        if (subtitlesGroupId != null && subtitlesGroupId.isEmpty) {
+          throw const FormatException('Invalid HLS variant subtitles group.');
+        }
         variants.add(
           HlsVariant(
             uri: resolvedUri,
             bandwidth: bandwidth,
             resolution: pendingVariantAttributes['RESOLUTION'],
             audioGroupId: audioGroupId,
+            subtitlesGroupId: subtitlesGroupId,
             codecs: pendingVariantAttributes['CODECS'],
           ),
         );

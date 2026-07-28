@@ -252,13 +252,14 @@ video/index.m3u8
       '''
 #EXTM3U
 #EXT-X-MEDIA:TYPE=AUDIO,GROUP-ID="audio-main",NAME="Japanese",DEFAULT=YES,URI="audio/index.m3u8"
-#EXT-X-STREAM-INF:BANDWIDTH=2400000,RESOLUTION=1920x1080,CODECS="avc1.640028,mp4a.40.2",AUDIO="audio-main"
+#EXT-X-STREAM-INF:BANDWIDTH=2400000,RESOLUTION=1920x1080,CODECS="avc1.640028,mp4a.40.2",AUDIO="audio-main",SUBTITLES="subs-main"
 video/index.m3u8
 ''',
       uri: Uri.parse('https://cdn.example.test/master.m3u8'),
     );
 
     expect(manifest.variants.single.audioGroupId, 'audio-main');
+    expect(manifest.variants.single.subtitlesGroupId, 'subs-main');
     expect(manifest.variants.single.codecs, 'avc1.640028,mp4a.40.2');
     expect(manifest.renditions, hasLength(1));
     expect(manifest.renditions.single.type, 'AUDIO');
@@ -361,6 +362,26 @@ video/index.m3u8
           (error) => error.message,
           'message',
           'Invalid HLS variant audio group.',
+        ),
+      ),
+    );
+  });
+
+  test('rejects an empty subtitles group on a master variant', () {
+    expect(
+      () => parser.parse(
+        '''
+#EXTM3U
+#EXT-X-STREAM-INF:BANDWIDTH=2400000,SUBTITLES=""
+video/index.m3u8
+''',
+        uri: Uri.parse('https://cdn.example.test/master.m3u8'),
+      ),
+      throwsA(
+        isA<FormatException>().having(
+          (error) => error.message,
+          'message',
+          'Invalid HLS variant subtitles group.',
         ),
       ),
     );
