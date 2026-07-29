@@ -7,6 +7,7 @@
 ## [Unreleased]
 
 ### Fixed
+- Fixed source diagnostics retaining raw URLs with token or cookie query values in memory; the recorder now sanitizes URLs, error messages, and paths before retaining entries so sensitive parameters cannot flow into later diagnostic summaries.
 - Fixed offline HLS rewrites dropping the `EXT-X-START` suggested playback position. Local master and media playlists now preserve `TIME-OFFSET` and precise-start intent so complete assets keep the source-defined opening position offline, while invalid or duplicate tags are rejected before downloads.
 - Fixed offline HLS rewrites dropping segment `EXT-X-PROGRAM-DATE-TIME` tags. Video and external-audio child playlists now retain their absolute timeline anchors so renditions with different media sequences or windows can remain synchronized after all files are localized.
 - Fixed offline HLS rewrites dropping `EXT-X-DISCONTINUITY-SEQUENCE`; video and external-audio child playlists now retain their independent timeline sequence values so complete local files remain synchronized when discontinuities occurred before the media window.
