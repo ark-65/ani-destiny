@@ -201,6 +201,122 @@ segment.ts
     );
   });
 
+  test('preserves a non-zero discontinuity sequence', () {
+    final manifest = parser.parse(
+      '''
+#EXTM3U
+#EXT-X-TARGETDURATION:6
+#EXT-X-DISCONTINUITY-SEQUENCE:17
+#EXTINF:6,
+segment.ts
+#EXT-X-ENDLIST
+''',
+      uri: Uri.parse('https://cdn.example.test/anime/index.m3u8'),
+    );
+
+    expect(manifest.discontinuitySequence, 17);
+  });
+
+  test('rejects an invalid discontinuity sequence', () {
+    expect(
+      () => parser.parse(
+        '''
+#EXTM3U
+#EXT-X-TARGETDURATION:6
+#EXT-X-DISCONTINUITY-SEQUENCE:-1
+#EXTINF:6,
+segment.ts
+#EXT-X-ENDLIST
+''',
+        uri: Uri.parse('https://cdn.example.test/anime/index.m3u8'),
+      ),
+      throwsFormatException,
+    );
+  });
+
+  test('preserves program date time on its media segment', () {
+    final manifest = parser.parse(
+      '''
+#EXTM3U
+#EXT-X-TARGETDURATION:6
+#EXT-X-PROGRAM-DATE-TIME:2026-07-29T01:02:03.456+08:00
+#EXTINF:6,
+segment-1.ts
+#EXTINF:6,
+segment-2.ts
+#EXT-X-ENDLIST
+''',
+      uri: Uri.parse('https://cdn.example.test/anime/index.m3u8'),
+    );
+
+    expect(
+      manifest.segments.first.programDateTime,
+      DateTime.parse('2026-07-29T01:02:03.456+08:00'),
+    );
+    expect(manifest.segments.last.programDateTime, isNull);
+  });
+
+  test('rejects an invalid program date time', () {
+    expect(
+      () => parser.parse(
+        '''
+#EXTM3U
+#EXT-X-TARGETDURATION:6
+#EXT-X-PROGRAM-DATE-TIME:not-a-date
+#EXTINF:6,
+segment.ts
+#EXT-X-ENDLIST
+''',
+        uri: Uri.parse('https://cdn.example.test/anime/index.m3u8'),
+      ),
+      throwsFormatException,
+    );
+  });
+
+  test('preserves the suggested HLS start position', () {
+    final manifest = parser.parse(
+      '''
+#EXTM3U
+#EXT-X-START:TIME-OFFSET=-12.5,PRECISE=YES
+#EXT-X-TARGETDURATION:6
+#EXTINF:6,
+segment.ts
+#EXT-X-ENDLIST
+''',
+      uri: Uri.parse('https://cdn.example.test/anime/index.m3u8'),
+    );
+
+    expect(manifest.startPosition?.timeOffsetSeconds, -12.5);
+    expect(manifest.startPosition?.precise, isTrue);
+  });
+
+  test('rejects invalid or duplicate HLS start positions', () {
+    for (final startTags in [
+      ['#EXT-X-START:PRECISE=YES'],
+      ['#EXT-X-START:TIME-OFFSET=NaN'],
+      ['#EXT-X-START:TIME-OFFSET=1,PRECISE=MAYBE'],
+      [
+        '#EXT-X-START:TIME-OFFSET=1',
+        '#EXT-X-START:TIME-OFFSET=2',
+      ],
+    ]) {
+      expect(
+        () => parser.parse(
+          [
+            '#EXTM3U',
+            ...startTags,
+            '#EXT-X-TARGETDURATION:6',
+            '#EXTINF:6,',
+            'segment.ts',
+            '#EXT-X-ENDLIST',
+          ].join('\n'),
+          uri: Uri.parse('https://cdn.example.test/anime/index.m3u8'),
+        ),
+        throwsFormatException,
+      );
+    }
+  });
+
   test('recognizes master playlist variants', () {
     final manifest = parser.parse(
       '''
@@ -223,18 +339,44 @@ segment.ts
     );
   });
 
+  for (final bandwidth in ['', 'invalid', '0', '-1']) {
+    test('rejects invalid master variant bandwidth "$bandwidth"', () {
+      final bandwidthAttribute =
+          bandwidth.isEmpty ? '' : 'BANDWIDTH=$bandwidth';
+      expect(
+        () => parser.parse(
+          '''
+#EXTM3U
+#EXT-X-STREAM-INF:$bandwidthAttribute
+video/index.m3u8
+''',
+          uri: Uri.parse('https://cdn.example.test/master.m3u8'),
+        ),
+        throwsA(
+          isA<FormatException>().having(
+            (error) => error.message,
+            'message',
+            'Invalid HLS variant bandwidth.',
+          ),
+        ),
+      );
+    });
+  }
+
   test('preserves alternate audio group on master playlist variants', () {
     final manifest = parser.parse(
       '''
 #EXTM3U
 #EXT-X-MEDIA:TYPE=AUDIO,GROUP-ID="audio-main",NAME="Japanese",DEFAULT=YES,URI="audio/index.m3u8"
-#EXT-X-STREAM-INF:BANDWIDTH=2400000,RESOLUTION=1920x1080,CODECS="avc1.640028,mp4a.40.2",AUDIO="audio-main"
+#EXT-X-STREAM-INF:BANDWIDTH=2400000,RESOLUTION=1920x1080,CODECS="avc1.640028,mp4a.40.2",AUDIO="audio-main",VIDEO="video-main",SUBTITLES="subs-main"
 video/index.m3u8
 ''',
       uri: Uri.parse('https://cdn.example.test/master.m3u8'),
     );
 
     expect(manifest.variants.single.audioGroupId, 'audio-main');
+    expect(manifest.variants.single.videoGroupId, 'video-main');
+    expect(manifest.variants.single.subtitlesGroupId, 'subs-main');
     expect(manifest.variants.single.codecs, 'avc1.640028,mp4a.40.2');
     expect(manifest.renditions, hasLength(1));
     expect(manifest.renditions.single.type, 'AUDIO');
@@ -244,6 +386,141 @@ video/index.m3u8
     expect(
       manifest.renditions.single.uri.toString(),
       'https://cdn.example.test/audio/index.m3u8',
+    );
+  });
+
+  test('rejects an empty alternate video group on a variant', () {
+    expect(
+      () => parser.parse(
+        '''
+#EXTM3U
+#EXT-X-STREAM-INF:BANDWIDTH=2400000,VIDEO=""
+video/index.m3u8
+''',
+        uri: Uri.parse('https://cdn.example.test/master.m3u8'),
+      ),
+      throwsA(
+        isA<FormatException>().having(
+          (error) => error.message,
+          'message',
+          'Invalid HLS variant video group.',
+        ),
+      ),
+    );
+  });
+
+  for (final attributes in [
+    'TYPE=AUDIO,GROUP-ID="",NAME="Japanese",URI="audio/index.m3u8"',
+    'TYPE=AUDIO,GROUP-ID="audio-main",NAME="",URI="audio/index.m3u8"',
+  ]) {
+    test('rejects empty required audio rendition attributes', () {
+      expect(
+        () => parser.parse(
+          '''
+#EXTM3U
+#EXT-X-MEDIA:$attributes
+#EXT-X-STREAM-INF:BANDWIDTH=2400000,AUDIO="audio-main"
+video/index.m3u8
+''',
+          uri: Uri.parse('https://cdn.example.test/master.m3u8'),
+        ),
+        throwsA(
+          isA<FormatException>().having(
+            (error) => error.message,
+            'message',
+            'Invalid HLS media rendition.',
+          ),
+        ),
+      );
+    });
+  }
+
+  for (final selectionAttributes in [
+    'DEFAULT=MAYBE',
+    'AUTOSELECT=1',
+    'DEFAULT=YES,AUTOSELECT=NO',
+  ]) {
+    test('rejects invalid audio selection attributes $selectionAttributes', () {
+      expect(
+        () => parser.parse(
+          '''
+#EXTM3U
+#EXT-X-MEDIA:TYPE=AUDIO,GROUP-ID="audio-main",NAME="Japanese",$selectionAttributes,URI="audio/index.m3u8"
+#EXT-X-STREAM-INF:BANDWIDTH=2400000,AUDIO="audio-main"
+video/index.m3u8
+''',
+          uri: Uri.parse('https://cdn.example.test/master.m3u8'),
+        ),
+        throwsA(
+          isA<FormatException>().having(
+            (error) => error.message,
+            'message',
+            'Invalid HLS audio selection attributes.',
+          ),
+        ),
+      );
+    });
+  }
+
+  test('rejects multiple default renditions in one audio group', () {
+    expect(
+      () => parser.parse(
+        '''
+#EXTM3U
+#EXT-X-MEDIA:TYPE=AUDIO,GROUP-ID="audio-main",NAME="Japanese",DEFAULT=YES,URI="audio/ja.m3u8"
+#EXT-X-MEDIA:TYPE=AUDIO,GROUP-ID="audio-main",NAME="English",DEFAULT=YES,URI="audio/en.m3u8"
+#EXT-X-STREAM-INF:BANDWIDTH=2400000,AUDIO="audio-main"
+video/index.m3u8
+''',
+        uri: Uri.parse('https://cdn.example.test/master.m3u8'),
+      ),
+      throwsA(
+        isA<FormatException>().having(
+          (error) => error.message,
+          'message',
+          'HLS audio group contains multiple default renditions.',
+        ),
+      ),
+    );
+  });
+
+  test('rejects an empty audio group on a master variant', () {
+    expect(
+      () => parser.parse(
+        '''
+#EXTM3U
+#EXT-X-STREAM-INF:BANDWIDTH=2400000,AUDIO=""
+video/index.m3u8
+''',
+        uri: Uri.parse('https://cdn.example.test/master.m3u8'),
+      ),
+      throwsA(
+        isA<FormatException>().having(
+          (error) => error.message,
+          'message',
+          'Invalid HLS variant audio group.',
+        ),
+      ),
+    );
+  });
+
+  test('rejects an empty subtitles group on a master variant', () {
+    expect(
+      () => parser.parse(
+        '''
+#EXTM3U
+#EXT-X-STREAM-INF:BANDWIDTH=2400000,SUBTITLES=""
+video/index.m3u8
+''',
+        uri: Uri.parse('https://cdn.example.test/master.m3u8'),
+      ),
+      throwsA(
+        isA<FormatException>().having(
+          (error) => error.message,
+          'message',
+          'Invalid HLS variant subtitles group.',
+        ),
+      ),
     );
   });
 

@@ -8,7 +8,9 @@ class HlsManifest {
     this.variables = const {},
     this.protocolVersion = 1,
     this.mediaSequence = 0,
+    this.discontinuitySequence = 0,
     this.targetDuration,
+    this.startPosition,
     this.initializationSegment,
   });
 
@@ -20,11 +22,23 @@ class HlsManifest {
   final Map<String, String> variables;
   final int protocolVersion;
   final int mediaSequence;
+  final int discontinuitySequence;
   final Duration? targetDuration;
+  final HlsStartPosition? startPosition;
   final HlsInitializationSegment? initializationSegment;
 
   bool get isMasterPlaylist => variants.isNotEmpty;
   bool get isMediaPlaylist => segments.isNotEmpty;
+}
+
+class HlsStartPosition {
+  const HlsStartPosition({
+    required this.timeOffsetSeconds,
+    this.precise = false,
+  });
+
+  final double timeOffsetSeconds;
+  final bool precise;
 }
 
 class HlsRendition {
@@ -69,6 +83,7 @@ class HlsSegment {
     this.byteRange,
     this.hasDiscontinuity = false,
     this.isGap = false,
+    this.programDateTime,
   });
 
   final Uri uri;
@@ -79,6 +94,7 @@ class HlsSegment {
   final HlsByteRange? byteRange;
   final bool hasDiscontinuity;
   final bool isGap;
+  final DateTime? programDateTime;
 }
 
 class HlsByteRange {
@@ -110,6 +126,8 @@ class HlsVariant {
     this.bandwidth,
     this.resolution,
     this.audioGroupId,
+    this.videoGroupId,
+    this.subtitlesGroupId,
     this.codecs,
   });
 
@@ -117,5 +135,7 @@ class HlsVariant {
   final int? bandwidth;
   final String? resolution;
   final String? audioGroupId;
+  final String? videoGroupId;
+  final String? subtitlesGroupId;
   final String? codecs;
 }

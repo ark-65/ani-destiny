@@ -5,16 +5,20 @@ import 'dart:io';
 
 import 'package:ani_destiny/core/storage/app_database.dart';
 import 'package:ani_destiny/features/download/data/repositories/download_repository_impl.dart';
+import 'package:ani_destiny/features/download/data/repositories/offline_media_repository_impl.dart';
 import 'package:ani_destiny/features/download/data/services/hls_manifest_loader.dart';
 import 'package:ani_destiny/features/download/data/services/hls_manifest_parser.dart';
 import 'package:ani_destiny/features/download/data/services/http_download_service.dart';
+import 'package:ani_destiny/features/download/data/services/local_offline_media_service.dart';
 import 'package:ani_destiny/features/download/domain/entities/download_failure_reason.dart';
 import 'package:ani_destiny/features/download/domain/entities/download_kind.dart';
 import 'package:ani_destiny/features/download/domain/entities/download_source.dart';
 import 'package:ani_destiny/features/download/domain/entities/download_task.dart';
 import 'package:ani_destiny/features/download/domain/entities/hls_manifest.dart';
+import 'package:ani_destiny/features/download/domain/entities/offline_media_item.dart';
 import 'package:ani_destiny/features/download/domain/services/hls_manifest_loader.dart';
 import 'package:ani_destiny/features/download/domain/services/offline_media_integrity.dart';
+import 'package:ani_destiny/features/download/presentation/pages/download_page.dart';
 import 'package:dio/dio.dart';
 import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -474,10 +478,223 @@ segment.ts
     expect(File(task.localPath!).existsSync(), isFalse);
   });
 
-  test('alternate audio master downloads local video and default audio',
+  test(
+    'alternate audio download survives database restart as local playback',
+    () async {
+      final tempDirectory =
+          await Directory.systemTemp.createTemp('ani-destiny-hls-http-audio');
+      addTearDown(() async {
+        if (tempDirectory.existsSync()) {
+          await tempDirectory.delete(recursive: true);
+        }
+      });
+
+      final server = await HttpServer.bind(InternetAddress.loopbackIPv4, 0);
+      addTearDown(server.close);
+      final requestedPaths = <String>[];
+      server.listen((request) {
+        requestedPaths.add(request.uri.path);
+        switch (request.uri.path) {
+          case '/master.m3u8':
+            request.response.write('''
+#EXTM3U
+#EXT-X-START:TIME-OFFSET=12.5,PRECISE=YES
+#EXT-X-MEDIA:TYPE=AUDIO,GROUP-ID="audio-main",NAME="Japanese",DEFAULT=YES,URI="audio/index.m3u8"
+#EXT-X-STREAM-INF:BANDWIDTH=2400000,CODECS="avc1.640028,mp4a.40.2",AUDIO="audio-main"
+video/index.m3u8
+''');
+          case '/video/index.m3u8':
+            request.response.write('''
+#EXTM3U
+#EXT-X-TARGETDURATION:6
+#EXT-X-DISCONTINUITY-SEQUENCE:11
+#EXT-X-START:TIME-OFFSET=-6
+#EXT-X-PROGRAM-DATE-TIME:2026-07-29T01:02:03.456Z
+#EXTINF:6,
+segment.ts
+#EXT-X-ENDLIST
+''');
+          case '/video/segment.ts':
+            request.response.add([1, 2, 3, 4]);
+          case '/audio/index.m3u8':
+            request.response.write('''
+#EXTM3U
+#EXT-X-TARGETDURATION:6
+#EXT-X-DISCONTINUITY-SEQUENCE:7
+#EXT-X-PROGRAM-DATE-TIME:2026-07-29T01:02:03.456Z
+#EXTINF:6,
+segment.aac
+#EXT-X-ENDLIST
+''');
+          case '/audio/segment.aac':
+            request.response.add([5, 6, 7]);
+          default:
+            request.response.statusCode = HttpStatus.notFound;
+        }
+        request.response.close();
+      });
+
+      final databasePath = p.join(tempDirectory.path, 'app.sqlite');
+      final database = AppDatabase(NativeDatabase(File(databasePath)));
+      var databaseClosed = false;
+      addTearDown(() async {
+        if (!databaseClosed) {
+          await database.close();
+        }
+      });
+      final repository = DownloadRepositoryImpl(database);
+      final offlineRepository = OfflineMediaRepositoryImpl(database);
+      final origin = 'http://${server.address.host}:${server.port}';
+      final dio = Dio();
+      final service = HttpDownloadService(
+        dio: dio,
+        repository: repository,
+        offlineMediaRepository: offlineRepository,
+        applicationDocumentsDirectory: () async => tempDirectory,
+        hlsManifestLoader: DioHlsManifestLoader(dio: dio),
+      );
+
+      final taskId = await service.createTask(
+        animeId: 'anime-1',
+        episodeId: 'episode-1',
+        sourceId: 'loopback',
+        source: DownloadSource(
+          url: '$origin/master.m3u8',
+          kind: DownloadKind.hls,
+        ),
+        title: 'HLS Alternate Audio Test',
+        episodeTitle: 'Episode 1',
+      );
+
+      await service.start(taskId);
+
+      final task = (await repository.getTask(taskId))!;
+      expect(task.status, DownloadStatus.completed);
+      expect(task.downloadedBytes, 7);
+      expect(requestedPaths, [
+        '/master.m3u8',
+        '/video/index.m3u8',
+        '/audio/index.m3u8',
+        '/video/segment.ts',
+        '/audio/segment.aac',
+      ]);
+      final masterContent = await File(task.localPath!).readAsString();
+      expect(masterContent, contains('TYPE=AUDIO'));
+      expect(masterContent, contains('URI="audio/index.m3u8"'));
+      expect(masterContent, contains('AUDIO="offline-audio"'));
+      expect(masterContent, contains('CODECS="avc1.640028,mp4a.40.2"'));
+      expect(masterContent, contains('video/index.m3u8'));
+      expect(
+        masterContent,
+        contains('#EXT-X-START:TIME-OFFSET=12.5,PRECISE=YES'),
+      );
+      expect(masterContent, isNot(contains(origin)));
+      expect(
+        await File(
+          p.join(p.dirname(task.localPath!), 'video', 'index.m3u8'),
+        ).readAsString(),
+        contains('#EXT-X-DISCONTINUITY-SEQUENCE:11'),
+      );
+      expect(
+        await File(
+          p.join(p.dirname(task.localPath!), 'video', 'index.m3u8'),
+        ).readAsString(),
+        contains('#EXT-X-START:TIME-OFFSET=-6.0'),
+      );
+      expect(
+        await File(
+          p.join(p.dirname(task.localPath!), 'video', 'index.m3u8'),
+        ).readAsString(),
+        contains('#EXT-X-PROGRAM-DATE-TIME:2026-07-29T01:02:03.456Z'),
+      );
+      expect(
+        await File(
+          p.join(p.dirname(task.localPath!), 'audio', 'index.m3u8'),
+        ).readAsString(),
+        contains('#EXT-X-DISCONTINUITY-SEQUENCE:7'),
+      );
+      expect(
+        await File(
+          p.join(p.dirname(task.localPath!), 'audio', 'index.m3u8'),
+        ).readAsString(),
+        contains('#EXT-X-PROGRAM-DATE-TIME:2026-07-29T01:02:03.456Z'),
+      );
+      expect(
+        File(
+          p.join(
+            p.dirname(task.localPath!),
+            'video',
+            'segments',
+            'segment-000000.ts',
+          ),
+        ).readAsBytesSync(),
+        [1, 2, 3, 4],
+      );
+      expect(
+        File(
+          p.join(
+            p.dirname(task.localPath!),
+            'audio',
+            'segments',
+            'segment-000000.aac',
+          ),
+        ).readAsBytesSync(),
+        [5, 6, 7],
+      );
+      expect(isPlayableOfflineMediaPath(task.localPath!), isTrue);
+
+      final published = (await offlineRepository.getAll()).single;
+      expect(published.downloadTaskId, taskId);
+      expect(published.manifestPath, task.localPath);
+      expect(published.downloadedBytes, 7);
+      expect(
+        await LocalOfflineMediaService(
+          repository: offlineRepository,
+        ).verify(published),
+        OfflineMediaIntegrityStatus.playable,
+      );
+
+      await server.close(force: true);
+      final requestCountBeforeRestart = requestedPaths.length;
+      await database.close();
+      databaseClosed = true;
+
+      final restartedDatabase = AppDatabase(NativeDatabase(File(databasePath)));
+      addTearDown(restartedDatabase.close);
+      final restartedRepository = OfflineMediaRepositoryImpl(restartedDatabase);
+      final restored = (await restartedRepository.getAll()).single;
+
+      expect(restored.integrityStatus, OfflineMediaIntegrityStatus.playable);
+      expect(
+        await LocalOfflineMediaService(
+          repository: restartedRepository,
+        ).verify(restored),
+        OfflineMediaIntegrityStatus.playable,
+      );
+      final routeArgs = offlineMediaPlayerRouteArgs(restored);
+      expect(routeArgs.playUrl, Uri.file(task.localPath!).toString());
+      expect(routeArgs.sourceId, 'offline');
+      expect(routeArgs.playHeaders, isEmpty);
+      expect(isPlayableOfflineMediaUrl(routeArgs.playUrl), isTrue);
+      expect(requestedPaths.length, requestCountBeforeRestart);
+
+      await File(
+        p.join(
+          p.dirname(task.localPath!),
+          'audio',
+          'segments',
+          'segment-000000.aac',
+        ),
+      ).delete();
+      expect(isPlayableOfflineMediaPath(task.localPath!), isFalse);
+    },
+  );
+
+  test(
+      'master selects highest-bandwidth variant with a localizable audio group',
       () async {
-    final tempDirectory =
-        await Directory.systemTemp.createTemp('ani-destiny-hls-http-audio');
+    final tempDirectory = await Directory.systemTemp
+        .createTemp('ani-destiny-hls-http-variant-selection');
     addTearDown(() async {
       if (tempDirectory.existsSync()) {
         await tempDirectory.delete(recursive: true);
@@ -493,11 +710,13 @@ segment.ts
         case '/master.m3u8':
           request.response.write('''
 #EXTM3U
-#EXT-X-MEDIA:TYPE=AUDIO,GROUP-ID="audio-main",NAME="Japanese",DEFAULT=YES,URI="audio/index.m3u8"
-#EXT-X-STREAM-INF:BANDWIDTH=2400000,CODECS="avc1.640028,mp4a.40.2",AUDIO="audio-main"
-video/index.m3u8
+#EXT-X-MEDIA:TYPE=AUDIO,GROUP-ID="audio-complete",NAME="Japanese",DEFAULT=YES,URI="audio/index.m3u8"
+#EXT-X-STREAM-INF:BANDWIDTH=4800000,AUDIO="audio-missing"
+high/video.m3u8
+#EXT-X-STREAM-INF:BANDWIDTH=2400000,CODECS="avc1.640028,mp4a.40.2",AUDIO="audio-complete"
+medium/video.m3u8
 ''');
-        case '/video/index.m3u8':
+        case '/medium/video.m3u8':
           request.response.write('''
 #EXTM3U
 #EXT-X-TARGETDURATION:6
@@ -505,7 +724,7 @@ video/index.m3u8
 segment.ts
 #EXT-X-ENDLIST
 ''');
-        case '/video/segment.ts':
+        case '/medium/segment.ts':
           request.response.add([1, 2, 3, 4]);
         case '/audio/index.m3u8':
           request.response.write('''
@@ -543,7 +762,7 @@ segment.aac
         url: '$origin/master.m3u8',
         kind: DownloadKind.hls,
       ),
-      title: 'HLS Alternate Audio Test',
+      title: 'HLS Variant Selection Test',
       episodeTitle: 'Episode 1',
     );
 
@@ -554,50 +773,516 @@ segment.aac
     expect(task.downloadedBytes, 7);
     expect(requestedPaths, [
       '/master.m3u8',
-      '/video/index.m3u8',
+      '/medium/video.m3u8',
       '/audio/index.m3u8',
-      '/video/segment.ts',
+      '/medium/segment.ts',
       '/audio/segment.aac',
     ]);
+    expect(requestedPaths, isNot(contains('/high/video.m3u8')));
     final masterContent = await File(task.localPath!).readAsString();
-    expect(masterContent, contains('TYPE=AUDIO'));
-    expect(masterContent, contains('URI="audio/index.m3u8"'));
-    expect(masterContent, contains('AUDIO="offline-audio"'));
     expect(masterContent, contains('CODECS="avc1.640028,mp4a.40.2"'));
     expect(masterContent, contains('video/index.m3u8'));
     expect(masterContent, isNot(contains(origin)));
-    expect(
-      File(
-        p.join(
-          p.dirname(task.localPath!),
-          'video',
-          'segments',
-          'segment-000000.ts',
-        ),
-      ).readAsBytesSync(),
-      [1, 2, 3, 4],
-    );
-    expect(
-      File(
-        p.join(
-          p.dirname(task.localPath!),
-          'audio',
-          'segments',
-          'segment-000000.aac',
-        ),
-      ).readAsBytesSync(),
-      [5, 6, 7],
-    );
     expect(isPlayableOfflineMediaPath(task.localPath!), isTrue);
-    await File(
-      p.join(
-        p.dirname(task.localPath!),
-        'audio',
-        'segments',
-        'segment-000000.aac',
+  });
+
+  test('master skips a higher-bandwidth ambiguous audio group', () async {
+    final tempDirectory = await Directory.systemTemp
+        .createTemp('ani-destiny-hls-http-unambiguous-variant');
+    addTearDown(() async {
+      if (tempDirectory.existsSync()) {
+        await tempDirectory.delete(recursive: true);
+      }
+    });
+
+    final server = await HttpServer.bind(InternetAddress.loopbackIPv4, 0);
+    addTearDown(server.close);
+    final requestedPaths = <String>[];
+    server.listen((request) {
+      requestedPaths.add(request.uri.path);
+      switch (request.uri.path) {
+        case '/master.m3u8':
+          request.response.write('''
+#EXTM3U
+#EXT-X-MEDIA:TYPE=AUDIO,GROUP-ID="audio-ambiguous",NAME="Japanese",AUTOSELECT=YES,URI="ambiguous/ja.m3u8"
+#EXT-X-MEDIA:TYPE=AUDIO,GROUP-ID="audio-ambiguous",NAME="English",AUTOSELECT=YES,URI="ambiguous/en.m3u8"
+#EXT-X-MEDIA:TYPE=AUDIO,GROUP-ID="audio-complete",NAME="Japanese",DEFAULT=YES,URI="audio/index.m3u8"
+#EXT-X-STREAM-INF:BANDWIDTH=4800000,AUDIO="audio-ambiguous"
+high/video.m3u8
+#EXT-X-STREAM-INF:BANDWIDTH=2400000,CODECS="avc1.640028,mp4a.40.2",AUDIO="audio-complete"
+medium/video.m3u8
+''');
+        case '/medium/video.m3u8':
+          request.response.write('''
+#EXTM3U
+#EXT-X-TARGETDURATION:6
+#EXTINF:6,
+segment.ts
+#EXT-X-ENDLIST
+''');
+        case '/medium/segment.ts':
+          request.response.add([1, 2, 3, 4]);
+        case '/audio/index.m3u8':
+          request.response.write('''
+#EXTM3U
+#EXT-X-TARGETDURATION:6
+#EXTINF:6,
+segment.aac
+#EXT-X-ENDLIST
+''');
+        case '/audio/segment.aac':
+          request.response.add([5, 6, 7]);
+        default:
+          request.response.statusCode = HttpStatus.notFound;
+      }
+      request.response.close();
+    });
+
+    final database = AppDatabase(NativeDatabase.memory());
+    addTearDown(database.close);
+    final repository = DownloadRepositoryImpl(database);
+    final origin = 'http://${server.address.host}:${server.port}';
+    final dio = Dio();
+    final service = HttpDownloadService(
+      dio: dio,
+      repository: repository,
+      applicationDocumentsDirectory: () async => tempDirectory,
+      hlsManifestLoader: DioHlsManifestLoader(dio: dio),
+    );
+
+    final taskId = await service.createTask(
+      animeId: 'anime-1',
+      episodeId: 'episode-1',
+      sourceId: 'loopback',
+      source: DownloadSource(
+        url: '$origin/master.m3u8',
+        kind: DownloadKind.hls,
       ),
-    ).delete();
-    expect(isPlayableOfflineMediaPath(task.localPath!), isFalse);
+      title: 'HLS Unambiguous Variant Test',
+      episodeTitle: 'Episode 1',
+    );
+
+    await service.start(taskId);
+
+    final task = (await repository.getTask(taskId))!;
+    expect(task.status, DownloadStatus.completed);
+    expect(task.downloadedBytes, 7);
+    expect(requestedPaths, [
+      '/master.m3u8',
+      '/medium/video.m3u8',
+      '/audio/index.m3u8',
+      '/medium/segment.ts',
+      '/audio/segment.aac',
+    ]);
+    expect(requestedPaths, isNot(contains('/high/video.m3u8')));
+    expect(requestedPaths, isNot(contains('/ambiguous/ja.m3u8')));
+    expect(requestedPaths, isNot(contains('/ambiguous/en.m3u8')));
+    final masterContent = await File(task.localPath!).readAsString();
+    expect(masterContent, contains('CODECS="avc1.640028,mp4a.40.2"'));
+    expect(masterContent, isNot(contains(origin)));
+    expect(isPlayableOfflineMediaPath(task.localPath!), isTrue);
+  });
+
+  test('master skips a higher-bandwidth external subtitles variant', () async {
+    final tempDirectory = await Directory.systemTemp
+        .createTemp('ani-destiny-hls-http-subtitles-variant');
+    addTearDown(() async {
+      if (tempDirectory.existsSync()) {
+        await tempDirectory.delete(recursive: true);
+      }
+    });
+
+    final server = await HttpServer.bind(InternetAddress.loopbackIPv4, 0);
+    addTearDown(server.close);
+    final requestedPaths = <String>[];
+    server.listen((request) {
+      requestedPaths.add(request.uri.path);
+      switch (request.uri.path) {
+        case '/master.m3u8':
+          request.response.write('''
+#EXTM3U
+#EXT-X-MEDIA:TYPE=SUBTITLES,GROUP-ID="subs-main",NAME="English",DEFAULT=YES,URI="subs/index.m3u8"
+#EXT-X-STREAM-INF:BANDWIDTH=4800000,SUBTITLES="subs-main"
+high/video.m3u8
+#EXT-X-STREAM-INF:BANDWIDTH=2400000
+medium/video.m3u8
+''');
+        case '/medium/video.m3u8':
+          request.response.write('''
+#EXTM3U
+#EXT-X-TARGETDURATION:6
+#EXTINF:6,
+segment.ts
+#EXT-X-ENDLIST
+''');
+        case '/medium/segment.ts':
+          request.response.add([1, 2, 3, 4]);
+        default:
+          request.response.statusCode = HttpStatus.notFound;
+      }
+      request.response.close();
+    });
+
+    final database = AppDatabase(NativeDatabase.memory());
+    addTearDown(database.close);
+    final repository = DownloadRepositoryImpl(database);
+    final origin = 'http://${server.address.host}:${server.port}';
+    final dio = Dio();
+    final service = HttpDownloadService(
+      dio: dio,
+      repository: repository,
+      applicationDocumentsDirectory: () async => tempDirectory,
+      hlsManifestLoader: DioHlsManifestLoader(dio: dio),
+    );
+
+    final taskId = await service.createTask(
+      animeId: 'anime-1',
+      episodeId: 'episode-1',
+      sourceId: 'loopback',
+      source: DownloadSource(
+        url: '$origin/master.m3u8',
+        kind: DownloadKind.hls,
+      ),
+      title: 'HLS Subtitles Variant Test',
+      episodeTitle: 'Episode 1',
+    );
+
+    await service.start(taskId);
+
+    final task = (await repository.getTask(taskId))!;
+    expect(task.status, DownloadStatus.completed);
+    expect(task.downloadedBytes, 4);
+    expect(requestedPaths, [
+      '/master.m3u8',
+      '/medium/video.m3u8',
+      '/medium/segment.ts',
+    ]);
+    expect(requestedPaths, isNot(contains('/high/video.m3u8')));
+    expect(requestedPaths, isNot(contains('/subs/index.m3u8')));
+    expect(isPlayableOfflineMediaPath(task.localPath!), isTrue);
+  });
+
+  test('master skips a higher-bandwidth external video variant', () async {
+    final tempDirectory = await Directory.systemTemp
+        .createTemp('ani-destiny-hls-http-video-variant');
+    addTearDown(() async {
+      if (tempDirectory.existsSync()) {
+        await tempDirectory.delete(recursive: true);
+      }
+    });
+
+    final server = await HttpServer.bind(InternetAddress.loopbackIPv4, 0);
+    addTearDown(server.close);
+    final requestedPaths = <String>[];
+    server.listen((request) {
+      requestedPaths.add(request.uri.path);
+      switch (request.uri.path) {
+        case '/master.m3u8':
+          request.response.write('''
+#EXTM3U
+#EXT-X-MEDIA:TYPE=VIDEO,GROUP-ID="angles",NAME="Main",DEFAULT=YES,URI="angles/main.m3u8"
+#EXT-X-STREAM-INF:BANDWIDTH=4800000,VIDEO="angles"
+high/video.m3u8
+#EXT-X-STREAM-INF:BANDWIDTH=2400000
+medium/video.m3u8
+''');
+        case '/medium/video.m3u8':
+          request.response.write('''
+#EXTM3U
+#EXT-X-TARGETDURATION:6
+#EXTINF:6,
+segment.ts
+#EXT-X-ENDLIST
+''');
+        case '/medium/segment.ts':
+          request.response.add([1, 2, 3, 4, 5]);
+        default:
+          request.response.statusCode = HttpStatus.notFound;
+      }
+      request.response.close();
+    });
+
+    final database = AppDatabase(NativeDatabase.memory());
+    addTearDown(database.close);
+    final repository = DownloadRepositoryImpl(database);
+    final origin = 'http://${server.address.host}:${server.port}';
+    final dio = Dio();
+    final service = HttpDownloadService(
+      dio: dio,
+      repository: repository,
+      applicationDocumentsDirectory: () async => tempDirectory,
+      hlsManifestLoader: DioHlsManifestLoader(dio: dio),
+    );
+
+    final taskId = await service.createTask(
+      animeId: 'anime-1',
+      episodeId: 'episode-1',
+      sourceId: 'loopback',
+      source: DownloadSource(
+        url: '$origin/master.m3u8',
+        kind: DownloadKind.hls,
+      ),
+      title: 'HLS Video Variant Test',
+      episodeTitle: 'Episode 1',
+    );
+
+    await service.start(taskId);
+
+    final task = (await repository.getTask(taskId))!;
+    expect(task.status, DownloadStatus.completed);
+    expect(task.downloadedBytes, 5);
+    expect(requestedPaths, [
+      '/master.m3u8',
+      '/medium/video.m3u8',
+      '/medium/segment.ts',
+    ]);
+    expect(requestedPaths, isNot(contains('/high/video.m3u8')));
+    expect(requestedPaths, isNot(contains('/angles/main.m3u8')));
+    expect(isPlayableOfflineMediaPath(task.localPath!), isTrue);
+  });
+
+  test('invalid master variant bandwidth stops before media requests',
+      () async {
+    final tempDirectory = await Directory.systemTemp
+        .createTemp('ani-destiny-hls-http-invalid-bandwidth');
+    addTearDown(() async {
+      if (tempDirectory.existsSync()) {
+        await tempDirectory.delete(recursive: true);
+      }
+    });
+
+    final server = await HttpServer.bind(InternetAddress.loopbackIPv4, 0);
+    addTearDown(server.close);
+    final requestedPaths = <String>[];
+    server.listen((request) {
+      requestedPaths.add(request.uri.path);
+      if (request.uri.path == '/master.m3u8') {
+        request.response.write('''
+#EXTM3U
+#EXT-X-STREAM-INF:BANDWIDTH=0
+video/index.m3u8
+''');
+      } else {
+        request.response.statusCode = HttpStatus.notFound;
+      }
+      request.response.close();
+    });
+
+    final database = AppDatabase(NativeDatabase.memory());
+    addTearDown(database.close);
+    final repository = DownloadRepositoryImpl(database);
+    final origin = 'http://${server.address.host}:${server.port}';
+    final dio = Dio();
+    final service = HttpDownloadService(
+      dio: dio,
+      repository: repository,
+      applicationDocumentsDirectory: () async => tempDirectory,
+      hlsManifestLoader: DioHlsManifestLoader(dio: dio),
+    );
+
+    final taskId = await service.createTask(
+      animeId: 'anime-1',
+      episodeId: 'episode-1',
+      sourceId: 'loopback',
+      source: DownloadSource(
+        url: '$origin/master.m3u8',
+        kind: DownloadKind.hls,
+      ),
+      title: 'Invalid HLS Bandwidth Test',
+      episodeTitle: 'Episode 1',
+    );
+
+    await service.start(taskId);
+
+    final task = (await repository.getTask(taskId))!;
+    expect(task.status, DownloadStatus.failed);
+    expect(task.failureReason, DownloadFailureReason.invalidManifest);
+    expect(requestedPaths, ['/master.m3u8']);
+    expect(await File(task.localPath!).exists(), isFalse);
+  });
+
+  test('empty master audio group stops before media requests', () async {
+    final tempDirectory = await Directory.systemTemp
+        .createTemp('ani-destiny-hls-http-empty-audio-group');
+    addTearDown(() async {
+      if (tempDirectory.existsSync()) {
+        await tempDirectory.delete(recursive: true);
+      }
+    });
+
+    final server = await HttpServer.bind(InternetAddress.loopbackIPv4, 0);
+    addTearDown(server.close);
+    final requestedPaths = <String>[];
+    server.listen((request) {
+      requestedPaths.add(request.uri.path);
+      if (request.uri.path == '/master.m3u8') {
+        request.response.write('''
+#EXTM3U
+#EXT-X-MEDIA:TYPE=AUDIO,GROUP-ID="",NAME="Japanese",DEFAULT=YES,URI="audio/index.m3u8"
+#EXT-X-STREAM-INF:BANDWIDTH=2400000,AUDIO=""
+video/index.m3u8
+''');
+      } else {
+        request.response.statusCode = HttpStatus.notFound;
+      }
+      request.response.close();
+    });
+
+    final database = AppDatabase(NativeDatabase.memory());
+    addTearDown(database.close);
+    final repository = DownloadRepositoryImpl(database);
+    final origin = 'http://${server.address.host}:${server.port}';
+    final dio = Dio();
+    final service = HttpDownloadService(
+      dio: dio,
+      repository: repository,
+      applicationDocumentsDirectory: () async => tempDirectory,
+      hlsManifestLoader: DioHlsManifestLoader(dio: dio),
+    );
+
+    final taskId = await service.createTask(
+      animeId: 'anime-1',
+      episodeId: 'episode-1',
+      sourceId: 'loopback',
+      source: DownloadSource(
+        url: '$origin/master.m3u8',
+        kind: DownloadKind.hls,
+      ),
+      title: 'Invalid HLS Audio Group Test',
+      episodeTitle: 'Episode 1',
+    );
+
+    await service.start(taskId);
+
+    final task = (await repository.getTask(taskId))!;
+    expect(task.status, DownloadStatus.failed);
+    expect(task.failureReason, DownloadFailureReason.invalidManifest);
+    expect(requestedPaths, ['/master.m3u8']);
+    expect(await File(task.localPath!).exists(), isFalse);
+  });
+
+  test('multiple default audio renditions stop before media requests',
+      () async {
+    final tempDirectory = await Directory.systemTemp
+        .createTemp('ani-destiny-hls-http-invalid-audio-selection');
+    addTearDown(() async {
+      if (tempDirectory.existsSync()) {
+        await tempDirectory.delete(recursive: true);
+      }
+    });
+
+    final server = await HttpServer.bind(InternetAddress.loopbackIPv4, 0);
+    addTearDown(server.close);
+    final requestedPaths = <String>[];
+    server.listen((request) {
+      requestedPaths.add(request.uri.path);
+      if (request.uri.path == '/master.m3u8') {
+        request.response.write('''
+#EXTM3U
+#EXT-X-MEDIA:TYPE=AUDIO,GROUP-ID="audio-main",NAME="Japanese",DEFAULT=YES,URI="audio/ja.m3u8"
+#EXT-X-MEDIA:TYPE=AUDIO,GROUP-ID="audio-main",NAME="English",DEFAULT=YES,URI="audio/en.m3u8"
+#EXT-X-STREAM-INF:BANDWIDTH=2400000,AUDIO="audio-main"
+video/index.m3u8
+''');
+      } else {
+        request.response.statusCode = HttpStatus.notFound;
+      }
+      request.response.close();
+    });
+
+    final database = AppDatabase(NativeDatabase.memory());
+    addTearDown(database.close);
+    final repository = DownloadRepositoryImpl(database);
+    final origin = 'http://${server.address.host}:${server.port}';
+    final dio = Dio();
+    final service = HttpDownloadService(
+      dio: dio,
+      repository: repository,
+      applicationDocumentsDirectory: () async => tempDirectory,
+      hlsManifestLoader: DioHlsManifestLoader(dio: dio),
+    );
+
+    final taskId = await service.createTask(
+      animeId: 'anime-1',
+      episodeId: 'episode-1',
+      sourceId: 'loopback',
+      source: DownloadSource(
+        url: '$origin/master.m3u8',
+        kind: DownloadKind.hls,
+      ),
+      title: 'Invalid HLS Audio Selection Test',
+      episodeTitle: 'Episode 1',
+    );
+
+    await service.start(taskId);
+
+    final task = (await repository.getTask(taskId))!;
+    expect(task.status, DownloadStatus.failed);
+    expect(task.failureReason, DownloadFailureReason.invalidManifest);
+    expect(requestedPaths, ['/master.m3u8']);
+    expect(await File(task.localPath!).exists(), isFalse);
+  });
+
+  test('ambiguous audio selection stops before media requests', () async {
+    final tempDirectory =
+        await Directory.systemTemp.createTemp('ani-destiny-hls-http-audio');
+    addTearDown(() async {
+      if (tempDirectory.existsSync()) {
+        await tempDirectory.delete(recursive: true);
+      }
+    });
+
+    final server = await HttpServer.bind(InternetAddress.loopbackIPv4, 0);
+    addTearDown(server.close);
+    final requestedPaths = <String>[];
+    server.listen((request) {
+      requestedPaths.add(request.uri.path);
+      if (request.uri.path == '/master.m3u8') {
+        request.response.write('''
+#EXTM3U
+#EXT-X-MEDIA:TYPE=AUDIO,GROUP-ID="audio-main",NAME="Japanese",AUTOSELECT=YES,URI="audio/ja.m3u8"
+#EXT-X-MEDIA:TYPE=AUDIO,GROUP-ID="audio-main",NAME="English",AUTOSELECT=YES,URI="audio/en.m3u8"
+#EXT-X-STREAM-INF:BANDWIDTH=2400000,AUDIO="audio-main"
+video/index.m3u8
+''');
+      } else {
+        request.response.statusCode = HttpStatus.internalServerError;
+      }
+      request.response.close();
+    });
+
+    final database = AppDatabase(NativeDatabase.memory());
+    addTearDown(database.close);
+    final repository = DownloadRepositoryImpl(database);
+    final origin = 'http://${server.address.host}:${server.port}';
+    final dio = Dio();
+    final service = HttpDownloadService(
+      dio: dio,
+      repository: repository,
+      applicationDocumentsDirectory: () async => tempDirectory,
+      hlsManifestLoader: DioHlsManifestLoader(dio: dio),
+    );
+
+    final taskId = await service.createTask(
+      animeId: 'anime-1',
+      episodeId: 'episode-1',
+      sourceId: 'loopback',
+      source: DownloadSource(
+        url: '$origin/master.m3u8',
+        kind: DownloadKind.hls,
+      ),
+      title: 'HLS Ambiguous Audio Test',
+      episodeTitle: 'Episode 1',
+    );
+
+    await service.start(taskId);
+
+    final task = (await repository.getTask(taskId))!;
+    expect(task.status, DownloadStatus.failed);
+    expect(task.failureReason, DownloadFailureReason.invalidManifest);
+    expect(requestedPaths, ['/master.m3u8']);
+    expect(task.localPath, isNotNull);
+    expect(File(task.localPath!).existsSync(), isFalse);
   });
 
   test('embedded default audio does not download an external alternative',
@@ -619,6 +1304,7 @@ segment.aac
         case '/master.m3u8':
           request.response.write('''
 #EXTM3U
+#EXT-X-START:TIME-OFFSET=8,PRECISE=YES
 #EXT-X-MEDIA:TYPE=AUDIO,GROUP-ID="audio-main",NAME="Japanese",DEFAULT=YES
 #EXT-X-MEDIA:TYPE=AUDIO,GROUP-ID="audio-main",NAME="English",AUTOSELECT=YES,URI="audio/index.m3u8"
 #EXT-X-STREAM-INF:BANDWIDTH=2400000,AUDIO="audio-main"
@@ -686,6 +1372,10 @@ segment.aac
     ]);
     final manifestContent = await File(task.localPath!).readAsString();
     expect(manifestContent, contains('#EXT-X-PLAYLIST-TYPE:VOD'));
+    expect(
+      manifestContent,
+      contains('#EXT-X-START:TIME-OFFSET=8.0,PRECISE=YES'),
+    );
     expect(manifestContent, isNot(contains('#EXT-X-MEDIA:')));
     expect(manifestContent, isNot(contains(origin)));
     expect(isPlayableOfflineMediaPath(task.localPath!), isTrue);

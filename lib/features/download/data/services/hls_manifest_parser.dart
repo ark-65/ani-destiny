@@ -23,8 +23,10 @@ class HlsManifestParser {
     final renditions = <HlsRendition>[];
     final variables = <String, String>{};
     Duration? targetDuration;
+    HlsStartPosition? startPosition;
     var protocolVersion = 1;
     var mediaSequence = 0;
+    var discontinuitySequence = 0;
     Duration? pendingSegmentDuration;
     String? pendingSegmentTitle;
     Map<String, String>? pendingVariantAttributes;
@@ -37,6 +39,7 @@ class HlsManifestParser {
     int? previousMapByteRangeEnd;
     var pendingDiscontinuity = false;
     var pendingGap = false;
+    DateTime? pendingProgramDateTime;
     var hasEndList = false;
 
     for (var index = 1; index < lines.length; index++) {
@@ -53,6 +56,26 @@ class HlsManifestParser {
           throw const FormatException('Invalid HLS target duration.');
         }
         targetDuration = Duration(seconds: value);
+        continue;
+      }
+      if (line.startsWith('#EXT-X-START:')) {
+        if (startPosition != null) {
+          throw const FormatException('Duplicate HLS start position.');
+        }
+        final attributes = _parseAttributes(
+          line.substring('#EXT-X-START:'.length),
+        );
+        final timeOffset = double.tryParse(attributes['TIME-OFFSET'] ?? '');
+        final precise = attributes['PRECISE'];
+        if (timeOffset == null ||
+            !timeOffset.isFinite ||
+            (precise != null && precise != 'YES' && precise != 'NO')) {
+          throw const FormatException('Invalid HLS start position.');
+        }
+        startPosition = HlsStartPosition(
+          timeOffsetSeconds: timeOffset,
+          precise: precise == 'YES',
+        );
         continue;
       }
       if (line.startsWith('#EXT-X-VERSION:')) {
@@ -73,6 +96,18 @@ class HlsManifestParser {
           throw const FormatException('Invalid HLS media sequence.');
         }
         mediaSequence = value;
+        continue;
+      }
+      if (line.startsWith('#EXT-X-DISCONTINUITY-SEQUENCE:')) {
+        final value = int.tryParse(
+          line.substring('#EXT-X-DISCONTINUITY-SEQUENCE:'.length).trim(),
+        );
+        if (value == null || value < 0) {
+          throw const FormatException(
+            'Invalid HLS discontinuity sequence.',
+          );
+        }
+        discontinuitySequence = value;
         continue;
       }
       if (line.startsWith('#EXTINF:')) {
@@ -134,10 +169,25 @@ class HlsManifestParser {
         final groupId = attributes['GROUP-ID'];
         final name = attributes['NAME'];
         final renditionUri = attributes['URI'];
+        final defaultValue = attributes['DEFAULT'];
+        final autoselectValue = attributes['AUTOSELECT'];
         if (groupId == null ||
+            groupId.isEmpty ||
             name == null ||
+            name.isEmpty ||
             (renditionUri != null && renditionUri.isEmpty)) {
           throw const FormatException('Invalid HLS media rendition.');
+        }
+        if ((defaultValue != null &&
+                defaultValue != 'YES' &&
+                defaultValue != 'NO') ||
+            (autoselectValue != null &&
+                autoselectValue != 'YES' &&
+                autoselectValue != 'NO') ||
+            (defaultValue == 'YES' && autoselectValue == 'NO')) {
+          throw const FormatException(
+            'Invalid HLS audio selection attributes.',
+          );
         }
         renditions.add(
           HlsRendition(
@@ -147,8 +197,8 @@ class HlsManifestParser {
             uri: renditionUri == null
                 ? null
                 : uri.resolve(_substituteVariables(renditionUri, variables)),
-            isDefault: attributes['DEFAULT'] == 'YES',
-            autoselect: attributes['AUTOSELECT'] == 'YES',
+            isDefault: defaultValue == 'YES',
+            autoselect: autoselectValue == 'YES',
             language: attributes['LANGUAGE'],
           ),
         );
@@ -229,6 +279,15 @@ class HlsManifestParser {
         pendingGap = true;
         continue;
       }
+      if (line.startsWith('#EXT-X-PROGRAM-DATE-TIME:')) {
+        final value = line.substring('#EXT-X-PROGRAM-DATE-TIME:'.length).trim();
+        final parsed = DateTime.tryParse(value);
+        if (parsed == null) {
+          throw const FormatException('Invalid HLS program date time.');
+        }
+        pendingProgramDateTime = parsed;
+        continue;
+      }
       if (line.startsWith('#EXT-X-BYTERANGE:')) {
         pendingByteRange = _parseByteRange(
           line.substring('#EXT-X-BYTERANGE:'.length),
@@ -241,14 +300,32 @@ class HlsManifestParser {
 
       final resolvedUri = uri.resolve(_substituteVariables(line, variables));
       if (pendingVariantAttributes != null) {
+        final bandwidth = int.tryParse(
+          pendingVariantAttributes['BANDWIDTH'] ?? '',
+        );
+        if (bandwidth == null || bandwidth <= 0) {
+          throw const FormatException('Invalid HLS variant bandwidth.');
+        }
+        final audioGroupId = pendingVariantAttributes['AUDIO'];
+        if (audioGroupId != null && audioGroupId.isEmpty) {
+          throw const FormatException('Invalid HLS variant audio group.');
+        }
+        final videoGroupId = pendingVariantAttributes['VIDEO'];
+        if (videoGroupId != null && videoGroupId.isEmpty) {
+          throw const FormatException('Invalid HLS variant video group.');
+        }
+        final subtitlesGroupId = pendingVariantAttributes['SUBTITLES'];
+        if (subtitlesGroupId != null && subtitlesGroupId.isEmpty) {
+          throw const FormatException('Invalid HLS variant subtitles group.');
+        }
         variants.add(
           HlsVariant(
             uri: resolvedUri,
-            bandwidth: int.tryParse(
-              pendingVariantAttributes['BANDWIDTH'] ?? '',
-            ),
+            bandwidth: bandwidth,
             resolution: pendingVariantAttributes['RESOLUTION'],
-            audioGroupId: pendingVariantAttributes['AUDIO'],
+            audioGroupId: audioGroupId,
+            videoGroupId: videoGroupId,
+            subtitlesGroupId: subtitlesGroupId,
             codecs: pendingVariantAttributes['CODECS'],
           ),
         );
@@ -275,6 +352,7 @@ class HlsManifestParser {
             byteRange: byteRange,
             hasDiscontinuity: pendingDiscontinuity,
             isGap: pendingGap,
+            programDateTime: pendingProgramDateTime,
           ),
         );
         if (byteRange != null) {
@@ -286,6 +364,16 @@ class HlsManifestParser {
         pendingSegmentTitle = null;
         pendingDiscontinuity = false;
         pendingGap = false;
+        pendingProgramDateTime = null;
+      }
+    }
+
+    final defaultAudioGroups = <String>{};
+    for (final rendition in renditions.where((item) => item.isDefault)) {
+      if (!defaultAudioGroups.add(rendition.groupId)) {
+        throw const FormatException(
+          'HLS audio group contains multiple default renditions.',
+        );
       }
     }
 
@@ -318,7 +406,9 @@ class HlsManifestParser {
       variables: Map.unmodifiable(variables),
       protocolVersion: protocolVersion,
       mediaSequence: mediaSequence,
+      discontinuitySequence: discontinuitySequence,
       targetDuration: targetDuration,
+      startPosition: startPosition,
       initializationSegment: initializationSegment,
     );
   }
