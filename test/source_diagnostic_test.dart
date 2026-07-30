@@ -70,6 +70,28 @@ void main() {
     expect(diagnostics.first.message, contains('cannot parse episode list'));
     expect(diagnostics.first.message, isNot(contains('<html>')));
   });
+
+  test('diagnostic recorder strips sensitive URL data before retaining entries',
+      () {
+    final recorder = InMemorySourceDiagnosticRecorder();
+
+    recorder.record(
+      const SourceDiagnostic(
+        sourceId: 'sakura',
+        operation: 'play',
+        level: SourceDiagnosticLevel.error,
+        message:
+            'request failed: https://example.test/play?token=secret&cookie=abc',
+        url: 'https://example.test/play?token=secret&cookie=abc',
+      ),
+    );
+
+    final diagnostic = recorder.latest().single;
+    expect(diagnostic.url, 'https://example.test/.../play');
+    expect(diagnostic.message, contains('https://example.test/.../play'));
+    expect(diagnostic.message, isNot(contains('secret')));
+    expect(diagnostic.message, isNot(contains('abc')));
+  });
 }
 
 class _FakeHttpClientAdapter implements HttpClientAdapter {

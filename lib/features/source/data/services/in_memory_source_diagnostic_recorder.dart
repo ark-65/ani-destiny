@@ -1,5 +1,6 @@
 import '../../domain/entities/source_diagnostic.dart';
 import '../../domain/services/source_diagnostic_recorder.dart';
+import '../../../../core/diagnostics/diagnostic_sanitizer.dart';
 
 class InMemorySourceDiagnosticRecorder implements SourceDiagnosticRecorder {
   InMemorySourceDiagnosticRecorder({
@@ -15,8 +16,8 @@ class InMemorySourceDiagnosticRecorder implements SourceDiagnosticRecorder {
       sourceId: diagnostic.sourceId,
       operation: diagnostic.operation,
       level: diagnostic.level,
-      message: diagnostic.message,
-      url: diagnostic.url,
+      message: sanitizeError(diagnostic.message),
+      url: diagnostic.url == null ? null : sanitizeUrl(diagnostic.url!),
       statusCode: diagnostic.statusCode,
       exceptionType: diagnostic.exceptionType,
       timestamp: diagnostic.timestamp ?? DateTime.now(),
