@@ -34,6 +34,10 @@ bool _isPlayableOfflineMediaPath(String manifestPath, Set<String> visited) {
   if (!manifestFile.existsSync() || manifestFile.lengthSync() == 0) {
     return false;
   }
+  final extension = p.extension(normalizedManifestPath).toLowerCase();
+  if (extension != '.m3u8') {
+    return true;
+  }
 
   final manifestDirectory = p.dirname(manifestPath);
   final content = manifestFile.readAsStringSync();

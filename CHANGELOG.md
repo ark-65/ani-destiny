@@ -75,6 +75,7 @@
 - 修复离线清单片段解析对双重编码路径的覆盖：`offline_media_integrity.dart` 增补二次解码候选（如 `segments%5Cnested%252Fspace%20name.ts`）的匹配能力，确保 `#EXTM3U` 里出现 `%252F`、`%2520` 组合时仍能命中真实分片文件，进一步消除 Windows Build 场景的 `PathNotFoundException` 假失败。
 - 修复下载页下载任务批量清理按钮的测试交互脆弱性：将 `test/download_page_test.dart` 中批量清理按钮的定位从文本匹配改为稳定的 `downloads-clear-ended-tasks` key，避免同页出现多处同文案导致的 `Bad state: Too many elements` 假性 CI 失败，保留现有清理行为与边界。
 - 修复本地播放可用性判断在 `file://` 路径上的误判：当存在普通本地媒体文件（非 m3u8）时直接视为可播放；仅对 manifest 文件做片段完整性校验。新增 `test/player_page_test.dart` 回归“非 manifest 文件也应判定可播放”。
+- 补齐离线可播放性边界回归：为离线完整性判断新增 `test/offline_media_integrity_test.dart` 覆盖，确保 `file://` 非 `index.m3u8` 的本地媒体文件在存在时始终返回可播放。
 - 修复离线清单引用带有查询参数或片段标识的本地分段路径：`offline_media_integrity.dart` 现在解析本地 segment 行时会忽略查询参数/锚点，仅按真实文件名校验，避免 `segments/file.ts?download=true` 或 `segments/file.ts#retry` 被误判为无法播放。
 - 修复离线清单引用 windows 风格相对路径分隔符的误判：`offline_media_integrity.dart` 现将 `\` 路径分隔符规范为路径分隔形式并解码再校验，保证来自 `segments\\...` 形态的本地清单在非 Windows 运行时不会因路径拼接失败被误判为不可播放。
 - 修复 Windows 风格离线清单片段场景的测试清理安全性：`offline local file play url is true for windows-style segment path with query` 不再在 Windows 测试中误删 `C:` 根目录；改为仅清理 `C:/ani-destiny-offline` 测试目录，避免 `FileSystemException: Deletion failed, path = 'C:'` 造成 Windows Build 误失败。

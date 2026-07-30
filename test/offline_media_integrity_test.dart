@@ -5,7 +5,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:path/path.dart' as p;
 
 void main() {
-  test('isPlayableOfflineMediaPath rejects files without a HLS header', () async {
+  test('isPlayableOfflineMediaPath rejects files without a HLS header',
+      () async {
     final temporaryDir = await Directory.systemTemp.createTemp(
       'ani-destiny-offline-media-invalid-header',
     );
@@ -42,6 +43,21 @@ void main() {
     );
 
     expect(isPlayableOfflineMediaPath(manifestPath), isTrue);
+  });
+
+  test('isPlayableOfflineMediaPath returns true for non-m3u8 media files',
+      () async {
+    final temporaryDir = await Directory.systemTemp.createTemp(
+      'ani-destiny-offline-media-non-m3u8',
+    );
+    addTearDown(() async {
+      await temporaryDir.delete(recursive: true);
+    });
+
+    final mediaPath = p.join(temporaryDir.path, 'video.mp4');
+    await File(mediaPath).writeAsString('video bytes');
+
+    expect(isPlayableOfflineMediaPath(mediaPath), isTrue);
   });
 
   test(
