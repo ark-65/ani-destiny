@@ -8,6 +8,7 @@
 
 ### Fixed
 - Fixed source diagnostics retaining raw URLs with token or cookie query values in memory; the recorder now sanitizes URLs, error messages, and paths before retaining entries so sensitive parameters cannot flow into later diagnostic summaries.
+- Fixed offline integrity checks from treating directories as playable files: when a local offline path points to a directory, the checker now returns false directly, avoiding potential `FileSystemException` and false positive playback-state transitions.
 - Fixed offline integrity checks to stop treating files missing the `#EXTM3U` header as playable when they contain other text, avoiding malformed manifests being marked playable before they enter the offline playback path.
 - Fixed offline integrity checks to stop treating files missing the `#EXTM3U` header as playable when they contain other text, avoiding malformed manifests being marked playable before they enter the offline playback path.
 - Fixed offline HLS rewrites dropping the `EXT-X-START` suggested playback position. Local master and media playlists now preserve `TIME-OFFSET` and precise-start intent so complete assets keep the source-defined opening position offline, while invalid or duplicate tags are rejected before downloads.

@@ -31,7 +31,17 @@ bool _isPlayableOfflineMediaPath(String manifestPath, Set<String> visited) {
     return false;
   }
   final manifestFile = File(manifestPath);
-  if (!manifestFile.existsSync() || manifestFile.lengthSync() == 0) {
+  if (!manifestFile.existsSync()) {
+    return false;
+  }
+  FileStat manifestStat;
+  try {
+    manifestStat = manifestFile.statSync();
+  } on FileSystemException {
+    return false;
+  }
+  if (manifestStat.type != FileSystemEntityType.file ||
+      manifestStat.size == 0) {
     return false;
   }
   final extension = p.extension(normalizedManifestPath).toLowerCase();

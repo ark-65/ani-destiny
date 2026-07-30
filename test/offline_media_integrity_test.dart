@@ -60,6 +60,17 @@ void main() {
     expect(isPlayableOfflineMediaPath(mediaPath), isTrue);
   });
 
+  test('isPlayableOfflineMediaPath rejects directory paths', () async {
+    final temporaryDir = await Directory.systemTemp.createTemp(
+      'ani-destiny-offline-media-directory',
+    );
+    addTearDown(() async {
+      await temporaryDir.delete(recursive: true);
+    });
+
+    expect(isPlayableOfflineMediaPath(temporaryDir.path), isFalse);
+  });
+
   test(
       'isPlayableOfflineMediaPath handles reserved characters encoded in segment file names',
       () async {
