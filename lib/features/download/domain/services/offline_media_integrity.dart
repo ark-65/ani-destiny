@@ -193,6 +193,13 @@ Iterable<String> _segmentPathCandidatesFromManifestLine(
   String manifestLine,
   String manifestDirectory,
 ) {
+  final normalizedManifestDirectory = p.normalize(p.absolute(manifestDirectory));
+  bool isWithinManifestDirectory(String segmentPath) {
+    final normalizedSegmentPath = p.normalize(p.absolute(segmentPath));
+    return p.equals(normalizedManifestDirectory, normalizedSegmentPath) ||
+        p.isWithin(normalizedManifestDirectory, normalizedSegmentPath);
+  }
+
   final normalizedLine = manifestLine.trim();
   if (normalizedLine.isEmpty) {
     return const Iterable<String>.empty();
@@ -214,6 +221,7 @@ Iterable<String> _segmentPathCandidatesFromManifestLine(
     final validWindowsDrivePaths = windowsDriveCandidates
         .where((segmentPath) => segmentPath.isNotEmpty)
         .where(windowsPathPattern.hasMatch)
+        .where(isWithinManifestDirectory)
         .toList(growable: false);
     if (validWindowsDrivePaths.isNotEmpty) {
       return validWindowsDrivePaths;
@@ -223,7 +231,11 @@ Iterable<String> _segmentPathCandidatesFromManifestLine(
 
   if (parsedUri.hasScheme) {
     if (parsedUri.scheme.toLowerCase() == 'file') {
-      return [parsedUri.toFilePath()];
+      final filePath = parsedUri.toFilePath();
+      if (isWithinManifestDirectory(filePath)) {
+        return [filePath];
+      }
+      return const Iterable<String>.empty();
     }
     return const Iterable<String>.empty();
   }
@@ -239,6 +251,7 @@ Iterable<String> _segmentPathCandidatesFromManifestLine(
             ? segmentPath
             : p.join(manifestDirectory, segmentPath),
       )
+      .where(isWithinManifestDirectory)
       .toList(growable: false);
   if (candidateValues.isEmpty) {
     return const Iterable<String>.empty();

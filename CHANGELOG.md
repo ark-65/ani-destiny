@@ -7,6 +7,7 @@
 ## [Unreleased]
 
 ### 修复
+- 加固离线完整性候选路径边界：在 `offline_media_integrity.dart` 中新增 manifest 目录范围约束，`#EXTM3U` 内的 segment/key/map 引用若解析到清单目录之外将直接判定为不可播放，避免路径穿透导致的误可播放伪阳性。
 - 补齐离线完整性判定用例：新增 `#EXT-X-MAP` 与 `#EXT-X-KEY` 引用目录路径时的回归覆盖，确认目录引用不会被误判为可播放文件。
 - 修复离线完整性判定中对 manifest 资源路径类型的边界：当 segment/key/map 路径指向目录而非文件时，播放器可玩性校验会直接返回不可播放并返回 `false`，避免目录路径触发 `FileSystemException` 或被误认为可播放资源。
 - 修复来源诊断记录在内存中保留带 token 或 cookie 的原始 URL；记录入口现在统一脱敏 URL、错误消息和路径，避免敏感参数进入后续诊断摘要。

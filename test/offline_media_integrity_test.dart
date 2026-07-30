@@ -167,6 +167,32 @@ void main() {
     expect(isPlayableOfflineMediaPath(manifestPath), isFalse);
   });
 
+  test('isPlayableOfflineMediaPath rejects path traversal outside manifest directory',
+      () async {
+    final temporaryRoot = await Directory.systemTemp.createTemp(
+      'ani-destiny-offline-media-manifest-traversal-root',
+    );
+    addTearDown(() async {
+      await temporaryRoot.delete(recursive: true);
+    });
+
+    final manifestDirectory = p.join(temporaryRoot.path, 'manifest');
+    await Directory(manifestDirectory).create(recursive: true);
+
+    final outsideDirectory = p.join(temporaryRoot.path, 'outside');
+    await Directory(outsideDirectory).create(recursive: true);
+    await File(p.join(outsideDirectory, 'escape.ts')).writeAsString('ok');
+
+    final manifestPath = p.join(manifestDirectory, 'index.m3u8');
+    await File(manifestPath).writeAsString(
+      '#EXTM3U\n'
+      '../outside/escape.ts\n'
+      '#EXT-X-ENDLIST\n',
+    );
+
+    expect(isPlayableOfflineMediaPath(manifestPath), isFalse);
+  });
+
   test('isPlayableOfflineMediaPath rejects map directory paths', () async {
     final temporaryDir = await Directory.systemTemp.createTemp(
       'ani-destiny-offline-media-map-directory',

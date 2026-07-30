@@ -7,6 +7,7 @@
 ## [Unreleased]
 
 ### Fixed
+- Hardened manifest-asset candidate path validation in `offline_media_integrity.dart` by rejecting local segment/key/map candidates that resolve outside the manifest directory; such manifests now fail offline playability checks instead of producing false-positive `true` values through path traversal.
 - Added offline integrity regression coverage for directory references in `#EXT-X-MAP` and `#EXT-X-KEY`; these references must resolve to files, not directories, to avoid false-positive playable states.
 - Hardened offline integrity asset-type handling by explicitly rejecting manifest-referenced segment/key/map paths that resolve to directories. When a manifest points at a directory path, playback checks now return `false` instead of treating it as valid content or throwing a file-system exception.
 - Fixed source diagnostics retaining raw URLs with token or cookie query values in memory; the recorder now sanitizes URLs, error messages, and paths before retaining entries so sensitive parameters cannot flow into later diagnostic summaries.
