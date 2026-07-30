@@ -145,6 +145,28 @@ void main() {
     expect(isPlayableOfflineMediaPath(manifestPath), isTrue);
   });
 
+  test('isPlayableOfflineMediaPath rejects segment directory paths', () async {
+    final temporaryDir = await Directory.systemTemp.createTemp(
+      'ani-destiny-offline-media-segment-directory',
+    );
+    addTearDown(() async {
+      await temporaryDir.delete(recursive: true);
+    });
+
+    final segmentDirectory = p.join(temporaryDir.path, 'segments');
+    await Directory(segmentDirectory).create(recursive: true);
+
+    final manifestPath = p.join(temporaryDir.path, 'index.m3u8');
+    await File(manifestPath).writeAsString(
+      '#EXTM3U\n'
+      '#EXTINF:8,\n'
+      'segments\n'
+      '#EXT-X-ENDLIST\n',
+    );
+
+    expect(isPlayableOfflineMediaPath(manifestPath), isFalse);
+  });
+
   test(
     'isPlayableOfflineMediaPath handles absolute Windows paths with double encoding',
     () async {

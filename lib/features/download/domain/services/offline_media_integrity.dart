@@ -163,10 +163,21 @@ bool _hasPlayableManifestAsset(
   );
   return segmentPaths.any((segmentPath) {
     final segmentFile = File(segmentPath);
-    return segmentFile.existsSync() &&
-        (expectedLength == null
-            ? segmentFile.lengthSync() > 0
-            : segmentFile.lengthSync() == expectedLength);
+    final FileStat segmentStat;
+    try {
+      segmentStat = segmentFile.statSync();
+    } on FileSystemException {
+      return false;
+    }
+    if (segmentStat.type != FileSystemEntityType.file) {
+      return false;
+    }
+
+    if (expectedLength == null) {
+      return segmentStat.size > 0;
+    }
+
+    return segmentStat.size == expectedLength;
   });
 }
 

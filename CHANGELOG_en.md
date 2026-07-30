@@ -7,6 +7,7 @@
 ## [Unreleased]
 
 ### Fixed
+- Hardened offline integrity asset-type handling by explicitly rejecting manifest-referenced segment/key/map paths that resolve to directories. When a manifest points at a directory path, playback checks now return `false` instead of treating it as valid content or throwing a file-system exception.
 - Fixed source diagnostics retaining raw URLs with token or cookie query values in memory; the recorder now sanitizes URLs, error messages, and paths before retaining entries so sensitive parameters cannot flow into later diagnostic summaries.
 - Fixed offline integrity checks from treating directories as playable files: when a local offline path points to a directory, the checker now returns false directly, avoiding potential `FileSystemException` and false positive playback-state transitions.
 - Fixed offline integrity checks to stop treating files missing the `#EXTM3U` header as playable when they contain other text, avoiding malformed manifests being marked playable before they enter the offline playback path.

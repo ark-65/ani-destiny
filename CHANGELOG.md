@@ -7,6 +7,7 @@
 ## [Unreleased]
 
 ### 修复
+- 修复离线完整性判定中对 manifest 资源路径类型的边界：当 segment/key/map 路径指向目录而非文件时，播放器可玩性校验会直接返回不可播放并返回 `false`，避免目录路径触发 `FileSystemException` 或被误认为可播放资源。
 - 修复来源诊断记录在内存中保留带 token 或 cookie 的原始 URL；记录入口现在统一脱敏 URL、错误消息和路径，避免敏感参数进入后续诊断摘要。
 - 修复离线完整性校验误将目录路径当作可播放文件的漏洞：如果本地路径指向目录而非文件，离线完整性现在会直接判定为不可播放并返回 `false`，避免目录状态触发 `FileSystemException` 或误入播放入口。
 - 修复离线完整性校验对非 HLS 清单的误判：`offline_media_integrity.dart` 不再把缺少 `#EXTM3U` 首行但存在其他文本的文件误判为可播放，避免损坏或错误 manifest 被标记为可播放并进入离线入口。
