@@ -167,6 +167,55 @@ void main() {
     expect(isPlayableOfflineMediaPath(manifestPath), isFalse);
   });
 
+  test('isPlayableOfflineMediaPath rejects map directory paths', () async {
+    final temporaryDir = await Directory.systemTemp.createTemp(
+      'ani-destiny-offline-media-map-directory',
+    );
+    addTearDown(() async {
+      await temporaryDir.delete(recursive: true);
+    });
+
+    final mapDirectory = p.join(temporaryDir.path, 'maps');
+    await Directory(mapDirectory).create(recursive: true);
+    await File(p.join(temporaryDir.path, 'segment.ts')).writeAsString('ok');
+
+    final manifestPath = p.join(temporaryDir.path, 'index.m3u8');
+    await File(manifestPath).writeAsString(
+      '#EXTM3U\n'
+      '#EXT-X-MAP:URI="maps"\n'
+      '#EXTINF:8,\n'
+      'segment.ts\n'
+      '#EXT-X-ENDLIST\n',
+    );
+
+    expect(isPlayableOfflineMediaPath(manifestPath), isFalse);
+  });
+
+  test('isPlayableOfflineMediaPath rejects key directory paths', () async {
+    final temporaryDir = await Directory.systemTemp.createTemp(
+      'ani-destiny-offline-media-key-directory',
+    );
+    addTearDown(() async {
+      await temporaryDir.delete(recursive: true);
+    });
+
+    final keyDirectory = p.join(temporaryDir.path, 'keys');
+    await Directory(keyDirectory).create(recursive: true);
+    await File(p.join(temporaryDir.path, 'segment.ts')).writeAsString('ok');
+
+    final manifestPath = p.join(temporaryDir.path, 'index.m3u8');
+    await File(manifestPath).writeAsString(
+      '#EXTM3U\n'
+      '#EXT-X-TARGETDURATION:6\n'
+      '#EXT-X-KEY:METHOD=AES-128,URI="keys"\n'
+      '#EXTINF:6,\n'
+      'segment.ts\n'
+      '#EXT-X-ENDLIST\n',
+    );
+
+    expect(isPlayableOfflineMediaPath(manifestPath), isFalse);
+  });
+
   test(
     'isPlayableOfflineMediaPath handles absolute Windows paths with double encoding',
     () async {
