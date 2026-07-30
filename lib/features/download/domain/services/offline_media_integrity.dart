@@ -46,7 +46,7 @@ bool _isPlayableOfflineMediaPath(String manifestPath, Set<String> visited) {
     return false;
   }
   if (lines.first != '#EXTM3U') {
-    return true;
+    return false;
   }
 
   var hasPlayableSegment = false;

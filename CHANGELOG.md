@@ -8,6 +8,8 @@
 
 ### 修复
 - 修复来源诊断记录在内存中保留带 token 或 cookie 的原始 URL；记录入口现在统一脱敏 URL、错误消息和路径，避免敏感参数进入后续诊断摘要。
+- 修复离线完整性校验对非 HLS 清单的误判：`offline_media_integrity.dart` 不再把缺少 `#EXTM3U` 首行但存在其他文本的文件误判为可播放，避免损坏或错误 manifest 被标记为可播放并进入离线入口。
+- 修复离线完整性校验对非 HLS 清单的误判：`offline_media_integrity.dart` 不再把缺少 `#EXTM3U` 首行但存在其他文本的文件误判为可播放，避免损坏或错误 manifest 被标记为可播放并进入离线入口。
 - 修复 HLS 离线清单重写时丢失 `EXT-X-START` 建议起播位置的问题；本地 master 与媒体清单现在保留 `TIME-OFFSET` 和精确起播要求，避免完整资产离线播放时偏离来源指定的开场位置，非法或重复标签会在下载前拒绝。
 - 修复 HLS 离线清单重写时丢失分片 `EXT-X-PROGRAM-DATE-TIME` 的问题；视频与外部音频子清单现在保留各自的绝对时间锚点，避免媒体序号或窗口不同的 rendition 文件完整却无法可靠同步。
 - 修复 HLS 离线清单重写时丢失 `EXT-X-DISCONTINUITY-SEQUENCE` 的问题；视频与外部音频子清单现在分别保留各自的时间线序号，避免文件完整却因滑动窗口前的 discontinuity 计数丢失而无法同步播放。

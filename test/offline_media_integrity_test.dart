@@ -5,6 +5,20 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:path/path.dart' as p;
 
 void main() {
+  test('isPlayableOfflineMediaPath rejects files without a HLS header', () async {
+    final temporaryDir = await Directory.systemTemp.createTemp(
+      'ani-destiny-offline-media-invalid-header',
+    );
+    addTearDown(() async {
+      await temporaryDir.delete(recursive: true);
+    });
+
+    final manifestPath = p.join(temporaryDir.path, 'index.m3u8');
+    await File(manifestPath).writeAsString('segment.ts\n');
+
+    expect(isPlayableOfflineMediaPath(manifestPath), isFalse);
+  });
+
   test('isPlayableOfflineMediaPath skips an HLS gap segment', () async {
     final temporaryDir = await Directory.systemTemp.createTemp(
       'ani-destiny-offline-media-gap',
