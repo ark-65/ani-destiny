@@ -7,6 +7,7 @@
 ## [Unreleased]
 
 ### Fixed
+- Hardened offline anime deletion: `LocalOfflineMediaService.removeAll` now continues deleting remaining episodes when one item cleanup fails, so successful entries are still removed, while a batch with failures now fails as `offline_media_cleanup_batch_failed` instead of aborting everything on first failure.
 - Added a delete failure regression for `offline_media_restart_playback_test.dart` that verifies `LocalOfflineMediaService.remove` throws `offline_media_cleanup_failed` when local media directory cleanup fails, and that the offline media record remains in the repository so cleanup failures do not silently remove playback entries.
 - Closed the secondary database in `test/offline_media_restart_playback_test.dart` restart/replay regression paths to avoid multiple open `AppDatabase` instances and prevent unstable Windows CI failures caused by database file locking.
 - Fixed a Windows CI false failure where the double-encoded absolute-path offline integrity fixture conflicted with manifest-directory containment. The fixture now keeps its segment inside the manifest directory while preserving drive-letter, mixed-separator, and double-decoding coverage without relaxing cross-directory rejection.
