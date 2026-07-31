@@ -7,6 +7,7 @@
 ## [Unreleased]
 
 ### 修复
+- 修复离线重启回归测试中的数据库资源泄漏：`test/offline_media_restart_playback_test.dart` 在数据库重建后的重试路径里显式关闭第二个数据库实例，避免 Windows CI 中出现 `AppDatabase` 多实例并发打开导致的资源锁与不确定假失败。
 - 修复 Windows 离线完整性双重编码绝对路径回归夹具与清单目录范围约束冲突导致的 CI 假失败；夹具现在把分片放在清单目录内，继续覆盖盘符、混合分隔符和双重编码解析，同时保留跨目录引用拒绝边界。
 - 加固离线完整性候选路径边界：在 `offline_media_integrity.dart` 中新增 manifest 目录范围约束，`#EXTM3U` 内的 segment/key/map 引用若解析到清单目录之外将直接判定为不可播放，避免路径穿透导致的误可播放伪阳性。
 - 补齐离线完整性判定用例：新增 `#EXT-X-MAP` 与 `#EXT-X-KEY` 引用目录路径时的回归覆盖，确认目录引用不会被误判为可播放文件。

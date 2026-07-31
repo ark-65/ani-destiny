@@ -74,6 +74,7 @@ void main() {
       expect(routeArgs.sourceId, 'offline');
       expect(routeArgs.playHeaders, isEmpty);
       expect(isPlayableOfflineMediaUrl(routeArgs.playUrl), isTrue);
+      await secondDatabase.close();
     },
   );
 
@@ -163,6 +164,7 @@ void main() {
       expect(routeArgs.sourceId, 'offline');
       expect(routeArgs.playHeaders, isEmpty);
       expect(isPlayableOfflineMediaUrl(routeArgs.playUrl), isTrue);
+      await secondDatabase.close();
     },
   );
 
@@ -243,6 +245,7 @@ void main() {
 
       await keyFile.delete();
       expect(await service.verify(restored), OfflineMediaIntegrityStatus.damaged);
+      await secondDatabase.close();
     },
   );
 

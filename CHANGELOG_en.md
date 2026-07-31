@@ -7,6 +7,7 @@
 ## [Unreleased]
 
 ### Fixed
+- Closed the secondary database in `test/offline_media_restart_playback_test.dart` restart/replay regression paths to avoid multiple open `AppDatabase` instances and prevent unstable Windows CI failures caused by database file locking.
 - Fixed a Windows CI false failure where the double-encoded absolute-path offline integrity fixture conflicted with manifest-directory containment. The fixture now keeps its segment inside the manifest directory while preserving drive-letter, mixed-separator, and double-decoding coverage without relaxing cross-directory rejection.
 - Hardened manifest-asset candidate path validation in `offline_media_integrity.dart` by rejecting local segment/key/map candidates that resolve outside the manifest directory; such manifests now fail offline playability checks instead of producing false-positive `true` values through path traversal.
 - Added offline integrity regression coverage for directory references in `#EXT-X-MAP` and `#EXT-X-KEY`; these references must resolve to files, not directories, to avoid false-positive playable states.
