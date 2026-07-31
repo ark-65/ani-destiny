@@ -245,28 +245,28 @@ void main() {
   test(
     'isPlayableOfflineMediaPath handles absolute Windows paths with double encoding',
     () async {
-      const windowsSegmentDirectory = 'C:/ani-destiny-offline/windows';
-      const windowsSegmentPath =
-          '$windowsSegmentDirectory/segments/episode-000001'
-          '/nested/space name.ts';
-      const windowsManifestSegment = '$windowsSegmentDirectory/segments%5C'
-          'episode-000001%252Fnested%252Fspace%2520name.ts?download_cache=true#retry';
-
-      await Directory(windowsSegmentPath).parent.create(recursive: true);
-      await File(windowsSegmentPath).writeAsString('segment');
-      addTearDown(() async {
-        final segmentDirectory = Directory(windowsSegmentDirectory);
-        if (await segmentDirectory.exists()) {
-          await segmentDirectory.delete(recursive: true);
-        }
-      });
-
       final temporaryDir = await Directory.systemTemp.createTemp(
         'ani-destiny-offline-media-absolute-windows',
       );
       addTearDown(() async {
         await temporaryDir.delete(recursive: true);
       });
+
+      final windowsSegmentDirectory = p.join(temporaryDir.path, 'windows');
+      final windowsSegmentPath = p.join(
+        windowsSegmentDirectory,
+        'segments',
+        'episode-000001',
+        'nested',
+        'space name.ts',
+      );
+      final windowsManifestSegment =
+          '${windowsSegmentDirectory.replaceAll('\\', '/')}/segments%5C'
+          'episode-000001%252Fnested%252Fspace%2520name.ts?download_cache=true#retry';
+
+      await Directory(windowsSegmentPath).parent.create(recursive: true);
+      await File(windowsSegmentPath).writeAsString('segment');
+
       final manifestPath = p.join(temporaryDir.path, 'index.m3u8');
       final localManifest = File(manifestPath);
       await localManifest.writeAsString(
