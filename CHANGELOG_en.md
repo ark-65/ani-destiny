@@ -7,6 +7,7 @@
 ## [Unreleased]
 
 ### Fixed
+- Added a restart regression that covers Windows-style segment references (with `%5C`, `%252F`, and `?download_cache=true#retry`) surviving AppDatabase rebuild, verifying path normalization and `offline_media_integrity` still resolves local media as playable in the offline-restart flow.
 - Added an offline restart regression for encoded segment URIs containing query and fragment markers, verifying the item remains playable after two consecutive AppDatabase rebuilds and that `offlineMediaPlayerRouteArgs` still returns local-only playback arguments.
 - Hardened offline anime deletion: `LocalOfflineMediaService.removeAll` now continues deleting remaining episodes when one item cleanup fails, so successful entries are still removed, while a batch with failures now fails as `offline_media_cleanup_batch_failed` instead of aborting everything on first failure.
 - Added a delete failure regression for `offline_media_restart_playback_test.dart` that verifies `LocalOfflineMediaService.remove` throws `offline_media_cleanup_failed` when local media directory cleanup fails, and that the offline media record remains in the repository so cleanup failures do not silently remove playback entries.
