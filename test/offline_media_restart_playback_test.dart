@@ -59,7 +59,6 @@ void main() {
       await firstDatabase.close();
 
       final secondDatabase = AppDatabase(NativeDatabase(File(databasePath)));
-      addTearDown(secondDatabase.close);
       final secondRepository = OfflineMediaRepositoryImpl(secondDatabase);
       final restored = (await secondRepository.getAll()).single;
 
@@ -149,7 +148,6 @@ void main() {
       await firstDatabase.close();
 
       final secondDatabase = AppDatabase(NativeDatabase(File(databasePath)));
-      addTearDown(secondDatabase.close);
       final secondRepository = OfflineMediaRepositoryImpl(secondDatabase);
       final restored = (await secondRepository.getAll()).single;
 
@@ -228,7 +226,6 @@ void main() {
       await firstDatabase.close();
 
       final secondDatabase = AppDatabase(NativeDatabase(File(databasePath)));
-      addTearDown(secondDatabase.close);
       final secondRepository = OfflineMediaRepositoryImpl(secondDatabase);
       final restored = (await secondRepository.getAll()).single;
 
@@ -325,6 +322,81 @@ void main() {
         ).verify(secondRestore),
         OfflineMediaIntegrityStatus.playable,
       );
+    },
+  );
+
+  test(
+    'offline HLS survives recheck after restart and supports full delete flow',
+    () async {
+      final tempDirectory = await Directory.systemTemp
+          .createTemp('offline-media-recheck-delete-');
+      addTearDown(() async {
+        if (await tempDirectory.exists()) {
+          await tempDirectory.delete(recursive: true);
+        }
+      });
+      final databasePath = p.join(tempDirectory.path, 'app.sqlite');
+      final mediaDirectory =
+          Directory(p.join(tempDirectory.path, 'downloads', 'task-delete'));
+      await mediaDirectory.create(recursive: true);
+      final manifest = File(p.join(mediaDirectory.path, 'index.m3u8'));
+      final segment = File(p.join(mediaDirectory.path, 'segment-000000.ts'));
+      await manifest.writeAsString(
+        '#EXTM3U\n'
+        '#EXT-X-TARGETDURATION:10\n'
+        '#EXTINF:10,\n'
+        'segment-000000.ts\n'
+        '#EXT-X-ENDLIST\n',
+      );
+      await segment.writeAsBytes([1, 2, 3]);
+
+      final firstDatabase = AppDatabase(NativeDatabase(File(databasePath)));
+      final firstRepository = OfflineMediaRepositoryImpl(firstDatabase);
+      final item = OfflineMediaItem(
+        id: 'offline-task-recheck-delete',
+        downloadTaskId: 'task-delete',
+        animeId: 'anime-3',
+        episodeId: 'episode-recheck-delete',
+        title: 'Offline Anime',
+        episodeTitle: 'Episode for recheck delete',
+        manifestPath: manifest.path,
+        downloadedBytes: await segment.length(),
+        createdAt: DateTime(2026, 7, 31),
+      );
+      await firstRepository.upsert(item);
+      expect(
+        await LocalOfflineMediaService(
+          repository: firstRepository,
+        ).verify(item),
+        OfflineMediaIntegrityStatus.playable,
+      );
+      await firstDatabase.close();
+
+      final secondDatabase = AppDatabase(NativeDatabase(File(databasePath)));
+      final secondRepository = OfflineMediaRepositoryImpl(secondDatabase);
+      final restored = (await secondRepository.getAll()).single;
+
+      expect(restored.integrityStatus, OfflineMediaIntegrityStatus.playable);
+      expect(
+        await LocalOfflineMediaService(
+          repository: secondRepository,
+        ).verify(restored),
+        OfflineMediaIntegrityStatus.playable,
+      );
+
+      await LocalOfflineMediaService(
+        repository: secondRepository,
+      ).remove(restored);
+
+      expect(await secondRepository.getAll(), isEmpty);
+      expect(await mediaDirectory.exists(), isFalse);
+
+      await secondDatabase.close();
+
+      final thirdDatabase = AppDatabase(NativeDatabase(File(databasePath)));
+      addTearDown(thirdDatabase.close);
+      final thirdRepository = OfflineMediaRepositoryImpl(thirdDatabase);
+      expect(await thirdRepository.getAll(), isEmpty);
     },
   );
 }
