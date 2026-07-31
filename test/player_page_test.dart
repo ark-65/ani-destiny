@@ -3614,7 +3614,9 @@ void main() {
         await temporaryDir.delete(recursive: true);
       });
       final windowsSegmentId = DateTime.now().microsecondsSinceEpoch;
-      final windowsSegmentDirectory = Directory('C:/ani-destiny-offline');
+      final windowsSegmentDirectory = Directory(
+        '${temporaryDir.path}\\segments',
+      );
       final windowsSegmentPath =
           '${windowsSegmentDirectory.path}\\windows-segment-$windowsSegmentId.ts';
       await windowsSegmentDirectory.create(recursive: true);
