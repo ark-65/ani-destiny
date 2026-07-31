@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:ani_destiny/core/error/app_exception.dart';
 import 'package:ani_destiny/core/storage/app_database.dart';
 import 'package:ani_destiny/features/download/data/repositories/offline_media_repository_impl.dart';
 import 'package:ani_destiny/features/download/data/services/local_offline_media_service.dart';
@@ -400,6 +401,58 @@ void main() {
       addTearDown(thirdDatabase.close);
       final thirdRepository = OfflineMediaRepositoryImpl(thirdDatabase);
       expect(await thirdRepository.getAll(), isEmpty);
+    },
+  );
+
+  test(
+    'offline media remove returns cleanup failure when local directory cleanup fails',
+    () async {
+      final tempDirectory =
+          await Directory.systemTemp.createTemp('offline-media-remove-failure-');
+      addTearDown(() async {
+        if (await tempDirectory.exists()) {
+          await tempDirectory.delete(recursive: true);
+        }
+      });
+      final databasePath = p.join(tempDirectory.path, 'app.sqlite');
+      final mediaDirectory =
+          Directory(p.join(tempDirectory.path, 'downloads', 'task-remove-failure'));
+      await mediaDirectory.create(recursive: true);
+      final manifest = File(p.join(mediaDirectory.path, 'index.m3u8'));
+      await manifest.writeAsString('#EXTM3U');
+
+      final database = AppDatabase(NativeDatabase(File(databasePath)));
+      final repository = OfflineMediaRepositoryImpl(database);
+      final item = OfflineMediaItem(
+        id: 'offline-task-remove-failure',
+        downloadTaskId: 'task-remove-failure',
+        animeId: 'anime-remove',
+        episodeId: 'episode-remove-failure',
+        title: 'Offline Anime',
+        episodeTitle: 'Episode remove failure',
+        manifestPath: manifest.path,
+        downloadedBytes: await manifest.length(),
+        createdAt: DateTime(2026, 8, 1),
+      );
+      await repository.upsert(item);
+      final service = LocalOfflineMediaService(
+        repository: repository,
+        directoryRemover: (_) => throw const FileSystemException('blocked'),
+      );
+
+      await expectLater(
+        service.remove(item),
+        throwsA(
+          isA<AppException>().having(
+            (error) => error.code,
+            'code',
+            'offline_media_cleanup_failed',
+          ),
+        ),
+      );
+
+      expect((await repository.getAll()).map((element) => element.id), [item.id]);
+      await database.close();
     },
   );
 }
