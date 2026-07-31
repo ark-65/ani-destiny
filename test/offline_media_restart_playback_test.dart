@@ -167,4 +167,164 @@ void main() {
       expect(isPlayableOfflineMediaUrl(routeArgs.playUrl), isTrue);
     },
   );
+
+  test(
+    'encrypted local HLS with init segment stays playable after database restart',
+    () async {
+      final tempDirectory =
+          await Directory.systemTemp.createTemp('offline-media-encrypted-restart-');
+      addTearDown(() async {
+        if (await tempDirectory.exists()) {
+          await tempDirectory.delete(recursive: true);
+        }
+      });
+      final databasePath = p.join(tempDirectory.path, 'app.sqlite');
+      final mediaDirectory =
+          Directory(p.join(tempDirectory.path, 'downloads', 'task-encrypted'));
+      final mediaSegmentsDirectory = Directory(p.join(mediaDirectory.path, 'segments'));
+      await mediaDirectory.create(recursive: true);
+      await mediaSegmentsDirectory.create(recursive: true);
+
+      final manifest = File(p.join(mediaDirectory.path, 'index.m3u8'));
+      final initSegment = File(p.join(mediaDirectory.path, 'init.mp4'));
+      final segment = File(p.join(mediaDirectory.path, 'segment.ts'));
+      final keyFile = File(p.join(mediaSegmentsDirectory.path, 'segment.key'));
+
+      await manifest.writeAsString(
+        '#EXTM3U\n'
+        '#EXT-X-TARGETDURATION:6\n'
+        '#EXT-X-MAP:URI="init.mp4"\n'
+        '#EXT-X-KEY:METHOD=AES-128,URI="segments/segment.key"\n'
+        '#EXTINF:6,\n'
+        'segment.ts\n'
+        '#EXT-X-ENDLIST\n',
+      );
+      await initSegment.writeAsBytes([1, 2, 3]);
+      await segment.writeAsBytes([4, 5, 6]);
+      await keyFile.writeAsBytes(List<int>.filled(16, 7));
+
+      final firstDatabase = AppDatabase(NativeDatabase(File(databasePath)));
+      final firstRepository = OfflineMediaRepositoryImpl(firstDatabase);
+      final item = OfflineMediaItem(
+        id: 'offline-task-encrypted',
+        downloadTaskId: 'task-encrypted',
+        animeId: 'anime-2',
+        episodeId: 'episode-encrypted',
+        title: 'Offline Anime Encrypted',
+        episodeTitle: 'Episode encrypted',
+        manifestPath: manifest.path,
+        downloadedBytes: await initSegment.length() +
+            await segment.length() +
+            await keyFile.length(),
+        createdAt: DateTime(2026, 7, 29),
+      );
+      await firstRepository.upsert(item);
+      expect(
+        await LocalOfflineMediaService(
+          repository: firstRepository,
+        ).verify(item),
+        OfflineMediaIntegrityStatus.playable,
+      );
+      await firstDatabase.close();
+
+      final secondDatabase = AppDatabase(NativeDatabase(File(databasePath)));
+      addTearDown(secondDatabase.close);
+      final secondRepository = OfflineMediaRepositoryImpl(secondDatabase);
+      final restored = (await secondRepository.getAll()).single;
+
+      expect(restored.integrityStatus, OfflineMediaIntegrityStatus.playable);
+      final service = LocalOfflineMediaService(
+        repository: secondRepository,
+      );
+      expect(await service.verify(restored), OfflineMediaIntegrityStatus.playable);
+
+      final routeArgs = offlineMediaPlayerRouteArgs(restored);
+      expect(routeArgs.playUrl, Uri.file(manifest.path).toString());
+      expect(routeArgs.sourceId, 'offline');
+      expect(routeArgs.playHeaders, isEmpty);
+      expect(isPlayableOfflineMediaUrl(routeArgs.playUrl), isTrue);
+
+      await keyFile.delete();
+      expect(await service.verify(restored), OfflineMediaIntegrityStatus.damaged);
+    },
+  );
+
+  test(
+    'offline HLS stays playable after two consecutive database and service restarts',
+    () async {
+      final tempDirectory =
+          await Directory.systemTemp.createTemp('offline-media-double-restart-');
+      addTearDown(() async {
+        if (await tempDirectory.exists()) {
+          await tempDirectory.delete(recursive: true);
+        }
+      });
+      final databasePath = p.join(tempDirectory.path, 'app.sqlite');
+      final mediaDirectory =
+          Directory(p.join(tempDirectory.path, 'downloads', 'task-double-restart'));
+      await mediaDirectory.create(recursive: true);
+      final manifest = File(p.join(mediaDirectory.path, 'index.m3u8'));
+      final segment = File(p.join(mediaDirectory.path, 'segment-000000.ts'));
+      await manifest.writeAsString(
+        '#EXTM3U\n'
+        '#EXT-X-TARGETDURATION:10\n'
+        '#EXTINF:10,\n'
+        'segment-000000.ts\n'
+        '#EXT-X-ENDLIST\n',
+      );
+      await segment.writeAsBytes([1, 2, 3]);
+
+      final firstDatabase = AppDatabase(NativeDatabase(File(databasePath)));
+      final firstRepository = OfflineMediaRepositoryImpl(firstDatabase);
+      final item = OfflineMediaItem(
+        id: 'offline-task-double-restart',
+        downloadTaskId: 'task-double-restart',
+        animeId: 'anime-1',
+        episodeId: 'episode-double-restart',
+        title: 'Offline Anime',
+        episodeTitle: 'Episode with double restart',
+        manifestPath: manifest.path,
+        downloadedBytes: await segment.length(),
+        createdAt: DateTime(2026, 7, 30),
+      );
+      await firstRepository.upsert(item);
+      expect(
+        await LocalOfflineMediaService(
+          repository: firstRepository,
+        ).verify(item),
+        OfflineMediaIntegrityStatus.playable,
+      );
+      await firstDatabase.close();
+
+      final secondDatabase = AppDatabase(NativeDatabase(File(databasePath)));
+      final secondRepository = OfflineMediaRepositoryImpl(secondDatabase);
+      final firstRestore = (await secondRepository.getAll()).single;
+      expect(firstRestore.integrityStatus, OfflineMediaIntegrityStatus.playable);
+      expect(
+        await LocalOfflineMediaService(
+          repository: secondRepository,
+        ).verify(firstRestore),
+        OfflineMediaIntegrityStatus.playable,
+      );
+      await secondDatabase.close();
+
+      final thirdDatabase = AppDatabase(NativeDatabase(File(databasePath)));
+      addTearDown(thirdDatabase.close);
+      final thirdRepository = OfflineMediaRepositoryImpl(thirdDatabase);
+      final secondRestore = (await thirdRepository.getAll()).single;
+
+      expect(secondRestore.integrityStatus, OfflineMediaIntegrityStatus.playable);
+      final routeArgs = offlineMediaPlayerRouteArgs(secondRestore);
+      expect(routeArgs.playUrl, Uri.file(manifest.path).toString());
+      expect(routeArgs.sourceId, 'offline');
+      expect(routeArgs.playHeaders, isEmpty);
+      expect(isPlayableOfflineMediaUrl(routeArgs.playUrl), isTrue);
+      expect(
+        await LocalOfflineMediaService(
+          repository: thirdRepository,
+        ).verify(secondRestore),
+        OfflineMediaIntegrityStatus.playable,
+      );
+    },
+  );
 }

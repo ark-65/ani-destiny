@@ -7,7 +7,13 @@
 ## [Unreleased]
 
 ### 修复
+- 修复 Windows 离线完整性双重编码绝对路径回归夹具与清单目录范围约束冲突导致的 CI 假失败；夹具现在把分片放在清单目录内，继续覆盖盘符、混合分隔符和双重编码解析，同时保留跨目录引用拒绝边界。
+- 加固离线完整性候选路径边界：在 `offline_media_integrity.dart` 中新增 manifest 目录范围约束，`#EXTM3U` 内的 segment/key/map 引用若解析到清单目录之外将直接判定为不可播放，避免路径穿透导致的误可播放伪阳性。
+- 补齐离线完整性判定用例：新增 `#EXT-X-MAP` 与 `#EXT-X-KEY` 引用目录路径时的回归覆盖，确认目录引用不会被误判为可播放文件。
+- 修复离线完整性判定中对 manifest 资源路径类型的边界：当 segment/key/map 路径指向目录而非文件时，播放器可玩性校验会直接返回不可播放并返回 `false`，避免目录路径触发 `FileSystemException` 或被误认为可播放资源。
 - 修复来源诊断记录在内存中保留带 token 或 cookie 的原始 URL；记录入口现在统一脱敏 URL、错误消息和路径，避免敏感参数进入后续诊断摘要。
+- 修复离线完整性校验误将目录路径当作可播放文件的漏洞：如果本地路径指向目录而非文件，离线完整性现在会直接判定为不可播放并返回 `false`，避免目录状态触发 `FileSystemException` 或误入播放入口。
+- 修复离线完整性校验对非 HLS 清单的误判：`offline_media_integrity.dart` 不再把缺少 `#EXTM3U` 首行但存在其他文本的文件误判为可播放，避免损坏或错误 manifest 被标记为可播放并进入离线入口。
 - 修复 HLS 离线清单重写时丢失 `EXT-X-START` 建议起播位置的问题；本地 master 与媒体清单现在保留 `TIME-OFFSET` 和精确起播要求，避免完整资产离线播放时偏离来源指定的开场位置，非法或重复标签会在下载前拒绝。
 - 修复 HLS 离线清单重写时丢失分片 `EXT-X-PROGRAM-DATE-TIME` 的问题；视频与外部音频子清单现在保留各自的绝对时间锚点，避免媒体序号或窗口不同的 rendition 文件完整却无法可靠同步。
 - 修复 HLS 离线清单重写时丢失 `EXT-X-DISCONTINUITY-SEQUENCE` 的问题；视频与外部音频子清单现在分别保留各自的时间线序号，避免文件完整却因滑动窗口前的 discontinuity 计数丢失而无法同步播放。
@@ -23,6 +29,8 @@
 - 修复带外部音轨的 HLS 离线主清单丢失所选视频线路 `CODECS` 提示的问题；本地清单现在保留音视频编解码标识，避免文件完整但播放器无法可靠选择解码器。
 
 ### ✨ 新增
+- 增补离线重启回归测试：针对包含 `EXT-X-MAP` 与 `EXT-X-KEY` 的本地加密 HLS 清单，验证数据库重建后仍可判定为可播放，且删除 KEY 文件后会同步变为损坏状态并阻断播放。
+- 增补离线媒体离线重启回归：新增连续两次数据库/服务重启后仍可播放的测试，验证 `offline-second-restart` 场景在本地持久化链路可复现并保持播放入口完整（`sourceId=offline`，无额外请求头）。
 - 将带外部音轨的 HLS 真实 loopback HTTP 下载、独立离线资产发布与磁盘数据库重建连成一条回归：关闭来源服务和首个数据库后，应用仍能恢复本地 master 及音视频子清单、递归复检为可播放，并生成无网络请求头且不再触网的本地播放参数。
 - 为带外部音轨的 HLS 离线资产补充真实文件与持久化数据库重建回归，证明应用重启后本地 master、视频和音频子清单仍可通过完整性校验，并以无网络请求头的本地播放参数进入播放器。
 - HLS 离线下载现在支持所选视频 variant 关联的外部音频 rendition：自动选择默认、可自动选择或首个音轨，分别下载音视频清单与分片，并生成只引用本地文件的 master playlist；离线完整性校验会递归检查音视频子清单，缺失任一音频分片都不会把资产判为可播放。
@@ -71,6 +79,7 @@
 - 修复离线清单片段解析对双重编码路径的覆盖：`offline_media_integrity.dart` 增补二次解码候选（如 `segments%5Cnested%252Fspace%20name.ts`）的匹配能力，确保 `#EXTM3U` 里出现 `%252F`、`%2520` 组合时仍能命中真实分片文件，进一步消除 Windows Build 场景的 `PathNotFoundException` 假失败。
 - 修复下载页下载任务批量清理按钮的测试交互脆弱性：将 `test/download_page_test.dart` 中批量清理按钮的定位从文本匹配改为稳定的 `downloads-clear-ended-tasks` key，避免同页出现多处同文案导致的 `Bad state: Too many elements` 假性 CI 失败，保留现有清理行为与边界。
 - 修复本地播放可用性判断在 `file://` 路径上的误判：当存在普通本地媒体文件（非 m3u8）时直接视为可播放；仅对 manifest 文件做片段完整性校验。新增 `test/player_page_test.dart` 回归“非 manifest 文件也应判定可播放”。
+- 补齐离线可播放性边界回归：为离线完整性判断新增 `test/offline_media_integrity_test.dart` 覆盖，确保 `file://` 非 `index.m3u8` 的本地媒体文件在存在时始终返回可播放。
 - 修复离线清单引用带有查询参数或片段标识的本地分段路径：`offline_media_integrity.dart` 现在解析本地 segment 行时会忽略查询参数/锚点，仅按真实文件名校验，避免 `segments/file.ts?download=true` 或 `segments/file.ts#retry` 被误判为无法播放。
 - 修复离线清单引用 windows 风格相对路径分隔符的误判：`offline_media_integrity.dart` 现将 `\` 路径分隔符规范为路径分隔形式并解码再校验，保证来自 `segments\\...` 形态的本地清单在非 Windows 运行时不会因路径拼接失败被误判为不可播放。
 - 修复 Windows 风格离线清单片段场景的测试清理安全性：`offline local file play url is true for windows-style segment path with query` 不再在 Windows 测试中误删 `C:` 根目录；改为仅清理 `C:/ani-destiny-offline` 测试目录，避免 `FileSystemException: Deletion failed, path = 'C:'` 造成 Windows Build 误失败。

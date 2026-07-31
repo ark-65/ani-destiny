@@ -31,8 +31,22 @@ bool _isPlayableOfflineMediaPath(String manifestPath, Set<String> visited) {
     return false;
   }
   final manifestFile = File(manifestPath);
-  if (!manifestFile.existsSync() || manifestFile.lengthSync() == 0) {
+  if (!manifestFile.existsSync()) {
     return false;
+  }
+  FileStat manifestStat;
+  try {
+    manifestStat = manifestFile.statSync();
+  } on FileSystemException {
+    return false;
+  }
+  if (manifestStat.type != FileSystemEntityType.file ||
+      manifestStat.size == 0) {
+    return false;
+  }
+  final extension = p.extension(normalizedManifestPath).toLowerCase();
+  if (extension != '.m3u8') {
+    return true;
   }
 
   final manifestDirectory = p.dirname(manifestPath);
@@ -46,7 +60,7 @@ bool _isPlayableOfflineMediaPath(String manifestPath, Set<String> visited) {
     return false;
   }
   if (lines.first != '#EXTM3U') {
-    return true;
+    return false;
   }
 
   var hasPlayableSegment = false;
@@ -149,10 +163,21 @@ bool _hasPlayableManifestAsset(
   );
   return segmentPaths.any((segmentPath) {
     final segmentFile = File(segmentPath);
-    return segmentFile.existsSync() &&
-        (expectedLength == null
-            ? segmentFile.lengthSync() > 0
-            : segmentFile.lengthSync() == expectedLength);
+    final FileStat segmentStat;
+    try {
+      segmentStat = segmentFile.statSync();
+    } on FileSystemException {
+      return false;
+    }
+    if (segmentStat.type != FileSystemEntityType.file) {
+      return false;
+    }
+
+    if (expectedLength == null) {
+      return segmentStat.size > 0;
+    }
+
+    return segmentStat.size == expectedLength;
   });
 }
 
@@ -168,6 +193,13 @@ Iterable<String> _segmentPathCandidatesFromManifestLine(
   String manifestLine,
   String manifestDirectory,
 ) {
+  final normalizedManifestDirectory = p.normalize(p.absolute(manifestDirectory));
+  bool isWithinManifestDirectory(String segmentPath) {
+    final normalizedSegmentPath = p.normalize(p.absolute(segmentPath));
+    return p.equals(normalizedManifestDirectory, normalizedSegmentPath) ||
+        p.isWithin(normalizedManifestDirectory, normalizedSegmentPath);
+  }
+
   final normalizedLine = manifestLine.trim();
   if (normalizedLine.isEmpty) {
     return const Iterable<String>.empty();
@@ -189,6 +221,7 @@ Iterable<String> _segmentPathCandidatesFromManifestLine(
     final validWindowsDrivePaths = windowsDriveCandidates
         .where((segmentPath) => segmentPath.isNotEmpty)
         .where(windowsPathPattern.hasMatch)
+        .where(isWithinManifestDirectory)
         .toList(growable: false);
     if (validWindowsDrivePaths.isNotEmpty) {
       return validWindowsDrivePaths;
@@ -198,7 +231,11 @@ Iterable<String> _segmentPathCandidatesFromManifestLine(
 
   if (parsedUri.hasScheme) {
     if (parsedUri.scheme.toLowerCase() == 'file') {
-      return [parsedUri.toFilePath()];
+      final filePath = parsedUri.toFilePath();
+      if (isWithinManifestDirectory(filePath)) {
+        return [filePath];
+      }
+      return const Iterable<String>.empty();
     }
     return const Iterable<String>.empty();
   }
@@ -214,6 +251,7 @@ Iterable<String> _segmentPathCandidatesFromManifestLine(
             ? segmentPath
             : p.join(manifestDirectory, segmentPath),
       )
+      .where(isWithinManifestDirectory)
       .toList(growable: false);
   if (candidateValues.isEmpty) {
     return const Iterable<String>.empty();
