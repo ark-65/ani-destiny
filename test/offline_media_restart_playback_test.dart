@@ -150,6 +150,87 @@ void main() {
   );
 
   test(
+    'offline HLS with encoded segment query survives two consecutive database restarts',
+    () async {
+      final tempDirectory =
+          await Directory.systemTemp.createTemp('offline-media-double-restart-query-');
+      addTearDown(() async {
+        if (await tempDirectory.exists()) {
+          await tempDirectory.delete(recursive: true);
+        }
+      });
+      final databasePath = p.join(tempDirectory.path, 'app.sqlite');
+      final mediaDirectory =
+          Directory(p.join(tempDirectory.path, 'downloads', 'task-query-double'));
+      final segmentDirectory = Directory(p.join(mediaDirectory.path, 'segments'));
+      await mediaDirectory.create(recursive: true);
+      await segmentDirectory.create(recursive: true);
+
+      final manifest = File(p.join(mediaDirectory.path, 'index.m3u8'));
+      final segment = File(p.join(segmentDirectory.path, 'segment%3Fname%23part.ts'));
+      await manifest.writeAsString(
+        '#EXTM3U\n'
+        '#EXT-X-TARGETDURATION:10\n'
+        '#EXTINF:10,\n'
+        'segments/segment%3Fname%23part.ts?download_cache=true#retry\n'
+        '#EXT-X-ENDLIST\n',
+      );
+      await segment.writeAsBytes([1, 2, 3]);
+
+      final firstDatabase = AppDatabase(NativeDatabase(File(databasePath)));
+      final firstRepository = OfflineMediaRepositoryImpl(firstDatabase);
+      final item = OfflineMediaItem(
+        id: 'offline-task-query-double-restart',
+        downloadTaskId: 'task-query-double',
+        animeId: 'anime-query',
+        episodeId: 'episode-query-double',
+        title: 'Offline Anime Query',
+        episodeTitle: 'Episode with query segment',
+        manifestPath: manifest.path,
+        downloadedBytes: await segment.length(),
+        createdAt: DateTime(2026, 8, 1),
+      );
+      await firstRepository.upsert(item);
+      expect(
+        await LocalOfflineMediaService(
+          repository: firstRepository,
+        ).verify(item),
+        OfflineMediaIntegrityStatus.playable,
+      );
+      await firstDatabase.close();
+
+      final secondDatabase = AppDatabase(NativeDatabase(File(databasePath)));
+      final secondRepository = OfflineMediaRepositoryImpl(secondDatabase);
+      final firstRestore = (await secondRepository.getAll()).single;
+      expect(firstRestore.integrityStatus, OfflineMediaIntegrityStatus.playable);
+      expect(
+        await LocalOfflineMediaService(
+          repository: secondRepository,
+        ).verify(firstRestore),
+        OfflineMediaIntegrityStatus.playable,
+      );
+      await secondDatabase.close();
+
+      final thirdDatabase = AppDatabase(NativeDatabase(File(databasePath)));
+      final thirdRepository = OfflineMediaRepositoryImpl(thirdDatabase);
+      final secondRestore = (await thirdRepository.getAll()).single;
+      expect(secondRestore.integrityStatus, OfflineMediaIntegrityStatus.playable);
+      final routeArgs = offlineMediaPlayerRouteArgs(secondRestore);
+      expect(routeArgs.playUrl, Uri.file(manifest.path).toString());
+      expect(routeArgs.sourceId, 'offline');
+      expect(routeArgs.playHeaders, isEmpty);
+      expect(isPlayableOfflineMediaUrl(routeArgs.playUrl), isTrue);
+      expect(
+        await LocalOfflineMediaService(
+          repository: thirdRepository,
+        ).verify(secondRestore),
+        OfflineMediaIntegrityStatus.playable,
+      );
+      await thirdDatabase.close();
+    },
+  );
+
+  test(
     'alternate audio HLS stays playable after database and service restart',
     () async {
       final tempDirectory =

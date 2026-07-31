@@ -7,6 +7,7 @@
 ## [Unreleased]
 
 ### 修复
+- 新增离线重启回归：带 `?` 与 `#` 编码片段的本地 m3u8，在连续两次数据库重建后仍应判定为可播放，覆盖 `offline-second-restart` 阶段的高风险 URI 解码路径边界。
 - 加固离线整部删除逻辑：`LocalOfflineMediaService.removeAll` 现在在单条删除失败时继续处理其余项，确保成功项仍被清理，并在有失败时统一抛出 `offline_media_cleanup_batch_failed`，避免整部删除因局部故障被整体中断。
 - 补充删除失败边界回归：`offline_media_restart_playback_test.dart` 新增用例覆盖 `LocalOfflineMediaService.remove` 在本地目录清理失败时抛出 `offline_media_cleanup_failed`，并验证数据库记录保留，确保离线媒体删除失败不会误删媒体索引。
 - 修复离线重启回归测试中的数据库资源泄漏：`test/offline_media_restart_playback_test.dart` 在数据库重建后的重试路径里显式关闭第二个数据库实例，避免 Windows CI 中出现 `AppDatabase` 多实例并发打开导致的资源锁与不确定假失败。
