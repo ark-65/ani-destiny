@@ -50,8 +50,25 @@ class LocalOfflineMediaService implements OfflineMediaService {
 
   @override
   Future<void> removeAll(Iterable<OfflineMediaItem> items) async {
+    final failedItems = <OfflineMediaItem>[];
+    AppException? firstFailure;
+
     for (final item in items) {
-      await remove(item);
+      try {
+        await remove(item);
+      } on AppException catch (error) {
+        failedItems.add(item);
+        firstFailure ??= error;
+        continue;
+      }
+    }
+
+    if (failedItems.isNotEmpty) {
+      throw AppException(
+        'Failed to remove all offline media entries.',
+        code: 'offline_media_cleanup_batch_failed',
+        cause: firstFailure,
+      );
     }
   }
 

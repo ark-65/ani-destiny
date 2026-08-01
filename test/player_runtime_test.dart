@@ -306,4 +306,28 @@ void main() {
     expect(diagnostics.state, PlaybackDiagnosticState.playing);
     expect(diagnostics.usedSourceFallback, isTrue);
   });
+
+  test('PlaybackDiagnosticsBuilder removes local file paths from diagnostics', () {
+    final diagnostics = const PlaybackDiagnosticsBuilder().build(
+      animeTitle: 'Anime 1',
+      episodeTitle: 'Episode 1',
+      selectedAppSourceId: null,
+      sourceId: 'offline',
+      requestedSourceId: null,
+      playSourceTitle: null,
+      playUrl: Uri.file('/tmp/ani-destiny-offline/episode-1/index.m3u8')
+          .toString(),
+      headers: const {
+        'User-Agent': 'AniDestinyOfflineTest',
+        'Cookie': 'sid=offline-session',
+      },
+      state: PlaybackDiagnosticState.playing,
+    );
+
+    expect(diagnostics.urlType, 'm3u8');
+    expect(diagnostics.sanitizedUrl, 'file:[hidden]');
+    expect(diagnostics.sanitizedUrl, isNot(contains('ani-destiny-offline')));
+    expect(diagnostics.sanitizedUrl, isNot(contains('episode-1')));
+    expect(diagnostics.headerKeys, ['Cookie', 'User-Agent']);
+  });
 }

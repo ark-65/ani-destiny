@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:ani_destiny/core/error/app_exception.dart';
 import 'package:ani_destiny/core/storage/app_database.dart';
 import 'package:ani_destiny/features/download/data/repositories/offline_media_repository_impl.dart';
 import 'package:ani_destiny/features/download/data/services/local_offline_media_service.dart';
@@ -59,7 +60,6 @@ void main() {
       await firstDatabase.close();
 
       final secondDatabase = AppDatabase(NativeDatabase(File(databasePath)));
-      addTearDown(secondDatabase.close);
       final secondRepository = OfflineMediaRepositoryImpl(secondDatabase);
       final restored = (await secondRepository.getAll()).single;
 
@@ -75,6 +75,236 @@ void main() {
       expect(routeArgs.sourceId, 'offline');
       expect(routeArgs.playHeaders, isEmpty);
       expect(isPlayableOfflineMediaUrl(routeArgs.playUrl), isTrue);
+      await secondDatabase.close();
+    },
+  );
+
+  test(
+    'offline HLS with encoded segment query stays playable after database restart',
+    () async {
+      final tempDirectory =
+          await Directory.systemTemp.createTemp('offline-media-restart-query-');
+      addTearDown(() async {
+        if (await tempDirectory.exists()) {
+          await tempDirectory.delete(recursive: true);
+        }
+      });
+      final databasePath = p.join(tempDirectory.path, 'app.sqlite');
+      final mediaDirectory =
+          Directory(p.join(tempDirectory.path, 'downloads', 'task-query'));
+      final segmentDirectory = Directory(p.join(mediaDirectory.path, 'segments'));
+      await mediaDirectory.create(recursive: true);
+      await segmentDirectory.create(recursive: true);
+
+      final manifest = File(p.join(mediaDirectory.path, 'index.m3u8'));
+      final segment = File(p.join(segmentDirectory.path, 'segment%3Fname%23part.ts'));
+      await manifest.writeAsString(
+        '#EXTM3U\n'
+        '#EXT-X-TARGETDURATION:10\n'
+        '#EXTINF:10,\n'
+        'segments/segment%3Fname%23part.ts?download_cache=true#retry\n'
+        '#EXT-X-ENDLIST\n',
+      );
+      await segment.writeAsBytes([1, 2, 3]);
+
+      final firstDatabase = AppDatabase(NativeDatabase(File(databasePath)));
+      final firstRepository = OfflineMediaRepositoryImpl(firstDatabase);
+      final item = OfflineMediaItem(
+        id: 'offline-task-query',
+        downloadTaskId: 'task-query',
+        animeId: 'anime-query',
+        episodeId: 'episode-query',
+        title: 'Offline Anime Query',
+        episodeTitle: 'Episode with query segment',
+        manifestPath: manifest.path,
+        downloadedBytes: await segment.length(),
+        createdAt: DateTime(2026, 8, 1),
+      );
+      await firstRepository.upsert(item);
+      expect(
+        await LocalOfflineMediaService(
+          repository: firstRepository,
+        ).verify(item),
+        OfflineMediaIntegrityStatus.playable,
+      );
+      await firstDatabase.close();
+
+      final secondDatabase = AppDatabase(NativeDatabase(File(databasePath)));
+      final secondRepository = OfflineMediaRepositoryImpl(secondDatabase);
+      final restored = (await secondRepository.getAll()).single;
+
+      expect(restored.integrityStatus, OfflineMediaIntegrityStatus.playable);
+      expect(
+        await LocalOfflineMediaService(
+          repository: secondRepository,
+        ).verify(restored),
+        OfflineMediaIntegrityStatus.playable,
+      );
+      final routeArgs = offlineMediaPlayerRouteArgs(restored);
+      expect(routeArgs.playUrl, Uri.file(manifest.path).toString());
+      expect(routeArgs.sourceId, 'offline');
+      expect(routeArgs.playHeaders, isEmpty);
+      expect(isPlayableOfflineMediaUrl(routeArgs.playUrl), isTrue);
+      await secondDatabase.close();
+    },
+  );
+
+  test(
+    'offline HLS with encoded segment query survives two consecutive database restarts',
+    () async {
+      final tempDirectory =
+          await Directory.systemTemp.createTemp('offline-media-double-restart-query-');
+      addTearDown(() async {
+        if (await tempDirectory.exists()) {
+          await tempDirectory.delete(recursive: true);
+        }
+      });
+      final databasePath = p.join(tempDirectory.path, 'app.sqlite');
+      final mediaDirectory =
+          Directory(p.join(tempDirectory.path, 'downloads', 'task-query-double'));
+      final segmentDirectory = Directory(p.join(mediaDirectory.path, 'segments'));
+      await mediaDirectory.create(recursive: true);
+      await segmentDirectory.create(recursive: true);
+
+      final manifest = File(p.join(mediaDirectory.path, 'index.m3u8'));
+      final segment = File(p.join(segmentDirectory.path, 'segment%3Fname%23part.ts'));
+      await manifest.writeAsString(
+        '#EXTM3U\n'
+        '#EXT-X-TARGETDURATION:10\n'
+        '#EXTINF:10,\n'
+        'segments/segment%3Fname%23part.ts?download_cache=true#retry\n'
+        '#EXT-X-ENDLIST\n',
+      );
+      await segment.writeAsBytes([1, 2, 3]);
+
+      final firstDatabase = AppDatabase(NativeDatabase(File(databasePath)));
+      final firstRepository = OfflineMediaRepositoryImpl(firstDatabase);
+      final item = OfflineMediaItem(
+        id: 'offline-task-query-double-restart',
+        downloadTaskId: 'task-query-double',
+        animeId: 'anime-query',
+        episodeId: 'episode-query-double',
+        title: 'Offline Anime Query',
+        episodeTitle: 'Episode with query segment',
+        manifestPath: manifest.path,
+        downloadedBytes: await segment.length(),
+        createdAt: DateTime(2026, 8, 1),
+      );
+      await firstRepository.upsert(item);
+      expect(
+        await LocalOfflineMediaService(
+          repository: firstRepository,
+        ).verify(item),
+        OfflineMediaIntegrityStatus.playable,
+      );
+      await firstDatabase.close();
+
+      final secondDatabase = AppDatabase(NativeDatabase(File(databasePath)));
+      final secondRepository = OfflineMediaRepositoryImpl(secondDatabase);
+      final firstRestore = (await secondRepository.getAll()).single;
+      expect(firstRestore.integrityStatus, OfflineMediaIntegrityStatus.playable);
+      expect(
+        await LocalOfflineMediaService(
+          repository: secondRepository,
+        ).verify(firstRestore),
+        OfflineMediaIntegrityStatus.playable,
+      );
+      await secondDatabase.close();
+
+      final thirdDatabase = AppDatabase(NativeDatabase(File(databasePath)));
+      final thirdRepository = OfflineMediaRepositoryImpl(thirdDatabase);
+      final secondRestore = (await thirdRepository.getAll()).single;
+      expect(secondRestore.integrityStatus, OfflineMediaIntegrityStatus.playable);
+      final routeArgs = offlineMediaPlayerRouteArgs(secondRestore);
+      expect(routeArgs.playUrl, Uri.file(manifest.path).toString());
+      expect(routeArgs.sourceId, 'offline');
+      expect(routeArgs.playHeaders, isEmpty);
+      expect(isPlayableOfflineMediaUrl(routeArgs.playUrl), isTrue);
+      expect(
+        await LocalOfflineMediaService(
+          repository: thirdRepository,
+        ).verify(secondRestore),
+        OfflineMediaIntegrityStatus.playable,
+      );
+      await thirdDatabase.close();
+    },
+  );
+
+  test(
+    'offline HLS with encoded absolute windows-style segment survives database restart',
+    () async {
+      final tempDirectory = await Directory.systemTemp.createTemp(
+        'offline-media-restart-query-windows-style-',
+      );
+      addTearDown(() async {
+        if (await tempDirectory.exists()) {
+          await tempDirectory.delete(recursive: true);
+        }
+      });
+      final databasePath = p.join(tempDirectory.path, 'app.sqlite');
+      final mediaDirectory =
+          Directory(p.join(tempDirectory.path, 'downloads', 'task-query-windows'));
+      final windowsDirectory = Directory(
+        p.join(mediaDirectory.path, 'windows', 'episodes', 'episode-000001'),
+      );
+      final segmentDirectory = Directory(
+        p.join(windowsDirectory.path, 'nested', 'segments'),
+      );
+      await segmentDirectory.create(recursive: true);
+
+      final manifest = File(p.join(mediaDirectory.path, 'index.m3u8'));
+      final segment = File(p.join(segmentDirectory.path, 'space name.ts'));
+      await segment.writeAsBytes([1, 2, 3]);
+      final manifestSegment =
+          '${windowsDirectory.path.replaceAll('\\', '/')}/nested%5Csegments'
+          '%252Fspace%2520name.ts?download_cache=true#retry';
+      await manifest.writeAsString(
+        '#EXTM3U\n'
+        '#EXT-X-TARGETDURATION:10\n'
+        '#EXTINF:10,\n'
+        '$manifestSegment\n'
+        '#EXT-X-ENDLIST\n',
+      );
+
+      final firstDatabase = AppDatabase(NativeDatabase(File(databasePath)));
+      final firstRepository = OfflineMediaRepositoryImpl(firstDatabase);
+      final item = OfflineMediaItem(
+        id: 'offline-task-query-windows',
+        downloadTaskId: 'task-query-windows',
+        animeId: 'anime-query',
+        episodeId: 'episode-query-windows',
+        title: 'Offline Anime Query',
+        episodeTitle: 'Episode with encoded windows segment',
+        manifestPath: manifest.path,
+        downloadedBytes: await segment.length(),
+        createdAt: DateTime(2026, 8, 1),
+      );
+      await firstRepository.upsert(item);
+      expect(
+        await LocalOfflineMediaService(
+          repository: firstRepository,
+        ).verify(item),
+        OfflineMediaIntegrityStatus.playable,
+      );
+      await firstDatabase.close();
+
+      final secondDatabase = AppDatabase(NativeDatabase(File(databasePath)));
+      final secondRepository = OfflineMediaRepositoryImpl(secondDatabase);
+      final restored = (await secondRepository.getAll()).single;
+
+      expect(restored.integrityStatus, OfflineMediaIntegrityStatus.playable);
+      expect(
+        await LocalOfflineMediaService(
+          repository: secondRepository,
+        ).verify(restored),
+        OfflineMediaIntegrityStatus.playable,
+      );
+      final routeArgs = offlineMediaPlayerRouteArgs(restored);
+      expect(routeArgs.playUrl, Uri.file(manifest.path).toString());
+      expect(routeArgs.sourceId, 'offline');
+      expect(routeArgs.playHeaders, isEmpty);
+      expect(isPlayableOfflineMediaUrl(routeArgs.playUrl), isTrue);
+      await secondDatabase.close();
     },
   );
 
@@ -149,7 +379,6 @@ void main() {
       await firstDatabase.close();
 
       final secondDatabase = AppDatabase(NativeDatabase(File(databasePath)));
-      addTearDown(secondDatabase.close);
       final secondRepository = OfflineMediaRepositoryImpl(secondDatabase);
       final restored = (await secondRepository.getAll()).single;
 
@@ -165,6 +394,7 @@ void main() {
       expect(routeArgs.sourceId, 'offline');
       expect(routeArgs.playHeaders, isEmpty);
       expect(isPlayableOfflineMediaUrl(routeArgs.playUrl), isTrue);
+      await secondDatabase.close();
     },
   );
 
@@ -228,7 +458,6 @@ void main() {
       await firstDatabase.close();
 
       final secondDatabase = AppDatabase(NativeDatabase(File(databasePath)));
-      addTearDown(secondDatabase.close);
       final secondRepository = OfflineMediaRepositoryImpl(secondDatabase);
       final restored = (await secondRepository.getAll()).single;
 
@@ -246,6 +475,7 @@ void main() {
 
       await keyFile.delete();
       expect(await service.verify(restored), OfflineMediaIntegrityStatus.damaged);
+      await secondDatabase.close();
     },
   );
 
@@ -325,6 +555,133 @@ void main() {
         ).verify(secondRestore),
         OfflineMediaIntegrityStatus.playable,
       );
+    },
+  );
+
+  test(
+    'offline HLS survives recheck after restart and supports full delete flow',
+    () async {
+      final tempDirectory = await Directory.systemTemp
+          .createTemp('offline-media-recheck-delete-');
+      addTearDown(() async {
+        if (await tempDirectory.exists()) {
+          await tempDirectory.delete(recursive: true);
+        }
+      });
+      final databasePath = p.join(tempDirectory.path, 'app.sqlite');
+      final mediaDirectory =
+          Directory(p.join(tempDirectory.path, 'downloads', 'task-delete'));
+      await mediaDirectory.create(recursive: true);
+      final manifest = File(p.join(mediaDirectory.path, 'index.m3u8'));
+      final segment = File(p.join(mediaDirectory.path, 'segment-000000.ts'));
+      await manifest.writeAsString(
+        '#EXTM3U\n'
+        '#EXT-X-TARGETDURATION:10\n'
+        '#EXTINF:10,\n'
+        'segment-000000.ts\n'
+        '#EXT-X-ENDLIST\n',
+      );
+      await segment.writeAsBytes([1, 2, 3]);
+
+      final firstDatabase = AppDatabase(NativeDatabase(File(databasePath)));
+      final firstRepository = OfflineMediaRepositoryImpl(firstDatabase);
+      final item = OfflineMediaItem(
+        id: 'offline-task-recheck-delete',
+        downloadTaskId: 'task-delete',
+        animeId: 'anime-3',
+        episodeId: 'episode-recheck-delete',
+        title: 'Offline Anime',
+        episodeTitle: 'Episode for recheck delete',
+        manifestPath: manifest.path,
+        downloadedBytes: await segment.length(),
+        createdAt: DateTime(2026, 7, 31),
+      );
+      await firstRepository.upsert(item);
+      expect(
+        await LocalOfflineMediaService(
+          repository: firstRepository,
+        ).verify(item),
+        OfflineMediaIntegrityStatus.playable,
+      );
+      await firstDatabase.close();
+
+      final secondDatabase = AppDatabase(NativeDatabase(File(databasePath)));
+      final secondRepository = OfflineMediaRepositoryImpl(secondDatabase);
+      final restored = (await secondRepository.getAll()).single;
+
+      expect(restored.integrityStatus, OfflineMediaIntegrityStatus.playable);
+      expect(
+        await LocalOfflineMediaService(
+          repository: secondRepository,
+        ).verify(restored),
+        OfflineMediaIntegrityStatus.playable,
+      );
+
+      await LocalOfflineMediaService(
+        repository: secondRepository,
+      ).remove(restored);
+
+      expect(await secondRepository.getAll(), isEmpty);
+      expect(await mediaDirectory.exists(), isFalse);
+
+      await secondDatabase.close();
+
+      final thirdDatabase = AppDatabase(NativeDatabase(File(databasePath)));
+      addTearDown(thirdDatabase.close);
+      final thirdRepository = OfflineMediaRepositoryImpl(thirdDatabase);
+      expect(await thirdRepository.getAll(), isEmpty);
+    },
+  );
+
+  test(
+    'offline media remove returns cleanup failure when local directory cleanup fails',
+    () async {
+      final tempDirectory =
+          await Directory.systemTemp.createTemp('offline-media-remove-failure-');
+      addTearDown(() async {
+        if (await tempDirectory.exists()) {
+          await tempDirectory.delete(recursive: true);
+        }
+      });
+      final databasePath = p.join(tempDirectory.path, 'app.sqlite');
+      final mediaDirectory =
+          Directory(p.join(tempDirectory.path, 'downloads', 'task-remove-failure'));
+      await mediaDirectory.create(recursive: true);
+      final manifest = File(p.join(mediaDirectory.path, 'index.m3u8'));
+      await manifest.writeAsString('#EXTM3U');
+
+      final database = AppDatabase(NativeDatabase(File(databasePath)));
+      final repository = OfflineMediaRepositoryImpl(database);
+      final item = OfflineMediaItem(
+        id: 'offline-task-remove-failure',
+        downloadTaskId: 'task-remove-failure',
+        animeId: 'anime-remove',
+        episodeId: 'episode-remove-failure',
+        title: 'Offline Anime',
+        episodeTitle: 'Episode remove failure',
+        manifestPath: manifest.path,
+        downloadedBytes: await manifest.length(),
+        createdAt: DateTime(2026, 8, 1),
+      );
+      await repository.upsert(item);
+      final service = LocalOfflineMediaService(
+        repository: repository,
+        directoryRemover: (_) => throw const FileSystemException('blocked'),
+      );
+
+      await expectLater(
+        service.remove(item),
+        throwsA(
+          isA<AppException>().having(
+            (error) => error.code,
+            'code',
+            'offline_media_cleanup_failed',
+          ),
+        ),
+      );
+
+      expect((await repository.getAll()).map((element) => element.id), [item.id]);
+      await database.close();
     },
   );
 }
