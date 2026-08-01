@@ -8,33 +8,6 @@
 
 ## [1.0.7] - 2026-08-01
 
-### 修复
-- 增补离线重启回归：`offline_media_restart_playback_test.dart` 覆盖 Windows 风格分片路径（含 `%5C`、`%252F` 与 `?download_cache=true#retry`）在数据库重建后的可播放性，验证即使分片引用经过路径编码与反斜杠重构，`offline_media_integrity` 在 `offline-restart` 场景仍能稳定解析为可播放并保留离线播放参数。
-- 新增离线重启回归：带 `?` 与 `#` 编码片段的本地 m3u8，在连续两次数据库重建后仍应判定为可播放，覆盖 `offline-second-restart` 阶段的高风险 URI 解码路径边界。
-- 加固离线整部删除逻辑：`LocalOfflineMediaService.removeAll` 现在在单条删除失败时继续处理其余项，确保成功项仍被清理，并在有失败时统一抛出 `offline_media_cleanup_batch_failed`，避免整部删除因局部故障被整体中断。
-- 补充删除失败边界回归：`offline_media_restart_playback_test.dart` 新增用例覆盖 `LocalOfflineMediaService.remove` 在本地目录清理失败时抛出 `offline_media_cleanup_failed`，并验证数据库记录保留，确保离线媒体删除失败不会误删媒体索引。
-- 修复离线重启回归测试中的数据库资源泄漏：`test/offline_media_restart_playback_test.dart` 在数据库重建后的重试路径里显式关闭第二个数据库实例，避免 Windows CI 中出现 `AppDatabase` 多实例并发打开导致的资源锁与不确定假失败。
-- 修复 Windows 离线完整性双重编码绝对路径回归夹具与清单目录范围约束冲突导致的 CI 假失败；夹具现在把分片放在清单目录内，继续覆盖盘符、混合分隔符和双重编码解析，同时保留跨目录引用拒绝边界。
-- 加固离线完整性候选路径边界：在 `offline_media_integrity.dart` 中新增 manifest 目录范围约束，`#EXTM3U` 内的 segment/key/map 引用若解析到清单目录之外将直接判定为不可播放，避免路径穿透导致的误可播放伪阳性。
-- 补齐离线完整性判定用例：新增 `#EXT-X-MAP` 与 `#EXT-X-KEY` 引用目录路径时的回归覆盖，确认目录引用不会被误判为可播放文件。
-- 修复离线完整性判定中对 manifest 资源路径类型的边界：当 segment/key/map 路径指向目录而非文件时，播放器可玩性校验会直接返回不可播放并返回 `false`，避免目录路径触发 `FileSystemException` 或被误认为可播放资源。
-- 修复来源诊断记录在内存中保留带 token 或 cookie 的原始 URL；记录入口现在统一脱敏 URL、错误消息和路径，避免敏感参数进入后续诊断摘要。
-- 增补 `PlaybackDiagnosticsBuilder` 的文件 URL 覆盖：离线 `file://` 播放路径现在会在诊断摘要里走去敏化路径，不再保留本地文件完整路径，新增回归测试防止日志再次泄露本地路径。
-- 修复离线完整性校验误将目录路径当作可播放文件的漏洞：如果本地路径指向目录而非文件，离线完整性现在会直接判定为不可播放并返回 `false`，避免目录状态触发 `FileSystemException` 或误入播放入口。
-- 修复离线完整性校验对非 HLS 清单的误判：`offline_media_integrity.dart` 不再把缺少 `#EXTM3U` 首行但存在其他文本的文件误判为可播放，避免损坏或错误 manifest 被标记为可播放并进入离线入口。
-- 修复 HLS 离线清单重写时丢失 `EXT-X-START` 建议起播位置的问题；本地 master 与媒体清单现在保留 `TIME-OFFSET` 和精确起播要求，避免完整资产离线播放时偏离来源指定的开场位置，非法或重复标签会在下载前拒绝。
-- 修复 HLS 离线清单重写时丢失分片 `EXT-X-PROGRAM-DATE-TIME` 的问题；视频与外部音频子清单现在保留各自的绝对时间锚点，避免媒体序号或窗口不同的 rendition 文件完整却无法可靠同步。
-- 修复 HLS 离线清单重写时丢失 `EXT-X-DISCONTINUITY-SEQUENCE` 的问题；视频与外部音频子清单现在分别保留各自的时间线序号，避免文件完整却因滑动窗口前的 discontinuity 计数丢失而无法同步播放。
-- 修复 HLS master 选择声明外部视频组的最高码率 variant、却在离线资产中静默丢弃视频关系的问题；下载器现在会跳过当前无法完整本地化备用视频的线路，改用同一 master 中最高码率且无外部视频依赖的完整线路。
-- 修复 HLS master 选择声明外部字幕组的最高码率 variant、却在离线资产中静默丢弃字幕关系的问题；下载器现在会跳过当前无法完整本地化字幕的线路，改用同一 master 中最高码率且无外部字幕依赖的完整线路。
-- 修复 HLS master 最高码率 variant 关联歧义音轨组时直接让整集失败的问题；下载器现在会跳过无法唯一选择音轨的线路，改用同一 master 中最高码率且音轨可确定的线路生成纯本地音视频资产。
-- 修复多语言 HLS 在没有唯一默认或自动音轨时按清单顺序静默下载任意语言的问题；歧义 AUDIO 组现在会在任何音视频媒体请求前失败，避免发布文件完整但语言错误的离线资产。
-- 修复同一 HLS AUDIO 组允许多个 `DEFAULT=YES` 音轨并按清单顺序静默选择的问题；下载器现在会在请求媒体清单前拒绝默认语言不唯一的 master，避免整集文件完整却离线播放错误语言。
-- 修复 HLS 音轨的 `DEFAULT` / `AUTOSELECT` 非法枚举值或 `DEFAULT=YES,AUTOSELECT=NO` 矛盾关系被静默当作非默认音轨的问题；下载器现在会在请求媒体清单前拒绝不可判定的音轨选择元数据，避免离线资产完整却切换到错误语言。
-- 修复 HLS master 中空 `AUDIO`、空音轨 `GROUP-ID` 或空 `NAME` 仍可能进入离线线路选择的问题；下载器现在会在请求媒体清单前稳定拒绝无效音轨关系，避免误配空组并生成语义被改写的本地主清单。
-- 修复 HLS master 中缺失、非数字或非正数的 variant `BANDWIDTH` 仍会进入离线下载的问题；下载器现在会在请求媒体清单前将其稳定判为无效 manifest，避免生成带伪造带宽的本地主清单或发布伪完成资产。
-- 修复 HLS master 总是先选择最高码率 variant、再因其引用缺失音轨组而让整集失败的问题；下载器现在会在请求媒体清单前选择最高码率且音轨关系可完整本地化的 variant，使同一 master 中仍可用的清晰度能够正常生成纯本地音视频资产。
-- 修复带外部音轨的 HLS 离线主清单丢失所选视频线路 `CODECS` 提示的问题；本地清单现在保留音视频编解码标识，避免文件完整但播放器无法可靠选择解码器。
 
 ### ✨ 新增
 - 增补离线重启回归测试：针对包含 `EXT-X-MAP` 与 `EXT-X-KEY` 的本地加密 HLS 清单，验证数据库重建后仍可判定为可播放，且删除 KEY 文件后会同步变为损坏状态并阻断播放。
@@ -61,6 +34,32 @@
 - 在设置的“关于”区域检查 GitHub 最新正式 Release；有更高版本时显示更新提示，并直接打开对应发布页下载安装。
 
 ### 🐛 修复
+- 增补离线重启回归：`offline_media_restart_playback_test.dart` 覆盖 Windows 风格分片路径（含 `%5C`、`%252F` 与 `?download_cache=true#retry`）在数据库重建后的可播放性，验证即使分片引用经过路径编码与反斜杠重构，`offline_media_integrity` 在 `offline-restart` 场景仍能稳定解析为可播放并保留离线播放参数。
+- 新增离线重启回归：带 `?` 与 `#` 编码片段的本地 m3u8，在连续两次数据库重建后仍应判定为可播放，覆盖 `offline-second-restart` 阶段的高风险 URI 解码路径边界。
+- 加固离线整部删除逻辑：`LocalOfflineMediaService.removeAll` 现在在单条删除失败时继续处理其余项，确保成功项仍被清理，并在有失败时统一抛出 `offline_media_cleanup_batch_failed`，避免整部删除因局部故障被整体中断。
+- 补充删除失败边界回归：`offline_media_restart_playback_test.dart` 新增用例覆盖 `LocalOfflineMediaService.remove` 在本地目录清理失败时抛出 `offline_media_cleanup_failed`，并验证数据库记录保留，确保离线媒体删除失败不会误删媒体索引。
+- 修复离线重启回归测试中的数据库资源泄漏：`test/offline_media_restart_playback_test.dart` 在数据库重建后的重试路径里显式关闭第二个数据库实例，避免 Windows CI 中出现 `AppDatabase` 多实例并发打开导致的资源锁与不确定假失败。
+- 修复 Windows 离线完整性双重编码绝对路径回归夹具与清单目录范围约束冲突导致的 CI 假失败；夹具现在把分片放在清单目录内，继续覆盖盘符、混合分隔符和双重编码解析，同时保留跨目录引用拒绝边界。
+- 加固离线完整性候选路径边界：在 `offline_media_integrity.dart` 中新增 manifest 目录范围约束，`#EXTM3U` 内的 segment/key/map 引用若解析到清单目录之外将直接判定为不可播放，避免路径穿透导致的误可播放伪阳性。
+- 补齐离线完整性判定用例：新增 `#EXT-X-MAP` 与 `#EXT-X-KEY` 引用目录路径时的回归覆盖，确认目录引用不会被误判为可播放文件。
+- 修复离线完整性判定中对 manifest 资源路径类型的边界：当 segment/key/map 路径指向目录而非文件时，播放器可玩性校验会直接返回不可播放并返回 `false`，避免目录路径触发 `FileSystemException` 或被误认为可播放资源。
+- 修复来源诊断记录在内存中保留带 token 或 cookie 的原始 URL；记录入口现在统一脱敏 URL、错误消息和路径，避免敏感参数进入后续诊断摘要。
+- 增补 `PlaybackDiagnosticsBuilder` 的文件 URL 覆盖：离线 `file://` 播放路径现在会在诊断摘要里走去敏化路径，不再保留本地文件完整路径，新增回归测试防止日志再次泄露本地路径。
+- 修复离线完整性校验误将目录路径当作可播放文件的漏洞：如果本地路径指向目录而非文件，离线完整性现在会直接判定为不可播放并返回 `false`，避免目录状态触发 `FileSystemException` 或误入播放入口。
+- 修复离线完整性校验对非 HLS 清单的误判：`offline_media_integrity.dart` 不再把缺少 `#EXTM3U` 首行但存在其他文本的文件误判为可播放，避免损坏或错误 manifest 被标记为可播放并进入离线入口。
+- 修复 HLS 离线清单重写时丢失 `EXT-X-START` 建议起播位置的问题；本地 master 与媒体清单现在保留 `TIME-OFFSET` 和精确起播要求，避免完整资产离线播放时偏离来源指定的开场位置，非法或重复标签会在下载前拒绝。
+- 修复 HLS 离线清单重写时丢失分片 `EXT-X-PROGRAM-DATE-TIME` 的问题；视频与外部音频子清单现在保留各自的绝对时间锚点，避免媒体序号或窗口不同的 rendition 文件完整却无法可靠同步。
+- 修复 HLS 离线清单重写时丢失 `EXT-X-DISCONTINUITY-SEQUENCE` 的问题；视频与外部音频子清单现在分别保留各自的时间线序号，避免文件完整却因滑动窗口前的 discontinuity 计数丢失而无法同步播放。
+- 修复 HLS master 选择声明外部视频组的最高码率 variant、却在离线资产中静默丢弃视频关系的问题；下载器现在会跳过当前无法完整本地化备用视频的线路，改用同一 master 中最高码率且无外部视频依赖的完整线路。
+- 修复 HLS master 选择声明外部字幕组的最高码率 variant、却在离线资产中静默丢弃字幕关系的问题；下载器现在会跳过当前无法完整本地化字幕的线路，改用同一 master 中最高码率且无外部字幕依赖的完整线路。
+- 修复 HLS master 最高码率 variant 关联歧义音轨组时直接让整集失败的问题；下载器现在会跳过无法唯一选择音轨的线路，改用同一 master 中最高码率且音轨可确定的线路生成纯本地音视频资产。
+- 修复多语言 HLS 在没有唯一默认或自动音轨时按清单顺序静默下载任意语言的问题；歧义 AUDIO 组现在会在任何音视频媒体请求前失败，避免发布文件完整但语言错误的离线资产。
+- 修复同一 HLS AUDIO 组允许多个 `DEFAULT=YES` 音轨并按清单顺序静默选择的问题；下载器现在会在请求媒体清单前拒绝默认语言不唯一的 master，避免整集文件完整却离线播放错误语言。
+- 修复 HLS 音轨的 `DEFAULT` / `AUTOSELECT` 非法枚举值或 `DEFAULT=YES,AUTOSELECT=NO` 矛盾关系被静默当作非默认音轨的问题；下载器现在会在请求媒体清单前拒绝不可判定的音轨选择元数据，避免离线资产完整却切换到错误语言。
+- 修复 HLS master 中空 `AUDIO`、空音轨 `GROUP-ID` 或空 `NAME` 仍可能进入离线线路选择的问题；下载器现在会在请求媒体清单前稳定拒绝无效音轨关系，避免误配空组并生成语义被改写的本地主清单。
+- 修复 HLS master 中缺失、非数字或非正数的 variant `BANDWIDTH` 仍会进入离线下载的问题；下载器现在会在请求媒体清单前将其稳定判为无效 manifest，避免生成带伪造带宽的本地主清单或发布伪完成资产。
+- 修复 HLS master 总是先选择最高码率 variant、再因其引用缺失音轨组而让整集失败的问题；下载器现在会在请求媒体清单前选择最高码率且音轨关系可完整本地化的 variant，使同一 master 中仍可用的清晰度能够正常生成纯本地音视频资产。
+- 修复带外部音轨的 HLS 离线主清单丢失所选视频线路 `CODECS` 提示的问题；本地清单现在保留音视频编解码标识，避免文件完整但播放器无法可靠选择解码器。
 - 修复 HLS master 的默认音轨已内嵌在视频 variant、同时还提供外部备选音轨时，离线下载错误切换到外部音轨的问题；现在先按完整音轨组选择默认/自动音轨，选中无 `URI` 的内嵌音轨时仅保存视频媒体清单，保留原始默认语言。
 - 修复带外部 `EXT-X-MEDIA` 音频组的 HLS master 被误下载为无声离线资产的问题：解析器现在保留所选 variant 的 `AUDIO` 关系，在多 rendition 离线打包尚未支持前，会在请求视频 media 清单或分片前稳定拒绝，而不是发布缺少音轨的伪完成单集。真实 loopback HTTP 回归证明失败任务只请求 master 且不生成本地 m3u8。
 - 修复 HLS 媒体清单缺少、携带非法或小于实际分片时长的 `EXT-X-TARGETDURATION` 时仍可能发布不可解码本地资产的问题：解析器现在要求目标时长为正整数且不小于任一分片的四舍五入时长，并在请求媒体文件前稳定拒绝不合规清单。真实 loopback HTTP 回归证明失败任务不会请求分片或生成本地 m3u8。
@@ -91,7 +90,7 @@
 - 修复本地播放可用性判断在 `file://` 路径上的误判：当存在普通本地媒体文件（非 m3u8）时直接视为可播放；仅对 manifest 文件做片段完整性校验。新增 `test/player_page_test.dart` 回归“非 manifest 文件也应判定可播放”。
 - 补齐离线可播放性边界回归：为离线完整性判断新增 `test/offline_media_integrity_test.dart` 覆盖，确保 `file://` 非 `index.m3u8` 的本地媒体文件在存在时始终返回可播放。
 - 修复离线清单引用带有查询参数或片段标识的本地分段路径：`offline_media_integrity.dart` 现在解析本地 segment 行时会忽略查询参数/锚点，仅按真实文件名校验，避免 `segments/file.ts?download=true` 或 `segments/file.ts#retry` 被误判为无法播放。
-- 修复离线清单引用 windows 风格相对路径分隔符的误判：`offline_media_integrity.dart` 现将 `<!-- Keep a Changelog guide -> https://keepachangelog.com -->
+- 修复离线清单引用 windows 风格相对路径分隔符的误判：`offline_media_integrity.dart` 现将 `
 - 路径分隔符规范为路径分隔形式并解码再校验，保证来自 `segments\...` 形态的本地清单在非 Windows 运行时不会因路径拼接失败被误判为不可播放。
 - 修复 Windows 风格离线清单片段场景的测试清理安全性：`offline local file play url is true for windows-style segment path with query` 不再在 Windows 测试中误删 `C:` 根目录；改为仅清理 `C:/ani-destiny-offline` 测试目录，避免 `FileSystemException: Deletion failed, path = 'C:'` 造成 Windows Build 误失败。
 - 增补下载列表关闭动作：在“已完成/失败/取消”卡片下增加“同番剧清除已结束任务”批量清理动作（同番剧下仅显示一次，且只清理已结束任务，保留 `clearAllEndedDownloads` 原有批量语义）；补充 `test/download_page_test.dart` 回归覆盖，同步对失败和已取消状态下按钮文案与可见性。
