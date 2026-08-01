@@ -428,6 +428,86 @@ void main() {
       expect(await thirdDirectory.exists(), isFalse);
     },
   );
+
+  test(
+    'removeAll maps repository AppException failure to batch failure code',
+    () async {
+      final database = AppDatabase(NativeDatabase.memory());
+      addTearDown(database.close);
+      final repository = OfflineMediaRepositoryImpl(database);
+      final tempDirectory =
+          await Directory.systemTemp.createTemp('offline-anime-repo-delete-app-error-');
+      addTearDown(() async {
+        if (await tempDirectory.exists()) {
+          await tempDirectory.delete(recursive: true);
+        }
+      });
+
+      final failingDirectory = Directory(p.join(tempDirectory.path, 'task-fail'));
+      final successDirectory = Directory(p.join(tempDirectory.path, 'task-success'));
+      await Future.wait([failingDirectory.create(), successDirectory.create()]);
+
+      final failingManifest = File(p.join(failingDirectory.path, 'index.m3u8'));
+      final successManifest = File(p.join(successDirectory.path, 'index.m3u8'));
+      await failingManifest.writeAsString('#EXTM3U\n');
+      await successManifest.writeAsString('#EXTM3U\n');
+
+      final items = <OfflineMediaItem>[
+        OfflineMediaItem(
+          id: 'offline-fail',
+          downloadTaskId: 'task-fail',
+          animeId: 'anime-1',
+          episodeId: 'episode-fail',
+          title: 'HLS Test',
+          episodeTitle: 'Episode fail',
+          manifestPath: failingManifest.path,
+          downloadedBytes: 1,
+          createdAt: DateTime(2026, 7, 26),
+        ),
+        OfflineMediaItem(
+          id: 'offline-success',
+          downloadTaskId: 'task-success',
+          animeId: 'anime-1',
+          episodeId: 'episode-success',
+          title: 'HLS Test',
+          episodeTitle: 'Episode success',
+          manifestPath: successManifest.path,
+          downloadedBytes: 1,
+          createdAt: DateTime(2026, 7, 26),
+        ),
+      ];
+      for (final item in items) {
+        await repository.upsert(item);
+      }
+
+      final service = LocalOfflineMediaService(
+        repository: _FailingDeleteRepository(
+          delegate: repository,
+          failingItemIds: {'offline-fail'},
+          error: const AppException(
+            'cleanup blocked by policy',
+            code: 'some_other_code',
+          ),
+        ),
+      );
+
+      await expectLater(
+        service.removeAll(items),
+        throwsA(
+          isA<AppException>().having(
+            (exception) => exception.code,
+            'code',
+            'offline_media_cleanup_batch_failed',
+          ),
+        ),
+      );
+
+      final remaining = await repository.getAll();
+      expect(remaining.single.id, 'offline-fail');
+      expect(await failingDirectory.exists(), isFalse);
+      expect(await successDirectory.exists(), isFalse);
+    },
+  );
 }
 
 OfflineMediaItem _item(String manifestPath) {
