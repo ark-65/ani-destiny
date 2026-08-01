@@ -5,6 +5,7 @@ import 'package:ani_destiny/core/storage/app_database.dart';
 import 'package:ani_destiny/features/download/data/repositories/offline_media_repository_impl.dart';
 import 'package:ani_destiny/features/download/data/services/local_offline_media_service.dart';
 import 'package:ani_destiny/features/download/domain/entities/offline_media_item.dart';
+import 'package:ani_destiny/features/download/domain/repositories/offline_media_repository.dart';
 import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:path/path.dart' as p;
@@ -115,6 +116,48 @@ void main() {
     );
 
     expect((await repository.getAll()).single.id, item.id);
+  });
+
+  test('remove maps repository delete failure to cleanup failure code', () async {
+    final database = AppDatabase(NativeDatabase.memory());
+    addTearDown(database.close);
+    final repository = OfflineMediaRepositoryImpl(database);
+    final tempDirectory =
+        await Directory.systemTemp.createTemp('offline-media-repo-delete-');
+    addTearDown(() async {
+      if (await tempDirectory.exists()) {
+        await tempDirectory.delete(recursive: true);
+      }
+    });
+    final mediaDirectory =
+        Directory(p.join(tempDirectory.path, 'downloads', 'task-1'));
+    await mediaDirectory.create(recursive: true);
+    final manifest = File(p.join(mediaDirectory.path, 'index.m3u8'));
+    final segment = File(p.join(mediaDirectory.path, 'segment.ts'));
+    await manifest.writeAsString('#EXTM3U\nsegment.ts\n');
+    await segment.writeAsBytes([1, 2, 3]);
+    final item = _item(manifest.path);
+    await repository.upsert(item);
+    final service = LocalOfflineMediaService(
+      repository: _FailingDeleteRepository(
+        delegate: repository,
+        failingItemIds: {item.id},
+      ),
+    );
+
+    await expectLater(
+      service.remove(item),
+      throwsA(
+        isA<AppException>().having(
+          (error) => error.code,
+          'code',
+          'offline_media_cleanup_failed',
+        ),
+      ),
+    );
+
+    expect((await repository.getAll()).single.id, item.id);
+    expect(await mediaDirectory.exists(), isFalse);
   });
 
   test('removeAll deletes each episode directory and repository record',
@@ -259,6 +302,101 @@ void main() {
     expect(await secondDirectory.exists(), isTrue);
     expect(await thirdDirectory.exists(), isFalse);
   });
+
+  test(
+    'removeAll continues when repository delete fails and returns batch failure code',
+    () async {
+      final database = AppDatabase(NativeDatabase.memory());
+      addTearDown(database.close);
+      final repository = OfflineMediaRepositoryImpl(database);
+      final tempDirectory =
+          await Directory.systemTemp.createTemp('offline-anime-repo-delete-failure-');
+      addTearDown(() async {
+        if (await tempDirectory.exists()) {
+          await tempDirectory.delete(recursive: true);
+        }
+      });
+
+      final firstDirectory = Directory(p.join(tempDirectory.path, 'task-first'));
+      final secondDirectory = Directory(p.join(tempDirectory.path, 'task-second'));
+      final thirdDirectory = Directory(p.join(tempDirectory.path, 'task-third'));
+      await Future.wait([
+        firstDirectory.create(),
+        secondDirectory.create(),
+        thirdDirectory.create(),
+      ]);
+
+      final firstManifest = File(p.join(firstDirectory.path, 'index.m3u8'));
+      final secondManifest = File(p.join(secondDirectory.path, 'index.m3u8'));
+      final thirdManifest = File(p.join(thirdDirectory.path, 'index.m3u8'));
+      await firstManifest.writeAsString('#EXTM3U\n');
+      await secondManifest.writeAsString('#EXTM3U\n');
+      await thirdManifest.writeAsString('#EXTM3U\n');
+
+      final items = <OfflineMediaItem>[
+        OfflineMediaItem(
+          id: 'offline-first',
+          downloadTaskId: 'task-first',
+          animeId: 'anime-1',
+          episodeId: 'episode-first',
+          title: 'HLS Test',
+          episodeTitle: 'Episode first',
+          manifestPath: firstManifest.path,
+          downloadedBytes: 1,
+          createdAt: DateTime(2026, 7, 26),
+        ),
+        OfflineMediaItem(
+          id: 'offline-second',
+          downloadTaskId: 'task-second',
+          animeId: 'anime-1',
+          episodeId: 'episode-second',
+          title: 'HLS Test',
+          episodeTitle: 'Episode second',
+          manifestPath: secondManifest.path,
+          downloadedBytes: 1,
+          createdAt: DateTime(2026, 7, 26),
+        ),
+        OfflineMediaItem(
+          id: 'offline-third',
+          downloadTaskId: 'task-third',
+          animeId: 'anime-1',
+          episodeId: 'episode-third',
+          title: 'HLS Test',
+          episodeTitle: 'Episode third',
+          manifestPath: thirdManifest.path,
+          downloadedBytes: 1,
+          createdAt: DateTime(2026, 7, 26),
+        ),
+      ];
+      for (final item in items) {
+        await repository.upsert(item);
+      }
+
+      final service = LocalOfflineMediaService(
+        repository: _FailingDeleteRepository(
+          delegate: repository,
+          failingItemIds: {'offline-second'},
+        ),
+      );
+
+      await expectLater(
+        service.removeAll(items),
+        throwsA(
+          isA<AppException>().having(
+            (exception) => exception.code,
+            'code',
+            'offline_media_cleanup_batch_failed',
+          ),
+        ),
+      );
+
+      final remaining = await repository.getAll();
+      expect(remaining.map((item) => item.id).toSet(), {'offline-second'});
+      expect(await firstDirectory.exists(), isFalse);
+      expect(await secondDirectory.exists(), isFalse);
+      expect(await thirdDirectory.exists(), isFalse);
+    },
+  );
 }
 
 OfflineMediaItem _item(String manifestPath) {
@@ -273,4 +411,39 @@ OfflineMediaItem _item(String manifestPath) {
     downloadedBytes: 3,
     createdAt: DateTime(2026, 7, 25),
   );
+}
+
+class _FailingDeleteRepository implements OfflineMediaRepository {
+  _FailingDeleteRepository({
+    required OfflineMediaRepository delegate,
+    required Set<String> failingItemIds,
+    Object? error,
+  })  : _delegate = delegate,
+        _failingItemIds = failingItemIds,
+        _error = error;
+
+  final OfflineMediaRepository _delegate;
+  final Set<String> _failingItemIds;
+  final Object? _error;
+
+  @override
+  Future<void> delete(String id) async {
+    if (_failingItemIds.contains(id)) {
+      throw _error ?? StateError('persistent delete failure');
+    }
+    await _delegate.delete(id);
+  }
+
+  @override
+  Future<List<OfflineMediaItem>> getAll() => _delegate.getAll();
+
+  @override
+  Stream<List<OfflineMediaItem>> watchAll() => _delegate.watchAll();
+
+  @override
+  Future<OfflineMediaItem?> getByDownloadTaskId(String downloadTaskId) =>
+      _delegate.getByDownloadTaskId(downloadTaskId);
+
+  @override
+  Future<void> upsert(OfflineMediaItem item) => _delegate.upsert(item);
 }

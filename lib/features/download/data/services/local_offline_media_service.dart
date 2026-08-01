@@ -38,6 +38,7 @@ class LocalOfflineMediaService implements OfflineMediaService {
   Future<void> remove(OfflineMediaItem item) async {
     try {
       await _directoryRemover(p.dirname(item.manifestPath));
+      await _repository.delete(item.id);
     } on AppException {
       rethrow;
     } catch (error) {
@@ -47,7 +48,6 @@ class LocalOfflineMediaService implements OfflineMediaService {
         cause: error,
       );
     }
-    await _repository.delete(item.id);
   }
 
   @override
