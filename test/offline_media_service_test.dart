@@ -160,6 +160,37 @@ void main() {
     expect(await mediaDirectory.exists(), isFalse);
   });
 
+  test(
+    'remove maps cleanup AppException to unified cleanup failure code',
+    () async {
+      final database = AppDatabase(NativeDatabase.memory());
+      addTearDown(database.close);
+      final repository = OfflineMediaRepositoryImpl(database);
+      final item = _item('/downloads/task-1/index.m3u8');
+      await repository.upsert(item);
+      final service = LocalOfflineMediaService(
+        repository: repository,
+        directoryRemover: (_) => throw const AppException(
+          'cleanup blocked by policy',
+          code: 'some_other_code',
+        ),
+      );
+
+      await expectLater(
+        service.remove(item),
+        throwsA(
+          isA<AppException>().having(
+            (error) => error.code,
+            'code',
+            'offline_media_cleanup_failed',
+          ),
+        ),
+      );
+
+      expect((await repository.getAll()).single.id, item.id);
+    },
+  );
+
   test('removeAll deletes each episode directory and repository record',
       () async {
     final database = AppDatabase(NativeDatabase.memory());

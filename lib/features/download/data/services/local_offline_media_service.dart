@@ -39,8 +39,6 @@ class LocalOfflineMediaService implements OfflineMediaService {
     try {
       await _directoryRemover(p.dirname(item.manifestPath));
       await _repository.delete(item.id);
-    } on AppException {
-      rethrow;
     } catch (error) {
       throw AppException(
         'Offline media files could not be removed.',
