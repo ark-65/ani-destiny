@@ -92,12 +92,7 @@
 - 补齐离线可播放性边界回归：为离线完整性判断新增 `test/offline_media_integrity_test.dart` 覆盖，确保 `file://` 非 `index.m3u8` 的本地媒体文件在存在时始终返回可播放。
 - 修复离线清单引用带有查询参数或片段标识的本地分段路径：`offline_media_integrity.dart` 现在解析本地 segment 行时会忽略查询参数/锚点，仅按真实文件名校验，避免 `segments/file.ts?download=true` 或 `segments/file.ts#retry` 被误判为无法播放。
 - 修复离线清单引用 windows 风格相对路径分隔符的误判：`offline_media_integrity.dart` 现将 `<!-- Keep a Changelog guide -> https://keepachangelog.com -->
-
-# AniDestiny 更新日志
-
-> 中文更新日志 | [English Changelog](./CHANGELOG_en.md)
-
- 路径分隔符规范为路径分隔形式并解码再校验，保证来自 `segments\...` 形态的本地清单在非 Windows 运行时不会因路径拼接失败被误判为不可播放。
+- 路径分隔符规范为路径分隔形式并解码再校验，保证来自 `segments\...` 形态的本地清单在非 Windows 运行时不会因路径拼接失败被误判为不可播放。
 - 修复 Windows 风格离线清单片段场景的测试清理安全性：`offline local file play url is true for windows-style segment path with query` 不再在 Windows 测试中误删 `C:` 根目录；改为仅清理 `C:/ani-destiny-offline` 测试目录，避免 `FileSystemException: Deletion failed, path = 'C:'` 造成 Windows Build 误失败。
 - 增补下载列表关闭动作：在“已完成/失败/取消”卡片下增加“同番剧清除已结束任务”批量清理动作（同番剧下仅显示一次，且只清理已结束任务，保留 `clearAllEndedDownloads` 原有批量语义）；补充 `test/download_page_test.dart` 回归覆盖，同步对失败和已取消状态下按钮文案与可见性。
 - 修复 HLS（m3u8）暂停后的恢复闭环：当已开始下载的 HLS 任务被 `pause` 终止时，暂停结算不再清理 `index.m3u8` 与 `segments/*`，而是保留 `localPath`，让任务在暂停/重启后可复用已下载片段继续下载；`cancel` 仍保持对已下载片段目录的清理行为。
