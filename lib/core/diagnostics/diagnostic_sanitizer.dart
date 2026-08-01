@@ -1,6 +1,6 @@
 const _hiddenValue = '[hidden]';
 
-final _urlPattern = RegExp(r'(?:https?|ftp)://[^\s<>)\]]+');
+final _urlPattern = RegExp(r'(?:https?|ftp|file)://[^\s<>)\]]+');
 final _htmlPattern = RegExp(
   r'<!doctype|<html|<body|<script',
   caseSensitive: false,

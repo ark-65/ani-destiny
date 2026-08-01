@@ -8,6 +8,7 @@
 
 ### 🐛 修复
 - 增强离线媒体删除边界：`LocalOfflineMediaService.remove` 现在会将任意清理异常统一映射为 `offline_media_cleanup_failed`，避免非 `FileSystemException` 错误导致清理失败时数据库记录未进入一致错误状态，并与批量删除流程保持一致行为。
+- 增强日志去敏边界：`sanitizeError` 现在会识别 `file://` URL 并脱敏为 `file:[hidden]`，避免 `file:///...` 本地播放路径完整泄露到诊断与反馈摘要。
 
 ## [1.0.7] - 2026-08-01
 

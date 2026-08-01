@@ -50,6 +50,20 @@ void main() {
     expect(value, isNot(contains('session')));
   });
 
+  test('sanitizeError hides file URI paths', () {
+    final value = sanitizeError(
+      'Failed opening file:///C:/Users/ark/Downloads/offline/index.m3u8 '
+      'with /tmp/ani-destiny-offline/manifest.m3u8',
+    );
+
+    expect(value, contains('file:[hidden]'));
+    expect(
+      value,
+      isNot(contains('C:/Users/ark/Downloads/offline/index.m3u8')),
+    );
+    expect(value, contains('/tmp/ani-destiny-offline/manifest.m3u8'));
+  });
+
   test('sanitizeError omits HTML documents', () {
     expect(
       sanitizeError('<html><body>token=secret</body></html>'),

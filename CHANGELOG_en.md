@@ -8,6 +8,7 @@
 
 ### Fixed
 - Hardened offline media cleanup: `LocalOfflineMediaService.remove` now maps any cleanup exception to `offline_media_cleanup_failed`, so non-`FileSystemException` failures do not bypass the offline-media error path and consistent cleanup semantics.
+- Hardened diagnostics sanitization by making `sanitizeError` redact `file://` URLs as `file:[hidden]`, preventing full local playback paths from leaking into diagnostics and feedback summaries.
 
 ## [1.0.7] - 2026-08-01
 
