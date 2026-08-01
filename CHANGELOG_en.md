@@ -11,6 +11,7 @@
 - Hardened diagnostics sanitization by making `sanitizeError` redact `file://` URLs as `file:[hidden]`, preventing full local playback paths from leaking into diagnostics and feedback summaries.
 - Hardened offline media cleanup by also mapping repository-delete failures through `offline_media_cleanup_failed`; `removeAll` now includes a batch-delete regression for repository-delete failures so one failed item does not block other deletions and still returns `offline_media_cleanup_batch_failed`.
 - Added a batch-delete regression for `LocalOfflineMediaService.removeAll` when repository delete throws `AppException`, confirming failures are still unified to `offline_media_cleanup_batch_failed` while leaving the failed item for retry.
+- Added a mixed-failure `removeAll` regression: when directory cleanup and repository deletion both fail in one batch, successful entries are still removed while failed entries (dir-cleanup-failed and repo-delete-failed) remain in repository and filesystem state for retry, with a final `offline_media_cleanup_batch_failed`.
 
 ## [1.0.7] - 2026-08-01
 

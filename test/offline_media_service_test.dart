@@ -508,6 +508,110 @@ void main() {
       expect(await successDirectory.exists(), isFalse);
     },
   );
+
+  test(
+    'removeAll continues for mixed directory-repo failures and keeps failed items',
+    () async {
+      final database = AppDatabase(NativeDatabase.memory());
+      addTearDown(database.close);
+      final repository = OfflineMediaRepositoryImpl(database);
+      final tempDirectory =
+          await Directory.systemTemp.createTemp('offline-anime-mixed-failure-');
+      addTearDown(() async {
+        if (await tempDirectory.exists()) {
+          await tempDirectory.delete(recursive: true);
+        }
+      });
+
+      final firstDirectory = Directory(p.join(tempDirectory.path, 'task-first'));
+      final secondDirectory = Directory(p.join(tempDirectory.path, 'task-second'));
+      final thirdDirectory = Directory(p.join(tempDirectory.path, 'task-third'));
+      await Future.wait([
+        firstDirectory.create(),
+        secondDirectory.create(),
+        thirdDirectory.create(),
+      ]);
+
+      final firstManifest = File(p.join(firstDirectory.path, 'index.m3u8'));
+      final secondManifest = File(p.join(secondDirectory.path, 'index.m3u8'));
+      final thirdManifest = File(p.join(thirdDirectory.path, 'index.m3u8'));
+      await firstManifest.writeAsString('#EXTM3U\n');
+      await secondManifest.writeAsString('#EXTM3U\n');
+      await thirdManifest.writeAsString('#EXTM3U\n');
+
+      final items = <OfflineMediaItem>[
+        OfflineMediaItem(
+          id: 'offline-first',
+          downloadTaskId: 'task-first',
+          animeId: 'anime-1',
+          episodeId: 'episode-first',
+          title: 'HLS Test',
+          episodeTitle: 'Episode first',
+          manifestPath: firstManifest.path,
+          downloadedBytes: 1,
+          createdAt: DateTime(2026, 7, 26),
+        ),
+        OfflineMediaItem(
+          id: 'offline-second',
+          downloadTaskId: 'task-second',
+          animeId: 'anime-1',
+          episodeId: 'episode-second',
+          title: 'HLS Test',
+          episodeTitle: 'Episode second',
+          manifestPath: secondManifest.path,
+          downloadedBytes: 1,
+          createdAt: DateTime(2026, 7, 26),
+        ),
+        OfflineMediaItem(
+          id: 'offline-third',
+          downloadTaskId: 'task-third',
+          animeId: 'anime-1',
+          episodeId: 'episode-third',
+          title: 'HLS Test',
+          episodeTitle: 'Episode third',
+          manifestPath: thirdManifest.path,
+          downloadedBytes: 1,
+          createdAt: DateTime(2026, 7, 26),
+        ),
+      ];
+      for (final item in items) {
+        await repository.upsert(item);
+      }
+
+      final service = LocalOfflineMediaService(
+        repository: _FailingDeleteRepository(
+          delegate: repository,
+          failingItemIds: {'offline-third'},
+        ),
+        directoryRemover: (path) {
+          if (path == secondDirectory.path) {
+            throw const FileSystemException('blocked');
+          }
+          return Directory(path).delete(recursive: true);
+        },
+      );
+
+      await expectLater(
+        service.removeAll(items),
+        throwsA(
+          isA<AppException>().having(
+            (exception) => exception.code,
+            'code',
+            'offline_media_cleanup_batch_failed',
+          ),
+        ),
+      );
+
+      final remaining = await repository.getAll();
+      expect(
+        remaining.map((item) => item.id).toSet(),
+        {'offline-second', 'offline-third'},
+      );
+      expect(await firstDirectory.exists(), isFalse);
+      expect(await secondDirectory.exists(), isTrue);
+      expect(await thirdDirectory.exists(), isFalse);
+    },
+  );
 }
 
 OfflineMediaItem _item(String manifestPath) {
