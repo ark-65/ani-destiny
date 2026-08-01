@@ -6,6 +6,8 @@
 
 ## [Unreleased]
 
+## [1.0.7] - 2026-08-01
+
 ### Fixed
 - Added a restart regression that covers Windows-style segment references (with `%5C`, `%252F`, and `?download_cache=true#retry`) surviving AppDatabase rebuild, verifying path normalization and `offline_media_integrity` still resolves local media as playable in the offline-restart flow.
 - Added an offline restart regression for encoded segment URIs containing query and fragment markers, verifying the item remains playable after two consecutive AppDatabase rebuilds and that `offlineMediaPlayerRouteArgs` still returns local-only playback arguments.
@@ -89,7 +91,7 @@
 - Fixed offline-playable judgment for local `file://` URLs: local media files that are not `index.m3u8` are now treated as playable as long as they exist, while manifest files continue to require segment-file integrity checks. Added a regression in `test/player_page_test.dart` to cover non-manifest local files.
 - Added offline-playability boundary regression: `test/offline_media_integrity_test.dart` now locks `file://` behavior for non-`index.m3u8` local files so they are treated as playable when the path exists, preventing regressions in local offline URL handling.
 - Fixed offline manifest segment lookup for local references with URL fragments or query params: `offline_media_integrity.dart` now ignores query/fragments when building local segment file paths, so entries like `segments/file.ts?download=true` or `segments/file.ts#retry` no longer produce false unplayable judgments.
-- Fixed offline segment-path parsing for Windows-style relative separators: `offline_media_integrity.dart` now normalizes backslash separators before decoding and lookup, so local manifests using `segments\\...` paths resolve correctly on non-Windows platforms instead of being flagged unplayable due to path-join failures.
+- Fixed offline segment-path parsing for Windows-style relative separators: `offline_media_integrity.dart` now normalizes backslash separators before decoding and lookup, so local manifests using `segments\...` paths resolve correctly on non-Windows platforms instead of being flagged unplayable due to path-join failures.
 - Fixed Windows offline manifest segment regression test cleanup safety: `offline local file play url is true for windows-style segment path with query` no longer deletes `C:` in teardown on Windows; the test now only removes the `C:/ani-destiny-offline` fixture directory to avoid false Windows Build failures such as `FileSystemException: Deletion failed, path = 'C:'`.
 - Added a same-anime cleanup action on the download page: completed/failed/canceled entries now expose a batched “clear same anime ended downloads” action (once per anime group, only on the first visible row) that removes ended tasks from that anime group, while preserving the existing “clear all ended downloads” behavior. This includes `test/download_page_test.dart` regression coverage and aligns visible labels/visibility.
 - Closed HLS (m3u8) resume-gap after pause: when an active HLS task is paused, cancel settlement now keeps the local `index.m3u8` and `segments/*` artifacts so restart can reuse downloaded segments; existing canceled-flow cleanup behavior for HLS remains intact.
@@ -105,7 +107,6 @@
 - Extended offline manifest segment-path parsing for percent-encoded names: offline `index.m3u8` entries like `segments/segment%20name.ts?download=true` are now decoded before file existence checks, so playable status is not blocked when real segment filenames contain spaces.
 - Added Windows-style offline segment-path compatibility: for `C:\...` style entries in local manifests, `offline_media_integrity.dart` now strips query/fragment suffixes before decoding, so `...segment.ts?download_cache=true` is not mis-identified as missing on Windows-style paths.
 - Added restart-proof regression coverage for offline playback: repeated `isPlayableUrl` checks on the same local offline manifest path remain true, providing executable proof that offline playback stays available when the app restarts with unchanged local files.
-
 ## [1.0.6] - 2026-07-21
 
 ### ✨ Added
