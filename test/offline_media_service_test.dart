@@ -92,6 +92,31 @@ void main() {
     expect((await repository.getAll()).single.id, item.id);
   });
 
+  test('remove keeps the database record when cleanup throws non-fs error', () async {
+    final database = AppDatabase(NativeDatabase.memory());
+    addTearDown(database.close);
+    final repository = OfflineMediaRepositoryImpl(database);
+    final item = _item('/downloads/task-1/index.m3u8');
+    await repository.upsert(item);
+    final service = LocalOfflineMediaService(
+      repository: repository,
+      directoryRemover: (_) => throw StateError('unexpected cleanup failure'),
+    );
+
+    await expectLater(
+      service.remove(item),
+      throwsA(
+        isA<AppException>().having(
+          (error) => error.code,
+          'code',
+          'offline_media_cleanup_failed',
+        ),
+      ),
+    );
+
+    expect((await repository.getAll()).single.id, item.id);
+  });
+
   test('removeAll deletes each episode directory and repository record',
       () async {
     final database = AppDatabase(NativeDatabase.memory());

@@ -6,6 +6,9 @@
 
 ## [Unreleased]
 
+### Fixed
+- Hardened offline media cleanup: `LocalOfflineMediaService.remove` now maps any cleanup exception to `offline_media_cleanup_failed`, so non-`FileSystemException` failures do not bypass the offline-media error path and consistent cleanup semantics.
+
 ## [1.0.7] - 2026-08-01
 
 ### ✨ Added

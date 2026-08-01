@@ -38,7 +38,9 @@ class LocalOfflineMediaService implements OfflineMediaService {
   Future<void> remove(OfflineMediaItem item) async {
     try {
       await _directoryRemover(p.dirname(item.manifestPath));
-    } on FileSystemException catch (error) {
+    } on AppException {
+      rethrow;
+    } catch (error) {
       throw AppException(
         'Offline media files could not be removed.',
         code: 'offline_media_cleanup_failed',
