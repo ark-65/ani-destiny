@@ -60,6 +60,15 @@ class LocalOfflineMediaService implements OfflineMediaService {
         failedItems.add(item);
         firstFailure ??= error;
         continue;
+      } catch (error) {
+        final normalized = AppException(
+          'Offline media files could not be removed.',
+          code: 'offline_media_cleanup_failed',
+          cause: error,
+        );
+        failedItems.add(item);
+        firstFailure ??= normalized;
+        continue;
       }
     }
 

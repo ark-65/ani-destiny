@@ -93,7 +93,8 @@ void main() {
     expect((await repository.getAll()).single.id, item.id);
   });
 
-  test('remove keeps the database record when cleanup throws non-fs error', () async {
+  test('remove keeps the database record when cleanup throws non-fs error',
+      () async {
     final database = AppDatabase(NativeDatabase.memory());
     addTearDown(database.close);
     final repository = OfflineMediaRepositoryImpl(database);
@@ -118,7 +119,8 @@ void main() {
     expect((await repository.getAll()).single.id, item.id);
   });
 
-  test('remove maps repository delete failure to cleanup failure code', () async {
+  test('remove maps repository delete failure to cleanup failure code',
+      () async {
     final database = AppDatabase(NativeDatabase.memory());
     addTearDown(database.close);
     final repository = OfflineMediaRepositoryImpl(database);
@@ -249,7 +251,8 @@ void main() {
     });
 
     final firstDirectory = Directory(p.join(tempDirectory.path, 'task-first'));
-    final secondDirectory = Directory(p.join(tempDirectory.path, 'task-second'));
+    final secondDirectory =
+        Directory(p.join(tempDirectory.path, 'task-second'));
     final thirdDirectory = Directory(p.join(tempDirectory.path, 'task-third'));
     await Future.wait([
       firstDirectory.create(),
@@ -340,17 +343,20 @@ void main() {
       final database = AppDatabase(NativeDatabase.memory());
       addTearDown(database.close);
       final repository = OfflineMediaRepositoryImpl(database);
-      final tempDirectory =
-          await Directory.systemTemp.createTemp('offline-anime-repo-delete-failure-');
+      final tempDirectory = await Directory.systemTemp
+          .createTemp('offline-anime-repo-delete-failure-');
       addTearDown(() async {
         if (await tempDirectory.exists()) {
           await tempDirectory.delete(recursive: true);
         }
       });
 
-      final firstDirectory = Directory(p.join(tempDirectory.path, 'task-first'));
-      final secondDirectory = Directory(p.join(tempDirectory.path, 'task-second'));
-      final thirdDirectory = Directory(p.join(tempDirectory.path, 'task-third'));
+      final firstDirectory =
+          Directory(p.join(tempDirectory.path, 'task-first'));
+      final secondDirectory =
+          Directory(p.join(tempDirectory.path, 'task-second'));
+      final thirdDirectory =
+          Directory(p.join(tempDirectory.path, 'task-third'));
       await Future.wait([
         firstDirectory.create(),
         secondDirectory.create(),
@@ -435,16 +441,18 @@ void main() {
       final database = AppDatabase(NativeDatabase.memory());
       addTearDown(database.close);
       final repository = OfflineMediaRepositoryImpl(database);
-      final tempDirectory =
-          await Directory.systemTemp.createTemp('offline-anime-repo-delete-app-error-');
+      final tempDirectory = await Directory.systemTemp
+          .createTemp('offline-anime-repo-delete-app-error-');
       addTearDown(() async {
         if (await tempDirectory.exists()) {
           await tempDirectory.delete(recursive: true);
         }
       });
 
-      final failingDirectory = Directory(p.join(tempDirectory.path, 'task-fail'));
-      final successDirectory = Directory(p.join(tempDirectory.path, 'task-success'));
+      final failingDirectory =
+          Directory(p.join(tempDirectory.path, 'task-fail'));
+      final successDirectory =
+          Directory(p.join(tempDirectory.path, 'task-success'));
       await Future.wait([failingDirectory.create(), successDirectory.create()]);
 
       final failingManifest = File(p.join(failingDirectory.path, 'index.m3u8'));
@@ -523,9 +531,12 @@ void main() {
         }
       });
 
-      final firstDirectory = Directory(p.join(tempDirectory.path, 'task-first'));
-      final secondDirectory = Directory(p.join(tempDirectory.path, 'task-second'));
-      final thirdDirectory = Directory(p.join(tempDirectory.path, 'task-third'));
+      final firstDirectory =
+          Directory(p.join(tempDirectory.path, 'task-first'));
+      final secondDirectory =
+          Directory(p.join(tempDirectory.path, 'task-second'));
+      final thirdDirectory =
+          Directory(p.join(tempDirectory.path, 'task-third'));
       await Future.wait([
         firstDirectory.create(),
         secondDirectory.create(),
@@ -612,6 +623,69 @@ void main() {
       expect(await thirdDirectory.exists(), isFalse);
     },
   );
+
+  test(
+    'removeAll maps non-AppException failures to batch failure and keeps all failed items',
+    () async {
+      final database = AppDatabase(NativeDatabase.memory());
+      addTearDown(database.close);
+      final repository = OfflineMediaRepositoryImpl(database);
+      final rawFailureItem = OfflineMediaItem(
+        id: 'offline-task-raw-fail',
+        downloadTaskId: 'task-raw-fail',
+        animeId: 'anime-1',
+        episodeId: 'episode-raw-fail',
+        title: 'HLS Test',
+        episodeTitle: 'Episode raw',
+        manifestPath: '/downloads/task-raw-fail/index.m3u8',
+        downloadedBytes: 3,
+        createdAt: DateTime(2026, 7, 25),
+      );
+      final appFailureItem = OfflineMediaItem(
+        id: 'offline-task-app-fail',
+        downloadTaskId: 'task-app-fail',
+        animeId: 'anime-1',
+        episodeId: 'episode-app-fail',
+        title: 'HLS Test',
+        episodeTitle: 'Episode app',
+        manifestPath: '/downloads/task-app-fail/index.m3u8',
+        downloadedBytes: 3,
+        createdAt: DateTime(2026, 7, 25),
+      );
+      await repository.upsert(rawFailureItem);
+      await repository.upsert(appFailureItem);
+
+      final service = _ThrowingRemoveService(
+        repository: repository,
+        errors: [
+          StateError('raw failure one'),
+          const AppException(
+            'expected app failure',
+            code: 'some_other_code',
+          ),
+        ],
+      );
+
+      final items = await repository.getAll();
+
+      await expectLater(
+        service.removeAll(items),
+        throwsA(
+          isA<AppException>().having(
+            (exception) => exception.code,
+            'code',
+            'offline_media_cleanup_batch_failed',
+          ),
+        ),
+      );
+
+      final remaining = await repository.getAll();
+      expect(remaining.map((item) => item.id).toSet(), {
+        rawFailureItem.id,
+        appFailureItem.id,
+      });
+    },
+  );
 }
 
 OfflineMediaItem _item(String manifestPath) {
@@ -661,4 +735,23 @@ class _FailingDeleteRepository implements OfflineMediaRepository {
 
   @override
   Future<void> upsert(OfflineMediaItem item) => _delegate.upsert(item);
+}
+
+class _ThrowingRemoveService extends LocalOfflineMediaService {
+  _ThrowingRemoveService({
+    required super.repository,
+    required List<Object> errors,
+  }) : _errors = errors;
+
+  final List<Object> _errors;
+  var _index = 0;
+
+  @override
+  Future<void> remove(OfflineMediaItem item) async {
+    final error = _errors[_index++ % _errors.length];
+    if (error is AppException) {
+      throw error;
+    }
+    throw error;
+  }
 }

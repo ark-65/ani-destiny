@@ -12,6 +12,7 @@
 - 完善离线媒体删除边界：`LocalOfflineMediaService.remove` 现在在仓库删除阶段同样映射异常为 `offline_media_cleanup_failed`；`removeAll` 的批量删除回归也覆盖数据库删除失败场景，确保一次失败不会掩盖其余条目，并正确返回 `offline_media_cleanup_batch_failed`。
 - 补充 `LocalOfflineMediaService.removeAll` 的失败码边界测试：仓库抛出 `AppException` 的批量删除场景也会统一返回 `offline_media_cleanup_batch_failed`，并保留失败条目供重试。
 - 新增 `LocalOfflineMediaService.removeAll` 混合失败回归：当目录清理异常与仓库删除异常并存时，成功项仍会被继续清理，失败项（含失败目录与失败仓库删除）在 DB 与文件层面都保留以便重试，最终返回 `offline_media_cleanup_batch_failed`。
+- 增补离线媒体批量删除防御边界：`removeAll` 现在会捕获 `remove` 过程中的非 `AppException` 异常并统一映射为 `offline_media_cleanup_batch_failed`，确保即便出现非标准错误码也不会绕过统一的批量失败重试语义。
 
 ## [1.0.7] - 2026-08-01
 
