@@ -9,6 +9,7 @@
 ### 🐛 修复
 - 增强离线媒体删除边界：`LocalOfflineMediaService.remove` 现在会将任意清理异常统一映射为 `offline_media_cleanup_failed`，避免非 `FileSystemException` 错误导致清理失败时数据库记录未进入一致错误状态，并与批量删除流程保持一致行为。
 - 增强日志去敏边界：`sanitizeError` 现在会识别 `file://` URL 并脱敏为 `file:[hidden]`，避免 `file:///...` 本地播放路径完整泄露到诊断与反馈摘要。
+- 增强日志去敏边界：`sanitizeError` 现在会将 `/tmp`、`/private`、`/var` 等绝对本地路径脱敏为 `path:[hidden]`，避免错误与诊断摘要继续泄露本机路径细节。
 - 完善离线媒体删除边界：`LocalOfflineMediaService.remove` 现在在仓库删除阶段同样映射异常为 `offline_media_cleanup_failed`；`removeAll` 的批量删除回归也覆盖数据库删除失败场景，确保一次失败不会掩盖其余条目，并正确返回 `offline_media_cleanup_batch_failed`。
 - 补充 `LocalOfflineMediaService.removeAll` 的失败码边界测试：仓库抛出 `AppException` 的批量删除场景也会统一返回 `offline_media_cleanup_batch_failed`，并保留失败条目供重试。
 - 新增 `LocalOfflineMediaService.removeAll` 混合失败回归：当目录清理异常与仓库删除异常并存时，成功项仍会被继续清理，失败项（含失败目录与失败仓库删除）在 DB 与文件层面都保留以便重试，最终返回 `offline_media_cleanup_batch_failed`。

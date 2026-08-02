@@ -57,11 +57,21 @@ void main() {
     );
 
     expect(value, contains('file:[hidden]'));
+    expect(value, contains('[path:[hidden]]'));
     expect(
       value,
-      isNot(contains('C:/Users/ark/Downloads/offline/index.m3u8')),
+      isNot(contains('/tmp/ani-destiny-offline/manifest.m3u8')),
     );
-    expect(value, contains('/tmp/ani-destiny-offline/manifest.m3u8'));
+  });
+
+  test('sanitizeError hides /private and /var absolute paths', () {
+    final value = sanitizeError(
+      'open /private/var/folders/xx/yy/cache/manifest.m3u8 and /var/tmp/session.tmp failed',
+    );
+
+    expect(value, contains('[path:[hidden]]'));
+    expect(value, isNot(contains('/private/var/folders/xx/yy/cache/manifest.m3u8')));
+    expect(value, isNot(contains('/var/tmp/session.tmp')));
   });
 
   test('sanitizeError omits HTML documents', () {

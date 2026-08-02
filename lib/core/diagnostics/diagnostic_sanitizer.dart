@@ -1,6 +1,12 @@
 const _hiddenValue = '[hidden]';
 
 final _urlPattern = RegExp(r'(?:https?|ftp|file)://[^\s<>)\]]+');
+final _absolutePathPattern = RegExp(
+  r'(?:^|[\s])((?:'
+  r'/(?:tmp|home|private|var|opt|mnt|Applications|Volumes|Library|srv|usr|etc)'
+  r'(?:/[^\s<>\)\]\}"]+)+))',
+  multiLine: true,
+);
 final _htmlPattern = RegExp(
   r'<!doctype|<html|<body|<script',
   caseSensitive: false,
@@ -84,6 +90,10 @@ String sanitizeError(Object error) {
         (match) => '[sensitive]=$_hiddenValue',
       );
 
+  text = text.replaceAllMapped(
+    _absolutePathPattern,
+    (_) => '[path:$_hiddenValue]',
+  );
   text = sanitizePath(text).replaceAll(RegExp(r'\s+'), ' ').trim();
   if (text.isEmpty) return 'Unavailable';
   if (text.length <= 220) return text;
