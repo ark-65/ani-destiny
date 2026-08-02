@@ -13,6 +13,7 @@
 - Added a batch-delete regression for `LocalOfflineMediaService.removeAll` when repository delete throws `AppException`, confirming failures are still unified to `offline_media_cleanup_batch_failed` while leaving the failed item for retry.
 - Added a mixed-failure `removeAll` regression: when directory cleanup and repository deletion both fail in one batch, successful entries are still removed while failed entries (dir-cleanup-failed and repo-delete-failed) remain in repository and filesystem state for retry, with a final `offline_media_cleanup_batch_failed`.
 - Hardened `LocalOfflineMediaService.removeAll` to catch non-`AppException` errors from `remove` and remap them into the same batch cleanup failure path, preventing unexpected throwable types from bypassing `offline_media_cleanup_batch_failed` recovery semantics.
+- Hardened HLS recovery after restart: `recoverInterruptedHlsTasks` now clears failure state and resets progress counters (`failureReason`, `failureMessage`, `progress`, `downloadedBytes`, `totalBytes`) before resuming interrupted HLS tasks; added regression coverage for clean re-resume state after recovery.
 
 ## [1.0.7] - 2026-08-01
 

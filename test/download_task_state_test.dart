@@ -1249,6 +1249,53 @@ segment-2.m4s
     );
   });
 
+  test('recovering interrupted HLS tasks clears stale failure details',
+      () async {
+    final database = AppDatabase(NativeDatabase.memory());
+    addTearDown(database.close);
+
+    final repository = DownloadRepositoryImpl(database);
+    final service = HttpDownloadService(
+      dio: Dio(),
+      repository: repository,
+    );
+    final taskId = await service.createTask(
+      animeId: 'anime-1',
+      episodeId: 'episode-1',
+      sourceId: 'sakura',
+      source: const DownloadSource(
+        url: 'https://cdn.example.test/index.m3u8',
+        kind: DownloadKind.hls,
+      ),
+      title: 'HLS Test',
+      episodeTitle: 'Episode 1',
+    );
+
+    final task = await repository.getTask(taskId);
+    expect(task, isNotNull);
+    await repository.upsertTask(
+      task!.copyWith(
+        status: DownloadStatus.downloading,
+        failureReason: DownloadFailureReason.networkError,
+        failureMessage: 'temporary network',
+        progress: 0.72,
+        totalBytes: 2048,
+        downloadedBytes: 1024,
+      ),
+    );
+
+    await repository.recoverInterruptedHlsTasks();
+
+    final recovered = await repository.getTask(taskId);
+    expect(recovered, isNotNull);
+    expect(recovered!.status, DownloadStatus.paused);
+    expect(recovered.failureReason, DownloadFailureReason.none);
+    expect(recovered.failureMessage, isNull);
+    expect(recovered.progress, 0);
+    expect(recovered.downloadedBytes, 0);
+    expect(recovered.totalBytes, isNull);
+  });
+
   test('starting HLS task fails when a downloaded segment is empty', () async {
     final database = AppDatabase(NativeDatabase.memory());
     addTearDown(database.close);
