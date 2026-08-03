@@ -64,6 +64,15 @@ void main() {
     );
   });
 
+  test('sanitizeError hides Windows drive paths with forward slashes', () {
+    final value = sanitizeError(
+      'Cannot open C:/Users/ark/Downloads/ani-destiny-offline/index.m3u8',
+    );
+
+    expect(value, contains('C:/Users/<user>/Downloads/ani-destiny-offline/index.m3u8'));
+    expect(value, isNot(contains('C:/Users/ark/Downloads/ani-destiny-offline/index.m3u8')));
+  });
+
   test('sanitizeError hides /private and /var absolute paths', () {
     final value = sanitizeError(
       'open /private/var/folders/xx/yy/cache/manifest.m3u8 and /var/tmp/session.tmp failed',

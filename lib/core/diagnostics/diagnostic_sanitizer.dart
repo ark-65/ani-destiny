@@ -68,6 +68,10 @@ String sanitizePath(String path) {
         (match) => '${match.group(1)}<user>',
       )
       .replaceAllMapped(
+        RegExp(r'([A-Za-z]:/Users/)[^/\s]+', caseSensitive: false),
+        (match) => '${match.group(1)}<user>',
+      )
+      .replaceAllMapped(
         RegExp(r'(/Users/)[^/\s]+'),
         (match) => '${match.group(1)}<user>',
       )
