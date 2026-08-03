@@ -73,6 +73,23 @@ Map<String, String> sanitizeHeaders(Map<String, String> headers) {
 String sanitizePath(String path) {
   return path
       .replaceAllMapped(
+        _windowsUncPathPattern,
+        (_) => '[path:$_hiddenValue]',
+      )
+      .replaceAllMapped(
+        _windowsDrivePathPattern,
+        (_) => '[path:$_hiddenValue]',
+      )
+      .replaceAllMapped(
+        RegExp(
+          r'(?:^|[\s])((?:'
+          r'/(?:tmp|private|var|opt|mnt|Applications|Volumes|Library|srv|usr|etc)'
+          r'(?:/[^\s]+)+))',
+          multiLine: true,
+        ),
+        (_) => '[path:$_hiddenValue]',
+      )
+      .replaceAllMapped(
         RegExp(r'([A-Z]:\\Users\\)[^\\/\s]+', caseSensitive: false),
         (match) => '${match.group(1)}<user>',
       )

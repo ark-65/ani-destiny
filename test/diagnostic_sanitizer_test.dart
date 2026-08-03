@@ -33,6 +33,14 @@ void main() {
       sanitizePath(r'C:\Users\ark\Downloads\AniDestiny\video.mp4'),
       r'C:\Users\<user>\Downloads\AniDestiny\video.mp4',
     );
+    expect(
+      sanitizePath(r'\\server\\share\\ani-destiny\\logs'),
+      '[path:[hidden]]',
+    );
+    expect(
+      sanitizePath('/tmp/ani-destiny-offline/manifest.m3u8'),
+      '[path:[hidden]]',
+    );
   });
 
   test('sanitizeError hides sensitive values and compresses messages', () {
