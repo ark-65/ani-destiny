@@ -60,6 +60,26 @@ void main() {
     expect(isPlayableOfflineMediaPath(mediaPath), isTrue);
   });
 
+  test('isPlayableOfflineMediaUrl rejects remote URLs', () {
+    expect(
+      isPlayableOfflineMediaUrl('https://example.com/episode/index.m3u8'),
+      isFalse,
+    );
+  });
+
+  test('isPlayableOfflineMediaUrl supports file URLs', () async {
+    final temporaryDir = await Directory.systemTemp.createTemp(
+      'ani-destiny-offline-media-file-url',
+    );
+    addTearDown(() async {
+      await temporaryDir.delete(recursive: true);
+    });
+    final mediaPath = p.join(temporaryDir.path, 'video.mp4');
+    await File(mediaPath).writeAsString('video bytes');
+
+    expect(isPlayableOfflineMediaUrl(Uri.file(mediaPath).toString()), isTrue);
+  });
+
   test('isPlayableOfflineMediaPath rejects remote URLs', () async {
     expect(
       isPlayableOfflineMediaPath('https://example.com/episode/index.m3u8'),

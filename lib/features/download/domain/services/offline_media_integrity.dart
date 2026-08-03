@@ -8,17 +8,27 @@ bool isPlayableOfflineMediaUrl(String value) {
   if (rawUrl.isEmpty || uri == null || !uri.hasScheme) {
     return false;
   }
-  if (uri.scheme.toLowerCase() != 'file') {
-    return true;
+  if (uri.scheme.toLowerCase() == 'file') {
+    try {
+      return isPlayableOfflineMediaPath(uri.toFilePath());
+    } on FormatException {
+      return false;
+    } on FileSystemException {
+      return false;
+    }
   }
 
-  try {
-    return isPlayableOfflineMediaPath(uri.toFilePath());
-  } on FormatException {
-    return false;
-  } on FileSystemException {
-    return false;
+  if (RegExp(r'^[a-zA-Z]:[\\/]').hasMatch(rawUrl)) {
+    try {
+      return isPlayableOfflineMediaPath(rawUrl);
+    } on FormatException {
+      return false;
+    } on FileSystemException {
+      return false;
+    }
   }
+
+  return false;
 }
 
 bool isPlayableOfflineMediaPath(String manifestPath) {
