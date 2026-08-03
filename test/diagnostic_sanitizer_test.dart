@@ -43,6 +43,17 @@ void main() {
     );
   });
 
+  test('sanitizePath hides windows paths with surrounding punctuation', () {
+    expect(
+      sanitizePath('(C:/ProgramData/ani-destiny/log.mp4)'),
+      '([path:[hidden]])',
+    );
+    expect(
+      sanitizePath(r'"C:\\ProgramData\\ani-destiny\\log.mp4"'),
+      '"[path:[hidden]]"',
+    );
+  });
+
   test('sanitizeError hides sensitive values and compresses messages', () {
     final value = sanitizeError(
       'Authorization: Bearer abc123 token=secret '
@@ -101,6 +112,20 @@ void main() {
 
   test('sanitizeError hides Windows UNC paths', () {
     final value = sanitizeError(r'Cannot open \\server\\share\\ani-destiny\\logs');
+
+    expect(value, contains('[path:[hidden]]'));
+    expect(value, isNot(contains('server')));
+  });
+
+  test('sanitizeError hides windows paths in quotes', () {
+    final value = sanitizeError('Cannot open "C:/ProgramData/ani-destiny/log.mp4" now');
+
+    expect(value, contains('"[path:[hidden]]"'));
+    expect(value, isNot(contains('ProgramData')));
+  });
+
+  test('sanitizeError hides windows UNC in brackets', () {
+    final value = sanitizeError('Cannot open [\\\\server\\\\share\\\\ani-destiny\\\\logs]');
 
     expect(value, contains('[path:[hidden]]'));
     expect(value, isNot(contains('server')));

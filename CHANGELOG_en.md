@@ -7,6 +7,7 @@
 ## [Unreleased]
 
 ### Fixed
+- Hardened diagnostics sanitization for punctuation-boundary local paths by matching `sanitizeError` and `sanitizePath` on paths wrapped in parentheses, quotes, or brackets, ensuring forms like `("C:/ProgramData/...")` and `["\\\\server\\\\share\\\\..."]` no longer leak local filesystem details.
 - Hardened diagnostics sanitization by masking non-`Users` Windows absolute paths in `sanitizeError` (for example `C:\ProgramData\ani-destiny\...` and `\\server\\share\\...`) as `path:[hidden]`, preventing complete local path leakage in diagnostic/feedback summaries.
 - Fixed feedback summary redaction formatting in `FeedbackPackageCollector`: multi-task manual cleanup summaries now standardize local-path redaction output as `Local path: [path:[hidden]]`, preventing brittle snapshot mismatches that were blocking CI.
 - Hardened offline media cleanup: `LocalOfflineMediaService.remove` now maps any cleanup exception to `offline_media_cleanup_failed`, so non-`FileSystemException` failures do not bypass the offline-media error path and consistent cleanup semantics.

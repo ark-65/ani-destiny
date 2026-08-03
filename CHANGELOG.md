@@ -7,6 +7,7 @@
 ## [Unreleased]
 
 ### 🐛 修复
+- 完善日志去敏边界：`sanitizeError` 现在在括号/引号等非空白边界前也会脱敏本地路径（如 `("C:/ProgramData/...")`、`'\"\\\\server\\\\share\\\\...\"'` 形式），避免前置分隔符导致的局部路径泄漏。
 - 强化日志去敏边界：`sanitizeError` 现在会将非 `Users` 段的 Windows 绝对路径（如 `C:\ProgramData\ani-destiny\...`、`\server\share\...`）统一脱敏为 `[path:[hidden]]`，避免诊断与反馈摘要泄露本机完整路径。
 - 修复诊断反馈摘要中的本地路径断言边界：`FeedbackPackageCollector` 在收集多任务清理摘要时，标准化本地路径分隔写法，确保 `Local path: [path:[hidden]]` 在测试与 CI 快照中稳定一致，避免误报导致的 CI 阻塞。
 - 增强离线媒体删除边界：`LocalOfflineMediaService.remove` 现在会将任意清理异常统一映射为 `offline_media_cleanup_failed`，避免非 `FileSystemException` 错误导致清理失败时数据库记录未进入一致错误状态，并与批量删除流程保持一致行为。
