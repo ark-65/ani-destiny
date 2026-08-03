@@ -7,6 +7,7 @@
 ## [Unreleased]
 
 ### 🐛 修复
+- 强化日志去敏边界：`sanitizeError` 现在会将非 `Users` 段的 Windows 绝对路径（如 `C:\ProgramData\ani-destiny\...`、`\server\share\...`）统一脱敏为 `[path:[hidden]]`，避免诊断与反馈摘要泄露本机完整路径。
 - 增强离线媒体删除边界：`LocalOfflineMediaService.remove` 现在会将任意清理异常统一映射为 `offline_media_cleanup_failed`，避免非 `FileSystemException` 错误导致清理失败时数据库记录未进入一致错误状态，并与批量删除流程保持一致行为。
 - 增强日志去敏边界：`sanitizeError` 现在会识别 `file://` URL 并脱敏为 `file:[hidden]`，避免 `file:///...` 本地播放路径完整泄露到诊断与反馈摘要。
 - 增强日志去敏边界：`sanitizeError` 现在会将 `/tmp`、`/private`、`/var` 等绝对本地路径脱敏为 `path:[hidden]`，避免错误与诊断摘要继续泄露本机路径细节。

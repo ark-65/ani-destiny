@@ -73,6 +73,31 @@ void main() {
     expect(value, isNot(contains('C:/Users/ark/Downloads/ani-destiny-offline/index.m3u8')));
   });
 
+  test('sanitizeError hides Windows absolute paths without Users segment', () {
+    final value = sanitizeError(
+      'Cannot open C:/ProgramData/ani-destiny/logs/app.log',
+    );
+
+    expect(value, contains('[path:[hidden]]'));
+    expect(value, isNot(contains('C:/ProgramData/ani-destiny/logs/app.log')));
+  });
+
+  test('sanitizeError hides backslash Windows paths', () {
+    final value = sanitizeError(
+      'Cannot open C:\\ProgramData\\ani-destiny\\logs\\app.log',
+    );
+
+    expect(value, contains('[path:[hidden]]'));
+    expect(value, isNot(contains('C:\\ProgramData\\ani-destiny\\logs\\app.log')));
+  });
+
+  test('sanitizeError hides Windows UNC paths', () {
+    final value = sanitizeError(r'Cannot open \\server\\share\\ani-destiny\\logs');
+
+    expect(value, contains('[path:[hidden]]'));
+    expect(value, isNot(contains('server')));
+  });
+
   test('sanitizeError hides /private and /var absolute paths', () {
     final value = sanitizeError(
       'open /private/var/folders/xx/yy/cache/manifest.m3u8 and /var/tmp/session.tmp failed',

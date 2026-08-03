@@ -7,6 +7,15 @@ final _absolutePathPattern = RegExp(
   r'(?:/[^\s<>\)\]\}"]+)+))',
   multiLine: true,
 );
+final _windowsDrivePathPattern = RegExp(
+  r'(?:^|[\s])([A-Za-z]:[\\/](?![Uu]sers[\\/])[^\s<>\)\]\}"]+)',
+  caseSensitive: false,
+  multiLine: true,
+);
+final _windowsUncPathPattern = RegExp(
+  r'(?:^|[\s])(\\\\[^\s<>\)\]\}"]+)',
+  multiLine: true,
+);
 final _htmlPattern = RegExp(
   r'<!doctype|<html|<body|<script',
   caseSensitive: false,
@@ -96,6 +105,14 @@ String sanitizeError(Object error) {
 
   text = text.replaceAllMapped(
     _absolutePathPattern,
+    (_) => '[path:$_hiddenValue]',
+  );
+  text = text.replaceAllMapped(
+    _windowsDrivePathPattern,
+    (_) => '[path:$_hiddenValue]',
+  );
+  text = text.replaceAllMapped(
+    _windowsUncPathPattern,
     (_) => '[path:$_hiddenValue]',
   );
   text = sanitizePath(text).replaceAll(RegExp(r'\s+'), ' ').trim();

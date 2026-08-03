@@ -7,6 +7,7 @@
 ## [Unreleased]
 
 ### Fixed
+- Hardened diagnostics sanitization by masking non-`Users` Windows absolute paths in `sanitizeError` (for example `C:\ProgramData\ani-destiny\...` and `\\server\\share\\...`) as `path:[hidden]`, preventing complete local path leakage in diagnostic/feedback summaries.
 - Hardened offline media cleanup: `LocalOfflineMediaService.remove` now maps any cleanup exception to `offline_media_cleanup_failed`, so non-`FileSystemException` failures do not bypass the offline-media error path and consistent cleanup semantics.
 - Hardened diagnostics sanitization by making `sanitizeError` redact `file://` URLs as `file:[hidden]`, preventing full local playback paths from leaking into diagnostics and feedback summaries.
 - Hardened diagnostics sanitization further by redacting absolute local paths (such as `/tmp`, `/private`, and `/var`) as `path:[hidden]` in `sanitizeError`, so error and diagnostic summaries no longer expose raw host file-system locations.
