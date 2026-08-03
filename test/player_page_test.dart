@@ -3580,6 +3580,22 @@ void main() {
     },
   );
 
+  test('isPlayableUrl allows common remote streaming URLs', () {
+    expect(
+      isPlayableUrl('https://example.com/test/playlist.m3u8'),
+      isTrue,
+    );
+    expect(
+      isPlayableUrl('https://media.ani.example.com/path/episode.m3u8?token=abc'),
+      isTrue,
+    );
+  });
+
+  test('isPlayableUrl rejects empty or malformed URLs', () {
+    expect(isPlayableUrl(''), isFalse);
+    expect(isPlayableUrl('not-a-url'), isFalse);
+  });
+
   test(
     'offline local file play url is true for encoded segment path and query',
     () async {
