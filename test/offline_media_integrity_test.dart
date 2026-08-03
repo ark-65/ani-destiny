@@ -60,6 +60,13 @@ void main() {
     expect(isPlayableOfflineMediaPath(mediaPath), isTrue);
   });
 
+  test('isPlayableOfflineMediaPath rejects remote URLs', () async {
+    expect(
+      isPlayableOfflineMediaPath('https://example.com/episode/index.m3u8'),
+      isFalse,
+    );
+  });
+
   test('isPlayableOfflineMediaPath rejects directory paths', () async {
     final temporaryDir = await Directory.systemTemp.createTemp(
       'ani-destiny-offline-media-directory',

@@ -22,6 +22,15 @@ bool isPlayableOfflineMediaUrl(String value) {
 }
 
 bool isPlayableOfflineMediaPath(String manifestPath) {
+  final rawUrl = manifestPath.trim();
+  final parsed = Uri.tryParse(rawUrl);
+  if (parsed != null && parsed.scheme.isNotEmpty) {
+    final hasWindowsDrivePrefix = RegExp(r'^[a-zA-Z]:[\\/]').hasMatch(rawUrl);
+    if (parsed.scheme.toLowerCase() != 'file' && !hasWindowsDrivePrefix) {
+      return false;
+    }
+  }
+
   return _isPlayableOfflineMediaPath(manifestPath, <String>{});
 }
 

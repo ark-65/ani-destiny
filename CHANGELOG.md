@@ -11,6 +11,7 @@
 - 修复诊断反馈摘要中的本地路径断言边界：`FeedbackPackageCollector` 在收集多任务清理摘要时，标准化本地路径分隔写法，确保 `Local path: [path:[hidden]]` 在测试与 CI 快照中稳定一致，避免误报导致的 CI 阻塞。
 - 增强离线媒体删除边界：`LocalOfflineMediaService.remove` 现在会将任意清理异常统一映射为 `offline_media_cleanup_failed`，避免非 `FileSystemException` 错误导致清理失败时数据库记录未进入一致错误状态，并与批量删除流程保持一致行为。
 - 增强日志去敏边界：`sanitizeError` 现在会识别 `file://` URL 并脱敏为 `file:[hidden]`，避免 `file:///...` 本地播放路径完整泄露到诊断与反馈摘要。
+- 修复离线完整性边界：`isPlayableOfflineMediaPath` 现在会拒绝 `http://`、`https://` 等远端 URI 作为可播放路径，避免将远端清单误判为本地离线可播放资产。
 - 增强日志去敏边界：`sanitizeError` 现在会将 `/tmp`、`/private`、`/var` 等绝对本地路径脱敏为 `path:[hidden]`，避免错误与诊断摘要继续泄露本机路径细节。
 - 增强日志去敏边界：`sanitizePath` 现在会识别 Windows 风格 `C:/Users/...` 绝对路径中的用户名字段并替换为 `<user>`，避免诊断与反馈摘要出现这类可识别路径信息。
 - 强化日志去敏边界：`sanitizePath` 进一步脱敏 UNC 与非 `Users` Windows 盘符根路径（如 `\\server\share\...`、`C:/ProgramData/...`）以及 `/tmp`、`/private`、`/var` 等绝对路径，统一写为 `[path:[hidden]]`。
