@@ -15,6 +15,8 @@ bool isPlayableOfflineMediaUrl(String value) {
       return false;
     } on FileSystemException {
       return false;
+    } on UnsupportedError {
+      return false;
     }
   }
 

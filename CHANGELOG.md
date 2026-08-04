@@ -11,6 +11,7 @@
 - 收紧播放源可播放性判定：`_isPlayableUrl` 现在仅接受 `http`、`https`、`file` 与 Windows 本地路径；`ftp`、`mailto` 等非播放器协议会返回 `false`，避免误判为可播放源触发播放器流程。
 - 修复播放器在线可播放性判断：`player_page.dart` 中 `_isPlayableUrl` 现在仅在 `file://`/本地路径与远端 URL 两类来源上返回可播放，而不会把离线完整性判定逻辑误用于远端流；新增 `test/player_page_test.dart` 回归覆盖远端 URL 与非法 URL 边界。
 - 修复离线完整性 URL 边界：`isPlayableOfflineMediaUrl` 现在对 `file://`/本地路径返回可播放判定，非本地远端 URL（如 `https://...`）返回 `false`，并补充 `test/offline_media_integrity_test.dart` 回归覆盖。
+- 修复离线完整性 URL 边界：`isPlayableOfflineMediaUrl` 现在也会在 `file://` URI 的 `authority` 场景（如 `file://server/share/...`）下返回 `false` 而不抛异常，新增 `test/offline_media_integrity_test.dart` 回归确保边界输入不阻塞播放。
 - 完善日志去敏边界：`sanitizeError` 现在在括号/引号等非空白边界前也会脱敏本地路径（如 `("C:/ProgramData/...")`、`'\"\\\\server\\\\share\\\\...\"'` 形式），避免前置分隔符导致的局部路径泄漏。
 - 强化日志去敏边界：`sanitizeError` 现在会将非 `Users` 段的 Windows 绝对路径（如 `C:\ProgramData\ani-destiny\...`、`\server\share\...`）统一脱敏为 `[path:[hidden]]`，避免诊断与反馈摘要泄露本机完整路径。
 - 修复诊断反馈摘要中的本地路径断言边界：`FeedbackPackageCollector` 在收集多任务清理摘要时，标准化本地路径分隔写法，确保 `Local path: [path:[hidden]]` 在测试与 CI 快照中稳定一致，避免误报导致的 CI 阻塞。

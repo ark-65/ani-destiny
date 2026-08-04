@@ -67,6 +67,13 @@ void main() {
     );
   });
 
+  test('isPlayableOfflineMediaUrl rejects file URLs with authority', () {
+    expect(
+      isPlayableOfflineMediaUrl('file://server/share/index.m3u8'),
+      isFalse,
+    );
+  });
+
   test('isPlayableOfflineMediaUrl supports file URLs', () async {
     final temporaryDir = await Directory.systemTemp.createTemp(
       'ani-destiny-offline-media-file-url',
