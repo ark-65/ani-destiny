@@ -7,6 +7,7 @@
 ## [Unreleased]
 
 ### 🐛 修复
+- 收紧播放源可播放性判定：`_isPlayableUrl` 现在仅接受 `http`、`https`、`file` 与 Windows 本地路径；`ftp`、`mailto` 等非播放器协议会返回 `false`，避免误判为可播放源触发播放器流程。
 - 修复播放器在线可播放性判断：`player_page.dart` 中 `_isPlayableUrl` 现在仅在 `file://`/本地路径与远端 URL 两类来源上返回可播放，而不会把离线完整性判定逻辑误用于远端流；新增 `test/player_page_test.dart` 回归覆盖远端 URL 与非法 URL 边界。
 - 修复离线完整性 URL 边界：`isPlayableOfflineMediaUrl` 现在对 `file://`/本地路径返回可播放判定，非本地远端 URL（如 `https://...`）返回 `false`，并补充 `test/offline_media_integrity_test.dart` 回归覆盖。
 - 完善日志去敏边界：`sanitizeError` 现在在括号/引号等非空白边界前也会脱敏本地路径（如 `("C:/ProgramData/...")`、`'\"\\\\server\\\\share\\\\...\"'` 形式），避免前置分隔符导致的局部路径泄漏。

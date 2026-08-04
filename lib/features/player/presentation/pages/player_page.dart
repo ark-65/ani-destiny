@@ -1468,7 +1468,8 @@ bool _isPlayableUrl(String value) {
       return false;
     }
   }
-  return true;
+  final scheme = uri.scheme.toLowerCase();
+  return scheme == 'http' || scheme == 'https';
 }
 
 bool isPlayableUrl(String value) {

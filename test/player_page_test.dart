@@ -3589,11 +3589,17 @@ void main() {
       isPlayableUrl('https://media.ani.example.com/path/episode.m3u8?token=abc'),
       isTrue,
     );
+    expect(
+      isPlayableUrl('HTTPS://media.ani.example.com/path/episode.m3u8'),
+      isTrue,
+    );
   });
 
   test('isPlayableUrl rejects empty or malformed URLs', () {
     expect(isPlayableUrl(''), isFalse);
     expect(isPlayableUrl('not-a-url'), isFalse);
+    expect(isPlayableUrl('ftp://media.ani.example.com/path/episode.m3u8'), isFalse);
+    expect(isPlayableUrl('mailto:anime@ani-destiny.test'), isFalse);
   });
 
   test(
