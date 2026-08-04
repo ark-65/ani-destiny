@@ -3602,6 +3602,12 @@ void main() {
     expect(isPlayableUrl('mailto:anime@ani-destiny.test'), isFalse);
   });
 
+  test('isPlayableUrl rejects network share style paths', () {
+    expect(isPlayableUrl(r'\\server\\share\\episode.m3u8'), isFalse);
+    expect(isPlayableUrl('//server/share/episode.m3u8'), isFalse);
+    expect(isPlayableUrl('file://server/share/index.m3u8'), isFalse);
+  });
+
   test(
     'offline local file play url is true for encoded segment path and query',
     () async {

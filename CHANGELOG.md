@@ -7,6 +7,7 @@
 ## [Unreleased]
 
 ### 🐛 修复
+- 新增 `test/player_page_test.dart` 回归：明确拒绝网络共享风格路径（`\\server\share...`、`//server/...` 与 `file://server/...`）在 `_isPlayableUrl` 中被误判为可播放，且在文件 URI 带 authority 时不抛异常返回 `false`，防止离线完整性评估链路绕过该类非本地路径输入。
 - 收紧播放源可播放性判定：`_isPlayableUrl` 现在仅接受 `http`、`https`、`file` 与 Windows 本地路径；`ftp`、`mailto` 等非播放器协议会返回 `false`，避免误判为可播放源触发播放器流程。
 - 修复播放器在线可播放性判断：`player_page.dart` 中 `_isPlayableUrl` 现在仅在 `file://`/本地路径与远端 URL 两类来源上返回可播放，而不会把离线完整性判定逻辑误用于远端流；新增 `test/player_page_test.dart` 回归覆盖远端 URL 与非法 URL 边界。
 - 修复离线完整性 URL 边界：`isPlayableOfflineMediaUrl` 现在对 `file://`/本地路径返回可播放判定，非本地远端 URL（如 `https://...`）返回 `false`，并补充 `test/offline_media_integrity_test.dart` 回归覆盖。

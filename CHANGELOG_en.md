@@ -7,6 +7,7 @@
 ## [Unreleased]
 
 ### Fixed
+- Added regression in `test/player_page_test.dart` to reject network-share style paths (`\\server\\share...`, `//server/...`, and `file://server/...`) from `_isPlayableUrl`, preventing share-style non-local inputs from being treated as playable sources and ensuring `file://` URIs with authority return `false` instead of throwing.
 - Hardened `player_page.dart` remote-url playability: `_isPlayableUrl` now only accepts `http`/`https` URL schemes after filtering local file and local-path cases, rejecting protocols such as `ftp` and `mailto` while preserving legitimate remote streaming input behavior.
 - Fixed player-playability URL routing so `player_page.dart` only treats `file://` and local paths as offline-media paths while preserving remote URL playability; this prevents offline-integrity-only checks from blocking online playback entry and adds `test/player_page_test.dart` regressions for remote URL and malformed-URL boundaries.
 - Hardened offline-integrity URL validation: `isPlayableOfflineMediaUrl` now treats only `file://` and local file-system paths as playable, and returns `false` for remote URLs (for example, `https://...`); added regression coverage in `test/offline_media_integrity_test.dart`.

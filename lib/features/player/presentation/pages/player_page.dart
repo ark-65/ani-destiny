@@ -1457,6 +1457,8 @@ bool _isPlayableUrl(String value) {
       return false;
     } on FileSystemException {
       return false;
+    } on UnsupportedError {
+      return false;
     }
   }
   if (RegExp(r'^[a-zA-Z]:[\\/]').hasMatch(rawUrl)) {
