@@ -667,10 +667,13 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
       return context.l10n.noPlayableSourceFound;
     }
     final downloadKind = detectDownloadKind(_args.playUrl);
-    if (downloadKind != DownloadKind.directFile) {
+    if (!isSupportedDownloadKind(downloadKind)) {
       return downloadEntryFeedbackMessage(context.l10n, downloadKind);
     }
-    return context.l10n.downloadTaskWillBeAdded;
+    if (downloadKind == DownloadKind.directFile) {
+      return context.l10n.downloadTaskWillBeAdded;
+    }
+    return downloadEntryFeedbackMessage(context.l10n, downloadKind);
   }
 
   String _routeBusyExitMessage(BuildContext context) {
