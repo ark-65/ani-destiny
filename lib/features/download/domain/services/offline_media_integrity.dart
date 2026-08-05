@@ -252,7 +252,16 @@ Iterable<String> _segmentPathCandidatesFromManifestLine(
 
   if (parsedUri.hasScheme) {
     if (parsedUri.scheme.toLowerCase() == 'file') {
-      final filePath = parsedUri.toFilePath();
+      final String filePath;
+      try {
+        filePath = parsedUri.toFilePath();
+      } on FormatException {
+        return const Iterable<String>.empty();
+      } on FileSystemException {
+        return const Iterable<String>.empty();
+      } on UnsupportedError {
+        return const Iterable<String>.empty();
+      }
       if (isWithinManifestDirectory(filePath)) {
         return [filePath];
       }
