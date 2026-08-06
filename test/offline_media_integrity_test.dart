@@ -60,6 +60,63 @@ void main() {
     expect(isPlayableOfflineMediaPath(mediaPath), isTrue);
   });
 
+  test('isPlayableOfflineMediaUrl rejects remote URLs', () {
+    expect(
+      isPlayableOfflineMediaUrl('https://example.com/episode/index.m3u8'),
+      isFalse,
+    );
+  });
+
+  test('isPlayableOfflineMediaUrl rejects file URLs with authority', () {
+    expect(
+      isPlayableOfflineMediaUrl('file://server/share/index.m3u8'),
+      isFalse,
+    );
+  });
+
+  test(
+    'isPlayableOfflineMediaPath returns false for manifest files with file URI authority refs',
+    () async {
+      final temporaryDir = await Directory.systemTemp.createTemp(
+        'ani-destiny-offline-media-file-uri-authority-line',
+      );
+      addTearDown(() async {
+        if (await temporaryDir.exists()) {
+          await temporaryDir.delete(recursive: true);
+        }
+      });
+
+      final manifestPath = p.join(temporaryDir.path, 'index.m3u8');
+      await File(manifestPath).writeAsString(
+        '#EXTM3U\n'
+        'file://server/share/segment.ts\n'
+        '#EXT-X-ENDLIST\n',
+      );
+
+      expect(isPlayableOfflineMediaPath(manifestPath), isFalse);
+    },
+  );
+
+  test('isPlayableOfflineMediaUrl supports file URLs', () async {
+    final temporaryDir = await Directory.systemTemp.createTemp(
+      'ani-destiny-offline-media-file-url',
+    );
+    addTearDown(() async {
+      await temporaryDir.delete(recursive: true);
+    });
+    final mediaPath = p.join(temporaryDir.path, 'video.mp4');
+    await File(mediaPath).writeAsString('video bytes');
+
+    expect(isPlayableOfflineMediaUrl(Uri.file(mediaPath).toString()), isTrue);
+  });
+
+  test('isPlayableOfflineMediaPath rejects remote URLs', () async {
+    expect(
+      isPlayableOfflineMediaPath('https://example.com/episode/index.m3u8'),
+      isFalse,
+    );
+  });
+
   test('isPlayableOfflineMediaPath rejects directory paths', () async {
     final temporaryDir = await Directory.systemTemp.createTemp(
       'ani-destiny-offline-media-directory',

@@ -8,20 +8,41 @@ bool isPlayableOfflineMediaUrl(String value) {
   if (rawUrl.isEmpty || uri == null || !uri.hasScheme) {
     return false;
   }
-  if (uri.scheme.toLowerCase() != 'file') {
-    return true;
+  if (uri.scheme.toLowerCase() == 'file') {
+    try {
+      return isPlayableOfflineMediaPath(uri.toFilePath());
+    } on FormatException {
+      return false;
+    } on FileSystemException {
+      return false;
+    } on UnsupportedError {
+      return false;
+    }
   }
 
-  try {
-    return isPlayableOfflineMediaPath(uri.toFilePath());
-  } on FormatException {
-    return false;
-  } on FileSystemException {
-    return false;
+  if (RegExp(r'^[a-zA-Z]:[\\/]').hasMatch(rawUrl)) {
+    try {
+      return isPlayableOfflineMediaPath(rawUrl);
+    } on FormatException {
+      return false;
+    } on FileSystemException {
+      return false;
+    }
   }
+
+  return false;
 }
 
 bool isPlayableOfflineMediaPath(String manifestPath) {
+  final rawUrl = manifestPath.trim();
+  final parsed = Uri.tryParse(rawUrl);
+  if (parsed != null && parsed.scheme.isNotEmpty) {
+    final hasWindowsDrivePrefix = RegExp(r'^[a-zA-Z]:[\\/]').hasMatch(rawUrl);
+    if (parsed.scheme.toLowerCase() != 'file' && !hasWindowsDrivePrefix) {
+      return false;
+    }
+  }
+
   return _isPlayableOfflineMediaPath(manifestPath, <String>{});
 }
 
@@ -231,7 +252,16 @@ Iterable<String> _segmentPathCandidatesFromManifestLine(
 
   if (parsedUri.hasScheme) {
     if (parsedUri.scheme.toLowerCase() == 'file') {
-      final filePath = parsedUri.toFilePath();
+      final String filePath;
+      try {
+        filePath = parsedUri.toFilePath();
+      } on FormatException {
+        return const Iterable<String>.empty();
+      } on FileSystemException {
+        return const Iterable<String>.empty();
+      } on UnsupportedError {
+        return const Iterable<String>.empty();
+      }
       if (isWithinManifestDirectory(filePath)) {
         return [filePath];
       }

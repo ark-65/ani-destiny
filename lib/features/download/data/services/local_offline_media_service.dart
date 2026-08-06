@@ -38,14 +38,14 @@ class LocalOfflineMediaService implements OfflineMediaService {
   Future<void> remove(OfflineMediaItem item) async {
     try {
       await _directoryRemover(p.dirname(item.manifestPath));
-    } on FileSystemException catch (error) {
+      await _repository.delete(item.id);
+    } catch (error) {
       throw AppException(
         'Offline media files could not be removed.',
         code: 'offline_media_cleanup_failed',
         cause: error,
       );
     }
-    await _repository.delete(item.id);
   }
 
   @override
@@ -59,6 +59,15 @@ class LocalOfflineMediaService implements OfflineMediaService {
       } on AppException catch (error) {
         failedItems.add(item);
         firstFailure ??= error;
+        continue;
+      } catch (error) {
+        final normalized = AppException(
+          'Offline media files could not be removed.',
+          code: 'offline_media_cleanup_failed',
+          cause: error,
+        );
+        failedItems.add(item);
+        firstFailure ??= normalized;
         continue;
       }
     }

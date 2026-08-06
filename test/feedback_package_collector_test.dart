@@ -1146,7 +1146,7 @@ void main() {
     final markdown = const FeedbackPackageFormatter(l10n: l10n).format(package);
 
     expect(markdown, contains('- Needs cleanup: 2'));
-    expect(markdown, contains('Local path: /tmp/manual-cleanup-partial-1.mp4'));
+    expect(markdown, contains('Local path: [path:[hidden]]'));
     expect(
       markdown,
       contains(

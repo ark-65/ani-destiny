@@ -1,6 +1,25 @@
 const _hiddenValue = '[hidden]';
 
-final _urlPattern = RegExp(r'(?:https?|ftp)://[^\s<>)\]]+');
+final _urlPattern = RegExp(r'(?:https?|ftp|file)://[^\s<>)\]]+');
+const String _pathBoundaryPrefixPattern = r'(^|[\s\(\[\{<"])';
+const String _windowsDrivePathBodyPattern =
+    r'[A-Za-z]:[\\/](?![Uu]sers[\\/])[^\s<>\)\]\}"]+';
+const String _windowsUncPathBodyPattern = r'\\\\[^\s<>\)\]\}"]+';
+final _absolutePathPattern = RegExp(
+  '$_pathBoundaryPrefixPattern((?:'
+  r'/(?:tmp|home|private|var|opt|mnt|Applications|Volumes|Library|srv|usr|etc)'
+  r'(?:/[^\s<>\)\]\}"]+)+))',
+  multiLine: true,
+);
+final _windowsDrivePathPattern = RegExp(
+  '$_pathBoundaryPrefixPattern($_windowsDrivePathBodyPattern)',
+  caseSensitive: false,
+  multiLine: true,
+);
+final _windowsUncPathPattern = RegExp(
+  '$_pathBoundaryPrefixPattern($_windowsUncPathBodyPattern)',
+  multiLine: true,
+);
 final _htmlPattern = RegExp(
   r'<!doctype|<html|<body|<script',
   caseSensitive: false,
@@ -58,7 +77,20 @@ Map<String, String> sanitizeHeaders(Map<String, String> headers) {
 String sanitizePath(String path) {
   return path
       .replaceAllMapped(
+        _windowsUncPathPattern,
+        (match) => '${match.group(1)}[path:$_hiddenValue]',
+      )
+      .replaceAllMapped(
+        _windowsDrivePathPattern,
+        (match) => '${match.group(1)}[path:$_hiddenValue]',
+      )
+      .replaceAllMapped(_absolutePathPattern, (match) => '${match.group(1)}[path:$_hiddenValue]')
+      .replaceAllMapped(
         RegExp(r'([A-Z]:\\Users\\)[^\\/\s]+', caseSensitive: false),
+        (match) => '${match.group(1)}<user>',
+      )
+      .replaceAllMapped(
+        RegExp(r'([A-Za-z]:/Users/)[^/\s]+', caseSensitive: false),
         (match) => '${match.group(1)}<user>',
       )
       .replaceAllMapped(
@@ -84,6 +116,18 @@ String sanitizeError(Object error) {
         (match) => '[sensitive]=$_hiddenValue',
       );
 
+  text = text.replaceAllMapped(
+    _absolutePathPattern,
+    (match) => '${match.group(1)}[path:$_hiddenValue]',
+  );
+  text = text.replaceAllMapped(
+    _windowsDrivePathPattern,
+    (match) => '${match.group(1)}[path:$_hiddenValue]',
+  );
+  text = text.replaceAllMapped(
+    _windowsUncPathPattern,
+    (match) => '${match.group(1)}[path:$_hiddenValue]',
+  );
   text = sanitizePath(text).replaceAll(RegExp(r'\s+'), ' ').trim();
   if (text.isEmpty) return 'Unavailable';
   if (text.length <= 220) return text;

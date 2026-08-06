@@ -3435,6 +3435,54 @@ void main() {
     expect(find.text('Open Downloads'), findsOneWidget);
   });
 
+  testWidgets('download action shows unsupported path for unsupported URLs', (tester) async {
+    var createdDownloads = 0;
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          playerRepositoryProvider
+              .overrideWithValue(const _FakePlayerRepository()),
+          historyRepositoryProvider.overrideWithValue(_FakeHistoryRepository()),
+          danmakuRepositoryProvider.overrideWithValue(_FakeDanmakuRepository()),
+          downloadTaskCreatorProvider.overrideWithValue(
+            _FakeDownloadTaskCreator(
+              kind: DownloadKind.unknown,
+              onCreate: () => createdDownloads++,
+            ),
+          ),
+        ],
+        child: _buildPlayerApp(
+          _args.copyWith(playUrl: 'https://cdn.example.test/unsupported.bin'),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    final downloadButton = tester.widget<IconButton>(
+      find.widgetWithIcon(IconButton, Icons.download_outlined),
+    );
+    expect(
+      downloadButton.tooltip,
+      'This download link is not a type AniDestiny can save directly yet. This entry stays in Downloads. If you want to retry, return to the episode first and confirm a supported source is available, then decide to retry or remove.',
+    );
+
+    await tester.tap(find.widgetWithIcon(IconButton, Icons.download_outlined));
+    await tester.pump();
+
+    expect(createdDownloads, 1);
+    expect(
+      find.text(
+        'This download link is not a type AniDestiny can save directly yet. This entry stays in Downloads. If you want to retry, return to the episode first and confirm a supported source is available, then decide to retry or remove.',
+      ),
+      findsOneWidget,
+    );
+    final snackBar = tester.widget<SnackBar>(find.byType(SnackBar));
+    final snackBarAction = snackBar.action;
+    expect(snackBarAction, isNotNull);
+    expect(snackBarAction!.label, 'Check download lines');
+  });
+
   testWidgets('download action surfaces player creation errors calmly', (
     tester,
   ) async {
@@ -3579,6 +3627,34 @@ void main() {
       );
     },
   );
+
+  test('isPlayableUrl allows common remote streaming URLs', () {
+    expect(
+      isPlayableUrl('https://example.com/test/playlist.m3u8'),
+      isTrue,
+    );
+    expect(
+      isPlayableUrl('https://media.ani.example.com/path/episode.m3u8?token=abc'),
+      isTrue,
+    );
+    expect(
+      isPlayableUrl('HTTPS://media.ani.example.com/path/episode.m3u8'),
+      isTrue,
+    );
+  });
+
+  test('isPlayableUrl rejects empty or malformed URLs', () {
+    expect(isPlayableUrl(''), isFalse);
+    expect(isPlayableUrl('not-a-url'), isFalse);
+    expect(isPlayableUrl('ftp://media.ani.example.com/path/episode.m3u8'), isFalse);
+    expect(isPlayableUrl('mailto:anime@ani-destiny.test'), isFalse);
+  });
+
+  test('isPlayableUrl rejects network share style paths', () {
+    expect(isPlayableUrl(r'\\server\\share\\episode.m3u8'), isFalse);
+    expect(isPlayableUrl('//server/share/episode.m3u8'), isFalse);
+    expect(isPlayableUrl('file://server/share/index.m3u8'), isFalse);
+  });
 
   test(
     'offline local file play url is true for encoded segment path and query',

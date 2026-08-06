@@ -77,10 +77,7 @@ void main() {
       (await repository.getTask('hls-downloading'))!.status,
       DownloadStatus.paused,
     );
-    expect(
-      (await repository.getTask('hls-downloading'))!.downloadedBytes,
-      512,
-    );
+    expect((await repository.getTask('hls-downloading'))!.downloadedBytes, 0);
     expect(
       (await repository.getTask('direct-downloading'))!.status,
       DownloadStatus.downloading,

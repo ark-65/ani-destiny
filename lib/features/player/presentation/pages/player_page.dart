@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'dart:async';
 
 import 'package:flutter/foundation.dart';
@@ -665,10 +667,13 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
       return context.l10n.noPlayableSourceFound;
     }
     final downloadKind = detectDownloadKind(_args.playUrl);
-    if (downloadKind != DownloadKind.directFile) {
+    if (!isSupportedDownloadKind(downloadKind)) {
       return downloadEntryFeedbackMessage(context.l10n, downloadKind);
     }
-    return context.l10n.downloadTaskWillBeAdded;
+    if (downloadKind == DownloadKind.directFile) {
+      return context.l10n.downloadTaskWillBeAdded;
+    }
+    return downloadEntryFeedbackMessage(context.l10n, downloadKind);
   }
 
   String _routeBusyExitMessage(BuildContext context) {
@@ -1443,7 +1448,33 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
 }
 
 bool _isPlayableUrl(String value) {
-  return isPlayableOfflineMediaUrl(value);
+  final rawUrl = value.trim();
+  final uri = Uri.tryParse(rawUrl);
+  if (rawUrl.isEmpty || uri == null || !uri.hasScheme) {
+    return false;
+  }
+  if (uri.scheme.toLowerCase() == 'file') {
+    try {
+      return isPlayableOfflineMediaPath(uri.toFilePath());
+    } on FormatException {
+      return false;
+    } on FileSystemException {
+      return false;
+    } on UnsupportedError {
+      return false;
+    }
+  }
+  if (RegExp(r'^[a-zA-Z]:[\\/]').hasMatch(rawUrl)) {
+    try {
+      return isPlayableOfflineMediaPath(rawUrl);
+    } on FormatException {
+      return false;
+    } on FileSystemException {
+      return false;
+    }
+  }
+  final scheme = uri.scheme.toLowerCase();
+  return scheme == 'http' || scheme == 'https';
 }
 
 bool isPlayableUrl(String value) {

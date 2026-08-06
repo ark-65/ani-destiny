@@ -33,6 +33,25 @@ void main() {
       sanitizePath(r'C:\Users\ark\Downloads\AniDestiny\video.mp4'),
       r'C:\Users\<user>\Downloads\AniDestiny\video.mp4',
     );
+    expect(
+      sanitizePath(r'\\server\\share\\ani-destiny\\logs'),
+      '[path:[hidden]]',
+    );
+    expect(
+      sanitizePath('/tmp/ani-destiny-offline/manifest.m3u8'),
+      '[path:[hidden]]',
+    );
+  });
+
+  test('sanitizePath hides windows paths with surrounding punctuation', () {
+    expect(
+      sanitizePath('(C:/ProgramData/ani-destiny/log.mp4)'),
+      '([path:[hidden]])',
+    );
+    expect(
+      sanitizePath(r'"C:\\ProgramData\\ani-destiny\\log.mp4"'),
+      '"[path:[hidden]]"',
+    );
   });
 
   test('sanitizeError hides sensitive values and compresses messages', () {
@@ -48,6 +67,78 @@ void main() {
     expect(value, isNot(contains('abc123')));
     expect(value, isNot(contains('secret')));
     expect(value, isNot(contains('session')));
+  });
+
+  test('sanitizeError hides file URI paths', () {
+    final value = sanitizeError(
+      'Failed opening file:///C:/Users/ark/Downloads/offline/index.m3u8 '
+      'with /tmp/ani-destiny-offline/manifest.m3u8',
+    );
+
+    expect(value, contains('file:[hidden]'));
+    expect(value, contains('[path:[hidden]]'));
+    expect(
+      value,
+      isNot(contains('/tmp/ani-destiny-offline/manifest.m3u8')),
+    );
+  });
+
+  test('sanitizeError hides Windows drive paths with forward slashes', () {
+    final value = sanitizeError(
+      'Cannot open C:/Users/ark/Downloads/ani-destiny-offline/index.m3u8',
+    );
+
+    expect(value, contains('C:/Users/<user>/Downloads/ani-destiny-offline/index.m3u8'));
+    expect(value, isNot(contains('C:/Users/ark/Downloads/ani-destiny-offline/index.m3u8')));
+  });
+
+  test('sanitizeError hides Windows absolute paths without Users segment', () {
+    final value = sanitizeError(
+      'Cannot open C:/ProgramData/ani-destiny/logs/app.log',
+    );
+
+    expect(value, contains('[path:[hidden]]'));
+    expect(value, isNot(contains('C:/ProgramData/ani-destiny/logs/app.log')));
+  });
+
+  test('sanitizeError hides backslash Windows paths', () {
+    final value = sanitizeError(
+      'Cannot open C:\\ProgramData\\ani-destiny\\logs\\app.log',
+    );
+
+    expect(value, contains('[path:[hidden]]'));
+    expect(value, isNot(contains('C:\\ProgramData\\ani-destiny\\logs\\app.log')));
+  });
+
+  test('sanitizeError hides Windows UNC paths', () {
+    final value = sanitizeError(r'Cannot open \\server\\share\\ani-destiny\\logs');
+
+    expect(value, contains('[path:[hidden]]'));
+    expect(value, isNot(contains('server')));
+  });
+
+  test('sanitizeError hides windows paths in quotes', () {
+    final value = sanitizeError('Cannot open "C:/ProgramData/ani-destiny/log.mp4" now');
+
+    expect(value, contains('"[path:[hidden]]"'));
+    expect(value, isNot(contains('ProgramData')));
+  });
+
+  test('sanitizeError hides windows UNC in brackets', () {
+    final value = sanitizeError('Cannot open [\\\\server\\\\share\\\\ani-destiny\\\\logs]');
+
+    expect(value, contains('[path:[hidden]]'));
+    expect(value, isNot(contains('server')));
+  });
+
+  test('sanitizeError hides /private and /var absolute paths', () {
+    final value = sanitizeError(
+      'open /private/var/folders/xx/yy/cache/manifest.m3u8 and /var/tmp/session.tmp failed',
+    );
+
+    expect(value, contains('[path:[hidden]]'));
+    expect(value, isNot(contains('/private/var/folders/xx/yy/cache/manifest.m3u8')));
+    expect(value, isNot(contains('/var/tmp/session.tmp')));
   });
 
   test('sanitizeError omits HTML documents', () {
