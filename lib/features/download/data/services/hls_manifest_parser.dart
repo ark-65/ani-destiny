@@ -377,6 +377,9 @@ class HlsManifestParser {
       }
     }
 
+    if (pendingVariantAttributes != null) {
+      throw const FormatException('Invalid HLS variant URI.');
+    }
     if (segments.isEmpty && variants.isEmpty) {
       throw const FormatException('HLS manifest contains no media entries.');
     }
