@@ -7,6 +7,7 @@
 ## [Unreleased]
 
 ### Fixed
+- Hardened `HlsManifestParser` to treat `#EXT-X-SESSION-DATA` and `#EXT-X-SESSION-KEY` as master-only tags: media playlists containing either now throw `Invalid HLS master tag in media playlist.`, preventing malformed manifest classification from entering download/integrity flows. Added regression coverage in `test/hls_manifest_parser_test.dart`.
 - Hardened `HlsManifestParser` mixed-playlist boundary handling by prioritizing mixed `segments`/`variants` checks before master/media exclusivity checks, and removed `#EXT-X-START`, `#EXT-X-VERSION`, and `#EXT-X-DEFINE` from media-only tracking so they no longer cause false mixed-type conflicts; updated `test/hls_manifest_parser_test.dart` to use real `#EXT-X-MEDIA` coverage for master-tag-in-media cases.
 - Hardened `HlsManifestParser` to enforce strict playlist-type exclusivity: master playlists may not contain media-only tags (`#EXTINF`, `#EXT-X-KEY`, etc.), and media playlists may not contain master tags (`#EXT-X-STREAM-INF`, `#EXT-X-MEDIA`). Added regressions in `test/hls_manifest_parser_test.dart`.
 - Hardened `HlsManifestParser` to reject mixed playlists containing both `#EXT-X-STREAM-INF` variants and `#EXTINF` media segments, preventing malformed manifests from being misclassified and routed through the wrong parsing flow; added a regression in `test/hls_manifest_parser_test.dart`.

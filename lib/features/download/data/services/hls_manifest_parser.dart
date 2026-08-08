@@ -221,6 +221,11 @@ class HlsManifestParser {
         );
         continue;
       }
+      if (line.startsWith('#EXT-X-SESSION-DATA:') ||
+          line.startsWith('#EXT-X-SESSION-KEY:')) {
+        hasMasterOnlyPlaylistTags = true;
+        continue;
+      }
       if (line.startsWith('#EXT-X-MAP:')) {
         hasMediaOnlyPlaylistTags = true;
         final attributes = _parseAttributes(
