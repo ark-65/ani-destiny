@@ -609,6 +609,27 @@ segment-001.ts
     );
   });
 
+  test('rejects master playlist media tags missing TYPE', () {
+    expect(
+      () => parser.parse(
+        '''
+#EXTM3U
+#EXT-X-MEDIA:GROUP-ID="audio-main",NAME="Japanese",AUTOSELECT=YES
+#EXT-X-STREAM-INF:BANDWIDTH=2400000,RESOLUTION=1920x1080
+1080p/index.m3u8
+''',
+        uri: Uri.parse('https://cdn.example.test/master.m3u8'),
+      ),
+      throwsA(
+        isA<FormatException>().having(
+          (error) => error.message,
+          'message',
+          'Invalid HLS media rendition.',
+        ),
+      ),
+    );
+  });
+
   test('rejects session tags in media playlists', () {
     expect(
       () => parser.parse(

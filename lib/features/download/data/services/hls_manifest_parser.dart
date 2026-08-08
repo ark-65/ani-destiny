@@ -180,6 +180,9 @@ class HlsManifestParser {
           line.substring('#EXT-X-MEDIA:'.length),
         );
         final type = attributes['TYPE'];
+        if (type == null || type.isEmpty) {
+          throw const FormatException('Invalid HLS media rendition.');
+        }
         if (type != 'AUDIO') {
           continue;
         }
@@ -208,7 +211,7 @@ class HlsManifestParser {
         }
         renditions.add(
           HlsRendition(
-            type: type!,
+            type: type,
             groupId: groupId,
             name: name,
             uri: renditionUri == null

@@ -8,6 +8,7 @@
 
 ### 🐛 修复
 - 修复 `HlsManifestParser` 媒体清单边界：新增 `#EXT-X-SESSION-KEY` 媒体清单注入场景回归，确保主/媒体清单类型判定不会把会话密钥标签误认为可下载媒体标签。
+- 修复 `HlsManifestParser` 主清单边界：`#EXT-X-MEDIA` 标签缺少 `TYPE` 时现在抛出 `FormatException('Invalid HLS media rendition.')`，避免该类错误标签被静默接受后进入主清单解析；新增 `test/hls_manifest_parser_test.dart` 回归覆盖。
 - 修复 `HlsManifestParser` 媒体清单边界：当媒体清单包含 `#EXT-X-SESSION-DATA` 或 `#EXT-X-SESSION-KEY` 时应按主清单标签处理并直接拒绝，避免被误当作普通媒体元数据通过解析后进入错误离线下载流程。新增 `test/hls_manifest_parser_test.dart` 回归覆盖该场景。
 - 修复 `HlsManifestParser` 的主/媒体清单混杂边界判定：解析结束时先校验 `segments` 与 `variants` 的互斥关系，避免被后置的“仅主清单/仅媒体”标签判定覆盖；同时 `#EXT-X-START`、`#EXT-X-VERSION`、`#EXT-X-DEFINE` 不再作为媒体专用标志参与冲突判断，配合 `test/hls_manifest_parser_test.dart` 用 `#EXT-X-MEDIA` 覆盖真实主标签边界场景，减少 `Mixed playlist` 的误分流。
 - 修复 HLS 清单类型边界：`HlsManifestParser` 现在会在主清单与媒体清单内拒绝对方类型标签（例如主清单中不能出现 `#EXTINF`/`#EXT-X-KEY`/`#EXT-X-MAP`，媒体清单中不能出现 `#EXT-X-STREAM-INF`/`#EXT-X-MEDIA`），并新增 `test/hls_manifest_parser_test.dart` 用例覆盖互斥标签场景，避免清单类型误判。
