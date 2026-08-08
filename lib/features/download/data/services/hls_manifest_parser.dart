@@ -65,7 +65,6 @@ class HlsManifestParser {
         continue;
       }
       if (line.startsWith('#EXT-X-START:')) {
-        hasMediaOnlyPlaylistTags = true;
         if (startPosition != null) {
           throw const FormatException('Duplicate HLS start position.');
         }
@@ -86,7 +85,6 @@ class HlsManifestParser {
         continue;
       }
       if (line.startsWith('#EXT-X-VERSION:')) {
-        hasMediaOnlyPlaylistTags = true;
         final value = int.tryParse(
           line.substring('#EXT-X-VERSION:'.length).trim(),
         );
@@ -141,7 +139,6 @@ class HlsManifestParser {
         continue;
       }
       if (line.startsWith('#EXT-X-DEFINE:')) {
-        hasMediaOnlyPlaylistTags = true;
         final attributes = _parseAttributes(
           line.substring('#EXT-X-DEFINE:'.length),
         );
@@ -409,14 +406,14 @@ class HlsManifestParser {
     if (pendingSegmentDuration != null) {
       throw const FormatException('HLS segment URI missing.');
     }
+    if (segments.isNotEmpty && variants.isNotEmpty) {
+      throw const FormatException('Invalid HLS mixed playlist type.');
+    }
     if (segments.isNotEmpty && hasMasterOnlyPlaylistTags) {
       throw const FormatException('Invalid HLS master tag in media playlist.');
     }
     if (variants.isNotEmpty && hasMediaOnlyPlaylistTags) {
       throw const FormatException('Invalid HLS media tag in master playlist.');
-    }
-    if (segments.isNotEmpty && variants.isNotEmpty) {
-      throw const FormatException('Invalid HLS mixed playlist type.');
     }
     if (segments.isEmpty && variants.isEmpty) {
       throw const FormatException('HLS manifest contains no media entries.');
