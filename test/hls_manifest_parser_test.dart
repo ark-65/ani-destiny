@@ -544,6 +544,27 @@ video/index.m3u8
     );
   });
 
+  test('rejects consecutive stream-inf records before a media URI is present', () {
+    expect(
+      () => parser.parse(
+        '''
+    #EXTM3U
+    #EXT-X-STREAM-INF:BANDWIDTH=2400000,RESOLUTION=1920x1080
+    #EXT-X-STREAM-INF:BANDWIDTH=4800000,RESOLUTION=3840x2160
+    master/index.m3u8
+    ''',
+        uri: Uri.parse('https://cdn.example.test/master.m3u8'),
+      ),
+      throwsA(
+        isA<FormatException>().having(
+          (error) => error.message,
+          'message',
+          'Invalid HLS variant URI.',
+        ),
+      ),
+    );
+  });
+
   test('substitutes locally defined variables in HLS asset URIs', () {
     final manifest = parser.parse(
       r'''

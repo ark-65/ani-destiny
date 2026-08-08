@@ -7,6 +7,7 @@
 ## [Unreleased]
 
 ### Fixed
+- Hardened HLS master-variant parsing boundary so consecutive `#EXT-X-STREAM-INF` entries without an intervening media URI now fail with `FormatException('Invalid HLS variant URI.')`, preventing earlier variants from being silently overwritten; added regression coverage in `test/hls_manifest_parser_test.dart`.
 - Hardened HLS master playlist parsing by rejecting `#EXT-X-STREAM-INF` entries that are not followed by a valid variant URI. `HlsManifestParser` now throws `FormatException('Invalid HLS variant URI.')` instead of silently accepting malformed variant/media sequencing; added regression coverage in `test/hls_manifest_parser_test.dart`.
 - Fixed download tooltip type-boundary consistency: `_downloadTooltip` now routes unsupported types through `isSupportedDownloadKind`, keeps BT/unknown branches on the retry/review flow, and preserves direct-file startup behavior for direct content while aligning HLS supported messaging with shared download feedback logic; added `test/player_page_test.dart` BT unsupported-path regression coverage.
 - Hardened offline-manifest URI parsing to handle malformed file-URI authority forms safely. `offline_media_integrity.dart` now catches `FormatException`, `FileSystemException`, and `UnsupportedError` from `file://` URIs and returns empty candidate paths instead of throwing, so offline integrity checks fail safely. Added regression coverage in `test/offline_media_integrity_test.dart`.

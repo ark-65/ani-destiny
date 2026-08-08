@@ -153,6 +153,9 @@ class HlsManifestParser {
         continue;
       }
       if (line.startsWith('#EXT-X-STREAM-INF:')) {
+        if (pendingVariantAttributes != null) {
+          throw const FormatException('Invalid HLS variant URI.');
+        }
         pendingVariantAttributes = _parseAttributes(
           line.substring('#EXT-X-STREAM-INF:'.length),
         );
