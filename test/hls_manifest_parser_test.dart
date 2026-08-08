@@ -632,6 +632,29 @@ segment-001.ts
     );
   });
 
+  test('rejects session key tags in media playlists', () {
+    expect(
+      () => parser.parse(
+        '''
+#EXTM3U
+#EXT-X-TARGETDURATION:6
+#EXT-X-SESSION-KEY:METHOD=AES-128,URI="https://example.com/keys/session.key",IV=0x00000000000000000000000000000001
+#EXTINF:6,
+segment-001.ts
+#EXT-X-ENDLIST
+''',
+        uri: Uri.parse('https://cdn.example.test/video/index.m3u8'),
+      ),
+      throwsA(
+        isA<FormatException>().having(
+          (error) => error.message,
+          'message',
+          'Invalid HLS master tag in media playlist.',
+        ),
+      ),
+    );
+  });
+
   test('rejects a stream-inf record interrupted by another EXT tag', () {
     expect(
       () => parser.parse(
