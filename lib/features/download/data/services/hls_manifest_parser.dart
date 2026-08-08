@@ -184,7 +184,7 @@ class HlsManifestParser {
           throw const FormatException('Invalid HLS media rendition.');
         }
         if (type != 'AUDIO') {
-          continue;
+          throw const FormatException('Invalid HLS media rendition type.');
         }
         final groupId = attributes['GROUP-ID'];
         final name = attributes['NAME'];

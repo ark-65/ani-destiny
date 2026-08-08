@@ -7,6 +7,7 @@
 ## [Unreleased]
 
 ### Fixed
+- Hardened `HlsManifestParser` to reject unsupported `#EXT-X-MEDIA` rendition types: non-`AUDIO` values (for example `SUBTITLES`) now throw `FormatException('Invalid HLS media rendition type.')` so unsupported master manifest tracks are not silently dropped into offline pipelines. Added regression coverage in `test/hls_manifest_parser_test.dart`.
 - Hardened `HlsManifestParser` media-playlist boundary handling: added a regression that rejects `#EXT-X-SESSION-KEY` in media playlists to ensure master/media tag classification does not mis-route session-key tags as playable media content.
 - Hardened `HlsManifestParser` master playlist parsing: `#EXT-X-MEDIA` entries now require a non-empty `TYPE`; missing `TYPE` now throws `FormatException('Invalid HLS media rendition.')`, and added regression coverage in `test/hls_manifest_parser_test.dart`.
 - Hardened `HlsManifestParser` to treat `#EXT-X-SESSION-DATA` and `#EXT-X-SESSION-KEY` as master-only tags: media playlists containing either now throw `Invalid HLS master tag in media playlist.`, preventing malformed manifest classification from entering download/integrity flows. Added regression coverage in `test/hls_manifest_parser_test.dart`.

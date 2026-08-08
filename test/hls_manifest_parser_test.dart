@@ -604,6 +604,27 @@ segment-001.ts
           (error) => error.message,
           'message',
           'Invalid HLS media tag in master playlist.',
+      ),
+      ),
+    );
+  });
+
+  test('rejects unsupported media rendition types', () {
+    expect(
+      () => parser.parse(
+        '''
+#EXTM3U
+#EXT-X-MEDIA:TYPE=SUBTITLES,GROUP-ID="subs",NAME="English",URI="subs/index.m3u8"
+#EXT-X-STREAM-INF:BANDWIDTH=2400000,RESOLUTION=1920x1080
+1080p/index.m3u8
+''',
+        uri: Uri.parse('https://cdn.example.test/master.m3u8'),
+      ),
+      throwsA(
+        isA<FormatException>().having(
+          (error) => error.message,
+          'message',
+          'Invalid HLS media rendition type.',
         ),
       ),
     );
