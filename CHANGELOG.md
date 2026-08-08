@@ -7,6 +7,7 @@
 ## [Unreleased]
 
 ### 🐛 修复
+- 修复 HLS 清单类型边界：`HlsManifestParser` 现在会在主清单与媒体清单内拒绝对方类型标签（例如主清单中不能出现 `#EXTINF`/`#EXT-X-KEY`/`#EXT-X-MAP`，媒体清单中不能出现 `#EXT-X-STREAM-INF`/`#EXT-X-MEDIA`），并新增 `test/hls_manifest_parser_test.dart` 用例覆盖互斥标签场景，避免清单类型误判。
 - 修复 HLS 主清单边界：解析器现在会拒绝同时包含 `#EXT-X-STREAM-INF` 与 `#EXTINF`/segment 条目的混合主清单，避免将混合清单错误判定为纯 master 或 media 并进入错误的下载/校验路径；新增 `test/hls_manifest_parser_test.dart` 回归覆盖该场景。
 - 修复 HLS 媒体片段边界：`HlsManifestParser` 现在会在 `#EXTINF` 后未出现片段 URI 前再次出现 `#EXTINF` 时抛出 `FormatException('HLS segment URI missing.')`，避免首个片段时长被后续标签覆盖并产生错误 manifest 解析；新增 `test/hls_manifest_parser_test.dart` 回归覆盖该场景。
 - 修复 `HlsManifestParser` 主清单边界：`#EXT-X-STREAM-INF` 之后若出现其他 `#EXT` 标签未接媒体 URI，现直接判定为 `Invalid HLS variant URI.`，避免标签穿插导致变体与媒体 URI 错配；新增 `test/hls_manifest_parser_test.dart` 回归覆盖 `#EXTINF` 干扰场景。
