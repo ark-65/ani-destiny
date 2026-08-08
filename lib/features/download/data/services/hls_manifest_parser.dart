@@ -183,7 +183,8 @@ class HlsManifestParser {
         if (type == null || type.isEmpty) {
           throw const FormatException('Invalid HLS media rendition.');
         }
-        if (type != 'AUDIO') {
+        const supportedMediaTypes = {'AUDIO', 'VIDEO', 'SUBTITLES'};
+        if (!supportedMediaTypes.contains(type)) {
           throw const FormatException('Invalid HLS media rendition type.');
         }
         final groupId = attributes['GROUP-ID'];

@@ -609,12 +609,32 @@ segment-001.ts
     );
   });
 
+  test('accepts subtitles and video media renditions', () {
+    final manifest = parser.parse(
+      '''
+#EXTM3U
+#EXT-X-MEDIA:TYPE=SUBTITLES,GROUP-ID="subs",NAME="English",URI="subs/index.m3u8"
+#EXT-X-MEDIA:TYPE=VIDEO,GROUP-ID="angles",NAME="Main",URI="angles/main.m3u8"
+#EXT-X-STREAM-INF:BANDWIDTH=2400000,RESOLUTION=1920x1080,VIDEO="angles",SUBTITLES="subs"
+1080p/index.m3u8
+''',
+      uri: Uri.parse('https://cdn.example.test/master.m3u8'),
+    );
+
+    expect(manifest.renditions, hasLength(2));
+    expect(manifest.renditions.first.type, 'SUBTITLES');
+    expect(manifest.renditions.last.type, 'VIDEO');
+    expect(manifest.variants, hasLength(1));
+    expect(manifest.variants.single.subtitlesGroupId, 'subs');
+    expect(manifest.variants.single.videoGroupId, 'angles');
+  });
+
   test('rejects unsupported media rendition types', () {
     expect(
       () => parser.parse(
         '''
 #EXTM3U
-#EXT-X-MEDIA:TYPE=SUBTITLES,GROUP-ID="subs",NAME="English",URI="subs/index.m3u8"
+#EXT-X-MEDIA:TYPE=INVALID,GROUP-ID="subs",NAME="English",URI="subs/index.m3u8"
 #EXT-X-STREAM-INF:BANDWIDTH=2400000,RESOLUTION=1920x1080
 1080p/index.m3u8
 ''',
