@@ -44,6 +44,9 @@ class HlsManifestParser {
 
     for (var index = 1; index < lines.length; index++) {
       final line = lines[index];
+      if (pendingVariantAttributes != null && line.startsWith('#EXT')) {
+        throw const FormatException('Invalid HLS variant URI.');
+      }
       if (line == '#EXT-X-ENDLIST') {
         hasEndList = true;
         continue;
