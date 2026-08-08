@@ -524,6 +524,179 @@ video/index.m3u8
     );
   });
 
+  test('rejects an incomplete master variant missing media URI', () {
+    expect(
+      () => parser.parse(
+        '''
+#EXTM3U
+#EXT-X-STREAM-INF:BANDWIDTH=2400000,RESOLUTION=1920x1080
+#EXT-X-ENDLIST
+''',
+        uri: Uri.parse('https://cdn.example.test/master.m3u8'),
+      ),
+      throwsA(
+        isA<FormatException>().having(
+          (error) => error.message,
+          'message',
+          'Invalid HLS variant URI.',
+        ),
+      ),
+    );
+  });
+
+  test('rejects consecutive stream-inf records before a media URI is present', () {
+    expect(
+      () => parser.parse(
+        '''
+    #EXTM3U
+    #EXT-X-STREAM-INF:BANDWIDTH=2400000,RESOLUTION=1920x1080
+    #EXT-X-STREAM-INF:BANDWIDTH=4800000,RESOLUTION=3840x2160
+    master/index.m3u8
+    ''',
+        uri: Uri.parse('https://cdn.example.test/master.m3u8'),
+      ),
+      throwsA(
+        isA<FormatException>().having(
+          (error) => error.message,
+          'message',
+          'Invalid HLS variant URI.',
+        ),
+      ),
+    );
+  });
+
+  test('rejects playlists that mix stream variants and media segments', () {
+    expect(
+      () => parser.parse(
+        '''
+#EXTM3U
+#EXT-X-STREAM-INF:BANDWIDTH=2400000,RESOLUTION=1920x1080
+1080p/index.m3u8
+#EXTINF:6,
+segment-001.ts
+#EXT-X-ENDLIST
+''',
+        uri: Uri.parse('https://cdn.example.test/mixed.m3u8'),
+      ),
+      throwsA(
+        isA<FormatException>().having(
+          (error) => error.message,
+          'message',
+          'Invalid HLS mixed playlist type.',
+        ),
+      ),
+    );
+  });
+
+  test('rejects media playlist tags in master playlists', () {
+    expect(
+      () => parser.parse(
+        '''
+#EXTM3U
+#EXT-X-STREAM-INF:BANDWIDTH=2400000,RESOLUTION=1920x1080
+1080p/index.m3u8
+#EXT-X-KEY:METHOD=AES-128,URI="keys/episode.key",IV=0x0123456789ABCDEF0123456789ABCDEF
+''',
+        uri: Uri.parse('https://cdn.example.test/master.m3u8'),
+      ),
+      throwsA(
+        isA<FormatException>().having(
+          (error) => error.message,
+          'message',
+          'Invalid HLS media tag in master playlist.',
+        ),
+      ),
+    );
+  });
+
+  test('rejects session tags in media playlists', () {
+    expect(
+      () => parser.parse(
+        '''
+#EXTM3U
+#EXT-X-TARGETDURATION:6
+#EXT-X-SESSION-DATA:DATA-ID="session",VALUE="test"
+#EXTINF:6,
+segment-001.ts
+#EXT-X-ENDLIST
+''',
+        uri: Uri.parse('https://cdn.example.test/video/index.m3u8'),
+      ),
+      throwsA(
+        isA<FormatException>().having(
+          (error) => error.message,
+          'message',
+          'Invalid HLS master tag in media playlist.',
+        ),
+      ),
+    );
+  });
+
+  test('rejects a stream-inf record interrupted by another EXT tag', () {
+    expect(
+      () => parser.parse(
+        '''
+#EXTM3U
+#EXT-X-STREAM-INF:BANDWIDTH=2400000,RESOLUTION=1920x1080
+#EXTINF:6,
+master/index.m3u8
+''',
+        uri: Uri.parse('https://cdn.example.test/master.m3u8'),
+      ),
+      throwsA(
+        isA<FormatException>().having(
+          (error) => error.message,
+          'message',
+          'Invalid HLS variant URI.',
+        ),
+      ),
+    );
+  });
+
+  test('rejects master playlist tags in media playlists', () {
+    expect(
+      () => parser.parse(
+        '''
+#EXTM3U
+#EXT-X-TARGETDURATION:6
+#EXT-X-MEDIA:TYPE=AUDIO,GROUP-ID="audio-main",NAME="English",AUTOSELECT=YES
+#EXTINF:6,
+segment-001.ts
+#EXT-X-ENDLIST
+''',
+        uri: Uri.parse('https://cdn.example.test/video/index.m3u8'),
+      ),
+      throwsA(
+        isA<FormatException>().having(
+          (error) => error.message,
+          'message',
+          'Invalid HLS master tag in media playlist.',
+        ),
+      ),
+    );
+  });
+
+  test('rejects consecutive segment duration tags before segment URI', () {
+    expect(
+      () => parser.parse(
+        '''
+#EXTM3U
+#EXTINF:6,
+#EXTINF:6,
+segment/index-001.ts
+''',
+        uri: Uri.parse('https://cdn.example.test/video/index.m3u8'),
+      ),
+      throwsA(
+        isA<FormatException>().having(
+          (error) => error.message,
+          'message',
+          'HLS segment URI missing.',
+        ),
+      ),
+    );
+  });
+
   test('substitutes locally defined variables in HLS asset URIs', () {
     final manifest = parser.parse(
       r'''

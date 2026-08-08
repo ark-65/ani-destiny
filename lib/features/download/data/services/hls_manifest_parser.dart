@@ -32,6 +32,8 @@ class HlsManifestParser {
     Map<String, String>? pendingVariantAttributes;
     HlsInitializationSegment? initializationSegment;
     HlsEncryptionKey? activeEncryptionKey;
+    var hasMediaOnlyPlaylistTags = false;
+    var hasMasterOnlyPlaylistTags = false;
     _PendingByteRange? pendingByteRange;
     Uri? previousByteRangeUri;
     int? previousByteRangeEnd;
@@ -44,11 +46,15 @@ class HlsManifestParser {
 
     for (var index = 1; index < lines.length; index++) {
       final line = lines[index];
+      if (pendingVariantAttributes != null && line.startsWith('#EXT')) {
+        throw const FormatException('Invalid HLS variant URI.');
+      }
       if (line == '#EXT-X-ENDLIST') {
         hasEndList = true;
         continue;
       }
       if (line.startsWith('#EXT-X-TARGETDURATION:')) {
+        hasMediaOnlyPlaylistTags = true;
         final value = int.tryParse(
           line.substring('#EXT-X-TARGETDURATION:'.length).trim(),
         );
@@ -89,6 +95,7 @@ class HlsManifestParser {
         continue;
       }
       if (line.startsWith('#EXT-X-MEDIA-SEQUENCE:')) {
+        hasMediaOnlyPlaylistTags = true;
         final value = int.tryParse(
           line.substring('#EXT-X-MEDIA-SEQUENCE:'.length).trim(),
         );
@@ -99,6 +106,7 @@ class HlsManifestParser {
         continue;
       }
       if (line.startsWith('#EXT-X-DISCONTINUITY-SEQUENCE:')) {
+        hasMediaOnlyPlaylistTags = true;
         final value = int.tryParse(
           line.substring('#EXT-X-DISCONTINUITY-SEQUENCE:'.length).trim(),
         );
@@ -111,6 +119,10 @@ class HlsManifestParser {
         continue;
       }
       if (line.startsWith('#EXTINF:')) {
+        hasMediaOnlyPlaylistTags = true;
+        if (pendingSegmentDuration != null) {
+          throw const FormatException('HLS segment URI missing.');
+        }
         final info = line.substring('#EXTINF:'.length);
         final commaIndex = info.indexOf(',');
         final durationText =
@@ -153,12 +165,17 @@ class HlsManifestParser {
         continue;
       }
       if (line.startsWith('#EXT-X-STREAM-INF:')) {
+        if (pendingVariantAttributes != null) {
+          throw const FormatException('Invalid HLS variant URI.');
+        }
         pendingVariantAttributes = _parseAttributes(
           line.substring('#EXT-X-STREAM-INF:'.length),
         );
+        hasMasterOnlyPlaylistTags = true;
         continue;
       }
       if (line.startsWith('#EXT-X-MEDIA:')) {
+        hasMasterOnlyPlaylistTags = true;
         final attributes = _parseAttributes(
           line.substring('#EXT-X-MEDIA:'.length),
         );
@@ -204,7 +221,13 @@ class HlsManifestParser {
         );
         continue;
       }
+      if (line.startsWith('#EXT-X-SESSION-DATA:') ||
+          line.startsWith('#EXT-X-SESSION-KEY:')) {
+        hasMasterOnlyPlaylistTags = true;
+        continue;
+      }
       if (line.startsWith('#EXT-X-MAP:')) {
+        hasMediaOnlyPlaylistTags = true;
         final attributes = _parseAttributes(
           line.substring('#EXT-X-MAP:'.length),
         );
@@ -237,6 +260,7 @@ class HlsManifestParser {
         continue;
       }
       if (line.startsWith('#EXT-X-KEY:')) {
+        hasMediaOnlyPlaylistTags = true;
         final attributes = _parseAttributes(
           line.substring('#EXT-X-KEY:'.length),
         );
@@ -272,14 +296,17 @@ class HlsManifestParser {
         continue;
       }
       if (line == '#EXT-X-DISCONTINUITY') {
+        hasMediaOnlyPlaylistTags = true;
         pendingDiscontinuity = true;
         continue;
       }
       if (line == '#EXT-X-GAP') {
+        hasMediaOnlyPlaylistTags = true;
         pendingGap = true;
         continue;
       }
       if (line.startsWith('#EXT-X-PROGRAM-DATE-TIME:')) {
+        hasMediaOnlyPlaylistTags = true;
         final value = line.substring('#EXT-X-PROGRAM-DATE-TIME:'.length).trim();
         final parsed = DateTime.tryParse(value);
         if (parsed == null) {
@@ -289,6 +316,7 @@ class HlsManifestParser {
         continue;
       }
       if (line.startsWith('#EXT-X-BYTERANGE:')) {
+        hasMediaOnlyPlaylistTags = true;
         pendingByteRange = _parseByteRange(
           line.substring('#EXT-X-BYTERANGE:'.length),
         );
@@ -377,6 +405,21 @@ class HlsManifestParser {
       }
     }
 
+    if (pendingVariantAttributes != null) {
+      throw const FormatException('Invalid HLS variant URI.');
+    }
+    if (pendingSegmentDuration != null) {
+      throw const FormatException('HLS segment URI missing.');
+    }
+    if (segments.isNotEmpty && variants.isNotEmpty) {
+      throw const FormatException('Invalid HLS mixed playlist type.');
+    }
+    if (segments.isNotEmpty && hasMasterOnlyPlaylistTags) {
+      throw const FormatException('Invalid HLS master tag in media playlist.');
+    }
+    if (variants.isNotEmpty && hasMediaOnlyPlaylistTags) {
+      throw const FormatException('Invalid HLS media tag in master playlist.');
+    }
     if (segments.isEmpty && variants.isEmpty) {
       throw const FormatException('HLS manifest contains no media entries.');
     }
