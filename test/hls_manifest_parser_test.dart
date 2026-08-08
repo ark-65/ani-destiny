@@ -565,6 +565,29 @@ video/index.m3u8
     );
   });
 
+  test('rejects playlists that mix stream variants and media segments', () {
+    expect(
+      () => parser.parse(
+        '''
+#EXTM3U
+#EXT-X-STREAM-INF:BANDWIDTH=2400000,RESOLUTION=1920x1080
+1080p/index.m3u8
+#EXTINF:6,
+segment-001.ts
+#EXT-X-ENDLIST
+''',
+        uri: Uri.parse('https://cdn.example.test/mixed.m3u8'),
+      ),
+      throwsA(
+        isA<FormatException>().having(
+          (error) => error.message,
+          'message',
+          'Invalid HLS mixed playlist type.',
+        ),
+      ),
+    );
+  });
+
   test('rejects a stream-inf record interrupted by another EXT tag', () {
     expect(
       () => parser.parse(

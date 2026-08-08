@@ -392,6 +392,9 @@ class HlsManifestParser {
     if (pendingSegmentDuration != null) {
       throw const FormatException('HLS segment URI missing.');
     }
+    if (segments.isNotEmpty && variants.isNotEmpty) {
+      throw const FormatException('Invalid HLS mixed playlist type.');
+    }
     if (segments.isEmpty && variants.isEmpty) {
       throw const FormatException('HLS manifest contains no media entries.');
     }
