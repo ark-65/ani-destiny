@@ -7,6 +7,7 @@
 ## [Unreleased]
 
 ### Fixed
+- Hardened HLS media segment parsing so `HlsManifestParser` now throws `FormatException('HLS segment URI missing.')` when a second `#EXTINF` appears before a segment URI, preventing the first segment duration from being silently overwritten and adding regression coverage in `test/hls_manifest_parser_test.dart`.
 - Hardened `HlsManifestParser` master-playlist boundary so `#EXT-X-STREAM-INF` entries must be followed directly by a media URI: any intervening `#EXT` tag now throws `FormatException('Invalid HLS variant URI.')`; added regression coverage for the interrupted-tag case in `test/hls_manifest_parser_test.dart`.
 - Hardened HLS master-variant parsing boundary so consecutive `#EXT-X-STREAM-INF` entries without an intervening media URI now fail with `FormatException('Invalid HLS variant URI.')`, preventing earlier variants from being silently overwritten; added regression coverage in `test/hls_manifest_parser_test.dart`.
 - Hardened HLS master playlist parsing by rejecting `#EXT-X-STREAM-INF` entries that are not followed by a valid variant URI. `HlsManifestParser` now throws `FormatException('Invalid HLS variant URI.')` instead of silently accepting malformed variant/media sequencing; added regression coverage in `test/hls_manifest_parser_test.dart`.

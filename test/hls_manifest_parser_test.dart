@@ -586,6 +586,27 @@ master/index.m3u8
     );
   });
 
+  test('rejects consecutive segment duration tags before segment URI', () {
+    expect(
+      () => parser.parse(
+        '''
+#EXTM3U
+#EXTINF:6,
+#EXTINF:6,
+segment/index-001.ts
+''',
+        uri: Uri.parse('https://cdn.example.test/video/index.m3u8'),
+      ),
+      throwsA(
+        isA<FormatException>().having(
+          (error) => error.message,
+          'message',
+          'HLS segment URI missing.',
+        ),
+      ),
+    );
+  });
+
   test('substitutes locally defined variables in HLS asset URIs', () {
     final manifest = parser.parse(
       r'''

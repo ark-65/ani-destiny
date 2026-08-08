@@ -7,6 +7,7 @@
 ## [Unreleased]
 
 ### 🐛 修复
+- 修复 HLS 媒体片段边界：`HlsManifestParser` 现在会在 `#EXTINF` 后未出现片段 URI 前再次出现 `#EXTINF` 时抛出 `FormatException('HLS segment URI missing.')`，避免首个片段时长被后续标签覆盖并产生错误 manifest 解析；新增 `test/hls_manifest_parser_test.dart` 回归覆盖该场景。
 - 修复 `HlsManifestParser` 主清单边界：`#EXT-X-STREAM-INF` 之后若出现其他 `#EXT` 标签未接媒体 URI，现直接判定为 `Invalid HLS variant URI.`，避免标签穿插导致变体与媒体 URI 错配；新增 `test/hls_manifest_parser_test.dart` 回归覆盖 `#EXTINF` 干扰场景。
 - 修复 HLS 主清单变体边界：`HlsManifestParser` 现在在连续出现两条 `#EXT-X-STREAM-INF` 未提供上一条 URI 时会抛出 `FormatException('Invalid HLS variant URI.')`，避免首条变体被后续清单标签静默覆盖；新增 `test/hls_manifest_parser_test.dart` 回归覆盖该场景。
 - 修复 HLS 主清单变体边界：`HlsManifestParser` 现在会在 `#EXT-X-STREAM-INF` 后未紧接合法媒体 URI 时抛出 `FormatException('Invalid HLS variant URI.')`，避免变体定义与媒体 URI 错位导致的离线入口误判；新增 `test/hls_manifest_parser_test.dart` 回归覆盖。

@@ -114,6 +114,9 @@ class HlsManifestParser {
         continue;
       }
       if (line.startsWith('#EXTINF:')) {
+        if (pendingSegmentDuration != null) {
+          throw const FormatException('HLS segment URI missing.');
+        }
         final info = line.substring('#EXTINF:'.length);
         final commaIndex = info.indexOf(',');
         final durationText =
@@ -385,6 +388,9 @@ class HlsManifestParser {
 
     if (pendingVariantAttributes != null) {
       throw const FormatException('Invalid HLS variant URI.');
+    }
+    if (pendingSegmentDuration != null) {
+      throw const FormatException('HLS segment URI missing.');
     }
     if (segments.isEmpty && variants.isEmpty) {
       throw const FormatException('HLS manifest contains no media entries.');
