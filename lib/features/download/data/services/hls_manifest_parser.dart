@@ -183,7 +183,12 @@ class HlsManifestParser {
         if (type == null || type.isEmpty) {
           throw const FormatException('Invalid HLS media rendition.');
         }
-        const supportedMediaTypes = {'AUDIO', 'VIDEO', 'SUBTITLES'};
+        const supportedMediaTypes = {
+          'AUDIO',
+          'VIDEO',
+          'SUBTITLES',
+          'CLOSED-CAPTIONS',
+        };
         if (!supportedMediaTypes.contains(type)) {
           throw const FormatException('Invalid HLS media rendition type.');
         }

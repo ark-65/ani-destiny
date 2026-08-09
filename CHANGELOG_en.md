@@ -7,6 +7,7 @@
 ## [Unreleased]
 
 ### Fixed
+- Added `CLOSED-CAPTIONS` support to `HlsManifestParser` master-playlist `#EXT-X-MEDIA` parsing so `TYPE=CLOSED-CAPTIONS` entries are not rejected as invalid media rendition types. Added regression coverage in `test/hls_manifest_parser_test.dart`.
 - Adjusted `HlsManifestParser` master-playlist `#EXT-X-MEDIA` parsing to support `VIDEO` and `SUBTITLES` rendition tags alongside `AUDIO` instead of treating them as immediate parse failures. Variant selection still intentionally skips `VIDEO`/`SUBTITLES`-bound variants and only selects fully localizable variants. Added regression coverage in `test/hls_manifest_parser_test.dart` and `test/hls_byte_range_http_integration_test.dart`.
 - Hardened `HlsManifestParser` to reject unsupported `#EXT-X-MEDIA` rendition types: values outside `AUDIO`, `VIDEO`, and `SUBTITLES` (for example `INVALID`) now throw `FormatException('Invalid HLS media rendition type.')` so unsupported master manifest tracks are not silently dropped into offline pipelines. Added regression coverage in `test/hls_manifest_parser_test.dart`.
 - Hardened `HlsManifestParser` media-playlist boundary handling: added a regression that rejects `#EXT-X-SESSION-KEY` in media playlists to ensure master/media tag classification does not mis-route session-key tags as playable media content.

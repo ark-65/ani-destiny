@@ -629,6 +629,27 @@ segment-001.ts
     expect(manifest.variants.single.videoGroupId, 'angles');
   });
 
+  test('accepts closed-captions media renditions', () {
+    final manifest = parser.parse(
+      '''
+#EXTM3U
+#EXT-X-MEDIA:TYPE=CLOSED-CAPTIONS,GROUP-ID="cc",NAME="CC1",INSTREAM-ID="CC1",AUTOSELECT=YES,DEFAULT=NO
+#EXT-X-STREAM-INF:BANDWIDTH=2400000,RESOLUTION=1920x1080
+1080p/index.m3u8
+''',
+      uri: Uri.parse('https://cdn.example.test/master.m3u8'),
+    );
+
+    expect(manifest.renditions, hasLength(1));
+    expect(manifest.renditions.single.type, 'CLOSED-CAPTIONS');
+    expect(manifest.renditions.single.groupId, 'cc');
+    expect(manifest.renditions.single.name, 'CC1');
+    expect(manifest.renditions.single.isDefault, isFalse);
+    expect(manifest.renditions.single.autoselect, isTrue);
+    expect(manifest.renditions.single.uri, isNull);
+    expect(manifest.variants, hasLength(1));
+  });
+
   test('rejects unsupported media rendition types', () {
     expect(
       () => parser.parse(

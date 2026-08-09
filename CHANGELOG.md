@@ -7,6 +7,7 @@
 ## [Unreleased]
 
 ### 🐛 修复
+- 修复 `HlsManifestParser` 主清单边界：允许 `TYPE=CLOSED-CAPTIONS` 的 `#EXT-X-MEDIA` 与 `AUDIO`/`VIDEO`/`SUBTITLES` 共存解析，不再将带字幕轨的真实主清单判为不支持类型；新增 `test/hls_manifest_parser_test.dart` 回归覆盖 `CLOSED-CAPTIONS` 场景。
 - 修复 `HlsManifestParser` 对主清单 `#EXT-X-MEDIA` 标签的边界：允许 `VIDEO` 与 `SUBTITLES` 与 `AUDIO` 同时解析保留，不再把 `VIDEO/SUBTITLES` 作为立即格式错误；下载选择仍会跳过这两类变体关联的变体，仅选择同一 master 中可完全本地化的 `AUDIO`/无附加轨道视频变体。新增 `test/hls_manifest_parser_test.dart` 与 `test/hls_byte_range_http_integration_test.dart` 回归覆盖。
 - 修复 `HlsManifestParser` 主清单边界：`#EXT-X-MEDIA` 的 `TYPE` 非 `AUDIO`/`VIDEO`/`SUBTITLES` 值会直接抛出 `FormatException('Invalid HLS media rendition type.')`，避免不支持的清单构型被静默忽略并误进入离线下载链路。新增 `test/hls_manifest_parser_test.dart` 回归覆盖。
 - 修复 `HlsManifestParser` 媒体清单边界：新增 `#EXT-X-SESSION-KEY` 媒体清单注入场景回归，确保主/媒体清单类型判定不会把会话密钥标签误认为可下载媒体标签。
