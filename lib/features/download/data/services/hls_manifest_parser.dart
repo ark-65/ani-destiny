@@ -192,14 +192,25 @@ class HlsManifestParser {
         if (!supportedMediaTypes.contains(type)) {
           throw const FormatException('Invalid HLS media rendition type.');
         }
+        final isClosedCaptions = type == 'CLOSED-CAPTIONS';
         final groupId = attributes['GROUP-ID'];
         final name = attributes['NAME'];
         final renditionUri = attributes['URI'];
+        final inStreamId = attributes['INSTREAM-ID'];
         final defaultValue = attributes['DEFAULT'];
         final autoselectValue = attributes['AUTOSELECT'];
-        if (groupId == null ||
-            groupId.isEmpty ||
-            name == null ||
+        if (isClosedCaptions) {
+          if (renditionUri != null) {
+            throw const FormatException('Invalid HLS media rendition.');
+          }
+          if (inStreamId == null || inStreamId.isEmpty) {
+            throw const FormatException('Invalid HLS media rendition.');
+          }
+        }
+        if (groupId == null || groupId.isEmpty) {
+          throw const FormatException('Invalid HLS media rendition.');
+        }
+        if (name == null ||
             name.isEmpty ||
             (renditionUri != null && renditionUri.isEmpty)) {
           throw const FormatException('Invalid HLS media rendition.');

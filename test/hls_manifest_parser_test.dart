@@ -650,6 +650,48 @@ segment-001.ts
     expect(manifest.variants, hasLength(1));
   });
 
+  test('rejects closed-captions renditions with URI', () {
+    expect(
+      () => parser.parse(
+        '''
+#EXTM3U
+#EXT-X-MEDIA:TYPE=CLOSED-CAPTIONS,GROUP-ID="cc",NAME="CC1",INSTREAM-ID="CC1",URI="cc.m3u8"
+#EXT-X-STREAM-INF:BANDWIDTH=2400000,RESOLUTION=1920x1080
+1080p/index.m3u8
+''',
+        uri: Uri.parse('https://cdn.example.test/master.m3u8'),
+      ),
+      throwsA(
+        isA<FormatException>().having(
+          (error) => error.message,
+          'message',
+          'Invalid HLS media rendition.',
+        ),
+      ),
+    );
+  });
+
+  test('rejects closed-captions renditions missing INSTREAM-ID', () {
+    expect(
+      () => parser.parse(
+        '''
+#EXTM3U
+#EXT-X-MEDIA:TYPE=CLOSED-CAPTIONS,GROUP-ID="cc",NAME="CC1"
+#EXT-X-STREAM-INF:BANDWIDTH=2400000,RESOLUTION=1920x1080
+1080p/index.m3u8
+''',
+        uri: Uri.parse('https://cdn.example.test/master.m3u8'),
+      ),
+      throwsA(
+        isA<FormatException>().having(
+          (error) => error.message,
+          'message',
+          'Invalid HLS media rendition.',
+        ),
+      ),
+    );
+  });
+
   test('rejects unsupported media rendition types', () {
     expect(
       () => parser.parse(
