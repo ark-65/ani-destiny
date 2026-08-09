@@ -7,6 +7,7 @@
 ## [Unreleased]
 
 ### Fixed
+- Hardened `HlsManifestParser` to skip non-`#EXT` hash-comment lines, so comment-only lines are no longer treated as segment URLs; added regression coverage in `test/hls_manifest_parser_test.dart` for comments in media playlists and between `#EXT-X-STREAM-INF` and variant URLs.
 - Hardened `HlsManifestParser` `#EXT-X-MEDIA` handling for `TYPE=CLOSED-CAPTIONS`: rendition entries now require `INSTREAM-ID` and must not include a `URI`, preventing invalid subtitle tracks from entering offline-playlist flow. Added regression coverage in `test/hls_manifest_parser_test.dart`.
 - Added `CLOSED-CAPTIONS` support to `HlsManifestParser` master-playlist `#EXT-X-MEDIA` parsing so `TYPE=CLOSED-CAPTIONS` entries are not rejected as invalid media rendition types. Added regression coverage in `test/hls_manifest_parser_test.dart`.
 - Adjusted `HlsManifestParser` master-playlist `#EXT-X-MEDIA` parsing to support `VIDEO` and `SUBTITLES` rendition tags alongside `AUDIO` instead of treating them as immediate parse failures. Variant selection still intentionally skips `VIDEO`/`SUBTITLES`-bound variants and only selects fully localizable variants. Added regression coverage in `test/hls_manifest_parser_test.dart` and `test/hls_byte_range_http_integration_test.dart`.

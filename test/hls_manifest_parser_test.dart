@@ -801,6 +801,53 @@ master/index.m3u8
     );
   });
 
+  test('ignores non-EXT comment lines in media playlists', () {
+    final manifest = parser.parse(
+      '''
+#EXTM3U
+#EXT-X-TARGETDURATION:6
+#EXTINF:6,
+# comment should be ignored
+segment-001.ts
+# EXTINF block should still work
+# another comment line
+#EXTINF:6,
+segment-002.ts
+#EXT-X-ENDLIST
+''',
+      uri: Uri.parse('https://cdn.example.test/video/index.m3u8'),
+    );
+
+    expect(manifest.segments, hasLength(2));
+    expect(
+      manifest.segments.map((segment) => segment.uri.toString()),
+      [
+        'https://cdn.example.test/video/segment-001.ts',
+        'https://cdn.example.test/video/segment-002.ts',
+      ],
+    );
+  });
+
+  test('ignores comment lines between stream-inf and variant URI', () {
+    final manifest = parser.parse(
+      '''
+#EXTM3U
+#EXT-X-MEDIA:TYPE=AUDIO,GROUP-ID="audio-main",NAME="Japanese",URI="audio/index.m3u8"
+#EXT-X-STREAM-INF:BANDWIDTH=2400000,RESOLUTION=1920x1080
+# generated variant tag
+1080p/index.m3u8
+''',
+      uri: Uri.parse('https://cdn.example.test/master.m3u8'),
+    );
+
+    expect(manifest.isMasterPlaylist, isTrue);
+    expect(manifest.variants, hasLength(1));
+    expect(
+      manifest.variants.single.uri.toString(),
+      'https://cdn.example.test/1080p/index.m3u8',
+    );
+  });
+
   test('rejects master playlist tags in media playlists', () {
     expect(
       () => parser.parse(

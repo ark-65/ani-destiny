@@ -53,6 +53,9 @@ class HlsManifestParser {
         hasEndList = true;
         continue;
       }
+      if (line.startsWith('#') && !line.startsWith('#EXT')) {
+        continue;
+      }
       if (line.startsWith('#EXT-X-TARGETDURATION:')) {
         hasMediaOnlyPlaylistTags = true;
         final value = int.tryParse(

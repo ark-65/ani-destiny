@@ -7,6 +7,7 @@
 ## [Unreleased]
 
 ### 🐛 修复
+- 修复 `HlsManifestParser` 非 `#EXT` 注释行边界：解析器现在跳过 `#` 开头但不满足 HLS 标准扩展标签前缀的注释行，避免这些注释被当成资源 URI 参与解析（包括 `#EXTINF` 后的注释），并新增 `test/hls_manifest_parser_test.dart` 回归覆盖。
 - 修复 `HlsManifestParser` `#EXT-X-MEDIA` `TYPE=CLOSED-CAPTIONS` 边界：解析器现在要求 `INSTREAM-ID` 存在且不允许 `URI` 字段，避免把无效字幕轨误识别为可本地化资源。新增 `test/hls_manifest_parser_test.dart` 回归覆盖标准 CC 轨道与缺失字段场景。
 - 修复 `HlsManifestParser` 主清单边界：允许 `TYPE=CLOSED-CAPTIONS` 的 `#EXT-X-MEDIA` 与 `AUDIO`/`VIDEO`/`SUBTITLES` 共存解析，不再将带字幕轨的真实主清单判为不支持类型；新增 `test/hls_manifest_parser_test.dart` 回归覆盖 `CLOSED-CAPTIONS` 场景。
 - 修复 `HlsManifestParser` 对主清单 `#EXT-X-MEDIA` 标签的边界：允许 `VIDEO` 与 `SUBTITLES` 与 `AUDIO` 同时解析保留，不再把 `VIDEO/SUBTITLES` 作为立即格式错误；下载选择仍会跳过这两类变体关联的变体，仅选择同一 master 中可完全本地化的 `AUDIO`/无附加轨道视频变体。新增 `test/hls_manifest_parser_test.dart` 与 `test/hls_byte_range_http_integration_test.dart` 回归覆盖。
