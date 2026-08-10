@@ -524,6 +524,374 @@ video/index.m3u8
     );
   });
 
+  test('rejects an incomplete master variant missing media URI', () {
+    expect(
+      () => parser.parse(
+        '''
+#EXTM3U
+#EXT-X-STREAM-INF:BANDWIDTH=2400000,RESOLUTION=1920x1080
+#EXT-X-ENDLIST
+''',
+        uri: Uri.parse('https://cdn.example.test/master.m3u8'),
+      ),
+      throwsA(
+        isA<FormatException>().having(
+          (error) => error.message,
+          'message',
+          'Invalid HLS variant URI.',
+        ),
+      ),
+    );
+  });
+
+  test('rejects consecutive stream-inf records before a media URI is present', () {
+    expect(
+      () => parser.parse(
+        '''
+    #EXTM3U
+    #EXT-X-STREAM-INF:BANDWIDTH=2400000,RESOLUTION=1920x1080
+    #EXT-X-STREAM-INF:BANDWIDTH=4800000,RESOLUTION=3840x2160
+    master/index.m3u8
+    ''',
+        uri: Uri.parse('https://cdn.example.test/master.m3u8'),
+      ),
+      throwsA(
+        isA<FormatException>().having(
+          (error) => error.message,
+          'message',
+          'Invalid HLS variant URI.',
+        ),
+      ),
+    );
+  });
+
+  test('rejects playlists that mix stream variants and media segments', () {
+    expect(
+      () => parser.parse(
+        '''
+#EXTM3U
+#EXT-X-STREAM-INF:BANDWIDTH=2400000,RESOLUTION=1920x1080
+1080p/index.m3u8
+#EXTINF:6,
+segment-001.ts
+#EXT-X-ENDLIST
+''',
+        uri: Uri.parse('https://cdn.example.test/mixed.m3u8'),
+      ),
+      throwsA(
+        isA<FormatException>().having(
+          (error) => error.message,
+          'message',
+          'Invalid HLS mixed playlist type.',
+        ),
+      ),
+    );
+  });
+
+  test('rejects media playlist tags in master playlists', () {
+    expect(
+      () => parser.parse(
+        '''
+#EXTM3U
+#EXT-X-STREAM-INF:BANDWIDTH=2400000,RESOLUTION=1920x1080
+1080p/index.m3u8
+#EXT-X-KEY:METHOD=AES-128,URI="keys/episode.key",IV=0x0123456789ABCDEF0123456789ABCDEF
+''',
+        uri: Uri.parse('https://cdn.example.test/master.m3u8'),
+      ),
+      throwsA(
+        isA<FormatException>().having(
+          (error) => error.message,
+          'message',
+          'Invalid HLS media tag in master playlist.',
+      ),
+      ),
+    );
+  });
+
+  test('accepts subtitles and video media renditions', () {
+    final manifest = parser.parse(
+      '''
+#EXTM3U
+#EXT-X-MEDIA:TYPE=SUBTITLES,GROUP-ID="subs",NAME="English",URI="subs/index.m3u8"
+#EXT-X-MEDIA:TYPE=VIDEO,GROUP-ID="angles",NAME="Main",URI="angles/main.m3u8"
+#EXT-X-STREAM-INF:BANDWIDTH=2400000,RESOLUTION=1920x1080,VIDEO="angles",SUBTITLES="subs"
+1080p/index.m3u8
+''',
+      uri: Uri.parse('https://cdn.example.test/master.m3u8'),
+    );
+
+    expect(manifest.renditions, hasLength(2));
+    expect(manifest.renditions.first.type, 'SUBTITLES');
+    expect(manifest.renditions.last.type, 'VIDEO');
+    expect(manifest.variants, hasLength(1));
+    expect(manifest.variants.single.subtitlesGroupId, 'subs');
+    expect(manifest.variants.single.videoGroupId, 'angles');
+  });
+
+  test('accepts closed-captions media renditions', () {
+    final manifest = parser.parse(
+      '''
+#EXTM3U
+#EXT-X-MEDIA:TYPE=CLOSED-CAPTIONS,GROUP-ID="cc",NAME="CC1",INSTREAM-ID="CC1",AUTOSELECT=YES,DEFAULT=NO
+#EXT-X-STREAM-INF:BANDWIDTH=2400000,RESOLUTION=1920x1080
+1080p/index.m3u8
+''',
+      uri: Uri.parse('https://cdn.example.test/master.m3u8'),
+    );
+
+    expect(manifest.renditions, hasLength(1));
+    expect(manifest.renditions.single.type, 'CLOSED-CAPTIONS');
+    expect(manifest.renditions.single.groupId, 'cc');
+    expect(manifest.renditions.single.name, 'CC1');
+    expect(manifest.renditions.single.isDefault, isFalse);
+    expect(manifest.renditions.single.autoselect, isTrue);
+    expect(manifest.renditions.single.uri, isNull);
+    expect(manifest.variants, hasLength(1));
+  });
+
+  test('rejects closed-captions renditions with URI', () {
+    expect(
+      () => parser.parse(
+        '''
+#EXTM3U
+#EXT-X-MEDIA:TYPE=CLOSED-CAPTIONS,GROUP-ID="cc",NAME="CC1",INSTREAM-ID="CC1",URI="cc.m3u8"
+#EXT-X-STREAM-INF:BANDWIDTH=2400000,RESOLUTION=1920x1080
+1080p/index.m3u8
+''',
+        uri: Uri.parse('https://cdn.example.test/master.m3u8'),
+      ),
+      throwsA(
+        isA<FormatException>().having(
+          (error) => error.message,
+          'message',
+          'Invalid HLS media rendition.',
+        ),
+      ),
+    );
+  });
+
+  test('rejects closed-captions renditions missing INSTREAM-ID', () {
+    expect(
+      () => parser.parse(
+        '''
+#EXTM3U
+#EXT-X-MEDIA:TYPE=CLOSED-CAPTIONS,GROUP-ID="cc",NAME="CC1"
+#EXT-X-STREAM-INF:BANDWIDTH=2400000,RESOLUTION=1920x1080
+1080p/index.m3u8
+''',
+        uri: Uri.parse('https://cdn.example.test/master.m3u8'),
+      ),
+      throwsA(
+        isA<FormatException>().having(
+          (error) => error.message,
+          'message',
+          'Invalid HLS media rendition.',
+        ),
+      ),
+    );
+  });
+
+  test('rejects unsupported media rendition types', () {
+    expect(
+      () => parser.parse(
+        '''
+#EXTM3U
+#EXT-X-MEDIA:TYPE=INVALID,GROUP-ID="subs",NAME="English",URI="subs/index.m3u8"
+#EXT-X-STREAM-INF:BANDWIDTH=2400000,RESOLUTION=1920x1080
+1080p/index.m3u8
+''',
+        uri: Uri.parse('https://cdn.example.test/master.m3u8'),
+      ),
+      throwsA(
+        isA<FormatException>().having(
+          (error) => error.message,
+          'message',
+          'Invalid HLS media rendition type.',
+        ),
+      ),
+    );
+  });
+
+  test('rejects master playlist media tags missing TYPE', () {
+    expect(
+      () => parser.parse(
+        '''
+#EXTM3U
+#EXT-X-MEDIA:GROUP-ID="audio-main",NAME="Japanese",AUTOSELECT=YES
+#EXT-X-STREAM-INF:BANDWIDTH=2400000,RESOLUTION=1920x1080
+1080p/index.m3u8
+''',
+        uri: Uri.parse('https://cdn.example.test/master.m3u8'),
+      ),
+      throwsA(
+        isA<FormatException>().having(
+          (error) => error.message,
+          'message',
+          'Invalid HLS media rendition.',
+        ),
+      ),
+    );
+  });
+
+  test('rejects session tags in media playlists', () {
+    expect(
+      () => parser.parse(
+        '''
+#EXTM3U
+#EXT-X-TARGETDURATION:6
+#EXT-X-SESSION-DATA:DATA-ID="session",VALUE="test"
+#EXTINF:6,
+segment-001.ts
+#EXT-X-ENDLIST
+''',
+        uri: Uri.parse('https://cdn.example.test/video/index.m3u8'),
+      ),
+      throwsA(
+        isA<FormatException>().having(
+          (error) => error.message,
+          'message',
+          'Invalid HLS master tag in media playlist.',
+        ),
+      ),
+    );
+  });
+
+  test('rejects session key tags in media playlists', () {
+    expect(
+      () => parser.parse(
+        '''
+#EXTM3U
+#EXT-X-TARGETDURATION:6
+#EXT-X-SESSION-KEY:METHOD=AES-128,URI="https://example.com/keys/session.key",IV=0x00000000000000000000000000000001
+#EXTINF:6,
+segment-001.ts
+#EXT-X-ENDLIST
+''',
+        uri: Uri.parse('https://cdn.example.test/video/index.m3u8'),
+      ),
+      throwsA(
+        isA<FormatException>().having(
+          (error) => error.message,
+          'message',
+          'Invalid HLS master tag in media playlist.',
+        ),
+      ),
+    );
+  });
+
+  test('rejects a stream-inf record interrupted by another EXT tag', () {
+    expect(
+      () => parser.parse(
+        '''
+#EXTM3U
+#EXT-X-STREAM-INF:BANDWIDTH=2400000,RESOLUTION=1920x1080
+#EXTINF:6,
+master/index.m3u8
+''',
+        uri: Uri.parse('https://cdn.example.test/master.m3u8'),
+      ),
+      throwsA(
+        isA<FormatException>().having(
+          (error) => error.message,
+          'message',
+          'Invalid HLS variant URI.',
+        ),
+      ),
+    );
+  });
+
+  test('ignores non-EXT comment lines in media playlists', () {
+    final manifest = parser.parse(
+      '''
+#EXTM3U
+#EXT-X-TARGETDURATION:6
+#EXTINF:6,
+# comment should be ignored
+segment-001.ts
+# EXTINF block should still work
+# another comment line
+#EXTINF:6,
+segment-002.ts
+#EXT-X-ENDLIST
+''',
+      uri: Uri.parse('https://cdn.example.test/video/index.m3u8'),
+    );
+
+    expect(manifest.segments, hasLength(2));
+    expect(
+      manifest.segments.map((segment) => segment.uri.toString()),
+      [
+        'https://cdn.example.test/video/segment-001.ts',
+        'https://cdn.example.test/video/segment-002.ts',
+      ],
+    );
+  });
+
+  test('ignores comment lines between stream-inf and variant URI', () {
+    final manifest = parser.parse(
+      '''
+#EXTM3U
+#EXT-X-MEDIA:TYPE=AUDIO,GROUP-ID="audio-main",NAME="Japanese",URI="audio/index.m3u8"
+#EXT-X-STREAM-INF:BANDWIDTH=2400000,RESOLUTION=1920x1080
+# generated variant tag
+1080p/index.m3u8
+''',
+      uri: Uri.parse('https://cdn.example.test/master.m3u8'),
+    );
+
+    expect(manifest.isMasterPlaylist, isTrue);
+    expect(manifest.variants, hasLength(1));
+    expect(
+      manifest.variants.single.uri.toString(),
+      'https://cdn.example.test/1080p/index.m3u8',
+    );
+  });
+
+  test('rejects master playlist tags in media playlists', () {
+    expect(
+      () => parser.parse(
+        '''
+#EXTM3U
+#EXT-X-TARGETDURATION:6
+#EXT-X-MEDIA:TYPE=AUDIO,GROUP-ID="audio-main",NAME="English",AUTOSELECT=YES
+#EXTINF:6,
+segment-001.ts
+#EXT-X-ENDLIST
+''',
+        uri: Uri.parse('https://cdn.example.test/video/index.m3u8'),
+      ),
+      throwsA(
+        isA<FormatException>().having(
+          (error) => error.message,
+          'message',
+          'Invalid HLS master tag in media playlist.',
+        ),
+      ),
+    );
+  });
+
+  test('rejects consecutive segment duration tags before segment URI', () {
+    expect(
+      () => parser.parse(
+        '''
+#EXTM3U
+#EXTINF:6,
+#EXTINF:6,
+segment/index-001.ts
+''',
+        uri: Uri.parse('https://cdn.example.test/video/index.m3u8'),
+      ),
+      throwsA(
+        isA<FormatException>().having(
+          (error) => error.message,
+          'message',
+          'HLS segment URI missing.',
+        ),
+      ),
+    );
+  });
+
   test('substitutes locally defined variables in HLS asset URIs', () {
     final manifest = parser.parse(
       r'''

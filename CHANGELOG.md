@@ -7,6 +7,21 @@
 ## [Unreleased]
 
 ### 🐛 修复
+- 修复 `HlsManifestParser` 非 `#EXT` 注释行边界：解析器现在跳过 `#` 开头但不满足 HLS 标准扩展标签前缀的注释行，避免这些注释被当成资源 URI 参与解析（包括 `#EXTINF` 后的注释），并新增 `test/hls_manifest_parser_test.dart` 回归覆盖。
+- 修复 `HlsManifestParser` `#EXT-X-MEDIA` `TYPE=CLOSED-CAPTIONS` 边界：解析器现在要求 `INSTREAM-ID` 存在且不允许 `URI` 字段，避免把无效字幕轨误识别为可本地化资源。新增 `test/hls_manifest_parser_test.dart` 回归覆盖标准 CC 轨道与缺失字段场景。
+- 修复 `HlsManifestParser` 主清单边界：允许 `TYPE=CLOSED-CAPTIONS` 的 `#EXT-X-MEDIA` 与 `AUDIO`/`VIDEO`/`SUBTITLES` 共存解析，不再将带字幕轨的真实主清单判为不支持类型；新增 `test/hls_manifest_parser_test.dart` 回归覆盖 `CLOSED-CAPTIONS` 场景。
+- 修复 `HlsManifestParser` 对主清单 `#EXT-X-MEDIA` 标签的边界：允许 `VIDEO` 与 `SUBTITLES` 与 `AUDIO` 同时解析保留，不再把 `VIDEO/SUBTITLES` 作为立即格式错误；下载选择仍会跳过这两类变体关联的变体，仅选择同一 master 中可完全本地化的 `AUDIO`/无附加轨道视频变体。新增 `test/hls_manifest_parser_test.dart` 与 `test/hls_byte_range_http_integration_test.dart` 回归覆盖。
+- 修复 `HlsManifestParser` 主清单边界：`#EXT-X-MEDIA` 的 `TYPE` 非 `AUDIO`/`VIDEO`/`SUBTITLES` 值会直接抛出 `FormatException('Invalid HLS media rendition type.')`，避免不支持的清单构型被静默忽略并误进入离线下载链路。新增 `test/hls_manifest_parser_test.dart` 回归覆盖。
+- 修复 `HlsManifestParser` 媒体清单边界：新增 `#EXT-X-SESSION-KEY` 媒体清单注入场景回归，确保主/媒体清单类型判定不会把会话密钥标签误认为可下载媒体标签。
+- 修复 `HlsManifestParser` 主清单边界：`#EXT-X-MEDIA` 标签缺少 `TYPE` 时现在抛出 `FormatException('Invalid HLS media rendition.')`，避免该类错误标签被静默接受后进入主清单解析；新增 `test/hls_manifest_parser_test.dart` 回归覆盖。
+- 修复 `HlsManifestParser` 媒体清单边界：当媒体清单包含 `#EXT-X-SESSION-DATA` 或 `#EXT-X-SESSION-KEY` 时应按主清单标签处理并直接拒绝，避免被误当作普通媒体元数据通过解析后进入错误离线下载流程。新增 `test/hls_manifest_parser_test.dart` 回归覆盖该场景。
+- 修复 `HlsManifestParser` 的主/媒体清单混杂边界判定：解析结束时先校验 `segments` 与 `variants` 的互斥关系，避免被后置的“仅主清单/仅媒体”标签判定覆盖；同时 `#EXT-X-START`、`#EXT-X-VERSION`、`#EXT-X-DEFINE` 不再作为媒体专用标志参与冲突判断，配合 `test/hls_manifest_parser_test.dart` 用 `#EXT-X-MEDIA` 覆盖真实主标签边界场景，减少 `Mixed playlist` 的误分流。
+- 修复 HLS 清单类型边界：`HlsManifestParser` 现在会在主清单与媒体清单内拒绝对方类型标签（例如主清单中不能出现 `#EXTINF`/`#EXT-X-KEY`/`#EXT-X-MAP`，媒体清单中不能出现 `#EXT-X-STREAM-INF`/`#EXT-X-MEDIA`），并新增 `test/hls_manifest_parser_test.dart` 用例覆盖互斥标签场景，避免清单类型误判。
+- 修复 HLS 主清单边界：解析器现在会拒绝同时包含 `#EXT-X-STREAM-INF` 与 `#EXTINF`/segment 条目的混合主清单，避免将混合清单错误判定为纯 master 或 media 并进入错误的下载/校验路径；新增 `test/hls_manifest_parser_test.dart` 回归覆盖该场景。
+- 修复 HLS 媒体片段边界：`HlsManifestParser` 现在会在 `#EXTINF` 后未出现片段 URI 前再次出现 `#EXTINF` 时抛出 `FormatException('HLS segment URI missing.')`，避免首个片段时长被后续标签覆盖并产生错误 manifest 解析；新增 `test/hls_manifest_parser_test.dart` 回归覆盖该场景。
+- 修复 `HlsManifestParser` 主清单边界：`#EXT-X-STREAM-INF` 之后若出现其他 `#EXT` 标签未接媒体 URI，现直接判定为 `Invalid HLS variant URI.`，避免标签穿插导致变体与媒体 URI 错配；新增 `test/hls_manifest_parser_test.dart` 回归覆盖 `#EXTINF` 干扰场景。
+- 修复 HLS 主清单变体边界：`HlsManifestParser` 现在在连续出现两条 `#EXT-X-STREAM-INF` 未提供上一条 URI 时会抛出 `FormatException('Invalid HLS variant URI.')`，避免首条变体被后续清单标签静默覆盖；新增 `test/hls_manifest_parser_test.dart` 回归覆盖该场景。
+- 修复 HLS 主清单变体边界：`HlsManifestParser` 现在会在 `#EXT-X-STREAM-INF` 后未紧接合法媒体 URI 时抛出 `FormatException('Invalid HLS variant URI.')`，避免变体定义与媒体 URI 错位导致的离线入口误判；新增 `test/hls_manifest_parser_test.dart` 回归覆盖。
 - 修复下载入口提示与下载能力边界的判定不一致风险：`player_page.dart::_downloadTooltip` 统一使用 `isSupportedDownloadKind` 进行可下载类型判定，仅对 BT/未知类型返回“先检查下载线路”文案，并将直链与 HLS 已支持分支明确区分，配合 `test/player_page_test.dart` 增补 BT 不支持路径回归，避免下载按钮文案与最终反馈语义分叉。
 - 补齐离线完整性 manifest 段路径解析的异常边界：`offline_media_integrity.dart` 对 `file://server/...` 等 file URI authority 入口添加 `FormatException/FileSystemException/UnsupportedError` 防护，避免 manifest 内异常 URI 直接抛异常导致离线完整性验证中断；同时新增 `test/offline_media_integrity_test.dart` 回归覆盖该边界。
 - 新增 `test/player_page_test.dart` 回归：明确拒绝网络共享风格路径（`\\server\share...`、`//server/...` 与 `file://server/...`）在 `_isPlayableUrl` 中被误判为可播放，且在文件 URI 带 authority 时不抛异常返回 `false`，防止离线完整性评估链路绕过该类非本地路径输入。
