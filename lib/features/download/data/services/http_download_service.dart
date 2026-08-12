@@ -524,8 +524,7 @@ class HttpDownloadService implements DownloadService {
         final expectedKeyLength = segmentSizesByName[keyFileName];
         if (await keyFile.exists() &&
             await keyFile.length() == _aes128KeyLength &&
-            (expectedKeyLength == null ||
-                expectedKeyLength == _aes128KeyLength)) {
+            expectedKeyLength == _aes128KeyLength) {
           downloadedBytes += await keyFile.length();
           continue;
         }
@@ -559,8 +558,7 @@ class HttpDownloadService implements DownloadService {
             (initializationSegment.byteRange == null ||
                 initializationLength ==
                     initializationSegment.byteRange!.length) &&
-            (expectedInitializationLength == null ||
-                expectedInitializationLength == initializationLength)) {
+            expectedInitializationLength == initializationLength) {
           downloadedBytes += initializationLength;
         } else {
           downloadedBytes += await _downloadHlsSegment(
@@ -595,9 +593,9 @@ class HttpDownloadService implements DownloadService {
           final existingBytes = await existingSegmentFile.length();
           if (existingBytes > 0 &&
               (segment.byteRange == null
-                  ? (expectedSegmentLength == null ||
-                      expectedSegmentLength == existingBytes)
-                  : existingBytes == segment.byteRange!.length)) {
+                  ? expectedSegmentLength == existingBytes
+                  : existingBytes == segment.byteRange!.length &&
+                      expectedSegmentLength == existingBytes)) {
             downloadedBytes += existingBytes;
             final progress = (index + 1) / mediaManifest.segments.length;
             _emit(
