@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:ani_destiny/core/error/app_exception.dart';
@@ -1247,6 +1248,102 @@ segment-2.m4s
       restartDio.downloadedUris,
       ['https://cdn.example.test/segment-2.ts'],
     );
+  });
+
+  test(
+      'starting HLS task redownloads segment when cached size no longer matches',
+      () async {
+    final database = AppDatabase(NativeDatabase.memory());
+    addTearDown(database.close);
+
+    final tempDir = await Directory.systemTemp
+        .createTemp('ani-destiny-download-hls-ledger-stale');
+    addTearDown(() async {
+      if (tempDir.existsSync()) {
+        await tempDir.delete(recursive: true);
+      }
+    });
+    _mockApplicationDocumentsDirectory(tempDir.path);
+
+    const segmentOne = <int>[1, 2, 3, 4];
+    const segmentTwo = <int>[5, 6, 7];
+    final repository = DownloadRepositoryImpl(database);
+    final service = HttpDownloadService(
+      dio: _FakeHlsSegmentDownloadDio({
+        'https://cdn.example.test/segment-1.ts': segmentOne,
+        'https://cdn.example.test/segment-2.ts': segmentTwo,
+      }),
+      repository: repository,
+      hlsManifestLoader: _FakeHlsManifestLoader(
+        (manifestUri, headers) async {
+          expect(manifestUri.toString(), 'https://cdn.example.test/index.m3u8');
+          return HlsManifest(
+            uri: Uri.parse('https://cdn.example.test/index.m3u8'),
+            segments: [
+              HlsSegment(
+                uri: Uri.parse('https://cdn.example.test/segment-1.ts'),
+              ),
+              HlsSegment(
+                uri: Uri.parse('https://cdn.example.test/segment-2.ts'),
+              ),
+            ],
+            variants: const [],
+            isLive: false,
+            targetDuration: null,
+          );
+        },
+      ),
+    );
+
+    final taskId = await service.createTask(
+      animeId: 'anime-1',
+      episodeId: 'episode-ledger',
+      sourceId: 'sakura',
+      source: const DownloadSource(
+        url: 'https://cdn.example.test/index.m3u8',
+        kind: DownloadKind.hls,
+      ),
+      title: 'HLS Test',
+      episodeTitle: 'Episode Ledger',
+    );
+
+    final staleSegment = File(
+      p.join(
+        tempDir.path,
+        'downloads',
+        taskId,
+        'segments',
+        'segment-000000.ts',
+      ),
+    );
+    await staleSegment.parent.create(recursive: true);
+    await staleSegment.writeAsBytes(const <int>[9, 9]);
+    await File(
+      p.join(staleSegment.parent.path, '.hls-segment-sizes.json'),
+    ).writeAsString(jsonEncode({'segment-000000.ts': segmentOne.length}));
+
+    await service.start(taskId);
+
+    final completedTask = await repository.getTask(taskId);
+    expect(completedTask, isNotNull);
+    expect(completedTask!.status, DownloadStatus.completed);
+    expect(completedTask.progress, 1);
+    expect(
+      completedTask.downloadedBytes,
+      segmentOne.length + segmentTwo.length,
+    );
+    expect(await staleSegment.length(), segmentOne.length);
+    expect(
+      await staleSegment.readAsBytes(),
+      segmentOne,
+    );
+
+    final ledger = jsonDecode(
+      await File(p.join(staleSegment.parent.path, '.hls-segment-sizes.json'))
+          .readAsString(),
+    ) as Map<String, dynamic>;
+    expect(ledger['segment-000000.ts'], segmentOne.length);
+    expect(ledger['segment-000001.ts'], segmentTwo.length);
   });
 
   test('recovering interrupted HLS tasks clears stale failure details',

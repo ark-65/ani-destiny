@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 import 'dart:io';
 import 'dart:math' as math;
 
@@ -21,6 +22,7 @@ import '../../domain/services/download_service.dart';
 
 const _downloadNetworkFailureMessage =
     'AniDestiny could not finish this download because the source could not be reached. Retry when the connection is stable.';
+const _hlsSegmentSizeLedgerFileName = '.hls-segment-sizes.json';
 
 class HttpDownloadService implements DownloadService {
   static const _aes128KeyLength = 16;
@@ -505,80 +507,77 @@ class HttpDownloadService implements DownloadService {
       ),
     );
     await segmentDirectory.create(recursive: true);
+    final segmentSizesByName =
+        await _loadHlsSegmentSizeLedger(segmentDirectory);
 
     var downloadedBytes = 0;
 
-    for (final keyEntry in _hlsEncryptionKeys(mediaManifest).entries) {
-      final keyFile = File(
-        p.join(
-          segmentDirectory.path,
-          _hlsEncryptionKeyFileName(keyEntry.value),
-        ),
-      );
-      if (await keyFile.exists() &&
-          await keyFile.length() == _aes128KeyLength) {
-        downloadedBytes += await keyFile.length();
-      } else {
+    try {
+      for (final keyEntry in _hlsEncryptionKeys(mediaManifest).entries) {
+        final keyFileName = _hlsEncryptionKeyFileName(keyEntry.value);
+        final keyFile = File(
+          p.join(
+            segmentDirectory.path,
+            keyFileName,
+          ),
+        );
+        final expectedKeyLength = segmentSizesByName[keyFileName];
+        if (await keyFile.exists() &&
+            await keyFile.length() == _aes128KeyLength &&
+            (expectedKeyLength == null ||
+                expectedKeyLength == _aes128KeyLength)) {
+          downloadedBytes += await keyFile.length();
+          continue;
+        }
         downloadedBytes += await _downloadHlsSegment(
           segmentUri: keyEntry.key.uri,
           localPath: keyFile.path,
           headers: headers,
           cancelToken: cancelToken,
         );
+        segmentSizesByName[keyFileName] = await keyFile.length();
       }
-    }
 
-    for (final initializationEntry
-        in _hlsInitializationSegments(mediaManifest).entries) {
-      final initializationSegment = initializationEntry.key;
-      final initializationPath = p.join(
-        segmentDirectory.path,
-        _hlsInitializationSegmentFileName(
+      for (final initializationEntry
+          in _hlsInitializationSegments(mediaManifest).entries) {
+        final initializationSegment = initializationEntry.key;
+        final initializationName = _hlsInitializationSegmentFileName(
           initializationSegment.uri,
           initializationEntry.value,
-        ),
-      );
-      final initializationFile = File(initializationPath);
-      final initializationLength = await initializationFile.exists()
-          ? await initializationFile.length()
-          : 0;
-      if (initializationLength > 0 &&
-          (initializationSegment.byteRange == null ||
-              initializationLength ==
-                  initializationSegment.byteRange!.length)) {
-        downloadedBytes += await initializationFile.length();
-      } else {
-        downloadedBytes += await _downloadHlsSegment(
-          segmentUri: initializationSegment.uri,
-          localPath: initializationPath,
-          headers: headers,
-          byteRange: initializationSegment.byteRange,
-          cancelToken: cancelToken,
         );
+        final initializationPath = p.join(
+          segmentDirectory.path,
+          initializationName,
+        );
+        final initializationFile = File(initializationPath);
+        final expectedInitializationLength =
+            segmentSizesByName[initializationName];
+        final initializationLength = await initializationFile.exists()
+            ? await initializationFile.length()
+            : 0;
+        if (initializationLength > 0 &&
+            (initializationSegment.byteRange == null ||
+                initializationLength ==
+                    initializationSegment.byteRange!.length) &&
+            (expectedInitializationLength == null ||
+                expectedInitializationLength == initializationLength)) {
+          downloadedBytes += initializationLength;
+        } else {
+          downloadedBytes += await _downloadHlsSegment(
+            segmentUri: initializationSegment.uri,
+            localPath: initializationPath,
+            headers: headers,
+            byteRange: initializationSegment.byteRange,
+            cancelToken: cancelToken,
+          );
+          segmentSizesByName[initializationName] =
+              await initializationFile.length();
+        }
       }
-    }
 
-    for (var index = 0; index < mediaManifest.segments.length; index++) {
-      final segment = mediaManifest.segments[index];
-      if (segment.isGap) {
-        final progress = (index + 1) / mediaManifest.segments.length;
-        _emit(
-          task.id,
-          progress,
-          DownloadStatus.downloading,
-          downloadedBytes: downloadedBytes,
-        );
-        continue;
-      }
-      final safeSegmentName = _hlsSegmentFileName(segment.uri, index);
-      final segmentPath = p.join(segmentDirectory.path, safeSegmentName);
-      final existingSegmentFile = File(segmentPath);
-      if (await existingSegmentFile.exists()) {
-        final existingBytes = await existingSegmentFile.length();
-        if (existingBytes > 0 &&
-            (segment.byteRange == null ||
-                existingBytes == segment.byteRange!.length)) {
-          downloadedBytes += existingBytes;
+      for (var index = 0; index < mediaManifest.segments.length; index++) {
+        final segment = mediaManifest.segments[index];
+        if (segment.isGap) {
           final progress = (index + 1) / mediaManifest.segments.length;
           _emit(
             task.id,
@@ -588,26 +587,53 @@ class HttpDownloadService implements DownloadService {
           );
           continue;
         }
+        final safeSegmentName = _hlsSegmentFileName(segment.uri, index);
+        final segmentPath = p.join(segmentDirectory.path, safeSegmentName);
+        final existingSegmentFile = File(segmentPath);
+        final expectedSegmentLength = segmentSizesByName[safeSegmentName];
+        if (await existingSegmentFile.exists()) {
+          final existingBytes = await existingSegmentFile.length();
+          if (existingBytes > 0 &&
+              (segment.byteRange == null
+                  ? (expectedSegmentLength == null ||
+                      expectedSegmentLength == existingBytes)
+                  : existingBytes == segment.byteRange!.length)) {
+            downloadedBytes += existingBytes;
+            final progress = (index + 1) / mediaManifest.segments.length;
+            _emit(
+              task.id,
+              progress,
+              DownloadStatus.downloading,
+              downloadedBytes: downloadedBytes,
+            );
+            continue;
+          }
+        }
+        final segmentBytes = await _downloadHlsSegment(
+          segmentUri: segment.uri,
+          localPath: segmentPath,
+          headers: headers,
+          byteRange: segment.byteRange,
+          cancelToken: cancelToken,
+        );
+        segmentSizesByName[safeSegmentName] = await File(segmentPath).length();
+        downloadedBytes += segmentBytes;
+        final progress = (index + 1) / mediaManifest.segments.length;
+        _emit(
+          task.id,
+          progress,
+          DownloadStatus.downloading,
+          downloadedBytes: downloadedBytes,
+        );
       }
-      final segmentBytes = await _downloadHlsSegment(
-        segmentUri: segment.uri,
-        localPath: segmentPath,
-        headers: headers,
-        byteRange: segment.byteRange,
-        cancelToken: cancelToken,
-      );
 
-      downloadedBytes += segmentBytes;
-      final progress = (index + 1) / mediaManifest.segments.length;
-      _emit(
-        task.id,
-        progress,
-        DownloadStatus.downloading,
-        downloadedBytes: downloadedBytes,
+      return downloadedBytes;
+    } finally {
+      await _saveHlsSegmentSizeLedger(
+        segmentDirectory,
+        segmentSizesByName,
       );
     }
-
-    return downloadedBytes;
   }
 
   Future<void> _validateHlsManifestAssets({
@@ -690,6 +716,63 @@ class HttpDownloadService implements DownloadService {
         );
       }
     }
+  }
+
+  Future<Map<String, int>> _loadHlsSegmentSizeLedger(
+    Directory segmentDirectory,
+  ) async {
+    final ledgerFile = File(_hlsSegmentSizeLedgerPath(segmentDirectory));
+    if (!await ledgerFile.exists()) {
+      return {};
+    }
+
+    final decoded = await ledgerFile.readAsString();
+    if (decoded.trim().isEmpty) {
+      return {};
+    }
+
+    try {
+      final object = jsonDecode(decoded);
+      if (object is! Map) {
+        return {};
+      }
+      final entries = <String, int>{};
+      for (final entry in object.entries) {
+        final key = entry.key;
+        final value = entry.value;
+        if (key is! String) continue;
+        if (value is int) {
+          entries[key] = value;
+          continue;
+        }
+        final parsed = int.tryParse('$value');
+        if (parsed != null) {
+          entries[key] = parsed;
+        }
+      }
+      return entries;
+    } on FormatException {
+      return {};
+    }
+  }
+
+  Future<void> _saveHlsSegmentSizeLedger(
+    Directory segmentDirectory,
+    Map<String, int> segmentSizesByName,
+  ) async {
+    await segmentDirectory.create(recursive: true);
+    final ledgerFile = File(_hlsSegmentSizeLedgerPath(segmentDirectory));
+    if (segmentSizesByName.isEmpty) {
+      if (await ledgerFile.exists()) {
+        await ledgerFile.delete();
+      }
+      return;
+    }
+    await ledgerFile.writeAsString(jsonEncode(segmentSizesByName));
+  }
+
+  String _hlsSegmentSizeLedgerPath(Directory segmentDirectory) {
+    return p.join(segmentDirectory.path, _hlsSegmentSizeLedgerFileName);
   }
 
   Future<int> _downloadHlsSegment({
