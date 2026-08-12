@@ -4,6 +4,7 @@ import 'dart:io';
 import 'dart:math' as math;
 
 import 'package:dio/dio.dart';
+import 'package:crypto/crypto.dart';
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 
@@ -23,6 +24,26 @@ import '../../domain/services/download_service.dart';
 const _downloadNetworkFailureMessage =
     'AniDestiny could not finish this download because the source could not be reached. Retry when the connection is stable.';
 const _hlsSegmentSizeLedgerFileName = '.hls-segment-sizes.json';
+
+class _HlsSegmentLedgerEntry {
+  const _HlsSegmentLedgerEntry({
+    required this.length,
+    this.sha256,
+  });
+
+  final int length;
+  final String? sha256;
+
+  Object toJson() {
+    if (sha256 == null) {
+      return length;
+    }
+    return <String, Object?>{
+      'length': length,
+      'sha256': sha256,
+    };
+  }
+}
 
 class HttpDownloadService implements DownloadService {
   static const _aes128KeyLength = 16;
@@ -507,7 +528,7 @@ class HttpDownloadService implements DownloadService {
       ),
     );
     await segmentDirectory.create(recursive: true);
-    final segmentSizesByName =
+    final segmentLedger =
         await _loadHlsSegmentSizeLedger(segmentDirectory);
 
     var downloadedBytes = 0;
@@ -521,10 +542,13 @@ class HttpDownloadService implements DownloadService {
             keyFileName,
           ),
         );
-        final expectedKeyLength = segmentSizesByName[keyFileName];
+        final expectedKeyRecord = segmentLedger[keyFileName];
         if (await keyFile.exists() &&
+            expectedKeyRecord != null &&
             await keyFile.length() == _aes128KeyLength &&
-            expectedKeyLength == _aes128KeyLength) {
+            expectedKeyRecord.length == _aes128KeyLength &&
+            (expectedKeyRecord.sha256 == null ||
+                expectedKeyRecord.sha256 == await _sha256Hex(keyFile))) {
           downloadedBytes += await keyFile.length();
           continue;
         }
@@ -534,7 +558,10 @@ class HttpDownloadService implements DownloadService {
           headers: headers,
           cancelToken: cancelToken,
         );
-        segmentSizesByName[keyFileName] = await keyFile.length();
+        segmentLedger[keyFileName] = _HlsSegmentLedgerEntry(
+          length: await keyFile.length(),
+          sha256: await _sha256Hex(keyFile),
+        );
       }
 
       for (final initializationEntry
@@ -544,21 +571,22 @@ class HttpDownloadService implements DownloadService {
           initializationSegment.uri,
           initializationEntry.value,
         );
+        final expectedInitializationRecord = segmentLedger[initializationName];
         final initializationPath = p.join(
           segmentDirectory.path,
           initializationName,
         );
         final initializationFile = File(initializationPath);
-        final expectedInitializationLength =
-            segmentSizesByName[initializationName];
         final initializationLength = await initializationFile.exists()
             ? await initializationFile.length()
             : 0;
         if (initializationLength > 0 &&
             (initializationSegment.byteRange == null ||
-                initializationLength ==
-                    initializationSegment.byteRange!.length) &&
-            expectedInitializationLength == initializationLength) {
+                initializationLength == initializationSegment.byteRange!.length) &&
+            expectedInitializationRecord?.length == initializationLength &&
+            (segmentLedger[initializationName]?.sha256 == null ||
+                segmentLedger[initializationName]?.sha256 ==
+                    await _sha256Hex(initializationFile))) {
           downloadedBytes += initializationLength;
         } else {
           downloadedBytes += await _downloadHlsSegment(
@@ -568,8 +596,10 @@ class HttpDownloadService implements DownloadService {
             byteRange: initializationSegment.byteRange,
             cancelToken: cancelToken,
           );
-          segmentSizesByName[initializationName] =
-              await initializationFile.length();
+          segmentLedger[initializationName] = _HlsSegmentLedgerEntry(
+            length: await initializationFile.length(),
+            sha256: await _sha256Hex(initializationFile),
+          );
         }
       }
 
@@ -588,14 +618,17 @@ class HttpDownloadService implements DownloadService {
         final safeSegmentName = _hlsSegmentFileName(segment.uri, index);
         final segmentPath = p.join(segmentDirectory.path, safeSegmentName);
         final existingSegmentFile = File(segmentPath);
-        final expectedSegmentLength = segmentSizesByName[safeSegmentName];
+        final expectedSegmentLength = segmentLedger[safeSegmentName]?.length;
+        final expectedSegmentHash = segmentLedger[safeSegmentName]?.sha256;
         if (await existingSegmentFile.exists()) {
           final existingBytes = await existingSegmentFile.length();
           if (existingBytes > 0 &&
               (segment.byteRange == null
                   ? expectedSegmentLength == existingBytes
                   : existingBytes == segment.byteRange!.length &&
-                      expectedSegmentLength == existingBytes)) {
+                      expectedSegmentLength == existingBytes) &&
+              (expectedSegmentHash == null ||
+                  expectedSegmentHash == await _sha256Hex(existingSegmentFile))) {
             downloadedBytes += existingBytes;
             final progress = (index + 1) / mediaManifest.segments.length;
             _emit(
@@ -614,7 +647,10 @@ class HttpDownloadService implements DownloadService {
           byteRange: segment.byteRange,
           cancelToken: cancelToken,
         );
-        segmentSizesByName[safeSegmentName] = await File(segmentPath).length();
+        segmentLedger[safeSegmentName] = _HlsSegmentLedgerEntry(
+          length: await File(segmentPath).length(),
+          sha256: await _sha256Hex(existingSegmentFile),
+        );
         downloadedBytes += segmentBytes;
         final progress = (index + 1) / mediaManifest.segments.length;
         _emit(
@@ -629,7 +665,7 @@ class HttpDownloadService implements DownloadService {
     } finally {
       await _saveHlsSegmentSizeLedger(
         segmentDirectory,
-        segmentSizesByName,
+        segmentLedger,
       );
     }
   }
@@ -716,7 +752,14 @@ class HttpDownloadService implements DownloadService {
     }
   }
 
-  Future<Map<String, int>> _loadHlsSegmentSizeLedger(
+  int? _parseInt(Object? value) {
+    if (value is int) {
+      return value;
+    }
+    return int.tryParse('$value');
+  }
+
+  Future<Map<String, _HlsSegmentLedgerEntry>> _loadHlsSegmentSizeLedger(
     Directory segmentDirectory,
   ) async {
     final ledgerFile = File(_hlsSegmentSizeLedgerPath(segmentDirectory));
@@ -734,18 +777,24 @@ class HttpDownloadService implements DownloadService {
       if (object is! Map) {
         return {};
       }
-      final entries = <String, int>{};
+      final entries = <String, _HlsSegmentLedgerEntry>{};
       for (final entry in object.entries) {
         final key = entry.key;
         final value = entry.value;
         if (key is! String) continue;
-        if (value is int) {
-          entries[key] = value;
+        if (value is Map) {
+          final length = _parseInt(value['length']);
+          if (length == null) continue;
+          final sha256 = value['sha256'];
+          entries[key] = _HlsSegmentLedgerEntry(
+            length: length,
+            sha256: sha256 is String && sha256.isNotEmpty ? sha256 : null,
+          );
           continue;
         }
-        final parsed = int.tryParse('$value');
+        final parsed = _parseInt(value);
         if (parsed != null) {
-          entries[key] = parsed;
+          entries[key] = _HlsSegmentLedgerEntry(length: parsed);
         }
       }
       return entries;
@@ -756,7 +805,7 @@ class HttpDownloadService implements DownloadService {
 
   Future<void> _saveHlsSegmentSizeLedger(
     Directory segmentDirectory,
-    Map<String, int> segmentSizesByName,
+    Map<String, _HlsSegmentLedgerEntry> segmentSizesByName,
   ) async {
     await segmentDirectory.create(recursive: true);
     final ledgerFile = File(_hlsSegmentSizeLedgerPath(segmentDirectory));
@@ -766,7 +815,13 @@ class HttpDownloadService implements DownloadService {
       }
       return;
     }
-    await ledgerFile.writeAsString(jsonEncode(segmentSizesByName));
+    await ledgerFile.writeAsString(
+      jsonEncode(
+        <String, Object?>{
+          for (final entry in segmentSizesByName.entries) entry.key: entry.value.toJson(),
+        },
+      ),
+    );
   }
 
   String _hlsSegmentSizeLedgerPath(Directory segmentDirectory) {
@@ -827,6 +882,11 @@ class HttpDownloadService implements DownloadService {
       }
     }
     throw StateError('HLS segment retry loop exited unexpectedly.');
+  }
+
+  Future<String> _sha256Hex(File file) async {
+    final digest = sha256.convert(await file.readAsBytes());
+    return digest.toString();
   }
 
   void _validateHlsByteRangeResponse(
