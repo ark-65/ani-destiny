@@ -324,6 +324,63 @@ void main() {
   });
 
   testWidgets(
+    'offline anime verification validates every episode in the group',
+    (tester) async {
+      final repository = _FakeDownloadRepository([]);
+      final animeOneEpisodeOne = _offlineItem(
+        id: 'offline-1',
+        animeId: 'anime-1',
+        episodeId: 'episode-1',
+        title: 'Offline Anime',
+        episodeTitle: 'Episode 1',
+      );
+      final animeOneEpisodeTwo = _offlineItem(
+        id: 'offline-2',
+        animeId: 'anime-1',
+        episodeId: 'episode-2',
+        title: 'Offline Anime',
+        episodeTitle: 'Episode 2',
+      );
+      final otherAnime = _offlineItem(
+        id: 'offline-3',
+        animeId: 'anime-2',
+        episodeId: 'episode-1',
+        title: 'Other Anime',
+        episodeTitle: 'Episode 1',
+      );
+      final offlineMediaService = _FakeOfflineMediaService(
+        integrityStatusById: {
+          'offline-1': OfflineMediaIntegrityStatus.playable,
+          'offline-2': OfflineMediaIntegrityStatus.damaged,
+        },
+      );
+
+      await _pumpDownloadPage(
+        tester,
+        repository,
+        offlineMedia: [animeOneEpisodeOne, animeOneEpisodeTwo, otherAnime],
+        offlineMediaService: offlineMediaService,
+      );
+
+      await tester.tap(
+        find.byKey(const ValueKey('offline-anime-verify-anime-1')),
+      );
+      await tester.pumpAndSettle();
+
+      expect(
+        offlineMediaService.verifiedItems,
+        [animeOneEpisodeOne, animeOneEpisodeTwo],
+      );
+      expect(
+        find.text(
+          'Offline episode files are incomplete. Delete and download it again.',
+        ),
+        findsOneWidget,
+      );
+    },
+  );
+
+  testWidgets(
     'same-anime clear button removes only that anime ended tasks',
     (tester) async {
       final repository = _FakeDownloadRepository([
@@ -2768,7 +2825,12 @@ class _FakeOfflineMediaService implements OfflineMediaService {
   _FakeOfflineMediaService({
     this.integrityStatus = OfflineMediaIntegrityStatus.playable,
     Map<String, OfflineMediaIntegrityStatus>? integrityStatusById,
-  }) : integrityStatusById = integrityStatusById ?? const {};
+  }) : integrityStatusById = integrityStatusById == null
+            ? const <String, OfflineMediaIntegrityStatus>{}
+            : Map<String, OfflineMediaIntegrityStatus>.unmodifiable(
+                integrityStatusById,
+              );
+            );
 
   final OfflineMediaIntegrityStatus integrityStatus;
   final Map<String, OfflineMediaIntegrityStatus> integrityStatusById;

@@ -9,6 +9,7 @@
 ## [1.0.8] - 2026-08-12
 
 ### 🐛 修复
+<<<<<<< HEAD
 - 修复离线播放入口参数边界：当播放参数 `playUrl` 指向离线本地 `file://`/本地路径且携带 `playHeaders` 时，进入播放器前会清空请求头后再构造播放参数；补充 `test/player_page_test.dart` 回归 `offline local playback args remove request headers before playback` 与 `remote playback args keep request headers`，避免离线复播携带旧请求头进入媒体层。
 - 新增离线媒体分组级校验入口：番剧标题行新增“Verify offline media”动作，可一键对该番剧下全部本地离线条目执行完整性重检；任何条目异常会统一提示损坏。新增 `test/download_page_test.dart` 回归覆盖整部番剧校验会逐条执行 `verify` 并根据结果汇总提示。
 - 增强离线媒体启动重扫：新增 `offlineMediaIntegrityProvider`，在离线列表读取前对仓库中的 `OfflineMediaItem` 执行完整性重检并持久化状态，避免重启后 `Downloads` 保留过期 `integrityStatus`。新增 `test/download_providers_test.dart` 覆盖可播放与缺损条目重扫落库。
@@ -32,6 +33,10 @@
 - 修复 `HlsManifestParser` 主清单边界：`#EXT-X-STREAM-INF` 之后若出现其他 `#EXT` 标签未接媒体 URI，现直接判定为 `Invalid HLS variant URI.`，避免标签穿插导致变体与媒体 URI 错配；新增 `test/hls_manifest_parser_test.dart` 回归覆盖 `#EXTINF` 干扰场景。
 - 修复 HLS 主清单变体边界：`HlsManifestParser` 现在在连续出现两条 `#EXT-X-STREAM-INF` 未提供上一条 URI 时会抛出 `FormatException('Invalid HLS variant URI.')`，避免首条变体被后续清单标签静默覆盖；新增 `test/hls_manifest_parser_test.dart` 回归覆盖该场景。
 - 修复 HLS 主清单变体边界：`HlsManifestParser` 现在会在 `#EXT-X-STREAM-INF` 后未紧接合法媒体 URI 时抛出 `FormatException('Invalid HLS variant URI.')`，避免变体定义与媒体 URI 错位导致的离线入口误判；新增 `test/hls_manifest_parser_test.dart` 回归覆盖。
+=======
+- 完善离线媒体番剧级校验入口：下载页离线媒体分组行新增“校验整部离线媒体”动作，点击后会逐条复检该番组所有本地单集，并按聚合结果给出“全部可播放”或“文件不完整”提示；保留单集校验入口与删除入口不变。
+- 修复离线完整性校验异常放大：`LocalOfflineMediaService.verify()` 现在对 `isPlayableOfflineMediaPath` 的运行时异常进行容错兜底，遇到清单解析/访问异常时返回 `damaged` 并持久化状态，避免单个损坏 `manifest` 将离线播放动作打断到异常路径。
+>>>>>>> 15fd4cc (feat(download): add offline anime group verification)
 - 修复下载入口提示与下载能力边界的判定不一致风险：`player_page.dart::_downloadTooltip` 统一使用 `isSupportedDownloadKind` 进行可下载类型判定，仅对 BT/未知类型返回“先检查下载线路”文案，并将直链与 HLS 已支持分支明确区分，配合 `test/player_page_test.dart` 增补 BT 不支持路径回归，避免下载按钮文案与最终反馈语义分叉。
 - 补齐离线完整性 manifest 段路径解析的异常边界：`offline_media_integrity.dart` 对 `file://server/...` 等 file URI authority 入口添加 `FormatException/FileSystemException/UnsupportedError` 防护，避免 manifest 内异常 URI 直接抛异常导致离线完整性验证中断；同时新增 `test/offline_media_integrity_test.dart` 回归覆盖该边界。
 - 新增 `test/player_page_test.dart` 回归：明确拒绝网络共享风格路径（`\server\share...`、`//server/...` 与 `file://server/...`）在 `_isPlayableUrl` 中被误判为可播放，且在文件 URI 带 authority 时不抛异常返回 `false`，防止离线完整性评估链路绕过该类非本地路径输入。
