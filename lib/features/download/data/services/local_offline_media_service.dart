@@ -35,6 +35,14 @@ class LocalOfflineMediaService implements OfflineMediaService {
   }
 
   @override
+  Future<void> refreshIntegrity() async {
+    final items = await _repository.getAll();
+    for (final item in items) {
+      await verify(item);
+    }
+  }
+
+  @override
   Future<void> remove(OfflineMediaItem item) async {
     try {
       await _directoryRemover(p.dirname(item.manifestPath));

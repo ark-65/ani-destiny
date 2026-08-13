@@ -2732,6 +2732,9 @@ class _FakeOfflineMediaService implements OfflineMediaService {
   }
 
   @override
+  Future<void> refreshIntegrity() async {}
+
+  @override
   Future<void> remove(OfflineMediaItem item) async {
     removedItems.add(item);
   }
