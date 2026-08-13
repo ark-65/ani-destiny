@@ -7,6 +7,11 @@
 ## [Unreleased]
 
 ### Fixed
+- Moved all 1.0.8 release notes from Unreleased to [1.0.8] section for finalization.
+
+## [1.0.8] - 2026-08-12
+
+### Fixed
 - Fixed an HLS download resume boundary regression: introduced a segment-size ledger file `.hls-segment-sizes.json`, and only reuse existing segment files when their on-disk byte size matches the recorded ledger entry. When mismatch is detected, the segment is re-downloaded and the ledger is rewritten, with `test/download_task_state_test.dart` coverage added to prevent stale ledger entries from masking truncated or corrupted segments as completed.
 - Hardened HLS resume reuse: when `.hls-segment-sizes.json` has no entry for a segment, that cached file is no longer treated as valid. The start flow now re-downloads the segment and rewrites the ledger so partial writes cannot bypass completion checks. Coverage added in `test/download_task_state_test.dart`.
 - Hardened HLS resume reuse with SHA-256: key, initialization, and media segment reuse now requires matching size and digest in `.hls-segment-sizes.json`. If payloads match in bytes but differ by digest, the segment is treated as stale and re-downloaded before continuing, with regression coverage in `test/download_task_state_test.dart`.

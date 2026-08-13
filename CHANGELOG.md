@@ -7,6 +7,11 @@
 ## [Unreleased]
 
 ### 🐛 修复
+- 将 1.0.8 全部变更归档至 1.0.8 发布日志。
+
+## [1.0.8] - 2026-08-12
+
+### 🐛 修复
 - 修复 HLS 离线任务重启恢复的复用边界：新增段落地大小账本 `.hls-segment-sizes.json`，启动时只有在本地片段文件大小与账本记录一致时才跳过下载，未一致时会重下并更新账本；新增 `test/download_task_state_test.dart` 覆盖该场景，避免旧下载记录掩盖损坏片段导致假完成。
 - 收紧 HLS 续传复用边界：当 `.hls-segment-sizes.json` 缺少某个片段条目时，即使文件存在也不再复用，启动任务时会强制重下该片段，避免中断写入残留文件触发假完成；补充 `test/download_task_state_test.dart` 回归验证。
 - 收紧 HLS 续传复用边界：新增 `.hls-segment-sizes.json` 的 SHA-256 校验，密钥、初始化段、普通媒体片段在长度一致时也要经过 digest 一致性确认；长度一致但内容变更的旧文件将被重下并重写账本，覆盖用例为 `test/download_task_state_test.dart`。
