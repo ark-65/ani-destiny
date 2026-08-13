@@ -1249,7 +1249,7 @@ segment-2.m4s
     );
   });
 
-  test('recovering interrupted HLS tasks clears stale failure details',
+  test('recovering interrupted HLS tasks keeps resumable progress',
       () async {
     final database = AppDatabase(NativeDatabase.memory());
     addTearDown(database.close);
@@ -1291,9 +1291,9 @@ segment-2.m4s
     expect(recovered!.status, DownloadStatus.paused);
     expect(recovered.failureReason, DownloadFailureReason.none);
     expect(recovered.failureMessage, isNull);
-    expect(recovered.progress, 0);
-    expect(recovered.downloadedBytes, 0);
-    expect(recovered.totalBytes, isNull);
+    expect(recovered.progress, 0.72);
+    expect(recovered.downloadedBytes, 1024);
+    expect(recovered.totalBytes, 2048);
   });
 
   test('starting HLS task fails when a downloaded segment is empty', () async {

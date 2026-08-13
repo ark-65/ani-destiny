@@ -30,9 +30,6 @@ class DownloadRepositoryImpl implements DownloadRepository {
         status: Value(DownloadStatus.paused.name),
         failureReason: Value(DownloadFailureReason.none.name),
         failureMessage: const Value(null),
-        progress: const Value(0),
-        downloadedBytes: const Value(0),
-        totalBytes: const Value(null),
         updatedAt: Value(now),
       ),
     );
