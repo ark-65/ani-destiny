@@ -41,5 +41,23 @@ void main() {
         DownloadKind.unknown,
       );
     });
+
+    test('detects HLS URLs where extension appears in query parameter', () {
+      expect(
+        detectDownloadKind(
+          'https://gateway.example.test/watch?playlist=https://cdn.example.test/stream.m3u8&token=abc',
+        ),
+        DownloadKind.hls,
+      );
+    });
+
+    test('detects encoded HLS URLs in query parameter', () {
+      expect(
+        detectDownloadKind(
+          'https://gateway.example.test/play?source=https%3A%2F%2Fcdn.example.test%2Fstream.m3u8',
+        ),
+        DownloadKind.hls,
+      );
+    });
   });
 }

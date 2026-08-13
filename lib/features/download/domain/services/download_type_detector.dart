@@ -36,5 +36,28 @@ bool _isHlsContentType(String contentType) {
 bool _pathEndsWith(String url, String extension) {
   final parsed = Uri.tryParse(url);
   final path = parsed?.path.toLowerCase() ?? url;
+  if (path.endsWith(extension)) {
+    return true;
+  }
+
+  if (parsed == null) {
+    return false;
+  }
+
+  return parsed.queryParameters.values.any((value) {
+    final decoded = Uri.decodeComponent(value);
+    final valueUri = Uri.tryParse(decoded);
+    final candidatePath = valueUri?.path.toLowerCase() ?? decoded;
+    return candidatePath.endsWith(extension);
+  }) ||
+      _endsWithPathLikeExtension(parsed.fragment, extension);
+}
+
+bool _endsWithPathLikeExtension(String fragment, String extension) {
+  if (fragment.trim().isEmpty) return false;
+
+  final decoded = Uri.decodeComponent(fragment);
+  final normalized = decoded.toLowerCase().replaceAll('\n', '').replaceAll('\r', '');
+  final path = normalized.split('#').first;
   return path.endsWith(extension);
 }

@@ -7,6 +7,7 @@
 ## [Unreleased]
 
 ### 🐛 修复
+- 2026-08-13 23:06:00+08:00：补齐离线下载类型识别边界：`detectDownloadKind` 现在会识别查询参数或片段中含有 `.m3u8` 的链接（支持 URL 编码值），避免网关/中转链接被误判为 `unknown`，并补充 `test/download_type_detector_test.dart` 2 条回归。
 - 修复离线播放入口参数边界：当播放参数 `playUrl` 指向离线本地 `file://`/本地路径且携带 `playHeaders` 时，进入播放器前会清空请求头后再构造播放参数；补充 `test/player_page_test.dart` 回归 `offline local playback args remove request headers before playback` 与 `remote playback args keep request headers`，避免离线复播携带旧请求头进入媒体层。
 - 新增离线媒体分组级校验入口：番剧标题行新增“Verify offline media”动作，可一键对该番剧下全部本地离线条目执行完整性重检；任何条目异常会统一提示损坏。新增 `test/download_page_test.dart` 回归覆盖整部番剧校验会逐条执行 `verify` 并根据结果汇总提示。
 - 增强离线媒体启动重扫：新增 `offlineMediaIntegrityProvider`，在离线列表读取前对仓库中的 `OfflineMediaItem` 执行完整性重检并持久化状态，避免重启后 `Downloads` 保留过期 `integrityStatus`。新增 `test/download_providers_test.dart` 覆盖可播放与缺损条目重扫落库。

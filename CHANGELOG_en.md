@@ -7,6 +7,7 @@
 ## [Unreleased]
 
 ### Fixed
+- 2026-08-13 23:06:00+08:00: Fixed download-kind detection by checking query parameters and URL fragments for `.m3u8` values (including percent-encoded links) so gateway/transitional URLs are no longer misclassified as `unknown`; added two regressions to `test/download_type_detector_test.dart`.
 - Fixed offline player args sanitization boundary: if `playUrl` is a local offline source (`file://`/local path) and `playHeaders` is present, the player now clears request headers before playback to avoid reusing stale header state; added unit regression coverage in `test/player_page_test.dart` for local stripping and remote pass-through (`offline local playback args remove request headers before playback`, `remote playback args keep request headers`).
 - Added an anime-level offline media verify action on the Downloads offline-media list: each anime group now shows a verify button that reruns integrity checks for all episodes in that group, and reports a combined result so any damaged item surfaces the damaged warning. Added regression coverage in `test/download_page_test.dart` for batch group verification.
 - Added offline media integrity cold-start reconciliation: `offlineMediaIntegrityProvider` now verifies all `OfflineMediaItem` records before the offline media list is observed so stale integrity states are corrected after restart. Added `test/download_providers_test.dart` to cover playable and damaged entries being updated after startup refresh.
