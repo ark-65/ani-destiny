@@ -7,6 +7,7 @@
 ## [Unreleased]
 
 ### Fixed
+- Fixed offline player args sanitization boundary: if `playUrl` is a local offline source (`file://`/local path) and `playHeaders` is present, the player now clears request headers before playback to avoid reusing stale header state; added unit regression coverage in `test/player_page_test.dart` for local stripping and remote pass-through (`offline local playback args remove request headers before playback`, `remote playback args keep request headers`).
 - Added an anime-level offline media verify action on the Downloads offline-media list: each anime group now shows a verify button that reruns integrity checks for all episodes in that group, and reports a combined result so any damaged item surfaces the damaged warning. Added regression coverage in `test/download_page_test.dart` for batch group verification.
 - Added offline media integrity cold-start reconciliation: `offlineMediaIntegrityProvider` now verifies all `OfflineMediaItem` records before the offline media list is observed so stale integrity states are corrected after restart. Added `test/download_providers_test.dart` to cover playable and damaged entries being updated after startup refresh.
 - Hardened HLS offline resume reuse boundaries with segment-size ledger `.hls-segment-sizes.json`: a local segment is only reused when its local size matches ledger metadata; size mismatch now triggers re-download and ledger rewrite. Added regression coverage in `test/download_task_state_test.dart`.
