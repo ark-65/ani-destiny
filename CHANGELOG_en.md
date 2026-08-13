@@ -7,6 +7,7 @@
 ## [Unreleased]
 
 ### Fixed
+- Hardened offline media integrity verification by making `LocalOfflineMediaService.verify()` tolerate manifest parser/runtime errors. If manifest checks fail with an exception, the service now persists `damaged` and continues safely so one malformed manifest does not throw users into an exception path.
 - Fixed download tooltip type-boundary consistency: `_downloadTooltip` now routes unsupported types through `isSupportedDownloadKind`, keeps BT/unknown branches on the retry/review flow, and preserves direct-file startup behavior for direct content while aligning HLS supported messaging with shared download feedback logic; added `test/player_page_test.dart` BT unsupported-path regression coverage.
 - Hardened offline-manifest URI parsing to handle malformed file-URI authority forms safely. `offline_media_integrity.dart` now catches `FormatException`, `FileSystemException`, and `UnsupportedError` from `file://` URIs and returns empty candidate paths instead of throwing, so offline integrity checks fail safely. Added regression coverage in `test/offline_media_integrity_test.dart`.
 - Added regression in `test/player_page_test.dart` to reject network-share style paths (`\\server\\share...`, `//server/...`, and `file://server/...`) from `_isPlayableUrl`, preventing share-style non-local inputs from being treated as playable sources and ensuring `file://` URIs with authority return `false` instead of throwing.

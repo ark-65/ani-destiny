@@ -7,6 +7,7 @@
 ## [Unreleased]
 
 ### 🐛 修复
+- 修复离线完整性校验异常放大：`LocalOfflineMediaService.verify()` 现在对 `isPlayableOfflineMediaPath` 的运行时异常进行容错兜底，遇到清单解析/访问异常时返回 `damaged` 并持久化状态，避免单个损坏 `manifest` 将离线播放动作打断到异常路径。
 - 修复下载入口提示与下载能力边界的判定不一致风险：`player_page.dart::_downloadTooltip` 统一使用 `isSupportedDownloadKind` 进行可下载类型判定，仅对 BT/未知类型返回“先检查下载线路”文案，并将直链与 HLS 已支持分支明确区分，配合 `test/player_page_test.dart` 增补 BT 不支持路径回归，避免下载按钮文案与最终反馈语义分叉。
 - 补齐离线完整性 manifest 段路径解析的异常边界：`offline_media_integrity.dart` 对 `file://server/...` 等 file URI authority 入口添加 `FormatException/FileSystemException/UnsupportedError` 防护，避免 manifest 内异常 URI 直接抛异常导致离线完整性验证中断；同时新增 `test/offline_media_integrity_test.dart` 回归覆盖该边界。
 - 新增 `test/player_page_test.dart` 回归：明确拒绝网络共享风格路径（`\\server\share...`、`//server/...` 与 `file://server/...`）在 `_isPlayableUrl` 中被误判为可播放，且在文件 URI 带 authority 时不抛异常返回 `false`，防止离线完整性评估链路绕过该类非本地路径输入。
