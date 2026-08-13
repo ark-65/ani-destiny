@@ -7,6 +7,7 @@
 ## [Unreleased]
 
 ### 🐛 修复
+- 2026-08-14 22:40:00+08:00：补齐 HLS 恢复续传行为回归，`recoverInterruptedHlsTasks()` 现在在回收 `preparing`/`downloading` HLS 任务时保留 `progress/downloadedBytes/totalBytes`，并清空 `failureMessage`；`test/download_repository_test.dart` 新增断言覆盖续传后状态字段，防止重启续传再开启时丢失续传里程碑。
 - 2026-08-14 02:04:00+08:00：补齐 HLS 续传重试行为：`recoverInterruptedHlsTasks()` 现在不再清零恢复中断 HLS 任务的下载进度和总长度，仅清除失败码与失败说明，并保留 `progress`、`downloadedBytes`、`totalBytes` 供继续下载使用；新增 `test/download_task_state_test.dart` 回归验证“中断恢复后仍保留可续传进度”。
 - 完善离线媒体番剧级校验入口：下载页离线媒体分组行新增“校验整部离线媒体”动作，点击后会逐条复检该番组所有本地单集，并按聚合结果给出“全部可播放”或“文件不完整”提示；保留单集校验入口与删除入口不变。
 - 修复离线完整性校验异常放大：`LocalOfflineMediaService.verify()` 现在对 `isPlayableOfflineMediaPath` 的运行时异常进行容错兜底，遇到清单解析/访问异常时返回 `damaged` 并持久化状态，避免单个损坏 `manifest` 将离线播放动作打断到异常路径。
