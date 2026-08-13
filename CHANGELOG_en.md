@@ -7,6 +7,7 @@
 ## [Unreleased]
 
 ### Fixed
+- 2026-08-14 23:45:00+08:00: Hardened HLS download kind detection: `detectDownloadKind` now checks `.m3u8` markers inside query parameters and URL fragments (including URL-encoded values), preventing gateway and redirect-style HLS links from being misclassified as `unknown`. Added `test/download_type_detector_test.dart` regressions covering query, fragment, and encoded query cases.
 - 2026-08-14 22:40:00+08:00: Added stronger HLS resume-recovery regression coverage in `test/download_repository_test.dart` to confirm `recoverInterruptedHlsTasks()` preserves `progress`, `downloadedBytes`, and `totalBytes` for interrupted HLS tasks while clearing `failureMessage`, preventing false resume state loss across restart.
 - 2026-08-14 02:04:00+08:00: Hardened interrupted HLS resume behavior by keeping resumed progress and byte counts across restart. `recoverInterruptedHlsTasks()` now clears failure reason/message but preserves `progress`, `downloadedBytes`, and `totalBytes` for resumable downloads, and added `test/download_task_state_test.dart` coverage for “recovered HLS task keeps progress”.
 - Added an anime-group offline media verification action on the Download page. The new “verify all offline media” entry now rechecks every episode item in the same anime group and reports an aggregate playable/damaged result, while preserving single-episode verify and remove flows.
