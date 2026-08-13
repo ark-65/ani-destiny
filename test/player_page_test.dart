@@ -3435,7 +3435,8 @@ void main() {
     expect(find.text('Open Downloads'), findsOneWidget);
   });
 
-  testWidgets('download action shows unsupported path for unsupported URLs', (tester) async {
+  testWidgets('download action shows unsupported path for unsupported URLs',
+      (tester) async {
     var createdDownloads = 0;
 
     await tester.pumpWidget(
@@ -3588,7 +3589,8 @@ void main() {
     );
   });
 
-  test('offline local file play url is true for non-manifest media files', () async {
+  test('offline local file play url is true for non-manifest media files',
+      () async {
     final temporaryDir = await Directory.systemTemp.createTemp(
       'ani-destiny-offline-localfile-direct',
     );
@@ -3634,7 +3636,9 @@ void main() {
       isTrue,
     );
     expect(
-      isPlayableUrl('https://media.ani.example.com/path/episode.m3u8?token=abc'),
+      isPlayableUrl(
+        'https://media.ani.example.com/path/episode.m3u8?token=abc',
+      ),
       isTrue,
     );
     expect(
@@ -3646,7 +3650,10 @@ void main() {
   test('isPlayableUrl rejects empty or malformed URLs', () {
     expect(isPlayableUrl(''), isFalse);
     expect(isPlayableUrl('not-a-url'), isFalse);
-    expect(isPlayableUrl('ftp://media.ani.example.com/path/episode.m3u8'), isFalse);
+    expect(
+      isPlayableUrl('ftp://media.ani.example.com/path/episode.m3u8'),
+      isFalse,
+    );
     expect(isPlayableUrl('mailto:anime@ani-destiny.test'), isFalse);
   });
 
@@ -3805,9 +3812,8 @@ void main() {
     },
   );
 
-  test(
-    'offline local file play url remains playable after page restart',
-    () async {
+  test('offline local file play url remains playable after page restart',
+      () async {
     final temporaryDir = await Directory.systemTemp.createTemp(
       'ani-destiny-offline-localfile-restart',
     );
@@ -3841,6 +3847,41 @@ void main() {
         Uri.file('${temporaryDir.path}/index.m3u8').toString();
 
     expect(isPlayableUrl(missingManifestUrl), isFalse);
+  });
+
+  test('offline local playback args remove request headers before playback',
+      () async {
+    final temporaryDir = await Directory.systemTemp.createTemp(
+      'ani-destiny-offline-localfile-arg-strip',
+    );
+    addTearDown(() async {
+      await temporaryDir.delete(recursive: true);
+    });
+    final segmentPath = '${temporaryDir.path}/segments/segment-000000.ts';
+    await Directory('${temporaryDir.path}/segments').create(recursive: true);
+    await File(segmentPath).writeAsString('segment');
+    final offlineManifest = File('${temporaryDir.path}/index.m3u8');
+    await offlineManifest.writeAsString(
+      '#EXTM3U\n#EXTINF:10,\nsegments/segment-000000.ts\n#EXT-X-ENDLIST',
+    );
+    final offlineUrl = Uri.file(offlineManifest.path).toString();
+    final offlineArgs = _args.copyWith(
+      playUrl: offlineUrl,
+      playHeaders: {'Referer': 'https://example.test/player?token=secret'},
+    );
+
+    expect(sanitizeOfflinePlaybackRouteArgs(offlineArgs).playHeaders, isEmpty);
+  });
+
+  test('remote playback args keep request headers', () {
+    final remoteArgs = _args.copyWith(
+      playHeaders: {'Referer': 'https://example.test/player?token=secret'},
+    );
+
+    expect(
+      sanitizeOfflinePlaybackRouteArgs(remoteArgs).playHeaders,
+      remoteArgs.playHeaders,
+    );
   });
 
   testWidgets('invalid playback urls are treated as unavailable before load',
