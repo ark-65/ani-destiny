@@ -7,6 +7,7 @@
 ## [Unreleased]
 
 ### Fixed
+- Added an anime-group offline media verification action on the Download page. The new “verify all offline media” entry now rechecks every episode item in the same anime group and reports an aggregate playable/damaged result, while preserving single-episode verify and remove flows.
 - Hardened offline media integrity verification by making `LocalOfflineMediaService.verify()` tolerate manifest parser/runtime errors. If manifest checks fail with an exception, the service now persists `damaged` and continues safely so one malformed manifest does not throw users into an exception path.
 - Fixed download tooltip type-boundary consistency: `_downloadTooltip` now routes unsupported types through `isSupportedDownloadKind`, keeps BT/unknown branches on the retry/review flow, and preserves direct-file startup behavior for direct content while aligning HLS supported messaging with shared download feedback logic; added `test/player_page_test.dart` BT unsupported-path regression coverage.
 - Hardened offline-manifest URI parsing to handle malformed file-URI authority forms safely. `offline_media_integrity.dart` now catches `FormatException`, `FileSystemException`, and `UnsupportedError` from `file://` URIs and returns empty candidate paths instead of throwing, so offline integrity checks fail safely. Added regression coverage in `test/offline_media_integrity_test.dart`.
