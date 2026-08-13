@@ -10,6 +10,7 @@
 
 ### 🐛 修复
 <<<<<<< HEAD
+<<<<<<< HEAD
 - 修复离线播放入口参数边界：当播放参数 `playUrl` 指向离线本地 `file://`/本地路径且携带 `playHeaders` 时，进入播放器前会清空请求头后再构造播放参数；补充 `test/player_page_test.dart` 回归 `offline local playback args remove request headers before playback` 与 `remote playback args keep request headers`，避免离线复播携带旧请求头进入媒体层。
 - 新增离线媒体分组级校验入口：番剧标题行新增“Verify offline media”动作，可一键对该番剧下全部本地离线条目执行完整性重检；任何条目异常会统一提示损坏。新增 `test/download_page_test.dart` 回归覆盖整部番剧校验会逐条执行 `verify` 并根据结果汇总提示。
 - 增强离线媒体启动重扫：新增 `offlineMediaIntegrityProvider`，在离线列表读取前对仓库中的 `OfflineMediaItem` 执行完整性重检并持久化状态，避免重启后 `Downloads` 保留过期 `integrityStatus`。新增 `test/download_providers_test.dart` 覆盖可播放与缺损条目重扫落库。
@@ -34,6 +35,9 @@
 - 修复 HLS 主清单变体边界：`HlsManifestParser` 现在在连续出现两条 `#EXT-X-STREAM-INF` 未提供上一条 URI 时会抛出 `FormatException('Invalid HLS variant URI.')`，避免首条变体被后续清单标签静默覆盖；新增 `test/hls_manifest_parser_test.dart` 回归覆盖该场景。
 - 修复 HLS 主清单变体边界：`HlsManifestParser` 现在会在 `#EXT-X-STREAM-INF` 后未紧接合法媒体 URI 时抛出 `FormatException('Invalid HLS variant URI.')`，避免变体定义与媒体 URI 错位导致的离线入口误判；新增 `test/hls_manifest_parser_test.dart` 回归覆盖。
 =======
+=======
+- 2026-08-14 02:04:00+08:00：补齐 HLS 续传重试行为：`recoverInterruptedHlsTasks()` 现在不再清零恢复中断 HLS 任务的下载进度和总长度，仅清除失败码与失败说明，并保留 `progress`、`downloadedBytes`、`totalBytes` 供继续下载使用；新增 `test/download_task_state_test.dart` 回归验证“中断恢复后仍保留可续传进度”。
+>>>>>>> 0383564 (fix: keep hls resume progress on recovery)
 - 完善离线媒体番剧级校验入口：下载页离线媒体分组行新增“校验整部离线媒体”动作，点击后会逐条复检该番组所有本地单集，并按聚合结果给出“全部可播放”或“文件不完整”提示；保留单集校验入口与删除入口不变。
 - 修复离线完整性校验异常放大：`LocalOfflineMediaService.verify()` 现在对 `isPlayableOfflineMediaPath` 的运行时异常进行容错兜底，遇到清单解析/访问异常时返回 `damaged` 并持久化状态，避免单个损坏 `manifest` 将离线播放动作打断到异常路径。
 >>>>>>> 15fd4cc (feat(download): add offline anime group verification)
