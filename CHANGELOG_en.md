@@ -7,6 +7,7 @@
 ## [Unreleased]
 
 ### Fixed
+- Added an anime-level offline media verify action on the Downloads offline-media list: each anime group now shows a verify button that reruns integrity checks for all episodes in that group, and reports a combined result so any damaged item surfaces the damaged warning. Added regression coverage in `test/download_page_test.dart` for batch group verification.
 - Added offline media integrity cold-start reconciliation: `offlineMediaIntegrityProvider` now verifies all `OfflineMediaItem` records before the offline media list is observed so stale integrity states are corrected after restart. Added `test/download_providers_test.dart` to cover playable and damaged entries being updated after startup refresh.
 - Hardened HLS offline resume reuse boundaries with segment-size ledger `.hls-segment-sizes.json`: a local segment is only reused when its local size matches ledger metadata; size mismatch now triggers re-download and ledger rewrite. Added regression coverage in `test/download_task_state_test.dart`.
 - Hardened HLS resume reuse: if `.hls-segment-sizes.json` lacks a segment entry, an existing local file is not reused; startup now forces re-download of that segment, with regression coverage in `test/download_task_state_test.dart`.

@@ -7,6 +7,7 @@
 ## [Unreleased]
 
 ### 🐛 修复
+- 新增离线媒体分组级校验入口：番剧标题行新增“Verify offline media”动作，可一键对该番剧下全部本地离线条目执行完整性重检；任何条目异常会统一提示损坏。新增 `test/download_page_test.dart` 回归覆盖整部番剧校验会逐条执行 `verify` 并根据结果汇总提示。
 - 增强离线媒体启动重扫：新增 `offlineMediaIntegrityProvider`，在离线列表读取前对仓库中的 `OfflineMediaItem` 执行完整性重检并持久化状态，避免重启后 `Downloads` 保留过期 `integrityStatus`。新增 `test/download_providers_test.dart` 覆盖可播放与缺损条目重扫落库。
 - 修复 HLS 离线任务重启恢复的复用边界：新增段落地大小账本 `.hls-segment-sizes.json`，启动时只有在本地片段文件大小与账本记录一致时才跳过下载，未一致时会重下并更新账本；新增 `test/download_task_state_test.dart` 覆盖该场景，避免旧下载记录掩盖损坏片段导致假完成。
 - 收紧 HLS 续传复用边界：当 `.hls-segment-sizes.json` 缺少某个片段条目时，即使文件存在也不再复用，启动任务时会强制重下该片段，避免中断写入残留文件触发假完成；补充 `test/download_task_state_test.dart` 回归验证。

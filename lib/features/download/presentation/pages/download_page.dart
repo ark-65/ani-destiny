@@ -265,22 +265,34 @@ class _DownloadPageState extends ConsumerState<DownloadPage>
                           final group = groups[groupIndex];
                           return Column(
                             children: [
-                              Row(
-                                children: [
-                                  Expanded(
-                                    child: Text(
-                                      '${group.first.title} (${group.length})',
-                                      maxLines: 1,
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: Text(
+                                    '${group.first.title} (${group.length})',
+                                    maxLines: 1,
                                       overflow: TextOverflow.ellipsis,
                                       style: Theme.of(context)
                                           .textTheme
-                                          .labelLarge,
-                                    ),
+                                        .labelLarge,
                                   ),
-                                  TextButton.icon(
-                                    key: ValueKey(
-                                      'offline-anime-remove-'
-                                      '${group.first.animeId}',
+                                ),
+                                TextButton.icon(
+                                  key: ValueKey(
+                                    'offline-anime-verify-'
+                                    '${group.first.animeId}',
+                                  ),
+                                  onPressed: () =>
+                                      _verifyOfflineMediaList(group),
+                                  icon: const Icon(
+                                    Icons.verified_outlined,
+                                  ),
+                                  label: Text(context.l10n.verifyOfflineMedia),
+                                ),
+                                TextButton.icon(
+                                  key: ValueKey(
+                                    'offline-anime-remove-'
+                                    '${group.first.animeId}',
                                     ),
                                     onPressed: () =>
                                         _confirmRemoveOfflineAnime(group),
@@ -1129,6 +1141,31 @@ class _DownloadPageState extends ConsumerState<DownloadPage>
       status == OfflineMediaIntegrityStatus.playable
           ? context.l10n.offlineMediaVerified
           : context.l10n.offlineMediaDamaged,
+    );
+  }
+
+  Future<void> _verifyOfflineMediaList(
+    List<OfflineMediaItem> items,
+  ) async {
+    if (!mounted || items.isEmpty) {
+      return;
+    }
+    var hasDamagedItems = false;
+    for (final item in items) {
+      try {
+        final status = await ref.read(offlineMediaServiceProvider).verify(item);
+        if (status == OfflineMediaIntegrityStatus.damaged) {
+          hasDamagedItems = true;
+        }
+      } catch (_) {
+        hasDamagedItems = true;
+      }
+    }
+    if (!mounted) return;
+    _showDownloadSnackBar(
+      hasDamagedItems
+          ? context.l10n.offlineMediaDamaged
+          : context.l10n.offlineMediaVerified,
     );
   }
 
