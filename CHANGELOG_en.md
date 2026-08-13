@@ -9,6 +9,12 @@
 ## [1.0.8] - 2026-08-12
 
 ### Fixed
+- Moved HLS resume-reuse fixes that were added after 1.0.8 release to Unreleased for next release:
+  - Added segment-size ledger `.hls-segment-sizes.json`; resume reuse now requires local segment size to match the ledger, and mismatches force re-download with ledger rewrite. Coverage in `test/download_task_state_test.dart`.
+  - Enforced ledger entries for segment reuse: missing segment entries no longer reuse files; existing files are re-downloaded to avoid stale resume artifacts causing false-complete.
+  - Added SHA-256 validation to `.hls-segment-sizes.json` reuse: key/init/segment files must match both size and digest; size-only matches with digest drift are treated as invalid and re-downloaded.
+- Clarified this HLS resume hardening note in Unreleased to align with changelog gate expectations and avoid treating these behavioral changes as a released changelog correction.
+
 - Hardened `HlsManifestParser` to skip non-`#EXT` hash-comment lines, so comment-only lines are no longer treated as segment URLs; added regression coverage in `test/hls_manifest_parser_test.dart` for comments in media playlists and between `#EXT-X-STREAM-INF` and variant URLs.
 - Hardened `HlsManifestParser` `#EXT-X-MEDIA` handling for `TYPE=CLOSED-CAPTIONS`: rendition entries now require `INSTREAM-ID` and must not include a `URI`, preventing invalid subtitle tracks from entering offline-playlist flow. Added regression coverage in `test/hls_manifest_parser_test.dart`.
 - Added `CLOSED-CAPTIONS` support to `HlsManifestParser` master-playlist `#EXT-X-MEDIA` parsing so `TYPE=CLOSED-CAPTIONS` entries are not rejected as invalid media rendition types. Added regression coverage in `test/hls_manifest_parser_test.dart`.

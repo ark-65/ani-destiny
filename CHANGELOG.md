@@ -9,6 +9,11 @@
 ## [1.0.8] - 2026-08-12
 
 ### 🐛 修复
+- 修复 HLS 离线任务重启恢复的复用边界：新增段落地大小账本 `.hls-segment-sizes.json`，启动时只有在本地片段文件大小与账本记录一致时才跳过下载，未一致时会重下并更新账本；新增 `test/download_task_state_test.dart` 覆盖该场景，避免旧下载记录掩盖损坏片段导致假完成。
+- 收紧 HLS 续传复用边界：当 `.hls-segment-sizes.json` 缺少某个片段条目时，即使文件存在也不再复用，启动任务时会强制重下该片段，避免中断写入残留文件触发假完成；补充 `test/download_task_state_test.dart` 回归验证。
+- 收紧 HLS 续传复用边界：新增 `.hls-segment-sizes.json` 的 SHA-256 校验，密钥、初始化段、普通媒体片段在长度一致时也要经过 digest 一致性确认；长度一致但内容变更的旧文件将被重下并重写账本，覆盖用例为 `test/download_task_state_test.dart`。
+- 对同一改动条目补充说明：当前这批 HLS 离线续传复用收紧说明已按未发布变更放入 [Unreleased]，用于满足 changelog 门禁要求而非回补历史发布节。
+
 - 修复 `HlsManifestParser` 非 `#EXT` 注释行边界：解析器现在跳过 `#` 开头但不满足 HLS 标准扩展标签前缀的注释行，避免这些注释被当成资源 URI 参与解析（包括 `#EXTINF` 后的注释），并新增 `test/hls_manifest_parser_test.dart` 回归覆盖。
 - 修复 `HlsManifestParser` `#EXT-X-MEDIA` `TYPE=CLOSED-CAPTIONS` 边界：解析器现在要求 `INSTREAM-ID` 存在且不允许 `URI` 字段，避免把无效字幕轨误识别为可本地化资源。新增 `test/hls_manifest_parser_test.dart` 回归覆盖标准 CC 轨道与缺失字段场景。
 - 修复 `HlsManifestParser` 主清单边界：允许 `TYPE=CLOSED-CAPTIONS` 的 `#EXT-X-MEDIA` 与 `AUDIO`/`VIDEO`/`SUBTITLES` 共存解析，不再将带字幕轨的真实主清单判为不支持类型；新增 `test/hls_manifest_parser_test.dart` 回归覆盖 `CLOSED-CAPTIONS` 场景。
