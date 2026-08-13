@@ -7,12 +7,14 @@
 ## [Unreleased]
 
 ### Fixed
-- Moved HLS resume-reuse fixes that were added after 1.0.8 release to Unreleased for next release:
-  - Added segment-size ledger `.hls-segment-sizes.json`; resume reuse now requires local segment size to match the ledger, and mismatches force re-download with ledger rewrite. Coverage in `test/download_task_state_test.dart`.
-  - Enforced ledger entries for segment reuse: missing segment entries no longer reuse files; existing files are re-downloaded to avoid stale resume artifacts causing false-complete.
-  - Added SHA-256 validation to `.hls-segment-sizes.json` reuse: key/init/segment files must match both size and digest; size-only matches with digest drift are treated as invalid and re-downloaded.
-- Clarified this HLS resume hardening note in Unreleased to align with changelog gate expectations and avoid treating these behavioral changes as a released changelog correction.
+- Hardened HLS offline resume reuse boundaries with segment-size ledger `.hls-segment-sizes.json`: a local segment is only reused when its local size matches ledger metadata; size mismatch now triggers re-download and ledger rewrite. Added regression coverage in `test/download_task_state_test.dart`.
+- Hardened HLS resume reuse: if `.hls-segment-sizes.json` lacks a segment entry, an existing local file is not reused; startup now forces re-download of that segment, with regression coverage in `test/download_task_state_test.dart`.
+- Hardened HLS resume reuse with SHA-256 integrity checks on `.hls-segment-sizes.json` entries for key/init/media files: length match alone is not enough—digest must match or the file is re-downloaded and the ledger is rewritten.
 
+
+## [1.0.8] - 2026-08-12
+
+### Fixed
 - Hardened `HlsManifestParser` to skip non-`#EXT` hash-comment lines, so comment-only lines are no longer treated as segment URLs; added regression coverage in `test/hls_manifest_parser_test.dart` for comments in media playlists and between `#EXT-X-STREAM-INF` and variant URLs.
 - Hardened `HlsManifestParser` `#EXT-X-MEDIA` handling for `TYPE=CLOSED-CAPTIONS`: rendition entries now require `INSTREAM-ID` and must not include a `URI`, preventing invalid subtitle tracks from entering offline-playlist flow. Added regression coverage in `test/hls_manifest_parser_test.dart`.
 - Added `CLOSED-CAPTIONS` support to `HlsManifestParser` master-playlist `#EXT-X-MEDIA` parsing so `TYPE=CLOSED-CAPTIONS` entries are not rejected as invalid media rendition types. Added regression coverage in `test/hls_manifest_parser_test.dart`.
@@ -30,26 +32,25 @@
 - Hardened HLS master playlist parsing by rejecting `#EXT-X-STREAM-INF` entries that are not followed by a valid variant URI. `HlsManifestParser` now throws `FormatException('Invalid HLS variant URI.')` instead of silently accepting malformed variant/media sequencing; added regression coverage in `test/hls_manifest_parser_test.dart`.
 - Fixed download tooltip type-boundary consistency: `_downloadTooltip` now routes unsupported types through `isSupportedDownloadKind`, keeps BT/unknown branches on the retry/review flow, and preserves direct-file startup behavior for direct content while aligning HLS supported messaging with shared download feedback logic; added `test/player_page_test.dart` BT unsupported-path regression coverage.
 - Hardened offline-manifest URI parsing to handle malformed file-URI authority forms safely. `offline_media_integrity.dart` now catches `FormatException`, `FileSystemException`, and `UnsupportedError` from `file://` URIs and returns empty candidate paths instead of throwing, so offline integrity checks fail safely. Added regression coverage in `test/offline_media_integrity_test.dart`.
-- Added regression in `test/player_page_test.dart` to reject network-share style paths (`\\server\\share...`, `//server/...`, and `file://server/...`) from `_isPlayableUrl`, preventing share-style non-local inputs from being treated as playable sources and ensuring `file://` URIs with authority return `false` instead of throwing.
+- Added regression in `test/player_page_test.dart` to reject network-share style paths (`\server\share...`, `//server/...`, and `file://server/...`) from `_isPlayableUrl`, preventing share-style non-local inputs from being treated as playable sources and ensuring `file://` URIs with authority return `false` instead of throwing.
 - Hardened `player_page.dart` remote-url playability: `_isPlayableUrl` now only accepts `http`/`https` URL schemes after filtering local file and local-path cases, rejecting protocols such as `ftp` and `mailto` while preserving legitimate remote streaming input behavior.
 - Fixed player-playability URL routing so `player_page.dart` only treats `file://` and local paths as offline-media paths while preserving remote URL playability; this prevents offline-integrity-only checks from blocking online playback entry and adds `test/player_page_test.dart` regressions for remote URL and malformed-URL boundaries.
 - Hardened offline-integrity URL validation: `isPlayableOfflineMediaUrl` now treats only `file://` and local file-system paths as playable, and returns `false` for remote URLs (for example, `https://...`); added regression coverage in `test/offline_media_integrity_test.dart`.
 - Hardened offline-integrity URL handling for `file://` authority forms: `isPlayableOfflineMediaUrl` now returns `false` for inputs like `file://server/share/...` without throwing, with regression coverage in `test/offline_media_integrity_test.dart` to keep malformed local-style URIs non-blocking.
-- Hardened diagnostics sanitization for punctuation-boundary local paths by matching `sanitizeError` and `sanitizePath` on paths wrapped in parentheses, quotes, or brackets, ensuring forms like `("C:/ProgramData/...")` and `["\\\\server\\\\share\\\\..."]` no longer leak local filesystem details.
-- Hardened diagnostics sanitization by masking non-`Users` Windows absolute paths in `sanitizeError` (for example `C:\ProgramData\ani-destiny\...` and `\\server\\share\\...`) as `path:[hidden]`, preventing complete local path leakage in diagnostic/feedback summaries.
+- Hardened diagnostics sanitization for punctuation-boundary local paths by matching `sanitizeError` and `sanitizePath` on paths wrapped in parentheses, quotes, or brackets, ensuring forms like `("C:/ProgramData/...")` and `["\\server\\share\\..."]` no longer leak local filesystem details.
+- Hardened diagnostics sanitization by masking non-`Users` Windows absolute paths in `sanitizeError` (for example `C:\ProgramData\ani-destiny\...` and `\server\share\...`) as `path:[hidden]`, preventing complete local path leakage in diagnostic/feedback summaries.
 - Fixed feedback summary redaction formatting in `FeedbackPackageCollector`: multi-task manual cleanup summaries now standardize local-path redaction output as `Local path: [path:[hidden]]`, preventing brittle snapshot mismatches that were blocking CI.
 - Hardened offline media cleanup: `LocalOfflineMediaService.remove` now maps any cleanup exception to `offline_media_cleanup_failed`, so non-`FileSystemException` failures do not bypass the offline-media error path and consistent cleanup semantics.
 - Hardened diagnostics sanitization by making `sanitizeError` redact `file://` URLs as `file:[hidden]`, preventing full local playback paths from leaking into diagnostics and feedback summaries.
 - Hardened offline integrity by rejecting remote URLs in `isPlayableOfflineMediaPath`; non-file URIs like `http://...` and `https://...` now return `false` so only local manifests can be considered playable.
 - Hardened diagnostics sanitization further by redacting absolute local paths (such as `/tmp`, `/private`, and `/var`) as `path:[hidden]` in `sanitizeError`, so error and diagnostic summaries no longer expose raw host file-system locations.
 - Hardened diagnostics sanitization by updating `sanitizePath` to replace usernames inside Windows-style `C:/Users/...` paths with `<user>`, avoiding this absolute-path pattern leaking through diagnostics or feedback summaries.
-- Hardened diagnostics sanitization further by redacting UNC paths and non-`Users` Windows absolute paths (for example `\\\\server\\share\\...`, `C:/ProgramData/...`) plus `/tmp`, `/private`, and `/var` absolute paths in `sanitizePath` as `[path:[hidden]]`.
+- Hardened diagnostics sanitization further by redacting UNC paths and non-`Users` Windows absolute paths (for example `\\server\share\...`, `C:/ProgramData/...`) plus `/tmp`, `/private`, and `/var` absolute paths in `sanitizePath` as `[path:[hidden]]`.
 - Hardened offline media cleanup by also mapping repository-delete failures through `offline_media_cleanup_failed`; `removeAll` now includes a batch-delete regression for repository-delete failures so one failed item does not block other deletions and still returns `offline_media_cleanup_batch_failed`.
 - Added a batch-delete regression for `LocalOfflineMediaService.removeAll` when repository delete throws `AppException`, confirming failures are still unified to `offline_media_cleanup_batch_failed` while leaving the failed item for retry.
 - Added a mixed-failure `removeAll` regression: when directory cleanup and repository deletion both fail in one batch, successful entries are still removed while failed entries (dir-cleanup-failed and repo-delete-failed) remain in repository and filesystem state for retry, with a final `offline_media_cleanup_batch_failed`.
 - Hardened `LocalOfflineMediaService.removeAll` to catch non-`AppException` errors from `remove` and remap them into the same batch cleanup failure path, preventing unexpected throwable types from bypassing `offline_media_cleanup_batch_failed` recovery semantics.
 - Hardened HLS recovery after restart: `recoverInterruptedHlsTasks` now clears failure state and resets progress counters (`failureReason`, `failureMessage`, `progress`, `downloadedBytes`, `totalBytes`) before resuming interrupted HLS tasks; added regression coverage for clean re-resume state after recovery.
-
 ## [1.0.7] - 2026-08-01
 
 ### ✨ Added

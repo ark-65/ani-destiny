@@ -10,8 +10,11 @@
 - 修复 HLS 离线任务重启恢复的复用边界：新增段落地大小账本 `.hls-segment-sizes.json`，启动时只有在本地片段文件大小与账本记录一致时才跳过下载，未一致时会重下并更新账本；新增 `test/download_task_state_test.dart` 覆盖该场景，避免旧下载记录掩盖损坏片段导致假完成。
 - 收紧 HLS 续传复用边界：当 `.hls-segment-sizes.json` 缺少某个片段条目时，即使文件存在也不再复用，启动任务时会强制重下该片段，避免中断写入残留文件触发假完成；补充 `test/download_task_state_test.dart` 回归验证。
 - 收紧 HLS 续传复用边界：新增 `.hls-segment-sizes.json` 的 SHA-256 校验，密钥、初始化段、普通媒体片段在长度一致时也要经过 digest 一致性确认；长度一致但内容变更的旧文件将被重下并重写账本，覆盖用例为 `test/download_task_state_test.dart`。
-- 对同一改动条目补充说明：当前这批 HLS 离线续传复用收紧说明已按未发布变更放入 [Unreleased]，用于满足 changelog 门禁要求而非回补历史发布节。
 
+
+## [1.0.8] - 2026-08-12
+
+### 🐛 修复
 - 修复 `HlsManifestParser` 非 `#EXT` 注释行边界：解析器现在跳过 `#` 开头但不满足 HLS 标准扩展标签前缀的注释行，避免这些注释被当成资源 URI 参与解析（包括 `#EXTINF` 后的注释），并新增 `test/hls_manifest_parser_test.dart` 回归覆盖。
 - 修复 `HlsManifestParser` `#EXT-X-MEDIA` `TYPE=CLOSED-CAPTIONS` 边界：解析器现在要求 `INSTREAM-ID` 存在且不允许 `URI` 字段，避免把无效字幕轨误识别为可本地化资源。新增 `test/hls_manifest_parser_test.dart` 回归覆盖标准 CC 轨道与缺失字段场景。
 - 修复 `HlsManifestParser` 主清单边界：允许 `TYPE=CLOSED-CAPTIONS` 的 `#EXT-X-MEDIA` 与 `AUDIO`/`VIDEO`/`SUBTITLES` 共存解析，不再将带字幕轨的真实主清单判为不支持类型；新增 `test/hls_manifest_parser_test.dart` 回归覆盖 `CLOSED-CAPTIONS` 场景。
@@ -29,12 +32,12 @@
 - 修复 HLS 主清单变体边界：`HlsManifestParser` 现在会在 `#EXT-X-STREAM-INF` 后未紧接合法媒体 URI 时抛出 `FormatException('Invalid HLS variant URI.')`，避免变体定义与媒体 URI 错位导致的离线入口误判；新增 `test/hls_manifest_parser_test.dart` 回归覆盖。
 - 修复下载入口提示与下载能力边界的判定不一致风险：`player_page.dart::_downloadTooltip` 统一使用 `isSupportedDownloadKind` 进行可下载类型判定，仅对 BT/未知类型返回“先检查下载线路”文案，并将直链与 HLS 已支持分支明确区分，配合 `test/player_page_test.dart` 增补 BT 不支持路径回归，避免下载按钮文案与最终反馈语义分叉。
 - 补齐离线完整性 manifest 段路径解析的异常边界：`offline_media_integrity.dart` 对 `file://server/...` 等 file URI authority 入口添加 `FormatException/FileSystemException/UnsupportedError` 防护，避免 manifest 内异常 URI 直接抛异常导致离线完整性验证中断；同时新增 `test/offline_media_integrity_test.dart` 回归覆盖该边界。
-- 新增 `test/player_page_test.dart` 回归：明确拒绝网络共享风格路径（`\\server\share...`、`//server/...` 与 `file://server/...`）在 `_isPlayableUrl` 中被误判为可播放，且在文件 URI 带 authority 时不抛异常返回 `false`，防止离线完整性评估链路绕过该类非本地路径输入。
+- 新增 `test/player_page_test.dart` 回归：明确拒绝网络共享风格路径（`\server\share...`、`//server/...` 与 `file://server/...`）在 `_isPlayableUrl` 中被误判为可播放，且在文件 URI 带 authority 时不抛异常返回 `false`，防止离线完整性评估链路绕过该类非本地路径输入。
 - 收紧播放源可播放性判定：`_isPlayableUrl` 现在仅接受 `http`、`https`、`file` 与 Windows 本地路径；`ftp`、`mailto` 等非播放器协议会返回 `false`，避免误判为可播放源触发播放器流程。
 - 修复播放器在线可播放性判断：`player_page.dart` 中 `_isPlayableUrl` 现在仅在 `file://`/本地路径与远端 URL 两类来源上返回可播放，而不会把离线完整性判定逻辑误用于远端流；新增 `test/player_page_test.dart` 回归覆盖远端 URL 与非法 URL 边界。
 - 修复离线完整性 URL 边界：`isPlayableOfflineMediaUrl` 现在对 `file://`/本地路径返回可播放判定，非本地远端 URL（如 `https://...`）返回 `false`，并补充 `test/offline_media_integrity_test.dart` 回归覆盖。
 - 修复离线完整性 URL 边界：`isPlayableOfflineMediaUrl` 现在也会在 `file://` URI 的 `authority` 场景（如 `file://server/share/...`）下返回 `false` 而不抛异常，新增 `test/offline_media_integrity_test.dart` 回归确保边界输入不阻塞播放。
-- 完善日志去敏边界：`sanitizeError` 现在在括号/引号等非空白边界前也会脱敏本地路径（如 `("C:/ProgramData/...")`、`'\"\\\\server\\\\share\\\\...\"'` 形式），避免前置分隔符导致的局部路径泄漏。
+- 完善日志去敏边界：`sanitizeError` 现在在括号/引号等非空白边界前也会脱敏本地路径（如 `("C:/ProgramData/...")`、`'\"\\server\\share\\...\"'` 形式），避免前置分隔符导致的局部路径泄漏。
 - 强化日志去敏边界：`sanitizeError` 现在会将非 `Users` 段的 Windows 绝对路径（如 `C:\ProgramData\ani-destiny\...`、`\server\share\...`）统一脱敏为 `[path:[hidden]]`，避免诊断与反馈摘要泄露本机完整路径。
 - 修复诊断反馈摘要中的本地路径断言边界：`FeedbackPackageCollector` 在收集多任务清理摘要时，标准化本地路径分隔写法，确保 `Local path: [path:[hidden]]` 在测试与 CI 快照中稳定一致，避免误报导致的 CI 阻塞。
 - 增强离线媒体删除边界：`LocalOfflineMediaService.remove` 现在会将任意清理异常统一映射为 `offline_media_cleanup_failed`，避免非 `FileSystemException` 错误导致清理失败时数据库记录未进入一致错误状态，并与批量删除流程保持一致行为。
@@ -42,13 +45,12 @@
 - 修复离线完整性边界：`isPlayableOfflineMediaPath` 现在会拒绝 `http://`、`https://` 等远端 URI 作为可播放路径，避免将远端清单误判为本地离线可播放资产。
 - 增强日志去敏边界：`sanitizeError` 现在会将 `/tmp`、`/private`、`/var` 等绝对本地路径脱敏为 `path:[hidden]`，避免错误与诊断摘要继续泄露本机路径细节。
 - 增强日志去敏边界：`sanitizePath` 现在会识别 Windows 风格 `C:/Users/...` 绝对路径中的用户名字段并替换为 `<user>`，避免诊断与反馈摘要出现这类可识别路径信息。
-- 强化日志去敏边界：`sanitizePath` 进一步脱敏 UNC 与非 `Users` Windows 盘符根路径（如 `\\server\share\...`、`C:/ProgramData/...`）以及 `/tmp`、`/private`、`/var` 等绝对路径，统一写为 `[path:[hidden]]`。
+- 强化日志去敏边界：`sanitizePath` 进一步脱敏 UNC 与非 `Users` Windows 盘符根路径（如 `\server\share\...`、`C:/ProgramData/...`）以及 `/tmp`、`/private`、`/var` 等绝对路径，统一写为 `[path:[hidden]]`。
 - 完善离线媒体删除边界：`LocalOfflineMediaService.remove` 现在在仓库删除阶段同样映射异常为 `offline_media_cleanup_failed`；`removeAll` 的批量删除回归也覆盖数据库删除失败场景，确保一次失败不会掩盖其余条目，并正确返回 `offline_media_cleanup_batch_failed`。
 - 补充 `LocalOfflineMediaService.removeAll` 的失败码边界测试：仓库抛出 `AppException` 的批量删除场景也会统一返回 `offline_media_cleanup_batch_failed`，并保留失败条目供重试。
 - 新增 `LocalOfflineMediaService.removeAll` 混合失败回归：当目录清理异常与仓库删除异常并存时，成功项仍会被继续清理，失败项（含失败目录与失败仓库删除）在 DB 与文件层面都保留以便重试，最终返回 `offline_media_cleanup_batch_failed`。
 - 增补离线媒体批量删除防御边界：`removeAll` 现在会捕获 `remove` 过程中的非 `AppException` 异常并统一映射为 `offline_media_cleanup_batch_failed`，确保即便出现非标准错误码也不会绕过统一的批量失败重试语义。
 - 修复 HLS 重启恢复边界：`recoverInterruptedHlsTasks` 现在会在恢复中断下载时清除失败码、清空失败说明并重置进度指标（`failureReason`、`failureMessage`、`progress`、`downloadedBytes`、`totalBytes`），新增回归验证恢复后的任务可回到可再启动态。
-
 ## [1.0.7] - 2026-08-01
 
 
