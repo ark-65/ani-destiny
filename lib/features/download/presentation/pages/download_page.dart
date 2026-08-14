@@ -265,27 +265,30 @@ class _DownloadPageState extends ConsumerState<DownloadPage>
                           final group = groups[groupIndex];
                           return Column(
                             children: [
-                            Row(
-                              children: [
-                                  Text(
-                                    '${group.first.title} (${group.length})',
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                    style: Theme.of(context).textTheme.labelLarge,
+                              Row(
+                                children: [
+                                  Expanded(
+                                    child: Text(
+                                      '${group.first.title} (${group.length})',
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .labelLarge,
+                                    ),
                                   ),
-                                ),
-                                TextButton.icon(
-                                  key: ValueKey(
-                                    'offline-anime-verify-${group.first.animeId}',
+                                  TextButton.icon(
+                                    key: ValueKey(
+                                      'offline-anime-verify-${group.first.animeId}',
+                                    ),
+                                    onPressed: () => _verifyOfflineAnime(group),
+                                    icon: const Icon(Icons.verified_outlined),
+                                    label:
+                                        Text(context.l10n.verifyOfflineMedia),
                                   ),
-                                  onPressed: () => _verifyOfflineAnime(group),
-                                  icon: const Icon(Icons.verified_outlined),
-                                  label: Text(context.l10n.verifyOfflineMedia),
-                                ),
-                                TextButton.icon(
-                                  key: ValueKey(
-                                    'offline-anime-remove-${group.first.animeId}',
-                                  ),
+                                  TextButton.icon(
+                                    key: ValueKey(
+                                      'offline-anime-remove-${group.first.animeId}',
                                     ),
                                     onPressed: () =>
                                         _confirmRemoveOfflineAnime(group),

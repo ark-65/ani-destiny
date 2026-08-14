@@ -274,7 +274,8 @@ void main() {
     );
   });
 
-  testWidgets('offline anime verification validates every episode in the group', (
+  testWidgets('offline anime verification validates every episode in the group',
+      (
     tester,
   ) async {
     final repository = _FakeDownloadRepository([]);
@@ -2830,7 +2831,6 @@ class _FakeOfflineMediaService implements OfflineMediaService {
             : Map<String, OfflineMediaIntegrityStatus>.unmodifiable(
                 integrityStatusById,
               );
-            );
 
   final OfflineMediaIntegrityStatus integrityStatus;
   final Map<String, OfflineMediaIntegrityStatus> integrityStatusById;
@@ -2856,7 +2856,6 @@ class _FakeOfflineMediaService implements OfflineMediaService {
   Future<void> removeAll(Iterable<OfflineMediaItem> items) async {
     removedBatches.add(items.toList());
   }
-
 }
 
 OfflineMediaItem _offlineItem({

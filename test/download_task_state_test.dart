@@ -1346,8 +1346,7 @@ segment-2.m4s
     expect(_ledgerLength(ledger['segment-000001.ts']), segmentTwo.length);
   });
 
-  test(
-      'starting HLS task redownloads segment when ledger entry is missing',
+  test('starting HLS task redownloads segment when ledger entry is missing',
       () async {
     final database = AppDatabase(NativeDatabase.memory());
     addTearDown(database.close);
@@ -1509,7 +1508,10 @@ segment-2.m4s
     );
 
     await service.start(taskId);
-    expect(dio.downloadedUris, contains('https://cdn.example.test/segment-1.ts'));
+    expect(
+      dio.downloadedUris,
+      contains('https://cdn.example.test/segment-1.ts'),
+    );
     expect(await File(segmentPath).exists(), isTrue);
     expect(await File(segmentPath).readAsBytes(), segmentOne);
 
@@ -1517,13 +1519,15 @@ segment-2.m4s
     await File(segmentPath).writeAsBytes(const [5, 4, 3, 2, 1]);
 
     await service.start(taskId);
-    expect(dio.downloadedUris, contains('https://cdn.example.test/segment-1.ts'));
+    expect(
+      dio.downloadedUris,
+      contains('https://cdn.example.test/segment-1.ts'),
+    );
     expect(dio.downloadedUris, hasLength(1));
     expect(await File(segmentPath).readAsBytes(), segmentOne);
   });
 
-  test('recovering interrupted HLS tasks keeps resumable progress',
-      () async {
+  test('recovering interrupted HLS tasks keeps resumable progress', () async {
     final database = AppDatabase(NativeDatabase.memory());
     addTearDown(database.close);
 

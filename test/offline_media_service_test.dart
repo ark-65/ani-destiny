@@ -53,8 +53,8 @@ void main() {
     final database = AppDatabase(NativeDatabase.memory());
     addTearDown(database.close);
     final repository = OfflineMediaRepositoryImpl(database);
-    final tempDirectory =
-        await Directory.systemTemp.createTemp('offline-media-verify-exception-');
+    final tempDirectory = await Directory.systemTemp
+        .createTemp('offline-media-verify-exception-');
     addTearDown(() async {
       if (await tempDirectory.exists()) {
         await tempDirectory.delete(recursive: true);
