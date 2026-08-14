@@ -1362,9 +1362,9 @@ class HttpDownloadService implements DownloadService {
       status: DownloadStatus.paused,
       failureReason: DownloadFailureReason.none,
       failureMessage: null,
-      progress: 0,
-      totalBytes: null,
-      downloadedBytes: 0,
+      progress: task.kind == DownloadKind.hls ? task.progress : 0,
+      totalBytes: task.kind == DownloadKind.hls ? task.totalBytes : null,
+      downloadedBytes: task.kind == DownloadKind.hls ? task.downloadedBytes : 0,
       updatedAt: DateTime.now(),
     );
     await _repository.upsertTask(updated);
