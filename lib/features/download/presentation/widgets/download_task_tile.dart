@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../../app/l10n/app_localizations.dart';
+import '../../../../core/diagnostics/diagnostic_sanitizer.dart';
 import '../download_task_cleanup_state.dart';
 import '../../domain/entities/download_failure_reason.dart';
 import '../../domain/entities/download_kind.dart';
@@ -273,14 +274,18 @@ class DownloadTaskTile extends StatelessWidget {
         DownloadKind.hls => context.l10n.downloadUnsupportedHlsMessage,
         DownloadKind.bt => context.l10n.downloadUnsupportedBtMessage,
         DownloadKind.unknown => context.l10n.downloadUnsupportedUnknownMessage,
-        DownloadKind.directFile => task.failureMessage,
+        DownloadKind.directFile => task.failureMessage == null
+            ? null
+            : sanitizeError(task.failureMessage!),
       };
     }
     final normalizedTask = normalizeDownloadTask(task);
     if (normalizedTask.failureMessage == unexpectedDownloadFailureMessage) {
       return context.l10n.downloadFailureUnexpectedError;
     }
-    return normalizedTask.failureMessage;
+    return normalizedTask.failureMessage == null
+        ? null
+        : sanitizeError(normalizedTask.failureMessage!);
   }
 
   bool _showProgress(DownloadTask task, bool isRemovingFromList) {

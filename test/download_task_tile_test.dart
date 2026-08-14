@@ -237,6 +237,36 @@ void main() {
       );
   });
 
+  testWidgets('failed download cards sanitize sensitive failure details', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      _buildTileApp(
+        DownloadTaskTile(
+          task: _task(
+            status: DownloadStatus.failed,
+            failureReason: DownloadFailureReason.unknown,
+            failureMessage:
+                'Download failed: https://api.example.com/video?token=abc123&cookie=secret',
+          ),
+          isBusy: false,
+          onStart: () {},
+          onPause: () {},
+          onCancel: () {},
+          onRemove: () {},
+        ),
+      ),
+    );
+    await tester.pump();
+
+    expect(find.textContaining('token='), findsNothing);
+    expect(find.textContaining('secret'), findsNothing);
+    expect(
+      find.text('Download failed: https://api.example.com/.../video'),
+      findsOneWidget,
+    );
+  });
+
   testWidgets(
       'failed download tasks with stale partial paths fall back to remove copy',
       (

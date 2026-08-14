@@ -1,4 +1,5 @@
 import '../../../core/error/app_exception.dart';
+import '../../../core/diagnostics/diagnostic_sanitizer.dart';
 import '../../../app/l10n/app_localizations.dart';
 import '../domain/entities/download_kind.dart';
 import '../domain/entities/download_task.dart';
@@ -80,7 +81,7 @@ String downloadActionErrorMessage(
   final fallbackMessage = parsedError?.message ?? rawMessage;
   if (fallbackMessage.trim().isNotEmpty &&
       !looksLikeRawDownloadFailureMessage(fallbackMessage)) {
-    return fallbackMessage;
+    return sanitizeError(fallbackMessage);
   }
   return l10n.downloadActionFailedMessage;
 }

@@ -54,6 +54,16 @@ void main() {
     );
   });
 
+  test('download action fallback sanitizes sensitive failure details', () {
+    const l10n = AppLocalizations(Locale('en'));
+
+    const rawActionFailure = 'Request failed: https://api.example.com/video?token=abc123';
+    final sanitizedMessage = downloadActionErrorMessage(l10n, rawActionFailure);
+
+    expect(sanitizedMessage, contains('https://api.example.com/.../video'));
+    expect(sanitizedMessage, isNot(contains('token=abc123')));
+  });
+
   test('download action errors fallback to readable reason for known codes',
       () {
     const l10n = AppLocalizations(Locale('en'));

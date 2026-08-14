@@ -7,6 +7,7 @@
 ## [Unreleased]
 
 ### Fixed
+- Unified download-failure message sanitization: download task cards and action-failure fallback messages now both route through `sanitizeError`, so URLs, token/cookie values, and local paths in raw failure strings are redacted before being shown. Added regression coverage in `test/download_task_tile_test.dart` and `test/download_entry_feedback_test.dart`.
 - Moved HLS resume-reuse fixes that were added after 1.0.8 release to Unreleased for next release:
   - Added segment-size ledger `.hls-segment-sizes.json`; resume reuse now requires local segment size to match the ledger, and mismatches force re-download with ledger rewrite. Coverage in `test/download_task_state_test.dart`.
   - Enforced ledger entries for segment reuse: missing segment entries no longer reuse files; existing files are re-downloaded to avoid stale resume artifacts causing false-complete.
