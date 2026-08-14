@@ -319,12 +319,13 @@ class HttpDownloadService implements DownloadService {
       return;
     }
 
-    final prepareLocalManifestPath = p.join(
-      (await _applicationDocumentsDirectory()).path,
-      'downloads',
-      existingTask.id,
-      'index.m3u8',
-    );
+    final prepareLocalManifestPath = existingTask.localPath ??
+        p.join(
+          (await _applicationDocumentsDirectory()).path,
+          'downloads',
+          existingTask.id,
+          'index.m3u8',
+        );
     final settleCompleter = Completer<void>();
     _settleCompleters[existingTask.id] = settleCompleter;
     final token = CancelToken();
@@ -335,9 +336,9 @@ class HttpDownloadService implements DownloadService {
       status: DownloadStatus.preparing,
       failureReason: DownloadFailureReason.none,
       failureMessage: null,
-      progress: 0,
-      downloadedBytes: 0,
-      totalBytes: null,
+      progress: existingTask.progress,
+      downloadedBytes: existingTask.downloadedBytes,
+      totalBytes: existingTask.totalBytes,
       updatedAt: DateTime.now(),
     );
     await _repository.upsertTask(preparingTask);
@@ -467,7 +468,8 @@ class HttpDownloadService implements DownloadService {
         );
         return;
       }
-      final failed = preparingTask.copyWith(
+      final latest = await _repository.getTask(existingTask.id) ?? preparingTask;
+      final failed = latest.copyWith(
         localPath: prepareLocalManifestPath,
         status: DownloadStatus.failed,
         failureReason: DownloadFailureReason.networkError,
@@ -478,7 +480,8 @@ class HttpDownloadService implements DownloadService {
       _emitTask(failed);
       return;
     } on FormatException catch (error) {
-      final invalidManifest = preparingTask.copyWith(
+      final latest = await _repository.getTask(existingTask.id) ?? preparingTask;
+      final invalidManifest = latest.copyWith(
         localPath: prepareLocalManifestPath,
         status: DownloadStatus.failed,
         failureReason: DownloadFailureReason.invalidManifest,
@@ -489,7 +492,8 @@ class HttpDownloadService implements DownloadService {
       _emitTask(invalidManifest);
       return;
     } on Object {
-      final failed = preparingTask.copyWith(
+      final latest = await _repository.getTask(existingTask.id) ?? preparingTask;
+      final failed = latest.copyWith(
         localPath: prepareLocalManifestPath,
         status: DownloadStatus.failed,
         failureReason: DownloadFailureReason.unknown,
@@ -550,6 +554,7 @@ class HttpDownloadService implements DownloadService {
             (expectedKeyRecord.sha256 == null ||
                 expectedKeyRecord.sha256 == await _sha256Hex(keyFile))) {
           downloadedBytes += await keyFile.length();
+          await _persistHlsDownloadProgress(task: task, downloadedBytes: downloadedBytes);
           continue;
         }
         downloadedBytes += await _downloadHlsSegment(
@@ -562,6 +567,7 @@ class HttpDownloadService implements DownloadService {
           length: await keyFile.length(),
           sha256: await _sha256Hex(keyFile),
         );
+        await _persistHlsDownloadProgress(task: task, downloadedBytes: downloadedBytes);
       }
 
       for (final initializationEntry
@@ -588,6 +594,7 @@ class HttpDownloadService implements DownloadService {
                 segmentLedger[initializationName]?.sha256 ==
                     await _sha256Hex(initializationFile))) {
           downloadedBytes += initializationLength;
+          await _persistHlsDownloadProgress(task: task, downloadedBytes: downloadedBytes);
         } else {
           downloadedBytes += await _downloadHlsSegment(
             segmentUri: initializationSegment.uri,
@@ -600,6 +607,7 @@ class HttpDownloadService implements DownloadService {
             length: await initializationFile.length(),
             sha256: await _sha256Hex(initializationFile),
           );
+          await _persistHlsDownloadProgress(task: task, downloadedBytes: downloadedBytes);
         }
       }
 
@@ -607,11 +615,10 @@ class HttpDownloadService implements DownloadService {
         final segment = mediaManifest.segments[index];
         if (segment.isGap) {
           final progress = (index + 1) / mediaManifest.segments.length;
-          _emit(
-            task.id,
-            progress,
-            DownloadStatus.downloading,
+          await _persistHlsDownloadProgress(
+            task: task,
             downloadedBytes: downloadedBytes,
+            progress: progress,
           );
           continue;
         }
@@ -631,11 +638,10 @@ class HttpDownloadService implements DownloadService {
                   expectedSegmentHash == await _sha256Hex(existingSegmentFile))) {
             downloadedBytes += existingBytes;
             final progress = (index + 1) / mediaManifest.segments.length;
-            _emit(
-              task.id,
-              progress,
-              DownloadStatus.downloading,
+            await _persistHlsDownloadProgress(
+              task: task,
               downloadedBytes: downloadedBytes,
+              progress: progress,
             );
             continue;
           }
@@ -653,11 +659,10 @@ class HttpDownloadService implements DownloadService {
         );
         downloadedBytes += segmentBytes;
         final progress = (index + 1) / mediaManifest.segments.length;
-        _emit(
-          task.id,
-          progress,
-          DownloadStatus.downloading,
+        await _persistHlsDownloadProgress(
+          task: task,
           downloadedBytes: downloadedBytes,
+          progress: progress,
         );
       }
 
@@ -668,6 +673,32 @@ class HttpDownloadService implements DownloadService {
         segmentLedger,
       );
     }
+  }
+
+  Future<void> _persistHlsDownloadProgress({
+    required DownloadTask task,
+    required int downloadedBytes,
+    double? progress,
+  }) async {
+    final latest = await _repository.getTask(task.id) ?? task;
+    final nextProgress = progress ?? latest.progress;
+    final persisted = latest.copyWith(
+      status: DownloadStatus.downloading,
+      progress: nextProgress,
+      totalBytes: latest.totalBytes,
+      downloadedBytes: downloadedBytes,
+      failureReason: DownloadFailureReason.none,
+      failureMessage: null,
+      updatedAt: DateTime.now(),
+    );
+    await _repository.upsertTask(persisted);
+    _emit(
+      task.id,
+      persisted.progress,
+      DownloadStatus.downloading,
+      downloadedBytes: downloadedBytes,
+      totalBytes: persisted.totalBytes,
+    );
   }
 
   Future<void> _validateHlsManifestAssets({
