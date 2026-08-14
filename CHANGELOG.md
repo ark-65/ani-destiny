@@ -20,6 +20,8 @@
 - 完善离线媒体番剧级校验入口：下载页离线媒体分组行新增“校验整部离线媒体”动作，点击后会逐条复检该番组所有本地单集，并按聚合结果给出“全部可播放”或“文件不完整”提示；保留单集校验入口与删除入口不变。
 - 修复离线完整性校验异常放大：`LocalOfflineMediaService.verify()` 现在对 `isPlayableOfflineMediaPath` 的运行时异常进行容错兜底，遇到清单解析/访问异常时返回 `damaged` 并持久化状态，避免单个损坏 `manifest` 将离线播放动作打断到异常路径。
 
+- 改进 HLS 失败重试持久化：当 HLS 下载在活动任务中断后重启时，`_startHlsTask()` 现在保留现有 `progress`/`downloadedBytes`/`totalBytes`，并在段下载循环内持续将进度写盘；失败态不会再回落到 0，续传将沿用真实已下载量。新增 `test/download_task_state_test.dart` 回归“exhausted retries preserve segment bytes”“starting HLS task resumes from existing segment files”。
+
 ## [1.0.8] - 2026-08-12
 
 ### 🐛 修复
