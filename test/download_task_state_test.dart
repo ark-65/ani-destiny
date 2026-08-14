@@ -858,6 +858,8 @@ segment-2.m4s
       segmentTwoUri,
       segmentTwoUri,
     ]);
+    expect(failedTask.progress, greaterThan(0));
+    expect(failedTask.downloadedBytes, segmentOne.length);
     final segmentDirectory = p.join(
       p.dirname(failedTask.localPath!),
       'segments',
@@ -1066,6 +1068,8 @@ segment-2.m4s
     expect(failedTask, isNotNull);
     expect(failedTask!.status, DownloadStatus.failed);
     expect(failedTask.localPath, isNotNull);
+    expect(failedTask.progress, greaterThan(0));
+    expect(failedTask.downloadedBytes, segmentOne.length);
 
     final manifestDirectory = p.dirname(failedTask.localPath!);
     final segmentDir = Directory(p.join(manifestDirectory, 'segments'));
