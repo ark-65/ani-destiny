@@ -1,5 +1,6 @@
 import 'package:ani_destiny/app/l10n/app_localizations.dart';
 import 'package:ani_destiny/core/error/app_exception.dart';
+import 'package:ani_destiny/core/diagnostics/diagnostic_sanitizer.dart';
 import 'package:ani_destiny/features/download/domain/entities/download_kind.dart';
 import 'package:ani_destiny/features/download/presentation/download_entry_feedback.dart';
 import 'package:flutter/widgets.dart';
@@ -206,6 +207,35 @@ void main() {
         'download_busy: action in progress',
       ),
       l10n.downloadActionBusyMessage,
+    );
+  });
+
+  test('download action errors sanitize fallback message values', () {
+    const l10n = AppLocalizations(Locale('en'));
+
+    expect(
+      downloadActionErrorMessage(
+        l10n,
+        const AppException(
+          'Download failed for https://cdn.example.test/playlist.m3u8?token=abc123',
+          code: 'download_unexpected_error',
+        ),
+      ),
+      '${l10n.downloadFailureUnexpectedError}. ${l10n.downloadActionFailedMessage}',
+    );
+
+    expect(
+      downloadActionErrorMessage(
+        l10n,
+        const AppException(
+          'Download failed for https://cdn.example.test/playlist.m3u8?token=abc123',
+        ),
+      ),
+      equals(
+        sanitizeError(
+          'Download failed for https://cdn.example.test/playlist.m3u8?token=abc123',
+        ),
+      ),
     );
   });
 }

@@ -7,6 +7,7 @@
 ## [Unreleased]
 
 ### Fixed
+- Hardened download action fallback message redaction: `downloadActionErrorMessage` now routes fallback messages through `sanitizeError` for all unknown action error cases, ensuring sensitive values like token/cookie/path/url are hidden in entry feedback and download-page action summaries. Added `test/download_entry_feedback_test.dart` coverage.
 - Moved HLS resume-reuse fixes that were added after 1.0.8 release to Unreleased for next release:
   - Added segment-size ledger `.hls-segment-sizes.json`; resume reuse now requires local segment size to match the ledger, and mismatches force re-download with ledger rewrite. Coverage in `test/download_task_state_test.dart`.
   - Enforced ledger entries for segment reuse: missing segment entries no longer reuse files; existing files are re-downloaded to avoid stale resume artifacts causing false-complete.
