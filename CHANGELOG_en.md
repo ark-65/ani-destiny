@@ -6,15 +6,19 @@
 
 ## [Unreleased]
 
-## [1.0.8] - 2026-08-12
-
 ### Fixed
 - Moved HLS resume-reuse fixes that were added after 1.0.8 release to Unreleased for next release:
   - Added segment-size ledger `.hls-segment-sizes.json`; resume reuse now requires local segment size to match the ledger, and mismatches force re-download with ledger rewrite. Coverage in `test/download_task_state_test.dart`.
   - Enforced ledger entries for segment reuse: missing segment entries no longer reuse files; existing files are re-downloaded to avoid stale resume artifacts causing false-complete.
   - Added SHA-256 validation to `.hls-segment-sizes.json` reuse: key/init/segment files must match both size and digest; size-only matches with digest drift are treated as invalid and re-downloaded.
 - Clarified this HLS resume hardening note in Unreleased to align with changelog gate expectations and avoid treating these behavioral changes as a released changelog correction.
+- 2026-08-14 02:04:00+08:00: Hardened interrupted HLS resume behavior by keeping resumed progress and byte counts across restart. `recoverInterruptedHlsTasks()` now clears failure reason/message but preserves `progress`, `downloadedBytes`, and `totalBytes` for resumable downloads, and added `test/download_task_state_test.dart` coverage for “recovered HLS task keeps progress”.
+- Added an anime-group offline media verification action on the Download page. The new “verify all offline media” entry now rechecks every episode item in the same anime group and reports an aggregate playable/damaged result, while preserving single-episode verify and remove flows.
+- Hardened offline media integrity verification by making `LocalOfflineMediaService.verify()` tolerate manifest parser/runtime errors. If manifest checks fail with an exception, the service now persists `damaged` and continues safely so one malformed manifest does not throw users into an exception path.
 
+## [1.0.8] - 2026-08-12
+
+### Fixed
 - Hardened `HlsManifestParser` to skip non-`#EXT` hash-comment lines, so comment-only lines are no longer treated as segment URLs; added regression coverage in `test/hls_manifest_parser_test.dart` for comments in media playlists and between `#EXT-X-STREAM-INF` and variant URLs.
 - Hardened `HlsManifestParser` `#EXT-X-MEDIA` handling for `TYPE=CLOSED-CAPTIONS`: rendition entries now require `INSTREAM-ID` and must not include a `URI`, preventing invalid subtitle tracks from entering offline-playlist flow. Added regression coverage in `test/hls_manifest_parser_test.dart`.
 - Added `CLOSED-CAPTIONS` support to `HlsManifestParser` master-playlist `#EXT-X-MEDIA` parsing so `TYPE=CLOSED-CAPTIONS` entries are not rejected as invalid media rendition types. Added regression coverage in `test/hls_manifest_parser_test.dart`.
@@ -30,9 +34,6 @@
 - Hardened `HlsManifestParser` master-playlist boundary so `#EXT-X-STREAM-INF` entries must be followed directly by a media URI: any intervening `#EXT` tag now throws `FormatException('Invalid HLS variant URI.')`; added regression coverage for the interrupted-tag case in `test/hls_manifest_parser_test.dart`.
 - Hardened HLS master-variant parsing boundary so consecutive `#EXT-X-STREAM-INF` entries without an intervening media URI now fail with `FormatException('Invalid HLS variant URI.')`, preventing earlier variants from being silently overwritten; added regression coverage in `test/hls_manifest_parser_test.dart`.
 - Hardened HLS master playlist parsing by rejecting `#EXT-X-STREAM-INF` entries that are not followed by a valid variant URI. `HlsManifestParser` now throws `FormatException('Invalid HLS variant URI.')` instead of silently accepting malformed variant/media sequencing; added regression coverage in `test/hls_manifest_parser_test.dart`.
-- 2026-08-14 02:04:00+08:00: Hardened interrupted HLS resume behavior by keeping resumed progress and byte counts across restart. `recoverInterruptedHlsTasks()` now clears failure reason/message but preserves `progress`, `downloadedBytes`, and `totalBytes` for resumable downloads, and added `test/download_task_state_test.dart` coverage for “recovered HLS task keeps progress”.
-- Added an anime-group offline media verification action on the Download page. The new “verify all offline media” entry now rechecks every episode item in the same anime group and reports an aggregate playable/damaged result, while preserving single-episode verify and remove flows.
-- Hardened offline media integrity verification by making `LocalOfflineMediaService.verify()` tolerate manifest parser/runtime errors. If manifest checks fail with an exception, the service now persists `damaged` and continues safely so one malformed manifest does not throw users into an exception path.
 - Fixed download tooltip type-boundary consistency: `_downloadTooltip` now routes unsupported types through `isSupportedDownloadKind`, keeps BT/unknown branches on the retry/review flow, and preserves direct-file startup behavior for direct content while aligning HLS supported messaging with shared download feedback logic; added `test/player_page_test.dart` BT unsupported-path regression coverage.
 - Hardened offline-manifest URI parsing to handle malformed file-URI authority forms safely. `offline_media_integrity.dart` now catches `FormatException`, `FileSystemException`, and `UnsupportedError` from `file://` URIs and returns empty candidate paths instead of throwing, so offline integrity checks fail safely. Added regression coverage in `test/offline_media_integrity_test.dart`.
 - Added regression in `test/player_page_test.dart` to reject network-share style paths (`\server\share...`, `//server/...`, and `file://server/...`) from `_isPlayableUrl`, preventing share-style non-local inputs from being treated as playable sources and ensuring `file://` URIs with authority return `false` instead of throwing.
