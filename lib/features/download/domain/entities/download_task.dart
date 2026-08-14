@@ -1,5 +1,6 @@
 import 'download_failure_reason.dart';
 import 'download_kind.dart';
+import '../../../../core/diagnostics/diagnostic_sanitizer.dart';
 
 const _unset = Object();
 
@@ -119,6 +120,10 @@ DownloadTask normalizeDownloadTask(DownloadTask task) {
   if (task.status == DownloadStatus.failed &&
       looksLikeRawDownloadFailureMessage(failureMessage)) {
     return task.copyWith(failureMessage: unexpectedDownloadFailureMessage);
+  }
+  if (task.status == DownloadStatus.failed &&
+      sanitizeError(failureMessage) != failureMessage) {
+    return task.copyWith(failureMessage: sanitizeError(failureMessage));
   }
   return task;
 }

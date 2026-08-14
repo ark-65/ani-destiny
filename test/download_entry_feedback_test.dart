@@ -208,4 +208,39 @@ void main() {
       l10n.downloadActionBusyMessage,
     );
   });
+
+  test('download action errors sanitize sensitive URLs and path fragments', () {
+    const l10n = AppLocalizations(Locale('en'));
+
+    expect(
+      downloadActionErrorMessage(
+        l10n,
+        const AppException(
+          'The selected download source is unavailable at '
+          'https://cdn.example.test/stream.m3u8?token=secret&cookie=abc',
+          
+        ),
+      ),
+      isNot(contains('token=secret')),
+    );
+    expect(
+      downloadActionErrorMessage(
+        l10n,
+        const AppException(
+          'The selected download source is unavailable at '
+          'https://cdn.example.test/stream.m3u8?token=secret&cookie=abc',
+        ),
+      ),
+      isNot(contains('cookie=abc')),
+    );
+    expect(
+      downloadActionErrorMessage(
+        l10n,
+        const AppException(
+          'Failed to read /tmp/ani-destiny-offline/logs/error.log due to error.',
+        ),
+      ),
+      isNot(contains('/tmp/ani-destiny-offline/logs/error.log')),
+    );
+  });
 }

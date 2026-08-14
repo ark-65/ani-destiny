@@ -15,6 +15,7 @@
 - 2026-08-14 02:04:00+08:00: Hardened interrupted HLS resume behavior by keeping resumed progress and byte counts across restart. `recoverInterruptedHlsTasks()` now clears failure reason/message but preserves `progress`, `downloadedBytes`, and `totalBytes` for resumable downloads, and added `test/download_task_state_test.dart` coverage for “recovered HLS task keeps progress”.
 - Added an anime-group offline media verification action on the Download page. The new “verify all offline media” entry now rechecks every episode item in the same anime group and reports an aggregate playable/damaged result, while preserving single-episode verify and remove flows.
 - Hardened offline media integrity verification by making `LocalOfflineMediaService.verify()` tolerate manifest parser/runtime errors. If manifest checks fail with an exception, the service now persists `damaged` and continues safely so one malformed manifest does not throw users into an exception path.
+- Hardened download error propagation by running both HLS action and failed-task feedback messages through `sanitizeError`, so response URLs (tokens/cookies), local absolute paths, and other diagnostics are redacted before reaching UI text. Added coverage in `test/download_entry_feedback_test.dart` and `test/download_task_entity_test.dart`.
 
 ## [1.0.8] - 2026-08-12
 
