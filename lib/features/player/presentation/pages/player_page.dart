@@ -35,6 +35,16 @@ import '../widgets/playback_speed_sheet.dart';
 import '../widgets/player_controls.dart';
 import '../widgets/player_surface.dart';
 
+PlayerRouteArgs sanitizeOfflinePlaybackRouteArgs(PlayerRouteArgs routeArgs) {
+  if (routeArgs.playHeaders.isEmpty) {
+    return routeArgs;
+  }
+  if (!isPlayableOfflineMediaUrl(routeArgs.playUrl)) {
+    return routeArgs;
+  }
+  return routeArgs.copyWith(playHeaders: const {});
+}
+
 class PlayerPage extends ConsumerStatefulWidget {
   const PlayerPage({
     required this.args,
@@ -72,7 +82,7 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
-    _currentArgs = widget.args;
+    _currentArgs = _sanitizedOfflineRouteArgs(widget.args);
     _historyRepository = ref.read(historyRepositoryProvider);
     _controller = ref.read(playerRepositoryProvider).createController();
     unawaited(ref.read(currentSourceIdProvider.future));
@@ -1001,6 +1011,10 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
     );
   }
 
+  PlayerRouteArgs _sanitizedOfflineRouteArgs(PlayerRouteArgs routeArgs) {
+    return sanitizeOfflinePlaybackRouteArgs(routeArgs);
+  }
+
   Future<void> _createDownload() async {
     try {
       final result = await ref.read(downloadTaskCreatorProvider).create(
@@ -1047,7 +1061,7 @@ class _PlayerPageState extends ConsumerState<PlayerPage>
     Duration? historyPositionOverride,
     Duration? historyDurationOverride,
   }) async {
-    final routeArgs = args ?? _args;
+    final routeArgs = _sanitizedOfflineRouteArgs(args ?? _args);
     _recordPlaybackDiagnostics(args: routeArgs);
     try {
       if (!_isPlayableUrl(routeArgs.playUrl)) {

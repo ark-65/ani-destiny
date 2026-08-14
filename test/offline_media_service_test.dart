@@ -49,6 +49,35 @@ void main() {
     expect(restored.verifiedAt, isNotNull);
   });
 
+  test('verify maps manifest parser exceptions to damaged status', () async {
+    final database = AppDatabase(NativeDatabase.memory());
+    addTearDown(database.close);
+    final repository = OfflineMediaRepositoryImpl(database);
+    final tempDirectory = await Directory.systemTemp
+        .createTemp('offline-media-verify-exception-');
+    addTearDown(() async {
+      if (await tempDirectory.exists()) {
+        await tempDirectory.delete(recursive: true);
+      }
+    });
+    final manifest = File(p.join(tempDirectory.path, 'index.m3u8'));
+    await manifest.writeAsString('#EXTM3U\nsegment.ts\n');
+    final item = _item(manifest.path);
+    await repository.upsert(item);
+    final service = LocalOfflineMediaService(
+      repository: repository,
+      manifestVerifier: (_) => throw StateError('broken manifest parser'),
+    );
+
+    expect(
+      await service.verify(item),
+      OfflineMediaIntegrityStatus.damaged,
+    );
+    final restored = (await repository.getAll()).single;
+    expect(restored.integrityStatus, OfflineMediaIntegrityStatus.damaged);
+    expect(restored.verifiedAt, isNotNull);
+  });
+
   test('remove deletes the asset directory before its database record',
       () async {
     final database = AppDatabase(NativeDatabase.memory());

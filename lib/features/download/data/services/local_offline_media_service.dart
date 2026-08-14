@@ -9,22 +9,24 @@ import '../../domain/services/offline_media_integrity.dart';
 import '../../domain/services/offline_media_service.dart';
 
 typedef OfflineMediaDirectoryRemover = Future<void> Function(String path);
+typedef OfflineMediaManifestVerifier = bool Function(String manifestPath);
 
 class LocalOfflineMediaService implements OfflineMediaService {
   const LocalOfflineMediaService({
     required OfflineMediaRepository repository,
     OfflineMediaDirectoryRemover directoryRemover = _removeDirectoryIfPresent,
+    OfflineMediaManifestVerifier manifestVerifier = isPlayableOfflineMediaPath,
   })  : _repository = repository,
-        _directoryRemover = directoryRemover;
+        _directoryRemover = directoryRemover,
+        _manifestVerifier = manifestVerifier;
 
   final OfflineMediaRepository _repository;
   final OfflineMediaDirectoryRemover _directoryRemover;
+  final OfflineMediaManifestVerifier _manifestVerifier;
 
   @override
   Future<OfflineMediaIntegrityStatus> verify(OfflineMediaItem item) async {
-    final status = isPlayableOfflineMediaPath(item.manifestPath)
-        ? OfflineMediaIntegrityStatus.playable
-        : OfflineMediaIntegrityStatus.damaged;
+    final status = _statusFromManifest(item.manifestPath);
     await _repository.upsert(
       item.copyWith(
         integrityStatus: status,
@@ -32,6 +34,24 @@ class LocalOfflineMediaService implements OfflineMediaService {
       ),
     );
     return status;
+  }
+
+  OfflineMediaIntegrityStatus _statusFromManifest(String manifestPath) {
+    try {
+      return _manifestVerifier(manifestPath)
+          ? OfflineMediaIntegrityStatus.playable
+          : OfflineMediaIntegrityStatus.damaged;
+    } on Object {
+      return OfflineMediaIntegrityStatus.damaged;
+    }
+  }
+
+  @override
+  Future<void> refreshIntegrity() async {
+    final items = await _repository.getAll();
+    for (final item in items) {
+      await verify(item);
+    }
   }
 
   @override

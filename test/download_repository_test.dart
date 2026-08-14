@@ -45,6 +45,8 @@ void main() {
         failureReason: DownloadFailureReason.none,
         progress: 0.5,
         downloadedBytes: 512,
+        totalBytes: 1024,
+        failureMessage: 'interrupted on restart',
         createdAt: now,
         updatedAt: now,
       ),
@@ -77,7 +79,11 @@ void main() {
       (await repository.getTask('hls-downloading'))!.status,
       DownloadStatus.paused,
     );
-    expect((await repository.getTask('hls-downloading'))!.downloadedBytes, 0);
+    final resumedTask = await repository.getTask('hls-downloading');
+    expect(resumedTask!.downloadedBytes, 512);
+    expect(resumedTask.totalBytes, 1024);
+    expect(resumedTask.progress, 0.5);
+    expect(resumedTask.failureMessage, isNull);
     expect(
       (await repository.getTask('direct-downloading'))!.status,
       DownloadStatus.downloading,

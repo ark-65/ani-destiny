@@ -38,6 +38,11 @@ final offlineMediaServiceProvider = Provider<OfflineMediaService>((ref) {
   );
 });
 
+final offlineMediaIntegrityProvider = FutureProvider<void>((ref) {
+  ref.keepAlive();
+  return ref.watch(offlineMediaServiceProvider).refreshIntegrity();
+});
+
 final httpDownloadServiceProvider = Provider<DownloadService>((ref) {
   return HttpDownloadService(
     dio: ref.watch(dioProvider),
@@ -68,8 +73,9 @@ final downloadTasksProvider =
 });
 
 final offlineMediaItemsProvider =
-    StreamProvider.autoDispose<List<OfflineMediaItem>>((ref) {
-  return ref.watch(offlineMediaRepositoryProvider).watchAll();
+    StreamProvider.autoDispose<List<OfflineMediaItem>>((ref) async* {
+  await ref.watch(offlineMediaIntegrityProvider.future);
+  yield* ref.watch(offlineMediaRepositoryProvider).watchAll();
 });
 
 final downloadProgressProvider =

@@ -279,8 +279,16 @@ class _DownloadPageState extends ConsumerState<DownloadPage>
                                   ),
                                   TextButton.icon(
                                     key: ValueKey(
-                                      'offline-anime-remove-'
-                                      '${group.first.animeId}',
+                                      'offline-anime-verify-${group.first.animeId}',
+                                    ),
+                                    onPressed: () => _verifyOfflineAnime(group),
+                                    icon: const Icon(Icons.verified_outlined),
+                                    label:
+                                        Text(context.l10n.verifyOfflineMedia),
+                                  ),
+                                  TextButton.icon(
+                                    key: ValueKey(
+                                      'offline-anime-remove-${group.first.animeId}',
                                     ),
                                     onPressed: () =>
                                         _confirmRemoveOfflineAnime(group),
@@ -1127,6 +1135,29 @@ class _DownloadPageState extends ConsumerState<DownloadPage>
     if (!mounted) return;
     _showDownloadSnackBar(
       status == OfflineMediaIntegrityStatus.playable
+          ? context.l10n.offlineMediaVerified
+          : context.l10n.offlineMediaDamaged,
+    );
+  }
+
+  Future<void> _verifyOfflineAnime(List<OfflineMediaItem> items) async {
+    if (items.isEmpty || !mounted) return;
+    final service = ref.read(offlineMediaServiceProvider);
+    var allPlayable = true;
+    for (final item in items) {
+      try {
+        final status = await service.verify(item);
+        if (status != OfflineMediaIntegrityStatus.playable) {
+          allPlayable = false;
+        }
+      } catch (_) {
+        allPlayable = false;
+      }
+      if (!mounted) return;
+    }
+    if (!mounted) return;
+    _showDownloadSnackBar(
+      allPlayable
           ? context.l10n.offlineMediaVerified
           : context.l10n.offlineMediaDamaged,
     );
