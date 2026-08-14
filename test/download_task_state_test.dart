@@ -2757,6 +2757,8 @@ media.mp4
 
     final partialFile = File(dio.savePath!);
     expect(partialFile.existsSync(), isTrue);
+    final activeTaskBeforePause = await repository.getTask(taskId);
+    expect(activeTaskBeforePause, isNotNull);
 
     var pauseSettled = false;
     final pauseFuture = service.pause(taskId).then((_) {
@@ -2769,9 +2771,9 @@ media.mp4
     expect(pausedTask!.status, DownloadStatus.paused);
     expect(pausedTask.failureReason, DownloadFailureReason.none);
     expect(pausedTask.failureMessage, isNull);
-    expect(pausedTask.progress, 0);
-    expect(pausedTask.totalBytes, isNull);
-    expect(pausedTask.downloadedBytes, 0);
+    expect(pausedTask.progress, activeTaskBeforePause!.progress);
+    expect(pausedTask.totalBytes, activeTaskBeforePause.totalBytes);
+    expect(pausedTask.downloadedBytes, activeTaskBeforePause.downloadedBytes);
     expect(pausedTask.localPath, isNotNull);
     expect(partialFile.existsSync(), isTrue);
     expect(pauseSettled, isFalse);
