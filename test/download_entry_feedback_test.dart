@@ -208,4 +208,23 @@ void main() {
       l10n.downloadActionBusyMessage,
     );
   });
+
+  test('download action fallback hides sensitive values and paths', () {
+    const l10n = AppLocalizations(Locale('en'));
+    final value = downloadActionErrorMessage(
+      l10n,
+      const AppException(
+        'AppException: [download_unknown] token=secret https://cdn.example.test/'
+        'segment.m3u8?ts=123&Authorization=abc'
+        ' /tmp/ani-destiny-offline/index.m3u8',
+      ),
+    );
+
+    expect(value, contains('[sensitive]=[hidden]'));
+    expect(value, contains('https://cdn.example.test/.../segment.m3u8'));
+    expect(value, contains('[path:[hidden]]'));
+    expect(value, isNot(contains('token=secret')));
+    expect(value, isNot(contains('Authorization=abc')));
+    expect(value, isNot(contains('/tmp/ani-destiny-offline/index.m3u8')));
+  });
 }

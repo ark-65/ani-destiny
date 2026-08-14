@@ -232,9 +232,49 @@ void main() {
 
     expect(find.textContaining('StateError'), findsNothing);
     expect(
-        find.text('Unexpected download error'),
-        findsOneWidget,
-      );
+      find.text('Unexpected download error'),
+      findsOneWidget,
+    );
+  });
+
+  testWidgets('failed download cards sanitize fallback failure messages', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      _buildTileApp(
+        DownloadTaskTile(
+          task: _task(
+            status: DownloadStatus.failed,
+            failureReason: DownloadFailureReason.unknown,
+            failureMessage:
+                'download failed for https://cdn.example.test/segment.m3u8?'
+                'token=secret and /tmp/ani-destiny-offline/index.m3u8',
+          ),
+          isBusy: false,
+          onStart: () {},
+          onPause: () {},
+          onCancel: () {},
+          onRemove: () {},
+        ),
+      ),
+    );
+    await tester.pump();
+
+    expect(find.textContaining('download failed for'), findsOneWidget);
+    expect(
+      find.textContaining('[sensitive]=[hidden]'),
+      findsOneWidget,
+    );
+    expect(
+      find.textContaining('https://cdn.example.test/.../segment.m3u8'),
+      findsOneWidget,
+    );
+    expect(find.textContaining('[path:[hidden]]'), findsOneWidget);
+    expect(find.textContaining('token=secret'), findsNothing);
+    expect(
+      find.textContaining('/tmp/ani-destiny-offline/index.m3u8'),
+      findsNothing,
+    );
   });
 
   testWidgets(
