@@ -2786,6 +2786,105 @@ media.mp4
     expect(pauseSettled, isTrue);
   });
 
+  test('canceling an active HLS download clears segment files after settle',
+      () async {
+    final database = AppDatabase(NativeDatabase.memory());
+    addTearDown(database.close);
+    final tempDir =
+        await Directory.systemTemp.createTemp('ani-destiny-active-hls-cancel');
+    addTearDown(() async {
+      if (tempDir.existsSync()) {
+        await tempDir.delete(recursive: true);
+      }
+    });
+
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMethodCallHandler(pathProviderChannel, (call) async {
+      if (call.method == 'getApplicationDocumentsDirectory') {
+        return tempDir.path;
+      }
+      return null;
+    });
+
+    final repository = DownloadRepositoryImpl(database);
+    final dio = _BlockingCancelDio();
+    final service = HttpDownloadService(
+      dio: dio,
+      repository: repository,
+      hlsManifestLoader: _FakeHlsManifestLoader(
+        (manifestUri, headers) async {
+          expect(manifestUri.toString(), 'https://cdn.example.test/index.m3u8');
+          return HlsManifest(
+            uri: Uri.parse('https://cdn.example.test/index.m3u8'),
+            segments: [
+              HlsSegment(
+                uri: Uri.parse('https://cdn.example.test/segment-1.ts'),
+              ),
+            ],
+            variants: const [],
+            isLive: false,
+            targetDuration: null,
+          );
+        },
+      ),
+    );
+
+    final taskId = await service.createTask(
+      animeId: 'anime-1',
+      episodeId: 'episode-1',
+      sourceId: 'sakura',
+      source: const DownloadSource(
+        url: 'https://cdn.example.test/index.m3u8',
+        kind: DownloadKind.hls,
+      ),
+      title: 'HLS Test',
+      episodeTitle: 'Episode 1',
+    );
+
+    final startFuture = service.start(taskId);
+    await dio.downloadStarted.future;
+
+    final partialSegment = File(dio.savePath!);
+    expect(partialSegment.existsSync(), isTrue);
+
+    final activeTaskBeforeCancel = await repository.getTask(taskId);
+    expect(activeTaskBeforeCancel, isNotNull);
+    expect(activeTaskBeforeCancel!.localPath, isNotNull);
+
+    var cancelSettled = false;
+    final cancelFuture = service.cancel(taskId).then((_) {
+      cancelSettled = true;
+    });
+    await Future<void>.delayed(Duration.zero);
+
+    final canceledTask = await repository.getTask(taskId);
+    expect(canceledTask, isNotNull);
+    expect(canceledTask!.status, DownloadStatus.canceled);
+    expect(canceledTask.failureReason, DownloadFailureReason.canceled);
+    expect(canceledTask.failureMessage, isNull);
+    expect(canceledTask.progress, 0);
+    expect(canceledTask.totalBytes, isNull);
+    expect(canceledTask.downloadedBytes, 0);
+    expect(canceledTask.localPath, isNull);
+    expect(partialSegment.existsSync(), isTrue);
+    expect(cancelSettled, isFalse);
+
+    dio.allowCancelCompletion.complete();
+    await cancelFuture;
+    await startFuture;
+
+    final finalizedTask = await repository.getTask(taskId);
+    expect(finalizedTask, isNotNull);
+    expect(finalizedTask!.status, DownloadStatus.canceled);
+    expect(finalizedTask.localPath, isNull);
+    expect(finalizedTask.progress, 0);
+    expect(finalizedTask.totalBytes, isNull);
+    expect(finalizedTask.downloadedBytes, 0);
+    expect(partialSegment.existsSync(), isFalse);
+    expect(cancelSettled, isTrue);
+
+  });
+
   test('removing a discarded task clears any leftover partial file first',
       () async {
     final database = AppDatabase(NativeDatabase.memory());
