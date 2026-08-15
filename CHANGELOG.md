@@ -20,6 +20,7 @@
 - 修复离线完整性校验异常放大：`LocalOfflineMediaService.verify()` 现在对 `isPlayableOfflineMediaPath` 的运行时异常进行容错兜底，遇到清单解析/访问异常时返回 `damaged` 并持久化状态，避免单个损坏 `manifest` 将离线播放动作打断到异常路径。
 
 - 改进 HLS 失败重试持久化：当 HLS 下载在活动任务中断后重启时，`_startHlsTask()` 现在保留现有 `progress`/`downloadedBytes`/`totalBytes`，并在段下载循环内持续将进度写盘；失败态不会再回落到 0，续传将沿用真实已下载量。新增 `test/download_task_state_test.dart` 回归“exhausted retries preserve segment bytes”“starting HLS task resumes from existing segment files”。
+- 补齐 HLS 续传重试复用边界：失败后重试时会复用已落盘的密钥与初始化段资源，首次下载成功的 `key-000000.key` 与 `initialization.mp4` 不再重复下载，避免重试环节的冗余请求并保留正确本地下载账本。新增 `test/download_task_state_test.dart` 回归“starting HLS task reuses downloaded key and init on retry”。
 
 ## [1.0.8] - 2026-08-12
 
