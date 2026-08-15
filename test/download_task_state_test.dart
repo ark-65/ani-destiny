@@ -1114,6 +1114,151 @@ segment-2.m4s
     expect(retryDio.downloadedUris, ['https://cdn.example.test/segment-2.ts']);
   });
 
+  test('starting HLS task reuses downloaded key and init on retry', () async {
+    final database = AppDatabase(NativeDatabase.memory());
+    addTearDown(database.close);
+
+    final tempDir = await Directory.systemTemp
+        .createTemp('ani-destiny-download-hls-retry-encrypted-segments');
+    addTearDown(() async {
+      if (tempDir.existsSync()) {
+        await tempDir.delete(recursive: true);
+      }
+    });
+    _mockApplicationDocumentsDirectory(tempDir.path);
+
+    const keyBytes = <int>[
+      1,
+      3,
+      3,
+      7,
+      1,
+      3,
+      3,
+      7,
+      1,
+      3,
+      3,
+      7,
+      1,
+      3,
+      3,
+      7,
+    ];
+    const initializationBytes = <int>[9, 8];
+    const segmentOne = <int>[5, 6, 7];
+    const segmentTwo = <int>[7, 8, 9, 10, 11, 12];
+    final manifestLoader = _FakeHlsManifestLoader(
+      (manifestUri, headers) async =>
+          const HlsManifestParser().parse(
+            '''
+#EXTM3U
+#EXT-X-TARGETDURATION:8
+#EXT-X-KEY:METHOD=AES-128,URI="episode.key",IV=0x0123456789ABCDEF0123456789ABCDEF
+#EXT-X-MAP:URI="init.mp4"
+#EXTINF:6,
+segment-1.ts
+#EXTINF:6,
+segment-2.ts
+#EXT-X-ENDLIST
+''',
+            uri: manifestUri,
+          ),
+    );
+
+    final firstAttemptDio = _FlakyHlsSegmentDownloadDio(
+      {
+        'https://cdn.example.test/episode.key': keyBytes,
+        'https://cdn.example.test/init.mp4': initializationBytes,
+        'https://cdn.example.test/segment-1.ts': segmentOne,
+        'https://cdn.example.test/segment-2.ts': segmentTwo,
+      },
+      failOnFirst: {'https://cdn.example.test/segment-2.ts'},
+    );
+
+    final repository = DownloadRepositoryImpl(database);
+    final firstAttemptService = HttpDownloadService(
+      dio: firstAttemptDio,
+      repository: repository,
+      hlsManifestLoader: manifestLoader,
+      hlsSegmentMaxAttempts: 1,
+    );
+
+    final taskId = await firstAttemptService.createTask(
+      animeId: 'anime-1',
+      episodeId: 'episode-1',
+      sourceId: 'sakura',
+      source: const DownloadSource(
+        url: 'https://cdn.example.test/index.m3u8',
+        kind: DownloadKind.hls,
+      ),
+      title: 'HLS Test',
+      episodeTitle: 'Episode 1',
+    );
+
+    await firstAttemptService.start(taskId);
+
+    final failedTask = await repository.getTask(taskId);
+    expect(failedTask, isNotNull);
+    expect(failedTask!.status, DownloadStatus.failed);
+    expect(failedTask.localPath, isNotNull);
+    expect(
+      failedTask.downloadedBytes,
+      keyBytes.length + initializationBytes.length + segmentOne.length,
+    );
+
+    final manifestDirectory = p.dirname(failedTask.localPath!);
+    final segmentDir = Directory(p.join(manifestDirectory, 'segments'));
+    expect(
+      File(p.join(segmentDir.path, 'key-000000.key')).existsSync(),
+      isTrue,
+    );
+    expect(
+      File(p.join(segmentDir.path, 'initialization.mp4')).existsSync(),
+      isTrue,
+    );
+    expect(
+      File(p.join(segmentDir.path, 'segment-000000.ts')).existsSync(),
+      isTrue,
+    );
+    expect(
+      File(p.join(segmentDir.path, 'segment-000001.ts')).existsSync(),
+      isFalse,
+    );
+
+    final retryDio = _FakeHlsSegmentDownloadDio({
+      'https://cdn.example.test/episode.key': keyBytes,
+      'https://cdn.example.test/init.mp4': initializationBytes,
+      'https://cdn.example.test/segment-1.ts': segmentOne,
+      'https://cdn.example.test/segment-2.ts': segmentTwo,
+    });
+    final retryService = HttpDownloadService(
+      dio: retryDio,
+      repository: repository,
+      hlsManifestLoader: manifestLoader,
+    );
+
+    await retryService.start(taskId);
+
+    final completedTask = await repository.getTask(taskId);
+    expect(completedTask, isNotNull);
+    expect(completedTask!.status, DownloadStatus.completed);
+    expect(
+      completedTask.downloadedBytes,
+      keyBytes.length + initializationBytes.length + segmentOne.length + segmentTwo.length,
+    );
+    expect(
+      completedTask.localPath,
+      equals(failedTask.localPath),
+    );
+    expect(
+      retryDio.downloadedUris,
+      containsAllInOrder(['https://cdn.example.test/segment-2.ts']),
+    );
+    expect(retryDio.downloadedUris.where((uri) => uri == 'https://cdn.example.test/episode.key'), hasLength(0));
+    expect(retryDio.downloadedUris.where((uri) => uri == 'https://cdn.example.test/init.mp4'), hasLength(0));
+  });
+
   test('interrupted HLS task resumes after app restart with existing segments',
       () async {
     final tempDir = await Directory.systemTemp
