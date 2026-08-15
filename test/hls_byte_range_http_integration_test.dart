@@ -1392,6 +1392,7 @@ class _StaticManifestLoader implements HlsManifestLoader {
     Uri manifestUri, {
     Map<String, String> headers = const {},
     Map<String, String> importedVariables = const {},
+    CancelToken? cancelToken,
   }) async =>
       manifest;
 }

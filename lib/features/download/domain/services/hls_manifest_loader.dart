@@ -1,3 +1,5 @@
+import 'package:dio/dio.dart';
+
 import '../entities/hls_manifest.dart';
 
 abstract class HlsManifestLoader {
@@ -7,5 +9,6 @@ abstract class HlsManifestLoader {
     Uri manifestUri, {
     Map<String, String> headers,
     Map<String, String> importedVariables,
+    CancelToken? cancelToken,
   });
 }

@@ -19,11 +19,13 @@ class DioHlsManifestLoader extends HlsManifestLoader {
     Uri manifestUri, {
     Map<String, String> headers = const {},
     Map<String, String> importedVariables = const {},
+    CancelToken? cancelToken,
   }) {
     return _load(
       manifestUri,
       headers: headers,
       importedVariables: importedVariables,
+      cancelToken: cancelToken,
     );
   }
 
@@ -31,9 +33,11 @@ class DioHlsManifestLoader extends HlsManifestLoader {
     Uri manifestUri, {
     Map<String, String> headers = const {},
     Map<String, String> importedVariables = const {},
+    CancelToken? cancelToken,
   }) async {
     final response = await _dio.getUri<String>(
       manifestUri,
+      cancelToken: cancelToken,
       options: Options(
         responseType: ResponseType.plain,
         headers: headers.isEmpty ? null : headers,

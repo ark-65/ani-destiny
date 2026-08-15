@@ -2784,6 +2784,93 @@ media.mp4
     expect(pauseSettled, isTrue);
   });
 
+  test(
+      'pausing a HLS task during manifest loading does not block task settlement',
+      () async {
+    final database = AppDatabase(NativeDatabase.memory());
+    addTearDown(database.close);
+
+    final tempDir = await Directory.systemTemp
+        .createTemp('ani-destiny-active-hls-manifest-pause');
+    addTearDown(() async {
+      if (tempDir.existsSync()) {
+        await tempDir.delete(recursive: true);
+      }
+    });
+    _mockApplicationDocumentsDirectory(tempDir.path);
+
+    final manifestLoadStarted = Completer<CancelToken?>();
+    CancelToken? manifestLoadToken;
+
+    final repository = DownloadRepositoryImpl(database);
+    final dio = Dio();
+    final service = HttpDownloadService(
+      dio: dio,
+      repository: repository,
+      hlsManifestLoader: _FakeHlsManifestLoader(
+        (manifestUri, headers) async {
+          manifestLoadStarted.complete(manifestLoadToken);
+          final manifestToken = manifestLoadToken;
+          if (manifestToken == null) {
+            await Future<void>.delayed(const Duration(seconds: 120));
+          } else {
+            await Future.any([
+              manifestToken.whenCancel,
+              Future<void>.delayed(const Duration(seconds: 120)),
+            ]);
+            if (manifestToken.isCancelled) {
+              throw DioException(
+                requestOptions: RequestOptions(path: manifestUri.toString()),
+                type: DioExceptionType.cancel,
+                message: 'request canceled',
+              );
+            }
+          }
+          return HlsManifest(
+            uri: Uri.parse('https://cdn.example.test/index.m3u8'),
+            segments: <HlsSegment>[],
+            variants: <HlsVariant>[],
+            isLive: false,
+            targetDuration: null,
+          );
+        },
+        onLoad: (_, cancelToken) {
+          manifestLoadToken = cancelToken;
+        },
+      ),
+    );
+
+    final taskId = await service.createTask(
+      animeId: 'anime-1',
+      episodeId: 'episode-1',
+      sourceId: 'sakura',
+      source: DownloadSource(
+        url: 'https://cdn.example.test/index.m3u8',
+        kind: DownloadKind.hls,
+      ),
+      title: 'HLS Pause Manifest Test',
+      episodeTitle: 'Episode 1',
+    );
+
+    final startFuture = service.start(taskId);
+    final loadedCancelToken = await manifestLoadStarted.future;
+
+    final pauseFuture = service.pause(taskId);
+    await expectLater(
+      pauseFuture.timeout(const Duration(seconds: 2)),
+      completes,
+    );
+    await expectLater(
+      startFuture.timeout(const Duration(seconds: 2)),
+      completes,
+    );
+
+    final task = await repository.getTask(taskId);
+    expect(task, isNotNull);
+    expect(task!.status, DownloadStatus.paused);
+    expect(loadedCancelToken, isNotNull);
+  });
+
   test('removing a discarded task clears any leftover partial file first',
       () async {
     final database = AppDatabase(NativeDatabase.memory());
@@ -3488,16 +3575,25 @@ class _FlakyHlsSegmentDownloadDio extends DioForNative {
 }
 
 class _FakeHlsManifestLoader implements HlsManifestLoader {
-  const _FakeHlsManifestLoader(this.loadManifest);
+  final Future<HlsManifest> Function(
+    Uri manifestUri,
+    Map<String, String> headers,
+  ) loadManifest;
+  final void Function(Uri manifestUri, CancelToken? cancelToken)? onLoad;
 
-  final Future<HlsManifest> Function(Uri, Map<String, String>) loadManifest;
+  const _FakeHlsManifestLoader(
+    this.loadManifest, {
+    this.onLoad,
+  });
 
   @override
   Future<HlsManifest> load(
     Uri manifestUri, {
     Map<String, String> headers = const {},
     Map<String, String> importedVariables = const {},
+    CancelToken? cancelToken,
   }) {
+    onLoad?.call(manifestUri, cancelToken);
     return loadManifest(manifestUri, headers);
   }
 }

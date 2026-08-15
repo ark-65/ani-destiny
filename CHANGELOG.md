@@ -7,6 +7,9 @@
 ## [Unreleased]
 
 ### 🐛 修复
+- 修复 HLS 下载暂停行为：当任务类型为 HLS 且处于下载中时，`pause()` 不再清空 `progress`、`downloadedBytes`、`totalBytes`，从而保留续传进度并避免界面与续传链路在暂停后显示 `0` 进度；新增 `test/download_task_state_test.dart` 回归“pausing an active HLS download keeps downloaded segments for resume”验证。
+- 修复 HLS 激活下载对 manifest 加载阶段的可收束性：`start()` 请求主清单期间执行 `pause()` 可在短时内完成结算，新增 `Dio` manifest 加载链路取消透传（`manifestLoader.load` 与 `_loadHlsMediaBundle` 透传 `CancelToken`），并补充 `test/download_task_state_test.dart` 回归“pausing a HLS task during manifest loading does not block task settlement”。
+- 修复 HLS 主/音频联合下载进度回退：当 master 选中带外部音轨且 video、audio 分别下载时，新增全局段总数与偏移量计算，`_downloadHlsSegments` 不再以单个清单段数归一化，避免视频下载完成后切到音频时进度回退；新增 `test/download_task_state_test.dart` 回归“starting HLS task with alternate audio keeps progress monotonic”。
 - 修复离线播放入口参数边界：当播放参数 `playUrl` 指向离线本地 `file://`/本地路径且携带 `playHeaders` 时，进入播放器前会清空请求头后再构造播放参数；补充 `test/player_page_test.dart` 回归 `offline local playback args remove request headers before playback` 与 `remote playback args keep request headers`，避免离线复播携带旧请求头进入媒体层。
 - 新增离线媒体分组级校验入口：番剧标题行新增“Verify offline media”动作，可一键对该番剧下全部本地离线条目执行完整性重检；任何条目异常会统一提示损坏。新增 `test/download_page_test.dart` 回归覆盖整部番剧校验会逐条执行 `verify` 并根据结果汇总提示。
 - 增强离线媒体启动重扫：新增 `offlineMediaIntegrityProvider`，在离线列表读取前对仓库中的 `OfflineMediaItem` 执行完整性重检并持久化状态，避免重启后 `Downloads` 保留过期 `integrityStatus`。新增 `test/download_providers_test.dart` 覆盖可播放与缺损条目重扫落库。
