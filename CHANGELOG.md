@@ -13,7 +13,8 @@
 - 增强离线媒体启动重扫：新增 `offlineMediaIntegrityProvider`，在离线列表读取前对仓库中的 `OfflineMediaItem` 执行完整性重检并持久化状态，避免重启后 `Downloads` 保留过期 `integrityStatus`。新增 `test/download_providers_test.dart` 覆盖可播放与缺损条目重扫落库。
 - 修复 HLS 离线任务重启恢复的复用边界：新增段落地大小账本 `.hls-segment-sizes.json`，启动时只有在本地片段文件大小与账本记录一致时才跳过下载，未一致时会重下并更新账本；新增 `test/download_task_state_test.dart` 覆盖该场景，避免旧下载记录掩盖损坏片段导致假完成。
 - 收紧 HLS 续传复用边界：当 `.hls-segment-sizes.json` 缺少某个片段条目时，即使文件存在也不再复用，启动任务时会强制重下该片段，避免中断写入残留文件触发假完成；补充 `test/download_task_state_test.dart` 回归验证。
-- 收紧 HLS 续传复用边界：新增 `.hls-segment-sizes.json` 的 SHA-256 校验，密钥、初始化段、普通媒体片段在长度一致时也要经过 digest 一致性确认；长度一致但内容变更的旧文件将被重下并重写账本，覆盖用例为 `test/download_task_state_test.dart`。
+ - 收紧 HLS 续传复用边界：新增 `.hls-segment-sizes.json` 的 SHA-256 校验，密钥、初始化段、普通媒体片段在长度一致时也要经过 digest 一致性确认；长度一致但内容变更的旧文件将被重下并重写账本，覆盖用例为 `test/download_task_state_test.dart`。
+ - 加强 key/init 摘要复用边界：新增 `test/download_task_state_test.dart` 回归，覆盖加密 HLS 在 key 与 init 本地文件摘要变更后的重下载场景，避免变更未检测到的本地密钥/初始化片段被错误复用导致解码失败。
 - 对同一改动条目补充说明：当前这批 HLS 离线续传复用收紧说明已按未发布变更放入 [Unreleased]，用于满足 changelog 门禁要求而非回补历史发布节。
 - 2026-08-14 02:04:00+08:00：补齐 HLS 续传重试行为：`recoverInterruptedHlsTasks()` 现在不再清零恢复中断 HLS 任务的下载进度和总长度，仅清除失败码与失败说明，并保留 `progress`、`downloadedBytes`、`totalBytes` 供继续下载使用；新增 `test/download_task_state_test.dart` 回归验证“中断恢复后仍保留可续传进度”。
 - 完善离线媒体番剧级校验入口：下载页离线媒体分组行新增“校验整部离线媒体”动作，点击后会逐条复检该番组所有本地单集，并按聚合结果给出“全部可播放”或“文件不完整”提示；保留单集校验入口与删除入口不变。
