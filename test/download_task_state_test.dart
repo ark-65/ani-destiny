@@ -1676,6 +1676,111 @@ segment-2.ts
     expect(await File(segmentPath).readAsBytes(), segmentOne);
   });
 
+  test(
+      'starting HLS task redownloads key and init when cached digests no longer match',
+      () async {
+    final database = AppDatabase(NativeDatabase.memory());
+    addTearDown(database.close);
+
+    final tempDir = await Directory.systemTemp
+        .createTemp('ani-destiny-download-hls-key-init-digest');
+    addTearDown(() async {
+      if (tempDir.existsSync()) {
+        await tempDir.delete(recursive: true);
+      }
+    });
+    _mockApplicationDocumentsDirectory(tempDir.path);
+
+    const keyBytes = <int>[
+      1,
+      3,
+      3,
+      7,
+      1,
+      3,
+      3,
+      7,
+      1,
+      3,
+      3,
+      7,
+      1,
+      3,
+      3,
+      7,
+    ];
+    const initializationBytes = <int>[9, 8];
+    const segmentOne = <int>[5, 6, 7];
+    final dio = _FakeHlsSegmentDownloadDio({
+      'https://cdn.example.test/episode.key': keyBytes,
+      'https://cdn.example.test/init.mp4': initializationBytes,
+      'https://cdn.example.test/segment-1.ts': segmentOne,
+    });
+    final repository = DownloadRepositoryImpl(database);
+    final service = HttpDownloadService(
+      dio: dio,
+      repository: repository,
+      hlsManifestLoader: _FakeHlsManifestLoader(
+        (manifestUri, headers) async => const HlsManifestParser().parse(
+          '''
+#EXTM3U
+#EXT-X-TARGETDURATION:8
+#EXT-X-KEY:METHOD=AES-128,URI="episode.key",IV=0x0123456789ABCDEF0123456789ABCDEF
+#EXT-X-MAP:URI="init.mp4"
+#EXTINF:6,
+segment-1.ts
+#EXT-X-ENDLIST
+''',
+          uri: manifestUri,
+        ),
+      ),
+    );
+
+    final taskId = await service.createTask(
+      animeId: 'anime-1',
+      episodeId: 'episode-key-init-digest',
+      sourceId: 'sakura',
+      source: const DownloadSource(
+        url: 'https://cdn.example.test/index.m3u8',
+        kind: DownloadKind.hls,
+      ),
+      title: 'HLS Test',
+      episodeTitle: 'Episode Key Init Digest',
+    );
+
+    final segmentDirectory = Directory(
+      p.join(tempDir.path, 'downloads', taskId, 'segments'),
+    );
+    final keyPath = p.join(segmentDirectory.path, 'key-000000.key');
+    final initPath = p.join(segmentDirectory.path, 'initialization.mp4');
+
+    await service.start(taskId);
+    final firstRunTask = await repository.getTask(taskId);
+    expect(firstRunTask, isNotNull);
+    expect(firstRunTask!.status, DownloadStatus.completed);
+    expect(dio.downloadedUris, hasLength(3));
+    expect(await File(keyPath).readAsBytes(), keyBytes);
+    expect(await File(initPath).readAsBytes(), initializationBytes);
+
+    dio.downloadedUris.clear();
+    await File(keyPath).writeAsBytes(<int>[1, 3, 3, 7, 1, 3, 3, 7, 1, 3, 3, 7, 1, 3, 3, 8]);
+    await File(initPath).writeAsBytes(const <int>[9, 9]);
+    await service.start(taskId);
+
+    expect(
+      dio.downloadedUris.where((uri) => uri == 'https://cdn.example.test/episode.key'),
+      hasLength(1),
+    );
+    expect(
+      dio.downloadedUris.where((uri) => uri == 'https://cdn.example.test/init.mp4'),
+      hasLength(1),
+    );
+    expect(dio.downloadedUris, isNot(contains('https://cdn.example.test/segment-1.ts')));
+    expect(firstRunTask!.totalBytes, keyBytes.length + initializationBytes.length + segmentOne.length);
+    expect(await File(keyPath).readAsBytes(), keyBytes);
+    expect(await File(initPath).readAsBytes(), initializationBytes);
+  });
+
   test('recovering interrupted HLS tasks keeps resumable progress', () async {
     final database = AppDatabase(NativeDatabase.memory());
     addTearDown(database.close);
