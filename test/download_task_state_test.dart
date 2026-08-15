@@ -3408,6 +3408,123 @@ media.mp4
     expect(loadedCancelToken, isNotNull);
   });
 
+  test(
+      'pausing a HLS task during media manifest loading does not block task settlement',
+      () async {
+    final database = AppDatabase(NativeDatabase.memory());
+    addTearDown(database.close);
+
+    final tempDir = await Directory.systemTemp
+        .createTemp('ani-destiny-active-hls-media-manifest-pause');
+    addTearDown(() async {
+      if (tempDir.existsSync()) {
+        await tempDir.delete(recursive: true);
+      }
+    });
+    _mockApplicationDocumentsDirectory(tempDir.path);
+
+    final rootManifestLoadStarted = Completer<CancelToken?>();
+    final mediaManifestLoadStarted = Completer<CancelToken?>();
+
+    CancelToken? rootManifestToken;
+    CancelToken? mediaManifestToken;
+    final manifestLoadTokens = <CancelToken?>[];
+
+    final repository = DownloadRepositoryImpl(database);
+    final service = HttpDownloadService(
+      dio: Dio(),
+      repository: repository,
+      hlsManifestLoader: _FakeHlsManifestLoader(
+        (manifestUri, headers) async {
+          if (manifestUri.toString() == 'https://cdn.example.test/index.m3u8') {
+            return HlsManifest(
+              uri: Uri.parse('https://cdn.example.test/index.m3u8'),
+              segments: <HlsSegment>[],
+              variants: [
+                HlsVariant(
+                  uri: Uri.parse('https://cdn.example.test/video/index.m3u8'),
+                  bandwidth: 2000000,
+                ),
+              ],
+              isLive: false,
+              targetDuration: null,
+            );
+          }
+
+          final manifestToken = mediaManifestToken;
+          if (manifestToken == null) {
+            await Future<void>.delayed(const Duration(seconds: 120));
+          } else {
+            await Future.any([
+              manifestToken.whenCancel,
+              Future<void>.delayed(const Duration(seconds: 120)),
+            ]);
+            if (manifestToken.isCancelled) {
+              throw DioException(
+                requestOptions: RequestOptions(path: manifestUri.toString()),
+                type: DioExceptionType.cancel,
+                message: 'request canceled',
+              );
+            }
+          }
+
+          return HlsManifest(
+            uri: Uri.parse('https://cdn.example.test/video/index.m3u8'),
+            segments: [
+              HlsSegment(uri: Uri.parse('https://cdn.example.test/video.ts')),
+            ],
+            variants: <HlsVariant>[],
+            isLive: false,
+            targetDuration: null,
+          );
+        },
+        onLoad: (manifestUri, cancelToken) {
+          if (manifestUri.toString() == 'https://cdn.example.test/index.m3u8') {
+            rootManifestToken = cancelToken;
+            rootManifestLoadStarted.complete(cancelToken);
+          } else {
+            mediaManifestToken = cancelToken;
+            mediaManifestLoadStarted.complete(cancelToken);
+          }
+          manifestLoadTokens.add(cancelToken);
+        },
+      ),
+    );
+
+    final taskId = await service.createTask(
+      animeId: 'anime-1',
+      episodeId: 'episode-1',
+      sourceId: 'sakura',
+      source: DownloadSource(
+        url: 'https://cdn.example.test/index.m3u8',
+        kind: DownloadKind.hls,
+      ),
+      title: 'HLS Pause Media Manifest Test',
+      episodeTitle: 'Episode 1',
+    );
+
+    final startFuture = service.start(taskId);
+
+    await rootManifestLoadStarted.future;
+    await mediaManifestLoadStarted.future;
+    await expectLater(
+      service.pause(taskId).timeout(const Duration(seconds: 2)),
+      completes,
+    );
+    await expectLater(
+      startFuture.timeout(const Duration(seconds: 2)),
+      completes,
+    );
+
+    final task = await repository.getTask(taskId);
+    expect(task, isNotNull);
+    expect(task!.status, DownloadStatus.paused);
+    expect(rootManifestToken, isNotNull);
+    expect(mediaManifestToken, isNotNull);
+    expect(rootManifestToken, same(mediaManifestToken));
+    expect(manifestLoadTokens, isNotEmpty);
+  });
+
   test('removing a discarded task clears any leftover partial file first',
       () async {
     final database = AppDatabase(NativeDatabase.memory());
