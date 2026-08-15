@@ -1757,7 +1757,16 @@ segment-1.ts
     await service.start(taskId);
     final firstRunTask = await repository.getTask(taskId);
     expect(firstRunTask, isNotNull);
-    expect(firstRunTask!.status, DownloadStatus.completed);
+    if (firstRunTask!.status != DownloadStatus.completed) {
+      fail(
+        'first attempt failed: status=${firstRunTask.status}, '
+        'failureReason=${firstRunTask.failureReason}, '
+        'failureMessage=${firstRunTask.failureMessage}',
+      );
+    }
+    if (dio.downloadedUris.length != 3) {
+      fail('first attempt download URIs: ${dio.downloadedUris}');
+    }
     expect(dio.downloadedUris, hasLength(3));
     expect(await File(keyPath).readAsBytes(), keyBytes);
     expect(await File(initPath).readAsBytes(), initializationBytes);
@@ -1776,9 +1785,139 @@ segment-1.ts
       hasLength(1),
     );
     expect(dio.downloadedUris, isNot(contains('https://cdn.example.test/segment-1.ts')));
-    expect(firstRunTask!.totalBytes, keyBytes.length + initializationBytes.length + segmentOne.length);
+    expect(firstRunTask.totalBytes, keyBytes.length + initializationBytes.length + segmentOne.length);
     expect(await File(keyPath).readAsBytes(), keyBytes);
     expect(await File(initPath).readAsBytes(), initializationBytes);
+  });
+
+  test(
+      'starting HLS task redownloads key and init when cached artifacts are missing',
+      () async {
+    final database = AppDatabase(NativeDatabase.memory());
+    addTearDown(database.close);
+
+    final tempDir = await Directory.systemTemp.createTemp(
+      'ani-destiny-download-hls-key-init-missing',
+    );
+    addTearDown(() async {
+      if (tempDir.existsSync()) {
+        await tempDir.delete(recursive: true);
+      }
+    });
+    _mockApplicationDocumentsDirectory(tempDir.path);
+
+    const keyBytes = <int>[
+      1,
+      3,
+      3,
+      7,
+      1,
+      3,
+      3,
+      7,
+      1,
+      3,
+      3,
+      7,
+      1,
+      3,
+      3,
+      7,
+    ];
+    const initializationBytes = <int>[9, 8];
+    const segmentOne = <int>[5, 6, 7];
+    final dio = _FakeHlsSegmentDownloadDio({
+      'https://cdn.example.test/episode.key': keyBytes,
+      'https://cdn.example.test/init.mp4': initializationBytes,
+      'https://cdn.example.test/segment-1.ts': segmentOne,
+    });
+    final repository = DownloadRepositoryImpl(database);
+    final service = HttpDownloadService(
+      dio: dio,
+      repository: repository,
+      hlsManifestLoader: _FakeHlsManifestLoader(
+        (manifestUri, headers) async => const HlsManifestParser().parse(
+          '''
+#EXTM3U
+#EXT-X-TARGETDURATION:8
+#EXT-X-KEY:METHOD=AES-128,URI="episode.key",IV=0x0123456789ABCDEF0123456789ABCDEF
+#EXT-X-MAP:URI="init.mp4"
+#EXTINF:6,
+segment-1.ts
+#EXT-X-ENDLIST
+''',
+          uri: manifestUri,
+        ),
+      ),
+    );
+
+    final taskId = await service.createTask(
+      animeId: 'anime-1',
+      episodeId: 'episode-key-init-missing',
+      sourceId: 'sakura',
+      source: const DownloadSource(
+        url: 'https://cdn.example.test/index.m3u8',
+        kind: DownloadKind.hls,
+      ),
+      title: 'HLS Test',
+      episodeTitle: 'Episode Key Init Missing',
+    );
+
+    final segmentDirectory = Directory(
+      p.join(tempDir.path, 'downloads', taskId, 'segments'),
+    );
+    final keyPath = p.join(segmentDirectory.path, 'key-000000.key');
+    final initPath = p.join(segmentDirectory.path, 'initialization.mp4');
+
+    await service.start(taskId);
+    final firstRunTask = await repository.getTask(taskId);
+    expect(firstRunTask, isNotNull);
+    if (firstRunTask!.status != DownloadStatus.completed) {
+      fail(
+        'first attempt failed: status=${firstRunTask.status}, '
+        'failureReason=${firstRunTask.failureReason}, '
+        'failureMessage=${firstRunTask.failureMessage}',
+      );
+    }
+    if (dio.downloadedUris.length != 3) {
+      fail('first attempt download URIs: ${dio.downloadedUris}');
+    }
+    expect(dio.downloadedUris, hasLength(3));
+    expect(await File(keyPath).readAsBytes(), keyBytes);
+    expect(await File(initPath).readAsBytes(), initializationBytes);
+
+    dio.downloadedUris.clear();
+    await File(keyPath).delete();
+    await File(initPath).delete();
+
+    await service.start(taskId);
+    final secondRunTask = await repository.getTask(taskId);
+    if (secondRunTask == null) {
+      fail('second attempt should persist task record after restart with missing key/init');
+    }
+    if (secondRunTask.status != DownloadStatus.completed) {
+      fail(
+        'second attempt failed: status=${secondRunTask.status}, '
+        'failureReason=${secondRunTask.failureReason}, '
+        'failureMessage=${secondRunTask.failureMessage}',
+      );
+    }
+
+    expect(
+      dio.downloadedUris.where((uri) => uri == 'https://cdn.example.test/episode.key'),
+      hasLength(1),
+    );
+    expect(
+      dio.downloadedUris.where((uri) => uri == 'https://cdn.example.test/init.mp4'),
+      hasLength(1),
+    );
+    expect(
+      dio.downloadedUris.where((uri) => uri == 'https://cdn.example.test/segment-1.ts'),
+      isEmpty,
+    );
+    expect(await File(keyPath).readAsBytes(), keyBytes);
+    expect(await File(initPath).readAsBytes(), initializationBytes);
+    expect(await File(p.join(segmentDirectory.path, 'segment-000000.ts')).exists(), isTrue);
   });
 
   test('recovering interrupted HLS tasks keeps resumable progress', () async {
