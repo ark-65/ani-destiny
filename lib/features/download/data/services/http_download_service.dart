@@ -363,11 +363,18 @@ class HttpDownloadService implements DownloadService {
         return;
       }
 
+      final audioBundle = mediaBundle.audio;
+      final videoSegmentCount = mediaBundle.video.segments.length;
+      final audioSegmentCount = audioBundle?.segments.length ?? 0;
+      final totalSegmentCount = videoSegmentCount + audioSegmentCount;
+
       var segmentDownloadedBytes = await _downloadHlsSegments(
         task: preparingTask,
         mediaManifest: mediaBundle.video,
         headers: existingTask.headers,
         cancelToken: token,
+        segmentOffset: 0,
+        totalSegments: totalSegmentCount,
         manifestPath: mediaBundle.audio == null
             ? prepareLocalManifestPath
             : p.join(
@@ -382,6 +389,8 @@ class HttpDownloadService implements DownloadService {
           mediaManifest: audioManifest,
           headers: existingTask.headers,
           cancelToken: token,
+          segmentOffset: videoSegmentCount,
+          totalSegments: totalSegmentCount,
           manifestPath: p.join(
             p.dirname(prepareLocalManifestPath),
             'audio',
@@ -520,6 +529,8 @@ class HttpDownloadService implements DownloadService {
     required Map<String, String> headers,
     required CancelToken cancelToken,
     required String manifestPath,
+    required int segmentOffset,
+    required int totalSegments,
   }) async {
     if (mediaManifest.segments.isEmpty) {
       throw const FormatException('HLS manifest contains no media entries.');
@@ -614,7 +625,8 @@ class HttpDownloadService implements DownloadService {
       for (var index = 0; index < mediaManifest.segments.length; index++) {
         final segment = mediaManifest.segments[index];
         if (segment.isGap) {
-          final progress = (index + 1) / mediaManifest.segments.length;
+          final progress =
+              (segmentOffset + index + 1) / (totalSegments.toDouble());
           await _persistHlsDownloadProgress(
             task: task,
             downloadedBytes: downloadedBytes,
@@ -636,8 +648,9 @@ class HttpDownloadService implements DownloadService {
                       expectedSegmentLength == existingBytes) &&
               (expectedSegmentHash == null ||
                   expectedSegmentHash == await _sha256Hex(existingSegmentFile))) {
-            downloadedBytes += existingBytes;
-            final progress = (index + 1) / mediaManifest.segments.length;
+          downloadedBytes += existingBytes;
+            final progress =
+                (segmentOffset + index + 1) / (totalSegments.toDouble());
             await _persistHlsDownloadProgress(
               task: task,
               downloadedBytes: downloadedBytes,
@@ -658,7 +671,7 @@ class HttpDownloadService implements DownloadService {
           sha256: await _sha256Hex(existingSegmentFile),
         );
         downloadedBytes += segmentBytes;
-        final progress = (index + 1) / mediaManifest.segments.length;
+        final progress = (segmentOffset + index + 1) / (totalSegments.toDouble());
         await _persistHlsDownloadProgress(
           task: task,
           downloadedBytes: downloadedBytes,
