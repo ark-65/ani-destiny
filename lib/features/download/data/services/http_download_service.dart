@@ -349,6 +349,7 @@ class HttpDownloadService implements DownloadService {
         manifestLoader: manifestLoader,
         sourceUri: sourceUri,
         headers: existingTask.headers,
+        cancelToken: token,
       );
       if (mediaBundle.manifests.any((manifest) => manifest.isLive)) {
         final unsupported = preparingTask.copyWith(
@@ -1180,10 +1181,12 @@ class HttpDownloadService implements DownloadService {
     required HlsManifestLoader manifestLoader,
     required Uri sourceUri,
     required Map<String, String> headers,
+    required CancelToken cancelToken,
   }) async {
     HlsManifest manifest = await manifestLoader.load(
       sourceUri,
       headers: headers,
+      cancelToken: cancelToken,
     );
     if (!manifest.isMasterPlaylist) {
       return _HlsMediaBundle(video: manifest);
@@ -1209,6 +1212,7 @@ class HttpDownloadService implements DownloadService {
       selectedVariant.uri,
       headers: headers,
       importedVariables: manifest.variables,
+      cancelToken: cancelToken,
     );
     if (videoManifest.isMasterPlaylist) {
       throw const FormatException(
@@ -1225,6 +1229,7 @@ class HttpDownloadService implements DownloadService {
       selectedAudio.uri!,
       headers: headers,
       importedVariables: manifest.variables,
+      cancelToken: cancelToken,
     );
     if (audioManifest.isMasterPlaylist) {
       throw const FormatException(
