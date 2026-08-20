@@ -2844,7 +2844,7 @@ media.mp4
       animeId: 'anime-1',
       episodeId: 'episode-1',
       sourceId: 'sakura',
-      source: DownloadSource(
+      source: const DownloadSource(
         url: 'https://cdn.example.test/index.m3u8',
         kind: DownloadKind.hls,
       ),
