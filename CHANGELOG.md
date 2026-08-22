@@ -7,6 +7,13 @@
 ## [Unreleased]
 
 ### 🐛 修复
+- 修复 HLS 下载暂停行为：当任务类型为 HLS 且处于下载中时，`pause()` 不再清空 `progress`、`downloadedBytes`、`totalBytes`，从而保留续传进度并避免界面与续传链路在暂停后显示 `0` 进度；新增 `test/download_task_state_test.dart` 回归“pausing an active HLS download keeps downloaded segments for resume”验证。
+- 补齐 HLS 活跃取消语义回归：新增 `test/download_task_state_test.dart` 用例，覆盖活跃 HLS 任务在取消过程中先保留 manifest 与分片文件、等待 settlement 后再清理目录并置空 `localPath`，锁定 `cancel()` 在下载中/取消态切换下的行为边界。
+- 修复 HLS 激活下载对 manifest 加载阶段的可收束性：`start()` 请求主清单期间执行 `pause()` 可在短时内完成结算，新增 `Dio` manifest 加载链路取消透传（`manifestLoader.load` 与 `_loadHlsMediaBundle` 透传 `CancelToken`），并补充 `test/download_task_state_test.dart` 回归“pausing a HLS task during manifest loading does not block task settlement”。
+- 修复 HLS 变体清单加载阶段暂停收敛行为：当 `pause()` 发生在 `_loadHlsMediaBundle` 的视频子清单加载期间时，`start()` 任务会在短时内结算为 `paused` 而非卡在下载态，新增 `test/download_task_state_test.dart` 回归“pausing a HLS task during variant manifest loading does not block task settlement”。
+- 补充同链路的媒体清单阶段验证：当 `start()` 已切入 video 变体后进入 media manifest 请求阶段时，`pause()` 仍应触发取消并在两秒内完成结算；新增 `test/download_task_state_test.dart` 回归“pausing a HLS task during media manifest loading does not block task settlement”。
+- 补充外部音轨清单加载阶段的暂停收敛验证：主清单与视频变体加载完成、进入 audio rendition 清单请求后执行 `pause()`，同一 `CancelToken` 会取消音频清单请求并让任务在两秒内结算为 `paused`；新增 `test/download_task_state_test.dart` 回归“pausing a HLS task during audio manifest loading does not block task settlement”。
+- 修复 HLS 主/音频联合下载进度回退：当 master 选中带外部音轨且 video、audio 分别下载时，新增全局段总数与偏移量计算，`_downloadHlsSegments` 不再以单个清单段数归一化，避免视频下载完成后切到音频时进度回退；新增 `test/download_task_state_test.dart` 回归“starting HLS task with alternate audio keeps progress monotonic”。
 - 收口下载失败提示的敏感信息边界：下载动作兜底、持久化任务失败说明与下载卡片统一经过 `sanitizeError(...)`，遮蔽 URL、token、cookie 和完整本地路径；补充 `test/download_entry_feedback_test.dart`、`test/download_task_entity_test.dart` 与 `test/download_task_tile_test.dart` 回归。
 - 固定 GitHub Actions 的 Build 与 Release 工具链为最后一次验证通过的 Flutter 3.44.9，避免 `stable` 漂移到 Flutter 3.47.1 / Dart 3.13 后触发旧版 analyzer 的代码生成异常并让 `build_runner` 挂起至 6 小时超时。
 - 修复离线播放入口参数边界：当播放参数 `playUrl` 指向离线本地 `file://`/本地路径且携带 `playHeaders` 时，进入播放器前会清空请求头后再构造播放参数；补充 `test/player_page_test.dart` 回归 `offline local playback args remove request headers before playback` 与 `remote playback args keep request headers`，避免离线复播携带旧请求头进入媒体层。
@@ -14,11 +21,16 @@
 - 增强离线媒体启动重扫：新增 `offlineMediaIntegrityProvider`，在离线列表读取前对仓库中的 `OfflineMediaItem` 执行完整性重检并持久化状态，避免重启后 `Downloads` 保留过期 `integrityStatus`。新增 `test/download_providers_test.dart` 覆盖可播放与缺损条目重扫落库。
 - 修复 HLS 离线任务重启恢复的复用边界：新增段落地大小账本 `.hls-segment-sizes.json`，启动时只有在本地片段文件大小与账本记录一致时才跳过下载，未一致时会重下并更新账本；新增 `test/download_task_state_test.dart` 覆盖该场景，避免旧下载记录掩盖损坏片段导致假完成。
 - 收紧 HLS 续传复用边界：当 `.hls-segment-sizes.json` 缺少某个片段条目时，即使文件存在也不再复用，启动任务时会强制重下该片段，避免中断写入残留文件触发假完成；补充 `test/download_task_state_test.dart` 回归验证。
-- 收紧 HLS 续传复用边界：新增 `.hls-segment-sizes.json` 的 SHA-256 校验，密钥、初始化段、普通媒体片段在长度一致时也要经过 digest 一致性确认；长度一致但内容变更的旧文件将被重下并重写账本，覆盖用例为 `test/download_task_state_test.dart`。
+ - 收紧 HLS 续传复用边界：新增 `.hls-segment-sizes.json` 的 SHA-256 校验，密钥、初始化段、普通媒体片段在长度一致时也要经过 digest 一致性确认；长度一致但内容变更的旧文件将被重下并重写账本，覆盖用例为 `test/download_task_state_test.dart`。
+ - 加强 key/init 摘要复用边界：新增 `test/download_task_state_test.dart` 回归，覆盖加密 HLS 在 key 与 init 本地文件摘要变更后的重下载场景，避免变更未检测到的本地密钥/初始化片段被错误复用导致解码失败。
+ - 强化 HLS 关键资源缺失边界：新增 `test/download_task_state_test.dart` 回归，覆盖 key/init 文件缺失后的重试任务应补下载缺失关键资源并复用已落盘片段的行为，避免因关键文件丢失造成解码失败或重复下载完整清单。
 - 对同一改动条目补充说明：当前这批 HLS 离线续传复用收紧说明已按未发布变更放入 [Unreleased]，用于满足 changelog 门禁要求而非回补历史发布节。
 - 2026-08-14 02:04:00+08:00：补齐 HLS 续传重试行为：`recoverInterruptedHlsTasks()` 现在不再清零恢复中断 HLS 任务的下载进度和总长度，仅清除失败码与失败说明，并保留 `progress`、`downloadedBytes`、`totalBytes` 供继续下载使用；新增 `test/download_task_state_test.dart` 回归验证“中断恢复后仍保留可续传进度”。
 - 完善离线媒体番剧级校验入口：下载页离线媒体分组行新增“校验整部离线媒体”动作，点击后会逐条复检该番组所有本地单集，并按聚合结果给出“全部可播放”或“文件不完整”提示；保留单集校验入口与删除入口不变。
 - 修复离线完整性校验异常放大：`LocalOfflineMediaService.verify()` 现在对 `isPlayableOfflineMediaPath` 的运行时异常进行容错兜底，遇到清单解析/访问异常时返回 `damaged` 并持久化状态，避免单个损坏 `manifest` 将离线播放动作打断到异常路径。
+
+- 改进 HLS 失败重试持久化：当 HLS 下载在活动任务中断后重启时，`_startHlsTask()` 现在保留现有 `progress`/`downloadedBytes`/`totalBytes`，并在段下载循环内持续将进度写盘；失败态不会再回落到 0，续传将沿用真实已下载量。新增 `test/download_task_state_test.dart` 回归“exhausted retries preserve segment bytes”“starting HLS task resumes from existing segment files”。
+- 补齐 HLS 续传重试复用边界：失败后重试时会复用已落盘的密钥与初始化段资源，首次下载成功的 `key-000000.key` 与 `initialization.mp4` 不再重复下载，避免重试环节的冗余请求并保留正确本地下载账本。新增 `test/download_task_state_test.dart` 回归“starting HLS task reuses downloaded key and init on retry”。
 
 ## [1.0.8] - 2026-08-12
 
