@@ -8,6 +8,7 @@
 
 ### Fixed
 - 2026-08-15 05:03:43+08:00: Completed another HLS mainline hygiene slice in `fix/hls-download-error-sanitize-main`: download action fallback and failed task card messages now pass through `sanitizeError(...)` before surfacing, covering URLs, tokens, and local paths. Added `test/download_entry_feedback_test.dart` and `test/download_task_tile_test.dart` regressions.
+- Pinned the GitHub Actions Build and Release toolchain to Flutter 3.44.9, the last verified green version, preventing `stable` drift to Flutter 3.47.1 / Dart 3.13 from triggering the older analyzer code-generation exception and leaving `build_runner` hung until the six-hour job timeout.
 - Moved HLS resume-reuse fixes that were added after 1.0.8 release to Unreleased for next release:
   - Added segment-size ledger `.hls-segment-sizes.json`; resume reuse now requires local segment size to match the ledger, and mismatches force re-download with ledger rewrite. Coverage in `test/download_task_state_test.dart`.
   - Enforced ledger entries for segment reuse: missing segment entries no longer reuse files; existing files are re-downloaded to avoid stale resume artifacts causing false-complete.
