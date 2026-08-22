@@ -7,6 +7,7 @@
 ## [Unreleased]
 
 ### Fixed
+- Pinned the GitHub Actions Build and Release toolchain to Flutter 3.44.9, the last verified green version, preventing `stable` drift to Flutter 3.47.1 / Dart 3.13 from triggering the older analyzer code-generation exception and leaving `build_runner` hung until the six-hour job timeout.
 - Moved HLS resume-reuse fixes that were added after 1.0.8 release to Unreleased for next release:
   - Added segment-size ledger `.hls-segment-sizes.json`; resume reuse now requires local segment size to match the ledger, and mismatches force re-download with ledger rewrite. Coverage in `test/download_task_state_test.dart`.
   - Enforced ledger entries for segment reuse: missing segment entries no longer reuse files; existing files are re-downloaded to avoid stale resume artifacts causing false-complete.
