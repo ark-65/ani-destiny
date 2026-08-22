@@ -3472,7 +3472,7 @@ media.mp4
       animeId: 'anime-1',
       episodeId: 'episode-1',
       sourceId: 'sakura',
-      source: DownloadSource(
+      source: const DownloadSource(
         url: 'https://cdn.example.test/index.m3u8',
         kind: DownloadKind.hls,
       ),
@@ -3586,7 +3586,7 @@ media.mp4
       animeId: 'anime-1',
       episodeId: 'episode-1',
       sourceId: 'sakura',
-      source: DownloadSource(
+      source: const DownloadSource(
         url: 'https://cdn.example.test/index.m3u8',
         kind: DownloadKind.hls,
       ),
@@ -3614,6 +3614,136 @@ media.mp4
     expect(mediaManifestToken, isNotNull);
     expect(rootManifestToken, same(mediaManifestToken));
     expect(manifestLoadTokens, isNotEmpty);
+  });
+
+  test(
+      'pausing a HLS task during variant manifest loading does not block task settlement',
+      () async {
+    final database = AppDatabase(NativeDatabase.memory());
+    addTearDown(database.close);
+
+    final tempDir =
+        await Directory.systemTemp.createTemp('ani-destiny-hls-variant-pause');
+    addTearDown(() async {
+      if (tempDir.existsSync()) {
+        await tempDir.delete(recursive: true);
+      }
+    });
+    _mockApplicationDocumentsDirectory(tempDir.path);
+
+    final variantLoadStarted = Completer<CancelToken>();
+    CancelToken? variantManifestToken;
+
+    final repository = DownloadRepositoryImpl(database);
+    final service = HttpDownloadService(
+      dio: Dio(),
+      repository: repository,
+      hlsManifestLoader: _FakeHlsManifestLoader(
+        (manifestUri, headers) async {
+          if (manifestUri.path == '/index.m3u8') {
+            return HlsManifest(
+              uri: manifestUri,
+              segments: const [],
+              variants: [
+                HlsVariant(
+                  uri: Uri.parse('https://cdn.example.test/1080/index.m3u8'),
+                  bandwidth: 2000000,
+                  audioGroupId: 'eng',
+                ),
+              ],
+              renditions: [
+                HlsRendition(
+                  uri: Uri.parse('https://cdn.example.test/eng/index.m3u8'),
+                  type: 'AUDIO',
+                  groupId: 'eng',
+                  name: 'ENG',
+                ),
+              ],
+              isLive: false,
+              targetDuration: null,
+            );
+          }
+          if (manifestUri.path == '/1080/index.m3u8') {
+            final token = variantManifestToken;
+            expect(token, isNotNull,
+                reason: 'variant manifest should carry cancel token');
+            await Future.any([
+              token!.whenCancel,
+              Future<void>.delayed(const Duration(seconds: 120)),
+            ]);
+            if (token.isCancelled) {
+              throw DioException(
+                requestOptions: RequestOptions(path: manifestUri.toString()),
+                type: DioExceptionType.cancel,
+                message: 'request canceled',
+              );
+            }
+            return HlsManifest(
+              uri: manifestUri,
+              segments: const [],
+              variants: const [],
+              isLive: false,
+              targetDuration: null,
+            );
+          }
+          if (manifestUri.path == '/eng/index.m3u8') {
+            return HlsManifest(
+              uri: manifestUri,
+              segments: [
+                HlsSegment(
+                  uri: Uri.parse('https://cdn.example.test/audio-1.aac'),
+                  duration: Duration.zero,
+                  title: 'audio',
+                ),
+              ],
+              variants: const [],
+              isLive: false,
+              targetDuration: const Duration(seconds: 6),
+            );
+          }
+          throw const FormatException('unexpected manifest uri');
+        },
+        onLoad: (manifestUri, cancelToken) {
+          if (manifestUri.path == '/1080/index.m3u8') {
+            variantManifestToken = cancelToken;
+            if (!variantLoadStarted.isCompleted) {
+              variantLoadStarted.complete(cancelToken!);
+            }
+          }
+        },
+      ),
+    );
+
+    final taskId = await service.createTask(
+      animeId: 'anime-1',
+      episodeId: 'episode-1',
+      sourceId: 'sakura',
+      source: const DownloadSource(
+        url: 'https://cdn.example.test/index.m3u8',
+        kind: DownloadKind.hls,
+      ),
+      title: 'HLS Pause Variant Manifest Test',
+      episodeTitle: 'Episode 1',
+    );
+
+    final startFuture = service.start(taskId);
+    final loadedCancelToken = await variantLoadStarted.future;
+
+    final pauseFuture = service.pause(taskId);
+    await expectLater(
+      pauseFuture.timeout(const Duration(seconds: 2)),
+      completes,
+    );
+    await expectLater(
+      startFuture.timeout(const Duration(seconds: 2)),
+      completes,
+    );
+
+    final task = await repository.getTask(taskId);
+    expect(task, isNotNull);
+    expect(task!.status, DownloadStatus.paused);
+    expect(loadedCancelToken, isNotNull);
+    expect(loadedCancelToken.isCancelled, isTrue);
   });
 
   test('removing a discarded task clears any leftover partial file first',
