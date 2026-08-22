@@ -7,6 +7,7 @@
 ## [Unreleased]
 
 ### 🐛 修复
+- 收口下载失败提示的敏感信息边界：下载动作兜底、持久化任务失败说明与下载卡片统一经过 `sanitizeError(...)`，遮蔽 URL、token、cookie 和完整本地路径；补充 `test/download_entry_feedback_test.dart`、`test/download_task_entity_test.dart` 与 `test/download_task_tile_test.dart` 回归。
 - 固定 GitHub Actions 的 Build 与 Release 工具链为最后一次验证通过的 Flutter 3.44.9，避免 `stable` 漂移到 Flutter 3.47.1 / Dart 3.13 后触发旧版 analyzer 的代码生成异常并让 `build_runner` 挂起至 6 小时超时。
 - 修复离线播放入口参数边界：当播放参数 `playUrl` 指向离线本地 `file://`/本地路径且携带 `playHeaders` 时，进入播放器前会清空请求头后再构造播放参数；补充 `test/player_page_test.dart` 回归 `offline local playback args remove request headers before playback` 与 `remote playback args keep request headers`，避免离线复播携带旧请求头进入媒体层。
 - 新增离线媒体分组级校验入口：番剧标题行新增“Verify offline media”动作，可一键对该番剧下全部本地离线条目执行完整性重检；任何条目异常会统一提示损坏。新增 `test/download_page_test.dart` 回归覆盖整部番剧校验会逐条执行 `verify` 并根据结果汇总提示。

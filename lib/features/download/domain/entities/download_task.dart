@@ -1,3 +1,4 @@
+import '../../../../core/diagnostics/diagnostic_sanitizer.dart';
 import 'download_failure_reason.dart';
 import 'download_kind.dart';
 
@@ -119,6 +120,11 @@ DownloadTask normalizeDownloadTask(DownloadTask task) {
   if (task.status == DownloadStatus.failed &&
       looksLikeRawDownloadFailureMessage(failureMessage)) {
     return task.copyWith(failureMessage: unexpectedDownloadFailureMessage);
+  }
+  final sanitizedFailureMessage = sanitizeError(failureMessage);
+  if (task.status == DownloadStatus.failed &&
+      sanitizedFailureMessage != failureMessage) {
+    return task.copyWith(failureMessage: sanitizedFailureMessage);
   }
   return task;
 }
