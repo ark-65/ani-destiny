@@ -278,12 +278,11 @@ class DownloadTaskTile extends StatelessWidget {
       };
     }
     final normalizedTask = normalizeDownloadTask(task);
-    if (normalizedTask.failureMessage == unexpectedDownloadFailureMessage) {
+    final failureMessage = normalizedTask.failureMessage;
+    if (failureMessage == unexpectedDownloadFailureMessage) {
       return context.l10n.downloadFailureUnexpectedError;
     }
-    return normalizedTask.failureMessage == null
-        ? null
-        : sanitizeError(normalizedTask.failureMessage);
+    return failureMessage == null ? null : sanitizeError(failureMessage);
   }
 
   bool _showProgress(DownloadTask task, bool isRemovingFromList) {

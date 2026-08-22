@@ -24,8 +24,10 @@ void main() {
 
     final normalized = normalizeDownloadTask(task);
 
-    expect(normalized.failureMessage,
-        isNot(contains('/tmp/ani-destiny/secret/session.txt')));
+    expect(
+      normalized.failureMessage,
+      isNot(contains('/tmp/ani-destiny/secret/session.txt')),
+    );
     expect(normalized.failureMessage, contains('[path:[hidden]]'));
   });
 }

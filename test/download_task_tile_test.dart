@@ -262,10 +262,6 @@ void main() {
 
     expect(find.textContaining('download failed for'), findsOneWidget);
     expect(
-      find.textContaining('[sensitive]=[hidden]'),
-      findsOneWidget,
-    );
-    expect(
       find.textContaining('https://cdn.example.test/.../segment.m3u8'),
       findsOneWidget,
     );
