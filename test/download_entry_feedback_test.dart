@@ -215,7 +215,7 @@ void main() {
       l10n,
       const AppException(
         'AppException: [download_unknown] token=secret https://cdn.example.test/'
-        'segment.m3u8?ts=123&Authorization=abc'
+        'segment.m3u8?ts=123&Authorization=abc&cookie=session'
         ' /tmp/ani-destiny-offline/index.m3u8',
       ),
     );
@@ -225,6 +225,7 @@ void main() {
     expect(value, contains('[path:[hidden]]'));
     expect(value, isNot(contains('token=secret')));
     expect(value, isNot(contains('Authorization=abc')));
+    expect(value, isNot(contains('cookie=session')));
     expect(value, isNot(contains('/tmp/ani-destiny-offline/index.m3u8')));
   });
 }
